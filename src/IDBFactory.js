@@ -31,6 +31,7 @@ let fs;
  * @returns {void}
  */
 const setFS = (_fs) => {
+    // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
     fs = _fs;
 };
 
@@ -93,7 +94,7 @@ function processNextInConnectionQueue (name, origin = getOrigin()) {
  */
 function addRequestToConnectionQueue (req, name, origin = getOrigin(), cb) {
     /* eslint-enable default-param-last -- Keep cb at end */
-    if (!connectionQueue[origin][name]) {
+    if (!Object.hasOwn(connectionQueue[origin], name)) {
         connectionQueue[origin][name] = [];
     }
     connectionQueue[origin][name].push({req, cb});
@@ -139,7 +140,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
                 setTimeout(() => {
                     entry.dispatchEvent(e); // No need to catch errors
                     resolve(undefined);
-                });
+                }, 0);
             });
         });
     }, SyncPromise.resolve(undefined)).then(function () {
@@ -168,7 +169,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
                 } else {
                     resolve(undefined);
                 }
-            });
+            }, 0);
         });
     });
 }
@@ -229,7 +230,7 @@ function getLatestCachedWebSQLDB (name) {
 function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
     const useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
     if (useMemoryDatabase) {
-        const latestSQLiteDBCached = websqlDBCache[name] ? getLatestCachedWebSQLDB(name) : null;
+        const latestSQLiteDBCached = Object.hasOwn(websqlDBCache, name) ? getLatestCachedWebSQLDB(name) : null;
         if (!latestSQLiteDBCached) {
             console.warn('Could not find a memory database instance to delete.');
             databaseDeleted();
@@ -334,6 +335,7 @@ function createSysDB (__openDatabase, success, failure) {
     if (sysdb) {
         success();
     } else {
+        // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
         sysdb = __openDatabase(
             typeof CFG.memoryDatabase === 'string'
                 ? CFG.memoryDatabase
@@ -367,6 +369,7 @@ function createSysDB (__openDatabase, success, failure) {
 /**
  * IDBFactory Class.
  * @see https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
+ * @throws {TypeError}
  * @class
  */
 function IDBFactory () {
@@ -438,6 +441,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     let calledDbCreateError = false;
 
     if (CFG.autoName && name === '') {
+        // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
         name = 'autoNamedDatabase_' + nameCounter++;
     }
     name = String(name); // cast to a string
@@ -494,7 +498,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 req.__done = true;
             }
             const connection = IDBDatabase.__createInstance(db, name, oldVersion, version, data);
-            if (!me.__connections[name]) {
+            if (!Object.hasOwn(me.__connections, name)) {
                 me.__connections[name] = [];
             }
             me.__connections[name].push(connection);
@@ -602,7 +606,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 connection.__upgradeTransaction = null;
                                 // We ensure any cache is deleted before any request error events fire and try to reopen
                                 if (useDatabaseCache) {
-                                    if (name in websqlDBCache) {
+                                    if (Object.hasOwn(websqlDBCache, name)) {
                                         delete websqlDBCache[name][version];
                                     }
                                 }
@@ -633,7 +637,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         dbCreateError(err);
                                         return false;
                                     });
-                                });
+                                }, 0);
                             };
 
                             // eslint-disable-next-line camelcase -- Clear API
@@ -712,7 +716,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     function openDB (oldVersion) {
         /** @type {DatabaseFull} */
         let db;
-        if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
+        if ((useMemoryDatabase || useDatabaseCache) && Object.hasOwn(websqlDBCache, name) && Object.hasOwn(websqlDBCache[name], version)) {
             db = websqlDBCache[name][version];
         } else {
             db = me.__openDatabase(
@@ -722,7 +726,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 CFG.DEFAULT_DB_SIZE
             );
             if (useDatabaseCache) {
-                if (!(name in websqlDBCache)) {
+                if (!(Object.hasOwn(websqlDBCache, name))) {
                     websqlDBCache[name] = {};
                 }
                 websqlDBCache[name][version] = db;
@@ -737,7 +741,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
             if (useDatabaseCache) {
                 setTimeout(() => {
                     dbCreateError(err);
-                });
+                }, 0);
             } else {
                 dbCreateError(err);
             }
@@ -764,7 +768,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     addRequestToConnectionQueue(req, name, /* origin */ undefined, function () {
         let latestCachedVersion;
         if (useDatabaseCache) {
-            if (!(name in websqlDBCache)) {
+            if (!Object.hasOwn(websqlDBCache, name)) {
                 websqlDBCache[name] = {};
             }
             latestCachedVersion = getLatestCachedWebSQLVersion(name);
@@ -884,7 +888,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             /** @type {DatabaseDeleted} */
             function databaseDeleted () {
                 sysdbFinishedCbDelete(false, function () {
-                    if (useDatabaseCache && name in websqlDBCache) {
+                    if (useDatabaseCache && Object.hasOwn(websqlDBCache, name)) {
                         delete websqlDBCache[name]; // New calls will treat as though never existed
                     }
                     delete me.__connections[name];
@@ -1017,7 +1021,7 @@ IDBFactory.prototype.databases = function () {
 * @todo forceClose: Test
 * This is provided to facilitate unit-testing of the
 *  closing of a database connection with a forced flag:
-* <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+* <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
 * @param {string} dbName
 * @param {Integer} connIdx
 * @param {string} msg
@@ -1041,12 +1045,13 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
                 forceClose(connection);
             });
         });
-    } else if (!me.__connections[dbName]) {
+    } else if (!Object.hasOwn(me.__connections, dbName)) {
         console.log('No database connections with that name to force close');
     } else if (util.isNullish(connIdx)) {
         me.__connections[dbName].forEach((conn) => {
             forceClose(conn);
         });
+    // eslint-disable-next-line unicorn/prefer-number-is-safe-integer -- Ok
     } else if (!Number.isInteger(connIdx) || connIdx < 0 || connIdx > me.__connections[dbName].length - 1) {
         throw new TypeError(
             'If providing an argument, __forceClose must be called with a ' +
@@ -1068,9 +1073,11 @@ IDBFactory.prototype.__setConnectionQueueOrigin = function (origin = getOrigin()
 
 IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactoryPrototype';
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 Object.defineProperty(IDBFactory, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 const shimIndexedDB = IDBFactory.__createInstance();
 export {IDBFactory, cmp, shimIndexedDB, setFS};

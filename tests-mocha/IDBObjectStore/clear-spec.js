@@ -63,7 +63,7 @@ describe('IDBObjectStore.clear', function () {
             const clear = store.clear();
 
             clear.onsuccess = sinon.spy(function () {
-                expect(clear.result).equal(undefined);
+                expect(clear.result).to.be.undefined;
             });
 
             tx.oncomplete = function () {

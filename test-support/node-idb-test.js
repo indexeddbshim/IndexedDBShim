@@ -124,6 +124,7 @@ function exit () {
 async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
     shimNS.fileName = jsFiles[item];
     shimNS.finished = async () => {
+        // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Testing
         ct += 1;
 
         /**
@@ -223,7 +224,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 });
                 if (unexpectedPasses.length) {
                     console.log(
-                        '  ' + '(' + unexpectedPasses.length + '): [\n    ' + cleanJSONOutput(unexpectedPasses).slice(1, -1) + '\n  ]\n'
+                        '  (' + unexpectedPasses.length + '): [\n    ' + cleanJSONOutput(unexpectedPasses).slice(1, -1) + '\n  ]\n'
                     );
                 } else {
                     console.log('(None)');
@@ -241,7 +242,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 );
                 if (failedFiles.length) {
                     console.log(
-                        '  ' + '(' + failedFiles.length + '): [\n    ' + cleanJSONOutput(failedFiles).slice(1, -1) + '\n  ]\n'
+                        '  (' + failedFiles.length + '): [\n    ' + cleanJSONOutput(failedFiles).slice(1, -1) + '\n  ]\n'
                     );
                 } else { console.log('(None)'); }
 
@@ -318,6 +319,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             ? excludedWorkers
             : excludedNormal;
         if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
+            // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Testing
             excludedCount++;
             shimNS.finished();
             return;
@@ -332,7 +334,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         return;
     }
 
-    if (nodeReplacementHacks[shimNS.fileName]) {
+    if (Object.hasOwn(nodeReplacementHacks, shimNS.fileName)) {
         content = content.replace(...nodeReplacementHacks[shimNS.fileName]);
     }
 
@@ -561,7 +563,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                                 return function (e) {
                                     setTimeout(function () {
                                         _onload(e);
-                                    });
+                                    }, 0);
                                 };
                             }
                         }
@@ -676,9 +678,9 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         //  ESLint rules on this joined file to better notice any other
         //  issues between the code, custom environment, and harness
         const fileSave =
-            '/' + '*' + shimNS.fileName + ':::' + err /* .replace(new RegExp('\\*' + '/', 'g'), '* /') */ + '*' + '/' +
-            '/' + '* globals assert_equals, assert_array_equals, assert_unreached, async_test, EventWatcher, SharedWorkerGlobalScope, DedicatedWorkerGlobalScope, ServiceWorkerGlobalScope, WorkerGlobalScope *' + '/\n' +
-            '/' + '*eslint-disable curly, no-unused-vars, no-self-compare, space-in-parens, no-extra-parens, spaced-comment, padded-blocks, no-useless-escape, func-call-spacing, comma-spacing, operator-linebreak, prefer-const, compat/compat, no-unneeded-ternary, space-unary-ops, object-property-newline, no-multiple-empty-lines, block-spacing, space-infix-ops, comma-dangle, no-template-curly-in-string, yoda, quotes, spaced-comment, no-var, key-spacing, camelcase, indent, semi, space-before-function-paren, eqeqeq, brace-style, no-array-constructor, keyword-spacing*' + '/\n' +
+            '/*' + shimNS.fileName + ':::' + err /* .replace(new RegExp('\\*' + '/', 'g'), '* /') */ + '*/' +
+            '/* globals assert_equals, assert_array_equals, assert_unreached, async_test, EventWatcher, SharedWorkerGlobalScope, DedicatedWorkerGlobalScope, ServiceWorkerGlobalScope, WorkerGlobalScope */\n' +
+            '/*eslint-disable curly, no-unused-vars, no-self-compare, space-in-parens, no-extra-parens, spaced-comment, padded-blocks, no-useless-escape, func-call-spacing, comma-spacing, operator-linebreak, prefer-const, compat/compat, no-unneeded-ternary, space-unary-ops, object-property-newline, no-multiple-empty-lines, block-spacing, space-infix-ops, comma-dangle, no-template-curly-in-string, yoda, quotes, spaced-comment, no-var, key-spacing, camelcase, indent, semi, space-before-function-paren, eqeqeq, brace-style, no-array-constructor, keyword-spacing*/\n' +
             allContent;
         try {
             await writeFile(path.join('test-support', 'latest-erring-bundled.js'), fileSave);
@@ -698,8 +700,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 async function readAndEvaluateFiles (jsFiles, workers, recursing) {
     jsFiles = jsFiles.filter((jsFile) => (/\.js/v).test(jsFile));
     if (!recursing && fileIndex) { // Start at a particular file count
-        const start = Number.parseInt(fileIndex);
-        const end = (endFileCount ? (start + Number.parseInt(endFileCount)) : jsFiles.length);
+        const start = Math.trunc(Number(fileIndex));
+        const end = (endFileCount ? (start + Math.trunc(Number(endFileCount))) : jsFiles.length);
         await readAndEvaluateFiles(
             jsFiles.slice(start, end),
             workers,
@@ -801,17 +803,20 @@ try {
  * @returns {Promise<string>}
  */
 async function readAndJoinFiles (arr, i = 0, str = '') {
-    const filename = arr[i];
-    if (!filename) { // || i === arr.length - 1) {
-        return str;
+    for (let idx = i; idx < arr.length; idx++) {
+        const filename = arr[idx];
+        if (!filename) { // || i === arr.length - 1) {
+            break;
+        }
+        let data;
+        try {
+            // eslint-disable-next-line no-await-in-loop -- Sequential
+            data = await readFile(filename, 'utf8');
+        } catch (err) {
+            console.error('Error 11', err);
+            throw err;
+        }
+        str += '/*jsfilename:' + filename + '*/\n\n' + data;
     }
-    let data;
-    try {
-        data = await readFile(filename, 'utf8');
-    } catch (err) {
-        console.error('Error 11', err);
-        throw err;
-    }
-    str += '/*jsfilename:' + filename + '*/\n\n' + data;
-    return readAndJoinFiles(arr, i + 1, str);
+    return str;
 }

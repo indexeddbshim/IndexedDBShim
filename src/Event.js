@@ -21,8 +21,10 @@ function createEvent (type, debug, evInit) {
     return ev;
 }
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 // We don't add within polyfill repo as might not always be the desired implementation
 Object.defineProperty(ShimEvent, Symbol.hasInstance, {
+    /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
     /**
      * @typedef {any} AnyValue
      */

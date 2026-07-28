@@ -18,8 +18,9 @@ const readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncreme
 
 /**
  * IndexedDB Object Store.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
  * @class
+ * @throws {TypeError}
  */
 function IDBObjectStore () {
     throw new TypeError('Illegal constructor');
@@ -85,89 +86,93 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__indexNames = DOMStringList.__createInstance();
         const {indexList} = storeProperties;
         for (const indexName in indexList) {
-            if (Object.hasOwn(indexList, indexName)) {
-                const index = IDBIndex.__createInstance(me, indexList[indexName]);
-                me.__indexes[index.name] = index;
-                if (!index.__deleted) {
-                    me.indexNames.push(index.name);
-                }
+            if (!Object.hasOwn(indexList, indexName)) {
+                continue;
+            }
+
+            const index = IDBIndex.__createInstance(me, indexList[indexName]);
+            me.__indexes[index.name] = index;
+            if (!index.__deleted) {
+                me.indexNames.push(index.name);
             }
         }
         me.__oldIndexNames = me.indexNames.clone();
-        Object.defineProperty(this, '__currentName', {
-            get () {
-                return '__pendingName' in this ? this.__pendingName : this.name;
-            }
-        });
-        Object.defineProperty(this, 'name', {
-            enumerable: false,
-            configurable: false,
-            /**
-             * @this {IDBObjectStoreFull}
-             * @returns {string}
-             */
-            get () {
-                return this.__name;
+        Object.defineProperties(this, {
+            __currentName: {
+                get () {
+                    return '__pendingName' in this ? this.__pendingName : this.name;
+                }
             },
-            /**
-             * @param {string} name
-             * @this {IDBObjectStoreFull}
-             * @returns {void}
-             */
-            set (name) {
-                const me = this;
-                name = util.convertToDOMString(name);
-                const oldName = me.name;
-                IDBObjectStoreAlias.__invalidStateIfDeleted(me);
-                IDBTransaction.__assertVersionChange(me.transaction);
-                IDBTransaction.__assertActive(me.transaction);
-                if (oldName === name) {
-                    return;
-                }
-                if (me.__idbdb.__objectStores[name] && !me.__idbdb.__objectStores[name].__pendingDelete) {
-                    throw createDOMException('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
-                }
+            name: {
+                enumerable: false,
+                configurable: false,
+                /**
+                 * @this {IDBObjectStoreFull}
+                 * @returns {string}
+                 */
+                get () {
+                    return this.__name;
+                },
+                /**
+                 * @param {string} name
+                 * @this {IDBObjectStoreFull}
+                 * @returns {void}
+                 */
+                set (name) {
+                    const me = this;
+                    name = util.convertToDOMString(name);
+                    const oldName = me.name;
+                    IDBObjectStoreAlias.__invalidStateIfDeleted(me);
+                    IDBTransaction.__assertVersionChange(me.transaction);
+                    IDBTransaction.__assertActive(me.transaction);
+                    if (oldName === name) {
+                        return;
+                    }
+                    if (Object.hasOwn(me.__idbdb.__objectStores, name) && !me.__idbdb.__objectStores[name].__pendingDelete) {
+                        throw createDOMException('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
+                    }
 
-                me.__name = name;
+                    me.__name = name;
 
-                const oldStore = me.__idbdb.__objectStores[oldName];
-                oldStore.__name = name; // Fix old references
-                me.__idbdb.__objectStores[name] = oldStore; // Ensure new reference accessible
-                delete me.__idbdb.__objectStores[oldName]; // Ensure won't be found
+                    const oldStore = me.__idbdb.__objectStores[oldName];
+                    oldStore.__name = name; // Fix old references
+                    me.__idbdb.__objectStores[name] = oldStore; // Ensure new reference accessible
+                    delete me.__idbdb.__objectStores[oldName]; // Ensure won't be found
 
-                me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(oldName), 1, name);
+                    me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(oldName), 1, name);
 
-                const oldHandle = /** @type {IDBObjectStoreFull} */ (
+                    const oldHandle = /** @type {IDBObjectStoreFull} */ (
+                        /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+                            me.transaction
+                        ).__storeHandles[oldName]
+                    );
+                    oldHandle.__name = name; // Fix old references
                     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
                         me.transaction
-                    ).__storeHandles[oldName]
-                );
-                oldHandle.__name = name; // Fix old references
-                /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
-                    me.transaction
-                ).__storeHandles[name] = oldHandle; // Ensure new reference accessible
+                    ).__storeHandles[name] = oldHandle; // Ensure new reference accessible
 
-                me.__pendingName = oldName;
+                    me.__pendingName = oldName;
 
-                const sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
-                const sqlValues = [util.escapeSQLiteStatement(name), util.escapeSQLiteStatement(oldName)];
-                if (CFG.DEBUG) { console.log(sql, sqlValues); }
-                /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
-                    me.transaction
-                ).__addNonRequestToTransactionQueue(function objectStoreClear (tx, args, success, error) {
-                    tx.executeSql(sql, sqlValues, function (tx) {
-                        // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
-                        const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
-                        if (CFG.DEBUG) { console.log(sql); }
-                        tx.executeSql(sql, [], function () {
-                            delete me.__pendingName;
-                            success();
+                    const sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
+                    const sqlValues = [util.escapeSQLiteStatement(name), util.escapeSQLiteStatement(oldName)];
+                    if (CFG.DEBUG) { console.log(sql, sqlValues); }
+                    /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+                        me.transaction
+                    ).__addNonRequestToTransactionQueue(function objectStoreClear (tx, args, success, error) {
+                        tx.executeSql(sql, sqlValues, function (tx) {
+                            // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
+                            const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
+                            if (CFG.DEBUG) { console.log(sql); }
+                            tx.executeSql(sql, [], function () {
+                                delete me.__pendingName;
+                                success();
+                            });
+                        }, function (tx, err) {
+                            error(err);
+                            return false;
                         });
-                    }, function (tx, err) {
-                        error(err);
-                        return false;
                     });
-                });
+                }
             }
         });
     }
@@ -239,7 +244,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     );
 
     const storeHandles = transaction.__storeHandles;
-    if (!storeHandles[storeName] ||
+    if (!Object.hasOwn(storeHandles, storeName) ||
         // These latter conditions are to allow store
         //   recreation to create new clone object
         storeHandles[storeName].__pendingDelete ||
@@ -609,7 +614,6 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             return false;
         });
         return undefined;
-    // eslint-disable-next-line sonarjs/no-invariant-returns -- Convenient
     }).catch(function (err) {
         /**
          * @returns {void}
@@ -1036,7 +1040,7 @@ IDBObjectStore.prototype.index = function (indexName) {
         throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.__currentName);
     }
 
-    if (!me.__indexHandles[indexName] ||
+    if (!Object.hasOwn(me.__indexHandles, indexName) ||
         me.__indexes[indexName].__pendingDelete ||
         me.__indexes[indexName].__deleted
     ) {
@@ -1069,7 +1073,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     IDBTransaction.__assertVersionChange(me.transaction);
     IDBObjectStore.__invalidStateIfDeleted(me);
     IDBTransaction.__assertActive(me.transaction);
-    if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted && !me.__indexes[indexName].__pendingDelete) {
+    if (Object.hasOwn(me.__indexes, indexName) && !me.__indexes[indexName].__deleted && !me.__indexes[indexName].__pendingDelete) {
         throw createDOMException('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.__currentName);
     }
 
@@ -1081,7 +1085,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
         throw createDOMException('InvalidAccessError', 'The keyPath argument was an array and the multiEntry option is true.');
     }
 
-    optionalParameters = optionalParameters || {};
+    optionalParameters ||= {};
     /** @type {import('./IDBIndex.js').IDBIndexProperties} */
     const indexProperties = {
         columnName: indexName,
@@ -1121,6 +1125,7 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
     IDBIndex.__deleteIndex(me, index);
 };
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineReadonlyOuterInterface(IDBObjectStore.prototype, readonlyProperties);
 util.defineOuterInterface(IDBObjectStore.prototype, ['name']);
 
@@ -1129,5 +1134,6 @@ IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStorePrototype';
 Object.defineProperty(IDBObjectStore, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 export default IDBObjectStore;

@@ -117,7 +117,7 @@ function createNonNativeDOMExceptionClass () {
     function DOMException (message, name) {
         // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
         this[Symbol.toStringTag] = 'DOMException';
-        this._code = name in codes
+        this._code = Object.hasOwn(codes, name)
             ? codes[/** @type {Code} */ (name)]
             : (legacyCodes[/** @type {LegacyCode} */ (name)] || 0);
         this._name = name || 'Error';
@@ -259,15 +259,17 @@ function createNonNativeDOMException (name, message) {
  * @returns {void}
  */
 function logError (name, message, error) {
-    if (CFG.DEBUG) {
-        const msg = error && typeof error === 'object' && error.message
-            ? error.message
-            : /** @type {string} */ (error);
-
-        const method = typeof (console.error) === 'function' ? 'error' : 'log';
-        console[method](name + ': ' + message + '. ' + (msg || ''));
-        if (console.trace) { console.trace(); }
+    if (!CFG.DEBUG) {
+        return;
     }
+
+    const msg = error && typeof error === 'object' && error.message
+        ? error.message
+        : /** @type {string} */ (error);
+
+    const method = typeof (console.error) === 'function' ? 'error' : 'log';
+    console[method](name + ': ' + message + '. ' + (msg || ''));
+    if (console.trace) { console.trace(); }
 }
 
 /**

@@ -61,6 +61,7 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
     inputFile: 'web-platform-tests/html/infrastructure/common-dom-interfaces/collections/domstringlist.html',
     outputFile: path.join(builtJSPath, 'domstringlist.js')
 }, {
+    /* eslint-disable unicorn/prefer-https -- Local */
     inputFile: 'http://web-platform.test:8000/workers/semantics/interface-objects/003.any.html',
     outputFile: path.join(builtJSPath, '_interface-objects-003.js'),
     web: true
@@ -74,6 +75,7 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
 }, ...anyFiles.map((anyFile) => {
     return {
         inputFile: `http://web-platform.test:8000/IndexedDB/${anyFile.replace(/\.js$/v, '.html')}`,
+        /* eslint-enable unicorn/prefer-https -- Local */
         outputFile: path.join(builtJSPath, anyFile),
         web: true
     };
@@ -135,10 +137,10 @@ await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
         if (!knownScripts.includes(src)) {
             console.log('Found non-typical script src: ' + src + ' in: ' + inputFile);
         }
-        scriptContent += '/' + '*beginscript::' + (
+        scriptContent += '/*beginscript::' + (
             // Handle exceptions to top-level /resources or /IndexedDB
             src === 'resources/test-helpers.sub.js' ? 'service-workers/service-worker/' + src : src
-        ) + '::endscript*' + '/\n';
+        ) + '::endscript*/\n';
     });
     scriptContent +=
         "document.title = '" +
@@ -157,7 +159,7 @@ await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
     }
     // console.log("The file " + outputFile + " was saved!");
 }));
-const reducer = (s, src) => s + '/' + '*beginscript::' + src + '::endscript*' + '/\n';
+const reducer = (s, src) => s + '/*beginscript::' + src + '::endscript*/\n';
 /* eslint-disable unicorn/no-array-callback-reference -- Convenient */
 const harnessContent = [
     '/resources/testharness.js',

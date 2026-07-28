@@ -64,6 +64,7 @@ const CFG = /** @type {ConfigValues} */ ({});
  */
 
 /** @type {Config} */
+// eslint-disable-next-line unicorn/no-top-level-side-effects -- Would be good
 ([
     // Boolean for verbose reporting
     'DEBUG', // Effectively defaults to false (ignored unless `true`)
@@ -82,7 +83,7 @@ const CFG = /** @type {ConfigValues} */ ({});
     //    calls required for full WebIDL compliance will be used. Probably
     //    only needed for testing or environments where full introspection
     //    on class relationships is required; see
-    //    http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+    //    https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
     'fullIDLSupport', // Effectively defaults to false (ignored unless `true`)
 
     // Boolean on whether to perform origin checks in `IDBFactory` methods

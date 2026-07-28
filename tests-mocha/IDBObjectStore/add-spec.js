@@ -61,7 +61,7 @@ describe('IDBObjectStore.add (only)', function () {
             }
             const req = objectStore.add(sample.obj());
             req.onsuccess = function () {
-                expect(req.result, 'Data added to Object store').to.not.equal(null);
+                expect(req.result, 'Data added to Object store').to.not.be.null;
                 objectStore.transaction.db.close();
                 done();
             };
@@ -83,7 +83,7 @@ describe('IDBObjectStore.add (only)', function () {
             delete data.Int;
             const req = objectStore.add(data);
             req.onsuccess = function () {
-                expect(req.result, 'Data added to Object store').to.not.equal(null);
+                expect(req.result, 'Data added to Object store').to.not.be.null;
                 objectStore.transaction.db.close();
                 done();
             };
@@ -179,10 +179,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -211,34 +213,38 @@ describe('IDBObjectStore.add (only)', function () {
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function () {
-                if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice) {
-                    expect(save1.result).to.equal(1);
-                    expect(save2.result).to.not.be.ok;
-                    expect(save3.result).to.not.be.ok;
-
-                    expect(save2.error.name).to.equal('ConstraintError');
-                    expect(save3.error.name).to.equal('ConstraintError');
-
-                    if (env.isShimmed || !env.browser.isSafari) {
-                        expect(save2.result).equal(undefined); // Safari uses null
-                        expect(save3.result).equal(undefined); // Safari uses null
-
-                        if (!env.browser.isFirefox) {
-                            expect(save2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
-                            expect(save3.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
-                        }
-                    }
-
-                    db.close();
-                    done();
+                if (!(tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice)) {
+                    return;
                 }
+
+                expect(save1.result).to.equal(1);
+                expect(save2.result).to.not.be.ok;
+                expect(save3.result).to.not.be.ok;
+
+                expect(save2.error.name).to.equal('ConstraintError');
+                expect(save3.error.name).to.equal('ConstraintError');
+
+                if (env.isShimmed || !env.browser.isSafari) {
+                    expect(save2.result).to.be.undefined; // Safari uses null
+                    expect(save3.result).to.be.undefined; // Safari uses null
+
+                    if (!env.browser.isFirefox) {
+                        expect(save2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
+                        expect(save3.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
+                    }
+                }
+
+                db.close();
+                done();
             });
 
             tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                if (save1.calledThrice) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!save1.calledThrice) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -285,10 +291,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -337,10 +345,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -369,34 +379,38 @@ describe('IDBObjectStore.add (only)', function () {
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function () {
-                if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice) {
-                    expect(save1.result).to.equal(1);
-                    expect(save2.result).to.not.be.ok;
-                    expect(save3.result).to.not.be.ok;
-
-                    expect(save2.error.name).to.equal('ConstraintError');
-                    expect(save3.error.name).to.equal('ConstraintError');
-
-                    if (env.isShimmed || !env.browser.isSafari) {
-                        expect(save2.result).equal(undefined); // Safari uses null
-                        expect(save3.result).equal(undefined); // Safari uses null
-
-                        if (!env.browser.isFirefox) {
-                            expect(save2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
-                            expect(save3.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
-                        }
-                    }
-
-                    db.close();
-                    done();
+                if (!(tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice)) {
+                    return;
                 }
+
+                expect(save1.result).to.equal(1);
+                expect(save2.result).to.not.be.ok;
+                expect(save3.result).to.not.be.ok;
+
+                expect(save2.error.name).to.equal('ConstraintError');
+                expect(save3.error.name).to.equal('ConstraintError');
+
+                if (env.isShimmed || !env.browser.isSafari) {
+                    expect(save2.result).to.be.undefined; // Safari uses null
+                    expect(save3.result).to.be.undefined; // Safari uses null
+
+                    if (!env.browser.isFirefox) {
+                        expect(save2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
+                        expect(save3.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
+                    }
+                }
+
+                db.close();
+                done();
             });
 
             tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                if (save1.calledThrice) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!save1.calledThrice) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -445,10 +459,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -496,10 +512,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -548,10 +566,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -600,10 +620,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -652,10 +674,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });
@@ -704,10 +728,12 @@ describe('IDBObjectStore.add (only)', function () {
             };
 
             tx.oncomplete = sinon.spy(function () {
-                if (add2.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!add2.onsuccess.called) {
+                    return;
                 }
+
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
             });
         });
     });

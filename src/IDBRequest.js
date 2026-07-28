@@ -8,8 +8,9 @@ const doneFlagGetters = ['result', 'error'];
 
 /**
  * The IDBRequest Object that is returns for all async calls.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
  * @class
+ * @throws {TypeError}
  */
 function IDBRequest () {
     throw new TypeError('Illegal constructor');
@@ -48,21 +49,26 @@ IDBRequest.__super = function IDBRequest () {
         legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
     doneFlagGetters.forEach((prop) => {
-        Object.defineProperty(this, '__' + prop, {
-            enumerable: false,
-            configurable: false,
-            writable: true
-        });
-        Object.defineProperty(this, prop, {
-            enumerable: true,
-            configurable: true,
-            get () {
-                if (!this.__done) {
-                    throw createDOMException('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
+        Object.defineProperties(
+            this,
+            {
+                ['__' + prop]: {
+                    enumerable: false,
+                    configurable: false,
+                    writable: true
+                },
+                [prop]: {
+                    enumerable: true,
+                    configurable: true,
+                    get () {
+                        if (!this.__done) {
+                            throw createDOMException('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
+                        }
+                        return this['__' + prop];
+                    }
                 }
-                return this['__' + prop];
             }
-        });
+        );
     });
     util.defineReadonlyProperties(this, readonlyProperties, {
         readyState: {
@@ -106,6 +112,7 @@ IDBRequest.prototype.__getParent = function () {
     return this.__transaction;
 };
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 // Illegal invocations
 util.defineReadonlyOuterInterface(IDBRequest.prototype, readonlyProperties);
 util.defineReadonlyOuterInterface(IDBRequest.prototype, doneFlagGetters);
@@ -123,6 +130,7 @@ IDBRequest.__super.prototype = IDBRequest.prototype;
 Object.defineProperty(IDBRequest, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 const openListeners = ['onblocked', 'onupgradeneeded'];
 
@@ -133,6 +141,7 @@ const openListeners = ['onblocked', 'onupgradeneeded'];
 /**
  * The IDBOpenDBRequest called when a database is opened.
  * @class
+ * @throws {TypeError}
  */
 function IDBOpenDBRequest () {
     throw new TypeError('Illegal constructor');
@@ -141,12 +150,14 @@ function IDBOpenDBRequest () {
 // @ts-expect-error It's ok
 IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
     enumerable: false,
     writable: true,
     configurable: true,
     value: IDBOpenDBRequest
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 const IDBOpenDBRequestAlias = IDBOpenDBRequest;
 /**
@@ -175,6 +186,7 @@ IDBOpenDBRequest.__createInstance = function () {
     return new IDBOpenDBRequest();
 };
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineOuterInterface(IDBOpenDBRequest.prototype, openListeners);
 
 IDBOpenDBRequest.prototype[Symbol.toStringTag] = 'IDBOpenDBRequestPrototype';
@@ -182,5 +194,6 @@ IDBOpenDBRequest.prototype[Symbol.toStringTag] = 'IDBOpenDBRequestPrototype';
 Object.defineProperty(IDBOpenDBRequest, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 export {IDBRequest, IDBOpenDBRequest};

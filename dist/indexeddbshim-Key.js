@@ -186,6 +186,7 @@
    */
 
   /** @type {Config} */
+  // eslint-disable-next-line unicorn/no-top-level-side-effects -- Would be good
   [
   // Boolean for verbose reporting
   'DEBUG',
@@ -203,7 +204,7 @@
   //    calls required for full WebIDL compliance will be used. Probably
   //    only needed for testing or environments where full introspection
   //    on class relationships is required; see
-  //    http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+  //    https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
   'fullIDLSupport',
   // Effectively defaults to false (ignored unless `true`)
 
@@ -454,7 +455,7 @@
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
-      this._code = name in codes ? codes[(/** @type {Code} */name)] : legacyCodes[(/** @type {LegacyCode} */name)] || 0;
+      this._code = Object.hasOwn(codes, name) ? codes[(/** @type {Code} */name)] : legacyCodes[(/** @type {LegacyCode} */name)] || 0;
       this._name = name || 'Error';
       // We avoid `String()` in this next line as it converts Symbols
       this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion -- Don't convert symbols
@@ -590,13 +591,14 @@
    * @returns {void}
    */
   function logError(name, message, error) {
-    if (CFG.DEBUG) {
-      var msg = error && _typeof(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
-      var method = typeof console.error === 'function' ? 'error' : 'log';
-      console[method](name + ': ' + message + '. ' + (msg || ''));
-      if (console.trace) {
-        console.trace();
-      }
+    if (!CFG.DEBUG) {
+      return;
+    }
+    var msg = error && _typeof(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
+    var method = typeof console.error === 'function' ? 'error' : 'log';
+    console[method](name + ': ' + message + '. ' + (msg || ''));
+    if (console.trace) {
+      console.trace();
     }
   }
 
@@ -659,9 +661,9 @@
    * @returns {string}
    */
   function escapeUnmatchedSurrogates(arg) {
-    // http://stackoverflow.com/a/6701665/271577
+    // https://stackoverflow.com/a/6701665/271577
     return arg.replaceAll(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
-      // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
+      // Could add a corresponding surrogate for compatibility with `node-sqlite3`: https://bugs.python.org/issue12569 and https://stackoverflow.com/a/6701665/271577
       //   but Chrome having problems
       if (unmatchedHighSurrogate) {
         return '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0');
@@ -831,10 +833,14 @@
     binary: 500,
     array: 600
   };
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   var keyTypes = /** @type {(KeyType|"invalid")[]} */Object.keys(keyTypeToEncodedChar);
   keyTypes.forEach(function (k) {
     keyTypeToEncodedChar[k] = String.fromCodePoint(/** @type {number} */keyTypeToEncodedChar[k]);
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
   var encodedCharToKeyType = keyTypes.reduce(function (o, k) {
     o[keyTypeToEncodedChar[k]] = k;
     return o;
@@ -920,13 +926,12 @@
             if (key > -1) {
               sign = signValues.indexOf('smallNegative');
               exponent = padBase32Exponent(significantDigitIndex);
-              mantissa = flipBase32(padBase32Mantissa(key32));
               // Non-negative exponent case:
             } else {
               sign = signValues.indexOf('bigNegative');
               exponent = flipBase32(padBase32Exponent(decimalIndex !== -1 ? decimalIndex : key32.length));
-              mantissa = flipBase32(padBase32Mantissa(key32));
             }
+            mantissa = flipBase32(padBase32Mantissa(key32));
             // Non-negative cases:
             // Negative exponent case:
           } else if (key < 1) {
@@ -960,9 +965,9 @@
         var mantissa = key.slice(5, 16);
         switch (signValues[sign]) {
           case 'negativeInfinity':
-            return Number.NEGATIVE_INFINITY;
+            return -Infinity;
           case 'positiveInfinity':
-            return Number.POSITIVE_INFINITY;
+            return Infinity;
           case 'bigPositive':
             return pow32(mantissa, exponent);
           case 'smallPositive':
@@ -1095,9 +1100,7 @@
       decode: function decode(key) {
         // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
         var k = key.slice(2);
-        var arr = k.length ? k.split(',').map(function (s) {
-          return Number.parseInt(s);
-        }) : [];
+        var arr = k.length ? k.split(',').map(Number) : [];
         var buffer = new ArrayBuffer(arr.length);
         var uint8 = new Uint8Array(buffer);
         uint8.set(arr);
@@ -1186,7 +1189,7 @@
    */
   function roundToPrecision(num) {
     var precision = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 16;
-    return Number.parseFloat(num.toPrecision(precision));
+    return Number(num.toPrecision(precision));
   }
 
   /**
@@ -1254,7 +1257,7 @@
    */
   function getCopyBytesHeldByBufferSource(O) {
     var offset = 0;
-    var length = 0;
+    var length;
     if (ArrayBuffer.isView(O)) {
       // Has [[ViewedArrayBuffer]] internal slot
       var arrayBuffer = O.buffer;
@@ -1287,7 +1290,7 @@
   * @returns {KeyValueObject}
   */
   function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
-    seen = seen || [];
+    seen || (seen = []);
     if (seen.includes(input)) {
       return {
         type: 'array',
@@ -1691,7 +1694,6 @@
               continue;
             }
             if (key.length === 1) {
-              // eslint-disable-next-line sonarjs/updated-loop-counter -- Convenient
               key = key[0];
             } else {
               var nested = findMultiEntryMatches(key, range);
@@ -1874,8 +1876,13 @@
    * @returns {void}
    */
   function setCurrentNumber(tx, store, num, successCb, failCb) {
-    num = num === MAX_ALLOWED_CURRENT_NUMBER ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
-    : num + 1;
+    num = 1 + (num === MAX_ALLOWED_CURRENT_NUMBER
+    // Since incrementing by one will have no effect in JavaScript on this
+    // unsafe max, we represent the max as a number incremented by two.
+    // The getting of the current number is never returned to the user and
+    // is only used in safe comparisons, so it is safe for us to represent
+    // it in this manner
+    ? num + 1 : num);
     return assignCurrentNumber(tx, store, num, successCb, failCb);
   }
 

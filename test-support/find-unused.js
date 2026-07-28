@@ -7,7 +7,8 @@ import goodBad from './node-good-bad-files.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let alreadyListedFiles = [];
-Object.entries(goodBad).forEach(([, arr]) => {
+Object.values(goodBad).forEach((arr) => {
+    // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- CLI file only
     alreadyListedFiles = alreadyListedFiles.concat(arr);
 });
 const files = (await readdir(join(__dirname, 'js'))).filter((file) => {

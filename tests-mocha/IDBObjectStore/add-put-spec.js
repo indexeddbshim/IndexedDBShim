@@ -359,8 +359,8 @@
                     saveKey(0); // zero
                     saveKey(-99999); // negative number
                     saveKey(3.12345); // float
-                    saveKey(Number.POSITIVE_INFINITY); // infinity
-                    saveKey(Number.NEGATIVE_INFINITY); // negative infinity
+                    saveKey(Infinity); // infinity
+                    saveKey(-Infinity); // negative infinity
                     saveKey(new Date(2000, 1, 2)); // Date
 
                     if (env.isShimmed || !env.browser.isIE) {
@@ -418,7 +418,7 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
-                    tryToSaveKey(Number.NaN); // NaN
+                    tryToSaveKey(NaN); // NaN
                     tryToSaveKey(true); // boolean
                     tryToSaveKey(false); // boolean
                     tryToSaveKey({}); // empty object
@@ -485,9 +485,9 @@
                     saveData(0); // zero
                     saveData(-99999); // negative number
                     saveData(3.12345); // float
-                    saveData(Number.POSITIVE_INFINITY); // infinity
-                    saveData(Number.NEGATIVE_INFINITY); // negative infinity
-                    saveData(Number.NaN); // NaN
+                    saveData(Infinity); // infinity
+                    saveData(-Infinity); // negative infinity
+                    saveData(NaN); // NaN
                     saveData({}); // empty object
                     saveData({foo: 'bar'}); // object
                     saveData(new Date(2000, 1, 2)); // Date
@@ -499,7 +499,7 @@
                     saveData([new Date(2005, 6, 7)]); // array of Dates
                     saveData([1, undefined, 2]); // array with undefined
                     saveData([1, null, 2]); // array with null
-                    saveData([1, Number.NaN, 3]); // array with NaN
+                    saveData([1, NaN, 3]); // array with NaN
                     saveData([true, false]); // array of booleans
                     saveData([{foo: 'bar'}, {}]); // array of objects
 
@@ -605,20 +605,22 @@
                     });
 
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                        if (tx1.oncomplete.calledThrice) {
-                            expect(save1.result).to.equal(1);
-                            expect(save2.result).to.equal(2);
-                            expect(save3.result).to.equal(3);
-
-                            expect(allData).to.have.same.deep.members([
-                                {primaryKey: 1, key: 1, value: {foo: 'one'}},
-                                {primaryKey: 2, key: 2, value: {foo: 'two'}},
-                                {primaryKey: 3, key: 3, value: {foo: 'three'}}
-                            ]);
-
-                            db.close();
-                            done();
+                        if (!tx1.oncomplete.calledThrice) {
+                            return;
                         }
+
+                        expect(save1.result).to.equal(1);
+                        expect(save2.result).to.equal(2);
+                        expect(save3.result).to.equal(3);
+
+                        expect(allData).to.have.same.deep.members([
+                            {primaryKey: 1, key: 1, value: {foo: 'one'}},
+                            {primaryKey: 2, key: 2, value: {foo: 'two'}},
+                            {primaryKey: 3, key: 3, value: {foo: 'three'}}
+                        ]);
+
+                        db.close();
+                        done();
                     });
                 });
             });
@@ -654,25 +656,27 @@
                     });
 
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                        if (tx1.oncomplete.calledThrice) {
-                            if (save1.result === save2.result && save2.result === save3.result) {
-                                done(new Error('The same primary key was generated for multiple records'));
-                                return;
-                            }
-
-                            expect(save1.result).to.equal(1);
-                            expect(save2.result).to.equal(2);
-                            expect(save3.result).to.equal(3);
-
-                            expect(allData).to.have.same.deep.members([
-                                {primaryKey: 1, key: 1, value: {foo: 'one'}},
-                                {primaryKey: 2, key: 2, value: {foo: 'two'}},
-                                {primaryKey: 3, key: 3, value: {foo: 'three'}}
-                            ]);
-
-                            db.close();
-                            done();
+                        if (!tx1.oncomplete.calledThrice) {
+                            return;
                         }
+
+                        if (save1.result === save2.result && save2.result === save3.result) {
+                            done(new Error('The same primary key was generated for multiple records'));
+                            return;
+                        }
+
+                        expect(save1.result).to.equal(1);
+                        expect(save2.result).to.equal(2);
+                        expect(save3.result).to.equal(3);
+
+                        expect(allData).to.have.same.deep.members([
+                            {primaryKey: 1, key: 1, value: {foo: 'one'}},
+                            {primaryKey: 2, key: 2, value: {foo: 'two'}},
+                            {primaryKey: 3, key: 3, value: {foo: 'three'}}
+                        ]);
+
+                        db.close();
+                        done();
                     });
                 });
             });
@@ -825,8 +829,8 @@
                     saveKey(0); // zero
                     saveKey(-99999); // negative number
                     saveKey(3.12345); // float
-                    saveKey(Number.POSITIVE_INFINITY); // infinity
-                    saveKey(Number.NEGATIVE_INFINITY); // negative infinity
+                    saveKey(Infinity); // infinity
+                    saveKey(-Infinity); // negative infinity
                     saveKey(new Date(2000, 1, 2)); // Date
 
                     if (env.isShimmed || !env.browser.isIE) {
@@ -884,7 +888,7 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
-                    tryToSaveKey(Number.NaN); // NaN
+                    tryToSaveKey(NaN); // NaN
                     tryToSaveKey(true); // boolean
                     tryToSaveKey(false); // boolean
                     tryToSaveKey({}); // empty object
@@ -1021,9 +1025,9 @@
                     tryToSaveData(0); // zero
                     tryToSaveData(-99999); // negative number
                     tryToSaveData(3.12345); // float
-                    tryToSaveData(Number.POSITIVE_INFINITY); // infinity
-                    tryToSaveData(Number.NEGATIVE_INFINITY); // negative infinity
-                    tryToSaveData(Number.NaN); // NaN
+                    tryToSaveData(Infinity); // infinity
+                    tryToSaveData(-Infinity); // negative infinity
+                    tryToSaveData(NaN); // NaN
 
                     if (env.isShimmed || !env.browser.isIE) {
                         tryToSaveData(null); // null
@@ -1103,20 +1107,22 @@
                     });
 
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                        if (tx1.oncomplete.calledThrice) {
-                            expect(save1.result).to.equal('one');
-                            expect(save2.result).to.equal('two');
-                            expect(save3.result).to.equal('three');
-
-                            expect(allData).to.have.same.deep.members([
-                                {primaryKey: 'one', key: 'one', value: {id: 'one'}},
-                                {primaryKey: 'two', key: 'two', value: {id: 'two'}},
-                                {primaryKey: 'three', key: 'three', value: {id: 'three'}}
-                            ]);
-
-                            db.close();
-                            done();
+                        if (!tx1.oncomplete.calledThrice) {
+                            return;
                         }
+
+                        expect(save1.result).to.equal('one');
+                        expect(save2.result).to.equal('two');
+                        expect(save3.result).to.equal('three');
+
+                        expect(allData).to.have.same.deep.members([
+                            {primaryKey: 'one', key: 'one', value: {id: 'one'}},
+                            {primaryKey: 'two', key: 'two', value: {id: 'two'}},
+                            {primaryKey: 'three', key: 'three', value: {id: 'three'}}
+                        ]);
+
+                        db.close();
+                        done();
                     });
                 });
             });
@@ -1151,25 +1157,27 @@
                     });
 
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                        if (tx1.oncomplete.calledThrice) {
-                            if (save1.result === save2.result && save2.result === save3.result) {
-                                done(new Error('The same primary key was generated for multiple records'));
-                                return;
-                            }
-
-                            expect(save1.result).to.equal(1);
-                            expect(save2.result).to.equal(2);
-                            expect(save3.result).to.equal(3);
-
-                            expect(allData).to.have.same.deep.members([
-                                {primaryKey: 1, key: 1, value: {id: 1, foo: 'one'}},
-                                {primaryKey: 2, key: 2, value: {id: 2, foo: 'two'}},
-                                {primaryKey: 3, key: 3, value: {id: 3, foo: 'three'}}
-                            ]);
-
-                            db.close();
-                            done();
+                        if (!tx1.oncomplete.calledThrice) {
+                            return;
                         }
+
+                        if (save1.result === save2.result && save2.result === save3.result) {
+                            done(new Error('The same primary key was generated for multiple records'));
+                            return;
+                        }
+
+                        expect(save1.result).to.equal(1);
+                        expect(save2.result).to.equal(2);
+                        expect(save3.result).to.equal(3);
+
+                        expect(allData).to.have.same.deep.members([
+                            {primaryKey: 1, key: 1, value: {id: 1, foo: 'one'}},
+                            {primaryKey: 2, key: 2, value: {id: 2, foo: 'two'}},
+                            {primaryKey: 3, key: 3, value: {id: 3, foo: 'three'}}
+                        ]);
+
+                        db.close();
+                        done();
                     });
                 });
             });
@@ -1284,20 +1292,22 @@
                     });
 
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                        if (tx1.oncomplete.calledThrice) {
-                            expect(save1.result).to.equal('John');
-                            expect(save2.result).to.equal('Sarah');
-                            expect(save3.result).to.equal('Bob');
-
-                            expect(allData).to.have.same.deep.members([
-                                {primaryKey: 'John', key: 'John', value: {name: {first: 'John'}}},
-                                {primaryKey: 'Sarah', key: 'Sarah', value: {name: {first: 'Sarah'}}},
-                                {primaryKey: 'Bob', key: 'Bob', value: {name: {first: 'Bob'}}}
-                            ]);
-
-                            db.close();
-                            done();
+                        if (!tx1.oncomplete.calledThrice) {
+                            return;
                         }
+
+                        expect(save1.result).to.equal('John');
+                        expect(save2.result).to.equal('Sarah');
+                        expect(save3.result).to.equal('Bob');
+
+                        expect(allData).to.have.same.deep.members([
+                            {primaryKey: 'John', key: 'John', value: {name: {first: 'John'}}},
+                            {primaryKey: 'Sarah', key: 'Sarah', value: {name: {first: 'Sarah'}}},
+                            {primaryKey: 'Bob', key: 'Bob', value: {name: {first: 'Bob'}}}
+                        ]);
+
+                        db.close();
+                        done();
                     });
                 });
             });
@@ -1332,25 +1342,27 @@
                     });
 
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                        if (tx1.oncomplete.calledThrice) {
-                            if (save1.result === save2.result && save2.result === save3.result) {
-                                done(new Error('The same primary key was generated for multiple records'));
-                                return;
-                            }
-
-                            expect(save1.result).to.equal(1);
-                            expect(save2.result).to.equal(2);
-                            expect(save3.result).to.equal(3);
-
-                            expect(allData).to.have.same.deep.members([
-                                {primaryKey: 1, key: 1, value: {name: {first: 1}, foo: 'one'}},
-                                {primaryKey: 2, key: 2, value: {name: {first: 2}, foo: 'two'}},
-                                {primaryKey: 3, key: 3, value: {name: {first: 3}, foo: 'three'}}
-                            ]);
-
-                            db.close();
-                            done();
+                        if (!tx1.oncomplete.calledThrice) {
+                            return;
                         }
+
+                        if (save1.result === save2.result && save2.result === save3.result) {
+                            done(new Error('The same primary key was generated for multiple records'));
+                            return;
+                        }
+
+                        expect(save1.result).to.equal(1);
+                        expect(save2.result).to.equal(2);
+                        expect(save3.result).to.equal(3);
+
+                        expect(allData).to.have.same.deep.members([
+                            {primaryKey: 1, key: 1, value: {name: {first: 1}, foo: 'one'}},
+                            {primaryKey: 2, key: 2, value: {name: {first: 2}, foo: 'two'}},
+                            {primaryKey: 3, key: 3, value: {name: {first: 3}, foo: 'three'}}
+                        ]);
+
+                        db.close();
+                        done();
                     });
                 });
             });
@@ -1496,8 +1508,8 @@
                     saveKey(0); // zero
                     saveKey(-99999); // negative number
                     saveKey(3.12345); // float
-                    saveKey(Number.POSITIVE_INFINITY); // infinity
-                    saveKey(Number.NEGATIVE_INFINITY); // negative infinity
+                    saveKey(Infinity); // infinity
+                    saveKey(-Infinity); // negative infinity
                     saveKey(new Date(2000, 1, 2)); // Date
                     saveKey([]); // empty array
                     saveKey(['a', '', 'b']); // array of strings
@@ -1557,7 +1569,7 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
-                    tryToSaveKey(Number.NaN); // NaN
+                    tryToSaveKey(NaN); // NaN
                     tryToSaveKey(true); // boolean
                     tryToSaveKey(false); // boolean
                     tryToSaveKey({}); // empty object
@@ -1652,20 +1664,22 @@
                     });
 
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                        if (tx1.oncomplete.calledThrice) {
-                            expect(save1.result).to.deep.equal([1, 'John']);
-                            expect(save2.result).to.deep.equal([2, 'Sarah']);
-                            expect(save3.result).to.deep.equal([3, 'Bob']);
-
-                            expect(allData).to.have.same.deep.members([
-                                {primaryKey: [1, 'John'], key: [1, 'John'], value: {id: 1, name: 'John'}},
-                                {primaryKey: [2, 'Sarah'], key: [2, 'Sarah'], value: {id: 2, name: 'Sarah'}},
-                                {primaryKey: [3, 'Bob'], key: [3, 'Bob'], value: {id: 3, name: 'Bob'}}
-                            ]);
-
-                            db.close();
-                            done();
+                        if (!tx1.oncomplete.calledThrice) {
+                            return;
                         }
+
+                        expect(save1.result).to.deep.equal([1, 'John']);
+                        expect(save2.result).to.deep.equal([2, 'Sarah']);
+                        expect(save3.result).to.deep.equal([3, 'Bob']);
+
+                        expect(allData).to.have.same.deep.members([
+                            {primaryKey: [1, 'John'], key: [1, 'John'], value: {id: 1, name: 'John'}},
+                            {primaryKey: [2, 'Sarah'], key: [2, 'Sarah'], value: {id: 2, name: 'Sarah'}},
+                            {primaryKey: [3, 'Bob'], key: [3, 'Bob'], value: {id: 3, name: 'Bob'}}
+                        ]);
+
+                        db.close();
+                        done();
                     });
                 });
             });
@@ -1701,20 +1715,22 @@
                     });
 
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                        if (tx1.oncomplete.calledThrice) {
-                            expect(save1.result).to.deep.equal([1, 'b', 3]);
-                            expect(save2.result).to.deep.equal([2, 'b', 3]);
-                            expect(save3.result).to.deep.equal([3, 'b', 3]);
-
-                            expect(allData).to.have.same.deep.members([
-                                {primaryKey: [1, 'b', 3], key: [1, 'b', 3], value: {foo: 'one'}},
-                                {primaryKey: [2, 'b', 3], key: [2, 'b', 3], value: {foo: 'two'}},
-                                {primaryKey: [3, 'b', 3], key: [3, 'b', 3], value: {foo: 'three'}}
-                            ]);
-
-                            db.close();
-                            done();
+                        if (!tx1.oncomplete.calledThrice) {
+                            return;
                         }
+
+                        expect(save1.result).to.deep.equal([1, 'b', 3]);
+                        expect(save2.result).to.deep.equal([2, 'b', 3]);
+                        expect(save3.result).to.deep.equal([3, 'b', 3]);
+
+                        expect(allData).to.have.same.deep.members([
+                            {primaryKey: [1, 'b', 3], key: [1, 'b', 3], value: {foo: 'one'}},
+                            {primaryKey: [2, 'b', 3], key: [2, 'b', 3], value: {foo: 'two'}},
+                            {primaryKey: [3, 'b', 3], key: [3, 'b', 3], value: {foo: 'three'}}
+                        ]);
+
+                        db.close();
+                        done();
                     });
                 });
             });

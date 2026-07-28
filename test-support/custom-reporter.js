@@ -113,9 +113,10 @@
             const test = tests[i];
             const tds = [...tr.querySelectorAll('td')].map((td) => td.textContent);
             const [statusText] = tds; // 2nd is testName
+            // eslint-disable-next-line prefer-const -- Convenient
             let [,, assertions, messageWithAnyStack] = tds;
             if (messageWithAnyStack === undefined) {
-                messageWithAnyStack = assertions;
+                // messageWithAnyStack = assertions;
                 assertions = undefined;
             }
             write(statusText, test.status);

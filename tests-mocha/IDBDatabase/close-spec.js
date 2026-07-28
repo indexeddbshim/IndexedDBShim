@@ -9,7 +9,7 @@ describe('IDBDatabase.close', function () {
                 return;
             }
             const result = db.close();
-            expect(result).equal(undefined);
+            expect(result).to.be.undefined;
             done();
         });
     });

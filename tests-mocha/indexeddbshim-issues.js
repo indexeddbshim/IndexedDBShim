@@ -1,4 +1,5 @@
 /* eslint-disable n/no-sync -- Ok for testing  */
+/* eslint-disable sonarjs/no-mixed-completion-style -- Complex otherwise */
 import fs from 'fs';
 import * as chai from 'chai';
 
@@ -64,7 +65,7 @@ describe('database config', function () {
             delReq.onsuccess = () => {
                 fs.readdir('foo', (err, files) => {
                     expect(err, 'Should be no read directory error').to.be.null;
-                    expect(files.length, 'Should be no files remaining').to.equal(0);
+                    expect(files, 'Should be no files remaining').to.have.lengthOf(0);
                     fs.rmdir('foo', (err) => {
                         expect(err, 'Should be no error removing test directory').to.be.null;
                         done();

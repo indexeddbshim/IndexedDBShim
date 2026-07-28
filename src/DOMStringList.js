@@ -70,7 +70,9 @@ DOMStringList.prototype = {
         if (!arguments.length) {
             throw new TypeError('DOMStringList.item must be supplied a value');
         }
-        if (key < 0 || key >= this.length || !Number.isInteger(key)) {
+        if (key < 0 || key >= this.length ||
+            // eslint-disable-next-line unicorn/prefer-number-is-safe-integer -- We want all
+            !Number.isInteger(key)) {
             return null;
         }
         return this._items[key];
@@ -101,8 +103,9 @@ DOMStringList.prototype = {
      * @returns {string[]}
      */
     sortList () {
-        // http://w3c.github.io/IndexedDB/#sorted-list
+        // https://w3c.github.io/IndexedDB/#sorted-list
         // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
+        // eslint-disable-next-line unicorn/require-array-sort-compare -- IndexedDB requires code unit comparison (default behavior)
         this._items.sort();
         this.addIndexes();
         return this._items;
@@ -154,7 +157,7 @@ DOMStringList.prototype = {
         this._items.splice(...args);
         this._length = this._items.length;
         for (const i in this) {
-            if (i === String(Number.parseInt(i))) {
+            if (i === String(Math.trunc(Number(i)))) {
                 delete this[i];
             }
         }
@@ -174,6 +177,7 @@ DOMStringList.prototype = {
     }
 };
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 /**
  * @typedef {any} AnyValue
  */
@@ -188,6 +192,7 @@ Object.defineProperty(DOMStringList, Symbol.hasInstance, {
 });
 const DOMStringListAlias = DOMStringList;
 Object.defineProperty(DOMStringList, '__createInstance', {
+    /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
     /**
      * @returns {DOMStringListFull}
      */

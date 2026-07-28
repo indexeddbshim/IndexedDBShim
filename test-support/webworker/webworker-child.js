@@ -1,4 +1,5 @@
 /* eslint-disable n/no-sync -- Convenient */
+/* eslint-disable unicorn/no-top-level-assignment-in-function -- Temporary */
 // Launcher script for WebWorkers.
 //
 // Sets up context and runs a worker script. This is not intended to be
@@ -16,7 +17,7 @@ import path from 'path';
 import vm from 'vm';
 import util from 'util';
 import http from 'http';
-import WebSocket from 'ws';
+import {WebSocket} from 'ws';
 import xmlHttpRequest from 'local-xmlhttprequest';
 import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
 import fetch from 'isomorphic-fetch';
@@ -70,7 +71,7 @@ const workerConfig = {
 // This implements the Runtime Script Errors section fo the Web Workers API
 // specification at
 //
-//  http://www.whatwg.org/specs/web-workers/current-work/#runtime-script-errors
+//  https://www.whatwg.org/specs/web-workers/current-work/#runtime-script-errors
 //
 // Todo: There are all sorts of pieces of the error handling spec that are not
 //      being done correctly. Pick a clause, any clause.
@@ -110,6 +111,7 @@ const workerConfig = {
 switch (scriptLoc.protocol) {
 case 'file':
     if ([/interfaces\.any\.js$/v, /interfaces\.any\.worker\.js$/v].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
+        // eslint-disable-next-line unicorn/prefer-https -- Local
         workerURL = workerURL.replace(/.*web-platform-tests/v, 'http://web-platform.test:8000');
         prom = new Promise((resolve) => { // eslint-disable-line promise/avoid-new -- No API
             http.get(workerURL, (res) => {
@@ -266,16 +268,18 @@ prom.then((scriptSource) => {
     };
     workerCtx.eventHandlers = {message: []};
     workerCtx.addEventListener = function (event, handler) {
-        if (event in workerCtx.eventHandlers) {
+        if (Object.hasOwn(workerCtx.eventHandlers, event)) {
             workerCtx.eventHandlers[event].push(handler);
         }
     };
     workerCtx.removeEventListener = function (event, handler) {
-        if (event in workerCtx.eventHandlers) {
-            const handlerPos = workerCtx.eventHandlers[event].indexOf(handler);
-            if (handlerPos !== -1) {
-                workerCtx.eventHandlers[event].splice(handlerPos, 1);
-            }
+        if (!Object.hasOwn(workerCtx.eventHandlers, event)) {
+            return;
+        }
+
+        const handlerPos = workerCtx.eventHandlers[event].indexOf(handler);
+        if (handlerPos !== -1) {
+            workerCtx.eventHandlers[event].splice(handlerPos, 1);
         }
     };
     workerCtx.importScripts = function (...args) {
@@ -361,6 +365,7 @@ prom.then((scriptSource) => {
     workerCtx.Blob = Blob;
     workerCtx.fetch = function (...args) {
         if (args[0].startsWith('/')) {
+            // eslint-disable-next-line unicorn/prefer-https -- Local
             args[0] = 'http://web-platform.test:8000' + args[0];
         }
         return fetch(...args);

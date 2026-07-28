@@ -38,7 +38,7 @@ describe('IDBFactory.open', function () {
                 open.onerror = open.onblocked = done;
 
                 // The transaction property is null initially
-                expect(open.transaction).equal(null);
+                expect(open.transaction).to.be.null;
 
                 open.onupgradeneeded = function () {
                     // The transaction property is an IDBTransaction during the onupgradeneeded event
@@ -48,7 +48,7 @@ describe('IDBFactory.open', function () {
 
                 open.onsuccess = function () {
                     // The transaction property is null again in the onsuccess event
-                    expect(open.transaction).equal(null);
+                    expect(open.transaction).to.be.null;
                     expect(tx).to.be.an.instanceOf(IDBTransaction);
 
                     open.result.close();
@@ -452,9 +452,9 @@ describe('IDBFactory.open', function () {
             tryToOpen('foobar');
             tryToOpen(0);
             tryToOpen(-3);
-            tryToOpen(Number.POSITIVE_INFINITY);
-            tryToOpen(Number.NEGATIVE_INFINITY);
-            tryToOpen(Number.NaN);
+            tryToOpen(Infinity);
+            tryToOpen(-Infinity);
+            tryToOpen(NaN);
 
             if (env.isShimmed || !env.browser.isFirefox) {
                 tryToOpen(/^regex$/v);

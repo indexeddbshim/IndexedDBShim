@@ -165,11 +165,11 @@ describe('IDBIndex.openCursor', function () {
             indexCursor.onerror = sinon.spy();
 
             storeCursor.onsuccess = sinon.spy(function () {
-                expect(storeCursor.result).equal(null);
+                expect(storeCursor.result).to.be.null;
             });
 
             indexCursor.onsuccess = sinon.spy(function () {
-                expect(indexCursor.result).equal(null);
+                expect(indexCursor.result).to.be.null;
             });
 
             tx.oncomplete = function () {
@@ -259,27 +259,31 @@ describe('IDBIndex.openCursor', function () {
             let storeCounter = 0, indexCounter = 0;
 
             storeCursor.onsuccess = sinon.spy(function () {
-                if (storeCursor.result) {
-                    storeCounter++;
-                    expect(storeCursor.result.source).to.equal(store);
-                    expect(storeCursor.result.direction).to.equal('next');
-                    expect(storeCursor.result.primaryKey).to.equal(storeCounter);
-                    expect(storeCursor.result.key).to.equal(storeCounter);
-                    expect(storeCursor.result.value).to.deep.equal({id: storeCounter});
-                    storeCursor.result.continue();
+                if (!storeCursor.result) {
+                    return;
                 }
+
+                storeCounter++;
+                expect(storeCursor.result.source).to.equal(store);
+                expect(storeCursor.result.direction).to.equal('next');
+                expect(storeCursor.result.primaryKey).to.equal(storeCounter);
+                expect(storeCursor.result.key).to.equal(storeCounter);
+                expect(storeCursor.result.value).to.deep.equal({id: storeCounter});
+                storeCursor.result.continue();
             });
 
             indexCursor.onsuccess = sinon.spy(function () {
-                if (indexCursor.result) {
-                    indexCounter++;
-                    expect(indexCursor.result.source).to.equal(index);
-                    expect(indexCursor.result.direction).to.equal('next');
-                    expect(indexCursor.result.primaryKey).to.equal(indexCounter);
-                    expect(indexCursor.result.key).to.equal(indexCounter);
-                    expect(indexCursor.result.value).to.deep.equal({id: indexCounter});
-                    indexCursor.result.continue();
+                if (!indexCursor.result) {
+                    return;
                 }
+
+                indexCounter++;
+                expect(indexCursor.result.source).to.equal(index);
+                expect(indexCursor.result.direction).to.equal('next');
+                expect(indexCursor.result.primaryKey).to.equal(indexCounter);
+                expect(indexCursor.result.key).to.equal(indexCounter);
+                expect(indexCursor.result.value).to.deep.equal({id: indexCounter});
+                indexCursor.result.continue();
             });
 
             // Added AFTER opening the cursor
@@ -320,17 +324,21 @@ describe('IDBIndex.openCursor', function () {
             let counter1 = 1, counter2 = 5;
 
             cursor1.onsuccess = sinon.spy(function () {
-                if (cursor1.result) {
-                    expect(cursor1.result.key).to.equal(counter1++);
-                    cursor1.result.continue();
+                if (!cursor1.result) {
+                    return;
                 }
+
+                expect(cursor1.result.key).to.equal(counter1++);
+                cursor1.result.continue();
             });
 
             cursor2.onsuccess = sinon.spy(function () {
-                if (cursor2.result) {
-                    expect(cursor2.result.key).to.equal(counter2--);
-                    cursor2.result.continue();
+                if (!cursor2.result) {
+                    return;
                 }
+
+                expect(cursor2.result.key).to.equal(counter2--);
+                cursor2.result.continue();
             });
 
             tx.oncomplete = function () {
@@ -368,27 +376,31 @@ describe('IDBIndex.openCursor', function () {
             let storeCounter = 0, indexCounter = 0;
 
             storeCursor.onsuccess = sinon.spy(function () {
-                if (storeCursor.result) {
-                    storeCounter++;
-                    expect(storeCursor.result.source).to.equal(store);
-                    expect(storeCursor.result.direction).to.equal('next');
-                    expect(storeCursor.result.primaryKey).to.equal(storeCounter);
-                    expect(storeCursor.result.key).to.equal(storeCounter);
-                    expect(storeCursor.result.value).to.deep.equal({id: storeCounter});
-                    storeCursor.result.continue();
+                if (!storeCursor.result) {
+                    return;
                 }
+
+                storeCounter++;
+                expect(storeCursor.result.source).to.equal(store);
+                expect(storeCursor.result.direction).to.equal('next');
+                expect(storeCursor.result.primaryKey).to.equal(storeCounter);
+                expect(storeCursor.result.key).to.equal(storeCounter);
+                expect(storeCursor.result.value).to.deep.equal({id: storeCounter});
+                storeCursor.result.continue();
             });
 
             indexCursor.onsuccess = sinon.spy(function () {
-                if (indexCursor.result) {
-                    indexCounter++;
-                    expect(indexCursor.result.source).to.equal(index);
-                    expect(indexCursor.result.direction).to.equal('next');
-                    expect(indexCursor.result.primaryKey).to.equal(indexCounter);
-                    expect(indexCursor.result.key).to.equal(indexCounter);
-                    expect(indexCursor.result.value).to.deep.equal({id: indexCounter});
-                    indexCursor.result.continue();
+                if (!indexCursor.result) {
+                    return;
                 }
+
+                indexCounter++;
+                expect(indexCursor.result.source).to.equal(index);
+                expect(indexCursor.result.direction).to.equal('next');
+                expect(indexCursor.result.primaryKey).to.equal(indexCounter);
+                expect(indexCursor.result.key).to.equal(indexCounter);
+                expect(indexCursor.result.value).to.deep.equal({id: indexCounter});
+                indexCursor.result.continue();
             });
 
             tx.oncomplete = function () {
@@ -450,17 +462,21 @@ describe('IDBIndex.openCursor', function () {
                 indexCursor = index.openCursor();
 
                 storeCursor.onsuccess = sinon.spy(function () {
-                    if (storeCursor.result) {
-                        expect(storeCursor.result.key).to.equal(++storeCounter);
-                        storeCursor.result.continue();
+                    if (!storeCursor.result) {
+                        return;
                     }
+
+                    expect(storeCursor.result.key).to.equal(++storeCounter);
+                    storeCursor.result.continue();
                 });
 
                 indexCursor.onsuccess = sinon.spy(function () {
-                    if (indexCursor.result) {
-                        expect(indexCursor.result.key).to.equal(++indexCounter);
-                        indexCursor.result.continue();
+                    if (!indexCursor.result) {
+                        return;
                     }
+
+                    expect(indexCursor.result.key).to.equal(++indexCounter);
+                    indexCursor.result.continue();
                 });
 
                 tx.oncomplete = function () {
@@ -491,8 +507,8 @@ describe('IDBIndex.openCursor', function () {
             getKey(0); // zero
             getKey(-99999); // negative number
             getKey(3.12345); // float
-            getKey(Number.POSITIVE_INFINITY); // infinity
-            getKey(Number.NEGATIVE_INFINITY); // negative infinity
+            getKey(Infinity); // infinity
+            getKey(-Infinity); // negative infinity
             getKey(new Date(2000, 1, 2)); // Date
             getKey(null); // null
 
@@ -543,7 +559,7 @@ describe('IDBIndex.openCursor', function () {
             const store = tx.objectStore('out-of-line-generated');
             const index = store.index('inline-index');
 
-            tryToGet(Number.NaN); // NaN
+            tryToGet(NaN); // NaN
             tryToGet(true); // boolean
             tryToGet(false); // boolean
             tryToGet({}); // empty object
@@ -628,7 +644,16 @@ describe('IDBIndex.openCursor', function () {
                             try {
                                 expect(dt[prop]).to.deep.equal(expected[i][prop]);
                             } catch (e) {
-                                throw new Error('The ' + prop + ' of result #' + (i + 1) + ' (of ' + data.length + ') does not match.\n\nActual:' + JSON.stringify(data[i], null, 2) + '\n\nExpected:' + JSON.stringify(expected[i], null, 2));
+                                throw new Error(
+                                    'The ' + prop + ' of result #' + (i + 1) +
+                                    ' (of ' + data.length + ') does not match.\n\nActual:' +
+                                    JSON.stringify(data[i], null, 2) +
+                                    '\n\nExpected:' +
+                                    JSON.stringify(expected[i], null, 2),
+                                    {
+                                        cause: e
+                                    }
+                                );
                             }
                         });
                     });
@@ -676,7 +701,7 @@ describe('IDBIndex.openCursor', function () {
                 query(store, IDBKeyRange.upperBound(0, true), [
                     {primaryKey: -3, key: -3, value: 'three'}
                 ]);
-                query(store, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, 1, true, true), [
+                query(store, IDBKeyRange.bound(-Infinity, 1, true, true), [
                     {primaryKey: -3, key: -3, value: 'three'},
                     {primaryKey: 0.0000000000005, key: 0.0000000000005, value: 'five'}
                 ]);
@@ -684,7 +709,7 @@ describe('IDBIndex.openCursor', function () {
                 // Index queries
                 query(index, 101, []);
                 query(index, IDBKeyRange.lowerBound(1), []);
-                query(index, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY), []);
+                query(index, IDBKeyRange.bound(-Infinity, Infinity), []);
             });
         });
 
@@ -822,7 +847,7 @@ describe('IDBIndex.openCursor', function () {
                 ]);
 
                 // Index queries
-                query(index, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY), 'prev', [
+                query(index, IDBKeyRange.bound(-Infinity, Infinity), 'prev', [
                     {primaryKey: 2, key: 2, value: {name: {first: 2}}},
                     {primaryKey: 1, key: 1, value: {name: {first: 1}}},
                     {primaryKey: 0.0000000000005, key: 0.0000000000005, value: {name: {first: 0.0000000000005}}},
@@ -914,8 +939,8 @@ describe('IDBIndex.openCursor', function () {
                 store.add({id: new Date(2001, 1, 1), name: {first: new Date(2002, 2, 2), last: new Date(2003, 3, 3)}});
 
                 // Object Store queries
-                query(store, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY), []);
-                query(store, IDBKeyRange.bound([Number.NEGATIVE_INFINITY], [Number.POSITIVE_INFINITY], true, true), 'prev', [
+                query(store, IDBKeyRange.bound(-Infinity, Infinity), []);
+                query(store, IDBKeyRange.bound([-Infinity], [Infinity], true, true), 'prev', [
                     {primaryKey: [1, 2, 3], key: [1, 2, 3], value: {id: 1, name: {first: 2, last: 3}}},
                     {primaryKey: [-1, -2, -3], key: [-1, -2, -3], value: {id: -1, name: {first: -2, last: -3}}},
                     {primaryKey: [-1, -3, -2], key: [-1, -3, -2], value: {id: -1, name: {first: -3, last: -2}}}
@@ -971,8 +996,8 @@ describe('IDBIndex.openCursor', function () {
                 store.add({id: -1, name: {first: -2, last: -3}});
 
                 // Object Store queries
-                query(store, IDBKeyRange.bound([Number.NEGATIVE_INFINITY], [Number.POSITIVE_INFINITY]), []);
-                query(store, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY), [
+                query(store, IDBKeyRange.bound([-Infinity], [Infinity]), []);
+                query(store, IDBKeyRange.bound(-Infinity, Infinity), [
                     {primaryKey: -1, key: -1, value: {id: -1, name: {first: -2, last: -3}}},
                     {primaryKey: 0, key: 0, value: {id: 0}},
                     {primaryKey: 1, key: 1, value: {id: 1, name: {first: 2, last: 3}}}

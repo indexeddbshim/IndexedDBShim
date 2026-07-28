@@ -61,7 +61,7 @@ function createIframe (src, w) {
 }
 var ifr = createIframe('${loaderFile}', window);
 
-// Avoid extra scrollbars: http://stackoverflow.com/a/15494969/271577
+// Avoid extra scrollbars: https://stackoverflow.com/a/15494969/271577
 ifr.style.overflow = 'hidden';
 ifr.setAttribute('scrolling', 'no');
 
@@ -150,7 +150,11 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
                 append ? htmlPath.replace(/.html?$/v, '2$&') : htmlPath,
                 String(fileContents)
                     .replace(polyfillScript, '') // Replace any preexisting polyfill tag
-                    .replace(/<script/v, polyfillScript + '$&')
+                    .replace(
+                        /<script/v,
+                        // eslint-disable-next-line unicorn/no-unsafe-string-replacement -- Testing only
+                        polyfillScript + '$&'
+                    )
             );
         };
         htmlFiles.forEach((htmlFile) => {
@@ -177,6 +181,7 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
             const htmlPath = path.join(indexedDBDir, htmlFile);
             const urlPath = new URL(
                 htmlFile,
+                // eslint-disable-next-line unicorn/prefer-https -- Local
                 'http://web-platform.test:8000/IndexedDB/'
             );
             const resp = await fetch(urlPath.href);

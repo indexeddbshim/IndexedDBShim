@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-top-level-assignment-in-function -- Testing */
 // Todo: Integrate into mocha tests
 // Todo: Also review (note to self: `idb-manager` project) TS compatibility
 //        `setGlobalVars` with `window` (our types differ from IndexedDB)

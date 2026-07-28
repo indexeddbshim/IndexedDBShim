@@ -81,7 +81,7 @@ describe('IDBFactory.deleteDatabase', function () {
             const del = indexedDB.deleteDatabase(db.name);
 
             del.onsuccess = function () {
-                expect(del.result).equal(undefined);
+                expect(del.result).to.be.undefined;
                 done();
             };
         });
@@ -153,9 +153,9 @@ describe('IDBFactory.deleteDatabase', function () {
         deleteDatabase(util.sampleData.veryLongString);
         deleteDatabase(42);
         deleteDatabase(-0.331);
-        deleteDatabase(Number.POSITIVE_INFINITY);
-        deleteDatabase(Number.NEGATIVE_INFINITY);
-        deleteDatabase(Number.NaN);
+        deleteDatabase(Infinity);
+        deleteDatabase(-Infinity);
+        deleteDatabase(NaN);
         deleteDatabase([]);
         deleteDatabase(['a', 'b', 'c']);
         deleteDatabase(new Date());

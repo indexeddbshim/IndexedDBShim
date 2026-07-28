@@ -64,12 +64,15 @@ const keyTypeToEncodedChar = {
     binary: 500,
     array: 600
 };
+
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 const keyTypes = /** @type {(KeyType|"invalid")[]} */ (Object.keys(keyTypeToEncodedChar));
 keyTypes.forEach((k) => {
     keyTypeToEncodedChar[k] = String.fromCodePoint(
         /** @type {number} */ (keyTypeToEncodedChar[k])
     );
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 const encodedCharToKeyType = keyTypes.reduce((o, k) => {
     o[keyTypeToEncodedChar[k]] = k;
@@ -160,15 +163,14 @@ const types = {
                     if (key > -1) {
                         sign = signValues.indexOf('smallNegative');
                         exponent = padBase32Exponent(significantDigitIndex);
-                        mantissa = flipBase32(padBase32Mantissa(key32));
                     // Non-negative exponent case:
                     } else {
                         sign = signValues.indexOf('bigNegative');
                         exponent = flipBase32(padBase32Exponent(
                             (decimalIndex !== -1) ? decimalIndex : key32.length
                         ));
-                        mantissa = flipBase32(padBase32Mantissa(key32));
                     }
+                    mantissa = flipBase32(padBase32Mantissa(key32));
                 // Non-negative cases:
                 // Negative exponent case:
                 } else if (key < 1) {
@@ -208,9 +210,9 @@ const types = {
 
             switch (signValues[sign]) {
             case 'negativeInfinity':
-                return Number.NEGATIVE_INFINITY;
+                return -Infinity;
             case 'positiveInfinity':
-                return Number.POSITIVE_INFINITY;
+                return Infinity;
             case 'bigPositive':
                 return pow32(mantissa, exponent);
             case 'smallPositive':
@@ -336,7 +338,7 @@ const types = {
         decode (key) {
             // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
             const k = key.slice(2);
-            const arr = k.length ? k.split(',').map((s) => Number.parseInt(s)) : [];
+            const arr = k.length ? k.split(',').map(Number) : [];
             const buffer = new ArrayBuffer(arr.length);
             const uint8 = new Uint8Array(buffer);
             uint8.set(arr);
@@ -417,7 +419,7 @@ function pow32 (mantissa, exponent) {
  * @returns {Float}
  */
 function roundToPrecision (num, precision = 16) {
-    return Number.parseFloat(num.toPrecision(precision));
+    return Number(num.toPrecision(precision));
 }
 
 /**
@@ -481,7 +483,7 @@ function convertValueToMultiEntryKey (input) {
  */
 function getCopyBytesHeldByBufferSource (O) {
     let offset = 0;
-    let length = 0;
+    let length;
     if (ArrayBuffer.isView(O)) { // Has [[ViewedArrayBuffer]] internal slot
         const arrayBuffer = O.buffer;
         if (arrayBuffer === undefined) {
@@ -518,7 +520,7 @@ function getCopyBytesHeldByBufferSource (O) {
 * @returns {KeyValueObject}
 */
 function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
-    seen = seen || [];
+    seen ||= [];
     if (seen.includes(input)) {
         return {
             type: 'array',
@@ -868,7 +870,6 @@ function findMultiEntryMatches (keyEntry, range) {
                     continue;
                 }
                 if (key.length === 1) {
-                    // eslint-disable-next-line sonarjs/updated-loop-counter -- Convenient
                     key = key[0];
                 } else {
                     const nested = findMultiEntryMatches(key, range);
@@ -1041,9 +1042,14 @@ function assignCurrentNumber (tx, store, num, successCb, failCb) {
  * @returns {void}
  */
 function setCurrentNumber (tx, store, num, successCb, failCb) {
-    num = num === MAX_ALLOWED_CURRENT_NUMBER
-        ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
-        : num + 1;
+    num = 1 + (num === MAX_ALLOWED_CURRENT_NUMBER
+        // Since incrementing by one will have no effect in JavaScript on this
+        // unsafe max, we represent the max as a number incremented by two.
+        // The getting of the current number is never returned to the user and
+        // is only used in safe comparisons, so it is safe for us to represent
+        // it in this manner
+        ? num + 1
+        : num);
     return assignCurrentNumber(tx, store, num, successCb, failCb);
 }
 

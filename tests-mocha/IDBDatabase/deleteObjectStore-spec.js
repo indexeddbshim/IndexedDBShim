@@ -22,7 +22,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
                     db.createObjectStore('My Store');
                     const result = db.deleteObjectStore('My Store');
 
-                    expect(result).equal(undefined);
+                    expect(result).to.be.undefined;
                 });
 
                 open.onsuccess = function () {

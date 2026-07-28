@@ -62,7 +62,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                     store.createIndex('My Index', 'foo');
                     const result = store.deleteIndex('My Index');
 
-                    expect(result).equal(undefined);
+                    expect(result).to.be.undefined;
                 });
 
                 open.onsuccess = function () {

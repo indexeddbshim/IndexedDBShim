@@ -122,6 +122,7 @@ export const MsgStream = function (s) {
     });
 };
 
+// eslint-disable-next-line unicorn/no-top-level-side-effects -- Would be good
 util.inherits(MsgStream, events.EventEmitter);
 
 /**
@@ -138,7 +139,7 @@ export const makeFileURL = function (workerConfig, dir) {
 };
 
 // Todo: Implement the WorkerLocation interface described in
-// http://www.whatwg.org/specs/web-workers/current-work/#dom-workerlocation-href
+// https://www.whatwg.org/specs/web-workers/current-work/#dom-workerlocation-href
 //   Leverage URL/URLSearchParams polyfill?
 // Todo: None of these properties are readonly as required by the spec.
 /**
@@ -200,7 +201,7 @@ export const WorkerLocation = function (url) {
  */
 export const getErrorMessage = function (e) {
     try {
-        return e.message || e.stack.split('\n')[0].trim();
+        return e.message || e.stack.split('\n', 1)[0].trim();
     } catch (e) {
         return 'WebWorkers: failed to get error message';
     }
@@ -214,7 +215,7 @@ export const getErrorMessage = function (e) {
  */
 export const getErrorFilename = function (e) {
     try {
-        const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
+        const m = e.stack.split('\n', 2)[1].match(STACK_FRAME_RE);
         // eslint-disable-next-line unicorn/prefer-string-slice -- Clear
         return m[1].substring(
             0,
@@ -233,9 +234,9 @@ export const getErrorFilename = function (e) {
  */
 export const getErrorLine = function (e) {
     try {
-        const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
+        const m = e.stack.split('\n', 2)[1].match(STACK_FRAME_RE);
         const parts = m[1].split(':');
-        return Number.parseInt(parts.at(-2));
+        return Math.trunc(Number(parts.at(-2)));
     } catch (e) {
         return -1;
     }

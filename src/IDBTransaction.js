@@ -85,8 +85,9 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
 
 /**
  * The IndexedDB Transaction.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
  * @class
+ * @throws {TypeError}
  */
 function IDBTransaction () {
     throw new TypeError('Illegal constructor');
@@ -108,6 +109,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         // @ts-expect-error It's ok
         me[Symbol.toStringTag] = 'IDBTransaction';
         util.defineReadonlyProperties(me, readonlyProperties);
+        // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Debugging only
         me.__id = ++uniqueID; // for debugging simultaneous transactions
         me.__active = true;
         me.__running = false;
@@ -509,7 +511,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + me.db.name);
     }
 
-    if (!me.__storeHandles[objectStoreName] ||
+    if (!Object.hasOwn(me.__storeHandles, objectStoreName) ||
         // These latter conditions are to allow store
         //   recreation to create new clone object
         me.__storeHandles[objectStoreName].__pendingDelete ||
@@ -615,7 +617,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                             }
                             q.req.dispatchEvent(reqEvt); // No need to catch errors
                             resolve();
-                        });
+                        }, 0);
                     }
                 );
             });
@@ -626,7 +628,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                 me.dispatchEvent(evt);
                 me.__storeHandles = {};
                 me.dispatchEvent(createEvent('__abort'));
-            });
+            }, 0);
             return undefined;
         }).catch((err) => {
             console.log('Abort error');
@@ -752,6 +754,7 @@ IDBTransaction.prototype.__getParent = function () {
     return this.db;
 };
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineOuterInterface(IDBTransaction.prototype, listeners);
 util.defineReadonlyOuterInterface(IDBTransaction.prototype, readonlyProperties);
 
@@ -765,5 +768,6 @@ Object.defineProperty(IDBTransaction.prototype, 'constructor', {
 Object.defineProperty(IDBTransaction, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 export default IDBTransaction;

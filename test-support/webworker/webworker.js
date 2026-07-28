@@ -93,7 +93,7 @@ let numWorkersCreated = 0;
  * @returns {Worker}
  */
 function WebWorker (workerConfig) {
-    workerConfig = workerConfig || {};
+    workerConfig ||= {};
     if (workerConfig.permittedProtocols && !Array.isArray(workerConfig.permittedProtocols)) {
         throw new TypeError('The permittedProtocols argument must be an array');
     }
@@ -113,7 +113,7 @@ function WebWorker (workerConfig) {
         // See https://html.spec.whatwg.org/multipage/workers.html#dom-worker
         const self = this; // eslint-disable-line consistent-this -- Clear
 
-        opts = opts || {};
+        opts ||= {};
 
         let basePath;
         // We don't use `new URL` as we need `url.parse` relative URL behavior; see
@@ -147,7 +147,7 @@ function WebWorker (workerConfig) {
             if (basePath) {
                 basePath = wwutil.makeFileURL(workerConfig, basePath);
             }
-            basePath = basePath || wwutil.makeFileURL(workerConfig, process.cwd()) || 'http://127.0.0.1';
+            basePath ||= wwutil.makeFileURL(workerConfig, process.cwd()) || 'http://127.0.0.1';
             src = new URL(src, basePath);
             // const urlObj = url.parse(src);
         }
@@ -184,6 +184,7 @@ function WebWorker (workerConfig) {
         const eventHandlers = {message: []};
 
         // The path to our socket
+        // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Testing
         const sockFilePath = path.join(SOCK_DIR_PATH, String(numWorkersCreated++));
         const sockPath = path.join((isWin ? '\\\\.\\pipe\\' : ''), sockFilePath); // '\\\\?\\pipe' had problems
 
@@ -245,10 +246,10 @@ function WebWorker (workerConfig) {
                 if (workerConfig.args) {
                     if (Array.isArray(workerConfig.args)) {
                         for (let ii = workerConfig.args.length; ii >= 0; ii--) {
-                            args.splice(0, 0, workerConfig.args[ii]);
+                            args.unshift(workerConfig.args[ii]);
                         }
                     } else {
-                        args.splice(0, 0, workerConfig.args.toString());
+                        args.unshift(workerConfig.args.toString());
                     }
                 }
 
@@ -306,14 +307,14 @@ function WebWorker (workerConfig) {
                         } catch (e) {}
 
                         if (self.onexit) {
-                            process.nextTick(function () {
+                            queueMicrotask(function () {
                                 self.onexit(code, signal);
                             });
                         }
                     });
 
                     if (self.onexit) {
-                        process.nextTick(function () {
+                        queueMicrotask(function () {
                             self.onexit(code, signal);
                         });
                     }
@@ -399,6 +400,7 @@ function WebWorker (workerConfig) {
             if (Array.isArray(xfers)) { // Todo: Currently only handling detached buffers, not yet exposing the transfer
                 xfers.forEach(function (xfer) {
                     // Assumes this currently non-standard method gets implemented for Node
+                    // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties -- Doesn't need to be universal
                     if (typeof ArrayBuffer.transfer === 'function') { ArrayBuffer.transfer(xfer, 0); }
                 });
             }
@@ -407,16 +409,18 @@ function WebWorker (workerConfig) {
 
         // Register event handler
         self.addEventListener = function (event, handler) {
-            if (event in eventHandlers) {
+            if (Object.hasOwn(eventHandlers, event)) {
                 eventHandlers[event].push(handler);
             }
         };
         self.removeEventListener = function (event, handler) {
-            if (event in eventHandlers) {
-                const handlerPos = eventHandlers[event].indexOf(handler);
-                if (handlerPos !== -1) {
-                    eventHandlers[event].splice(handlerPos, 1);
-                }
+            if (!(Object.hasOwn(eventHandlers, event))) {
+                return;
+            }
+
+            const handlerPos = eventHandlers[event].indexOf(handler);
+            if (handlerPos !== -1) {
+                eventHandlers[event].splice(handlerPos, 1);
             }
         };
 

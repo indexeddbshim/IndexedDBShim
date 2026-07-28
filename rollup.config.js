@@ -1,6 +1,6 @@
-// /* eslint-disable import/no-deprecated, import/namespace,
-//     import/default, import/no-named-as-default,
-//     import/no-named-as-default-member -- Problems with JSON import */
+// /* eslint-disable import-x/no-deprecated, import-x/namespace,
+//     import-x/default, import-x/no-named-as-default,
+//     import-x/no-named-as-default-member -- Problems with JSON import */
 import {readFile} from 'node:fs/promises';
 
 import {nodeResolve} from '@rollup/plugin-node-resolve';
@@ -128,7 +128,7 @@ const nodeEnvironment = ({input, name, output: file}) => {
                 // Notes when using browserify:
                 // Could try for consistency with any relative paths if still
                 //  seeing https://github.com/axemclion/IndexedDBShim/issues/291 ;
-                //  see also http://stackoverflow.com/a/33124979/271577
+                //  see also https://stackoverflow.com/a/33124979/271577
                 // basedir: __dirname,
             },
             plugins: getRollupPlugins(

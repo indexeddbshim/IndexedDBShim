@@ -66,7 +66,7 @@ describe('IDBObjectStore.delete', function () {
             const del = store.delete('foo');
 
             del.onsuccess = sinon.spy(function () {
-                expect(del.result).equal(undefined);
+                expect(del.result).to.be.undefined;
             });
 
             tx.oncomplete = function () {
@@ -696,8 +696,8 @@ describe('IDBObjectStore.delete', function () {
             deleteKey(0); // zero
             deleteKey(-99999); // negative number
             deleteKey(3.12345); // float
-            deleteKey(Number.POSITIVE_INFINITY); // infinity
-            deleteKey(Number.NEGATIVE_INFINITY); // negative infinity
+            deleteKey(Infinity); // infinity
+            deleteKey(-Infinity); // negative infinity
             deleteKey(new Date(2000, 1, 2)); // Date
 
             if (env.isShimmed || !env.browser.isIE) {
@@ -742,7 +742,7 @@ describe('IDBObjectStore.delete', function () {
             const store = tx.objectStore('out-of-line-generated');
 
             tryToDelete(undefined); // undefined
-            tryToDelete(Number.NaN); // NaN
+            tryToDelete(NaN); // NaN
             tryToDelete(true); // boolean
             tryToDelete(false); // boolean
             tryToDelete({}); // empty object

@@ -4,7 +4,7 @@ import {
 
 import {createDOMException, ShimDOMException} from './DOMException.js';
 
-// See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
+// See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
 let typeson = new Typeson().register(structuredCloningThrowing);
 
@@ -14,6 +14,7 @@ let typeson = new Typeson().register(structuredCloningThrowing);
  * @returns {void}
  */
 function register (func) {
+    // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
     typeson = new Typeson().register(func(structuredCloningThrowing));
 }
 

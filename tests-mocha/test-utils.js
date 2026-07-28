@@ -79,7 +79,6 @@
         createDatabase (schema, done) {
             /* eslint-disable prefer-rest-params -- Convenient */
             schema = Array.prototype.slice.call(arguments, 0, -1);
-            // eslint-disable-next-line unicorn/prefer-at -- Not available here
             done = arguments[arguments.length - 1];
             /* eslint-enable prefer-rest-params -- Convenient */
 
@@ -152,8 +151,7 @@
                 open.onsuccess = function () {
                     const cursor = open.result;
                     if (cursor) {
-                        const {key} = cursor;
-                        const {primaryKey} = cursor;
+                        const {key, primaryKey} = cursor;
                         if (env.isNative && env.browser.isSafari) {
                             // BUG: Safari has a bug with compound-key cursors
                             if (Array.isArray(primaryKey)) {

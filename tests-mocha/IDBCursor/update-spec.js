@@ -52,7 +52,9 @@ describe('IDBCursor.update', function () {
                     // as mistakenly confusing supplied key range here with supplying
                     // key to put/add (when in-line keys are used)
                     db.close();
-                    throw new Error('Cursor update failed; possibly PhantomJS bug');
+                    throw new Error('Cursor update failed; possibly PhantomJS bug', {
+                        cause: err
+                    });
                 }
                 throw err;
             }

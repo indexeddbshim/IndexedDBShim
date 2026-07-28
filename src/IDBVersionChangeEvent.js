@@ -29,6 +29,7 @@ IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventProt
  * @typedef {number} Integer
  */
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 readonlyProperties.forEach((prop) => {
     // Ensure for proper interface testing that "get <name>" is the function name
     const o = {
@@ -73,5 +74,6 @@ Object.defineProperty(IDBVersionChangeEvent.prototype, 'constructor', {
 Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 export default IDBVersionChangeEvent;

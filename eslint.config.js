@@ -27,6 +27,22 @@ const rules = {
     'unicorn/no-this-assignment': 0,
     'unicorn/prefer-spread': 0,
 
+    // Mocha uses this.timeout(), and we have some pseudo-classes for API reasons
+    'unicorn/no-this-outside-of-class': 'off',
+
+    // While useful, we want to follow the order of the spec for readability
+    'unicorn/no-declarations-before-early-exit': 'off',
+    'unicorn/prefer-simple-condition-first': 'off',
+
+    // Until disabled in eslint-config-ash-nazg
+    'unicorn/prefer-then-catch': 'off',
+    'unicorn/max-nested-calls': 'off',
+    'unicorn/no-confusing-array-splice': 'off',
+    'sonarjs/super-linear-regex': 'off',
+
+    // If not counted by the testing suite, then flags what is expected
+    'sonarjs/no-trivial-assertions': 'off',
+
     'jsdoc/require-throws': 'error',
     'jsdoc/require-returns': ['error', {
         forceRequireReturn: true,
@@ -96,14 +112,15 @@ export default [
         files: ['**/*.md/*.js'],
         rules: {
             'unicorn/prefer-global-this': 'off', // Older browsers
-            'import/no-commonjs': 'off',
+            'import-x/no-commonjs': 'off',
             'eol-last': 'off',
             'no-console': 'off',
             'no-undef': 'off',
             'no-unused-vars': ['warn', {varsIgnorePattern: 'setGlobalVars'}],
             'padded-blocks': 'off',
-            'import/unambiguous': 'off',
-            'import/no-unresolved': 'off',
+            'unicorn/no-global-object-property-assignment': 'off',
+            'import-x/unambiguous': 'off',
+            'import-x/no-unresolved': 'off',
             'n/no-missing-require': 'off',
             'n/no-missing-import': 'off',
             'n/no-unsupported-features/es-syntax': 'off'
@@ -173,10 +190,31 @@ export default [
             'no-process-exit': 0,
             // We want console in tests!
             'no-console': 'off',
-            'import/unambiguous': 'off',
+            'import-x/unambiguous': 'off',
             'n/no-unsupported-features/node-builtins': 'off',
             'unicorn/prefer-add-event-listener': 'off',
+
+            'unicorn/no-global-object-property-assignment': 'off',
             ...rules
+        }
+    },
+    // Disable import-x rules for files with top-level await due to ESM/CommonJS compatibility
+    {
+        files: [
+            'eslint.config.js',
+            'test-support/node-buildjs.js',
+            'tests-mocha/test-node.js',
+            'tests-polyfill/fakeIndexedDB/test-node.js',
+            'tests-polyfill/indexedDBmock/test-node.js',
+            'tests-polyfill/w3c/test-node.js'
+        ],
+        rules: {
+            'import-x/namespace': 0,
+            'import-x/no-deprecated': 0,
+            'import-x/default': 0,
+            'import-x/named': 0,
+            'import-x/no-named-as-default': 0,
+            'import-x/no-named-as-default-member': 0
         }
     },
     {

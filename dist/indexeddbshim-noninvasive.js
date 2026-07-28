@@ -1343,6 +1343,7 @@
    */
 
   /** @type {Config} */
+  // eslint-disable-next-line unicorn/no-top-level-side-effects -- Would be good
   [
   // Boolean for verbose reporting
   'DEBUG',
@@ -1360,7 +1361,7 @@
   //    calls required for full WebIDL compliance will be used. Probably
   //    only needed for testing or environments where full introspection
   //    on class relationships is required; see
-  //    http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+  //    https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
   'fullIDLSupport',
   // Effectively defaults to false (ignored unless `true`)
 
@@ -1523,9 +1524,9 @@
    * @returns {string}
    */
   function escapeUnmatchedSurrogates(arg) {
-    // http://stackoverflow.com/a/6701665/271577
+    // https://stackoverflow.com/a/6701665/271577
     return arg.replaceAll(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
-      // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
+      // Could add a corresponding surrogate for compatibility with `node-sqlite3`: https://bugs.python.org/issue12569 and https://stackoverflow.com/a/6701665/271577
       //   but Chrome having problems
       if (unmatchedHighSurrogate) {
         return '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0');
@@ -1539,14 +1540,14 @@
    * @returns {string}
    */
   function escapeNameForSQLiteIdentifier(arg) {
-    // http://stackoverflow.com/a/6701665/271577
+    // https://stackoverflow.com/a/6701665/271577
     return '_' +
     // Prevent empty string
     escapeUnmatchedSurrogates(arg.replaceAll('^', '^^') // Escape our escape
-    // http://www.sqlite.org/src/tktview?name=57c971fc74
+    // https://www.sqlite.org/src/tktview?name=57c971fc74
     .replaceAll('\0', '^0')
     // We need to avoid identifiers being treated as duplicates based on SQLite's ASCII-only case-insensitive table and column names
-    // (For SQL in general, however, see http://stackoverflow.com/a/17215009/271577
+    // (For SQL in general, however, see https://stackoverflow.com/a/17215009/271577
     // See also https://www.sqlite.org/faq.html#q18 re: Unicode (non-ASCII) case-insensitive not working
     .replaceAll(/([A-Z])/g, '^$1'));
   }
@@ -1576,7 +1577,7 @@
    */
   function sqlEscape(arg) {
     // https://www.sqlite.org/lang_keywords.html
-    // http://stackoverflow.com/a/6701665/271577
+    // https://stackoverflow.com/a/6701665/271577
     // There is no need to escape ', `, or [], as
     //   we should always be within double quotes
     // NUL should have already been stripped
@@ -1740,7 +1741,9 @@
    * @returns {boolean}
    */
   function isIterable(obj) {
-    return isObj(obj) && Symbol.iterator in obj && typeof obj[Symbol.iterator] === 'function';
+    return isObj(obj) &&
+    // eslint-disable-next-line unicorn/no-computed-property-existence-check -- May not be "own"
+    Symbol.iterator in obj && typeof obj[Symbol.iterator] === 'function';
   }
 
   /**
@@ -1820,7 +1823,7 @@
     props = typeof props === 'string' ? [props] : props;
     props.forEach(function (prop) {
       var o;
-      if (getter && prop in getter) {
+      if (getter && Object.hasOwn(getter, prop)) {
         o = getter[prop];
       } else {
         Object.defineProperty(obj, '__' + prop, {
@@ -1878,7 +1881,7 @@
    */
   function isValidKeyPath(keyPath) {
     return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && Boolean(keyPath.length) &&
-    // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
+    // Convert array from sparse to dense https://www.2ality.com/2012/06/dense-arrays.html
     // See also https://heycam.github.io/webidl/#idl-DOMString
     _toConsumableArray(keyPath).every(function (pathComponent) {
       return isValidKeyPathString(pathComponent);
@@ -1984,8 +1987,10 @@
     return ev;
   }
 
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   // We don't add within polyfill repo as might not always be the desired implementation
   Object.defineProperty(ShimEvent, Symbol.hasInstance, {
+    /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
     /**
      * @typedef {any} AnyValue
      */
@@ -2027,6 +2032,7 @@
    * @typedef {number} Integer
    */
 
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   readonlyProperties$6.forEach(function (prop) {
     // Ensure for proper interface testing that "get <name>" is the function name
     var o = _defineAccessor("get", {}, prop, function () {
@@ -2177,7 +2183,7 @@
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
-      this._code = name in codes ? codes[(/** @type {Code} */name)] : legacyCodes[(/** @type {LegacyCode} */name)] || 0;
+      this._code = Object.hasOwn(codes, name) ? codes[(/** @type {Code} */name)] : legacyCodes[(/** @type {LegacyCode} */name)] || 0;
       this._name = name || 'Error';
       // We avoid `String()` in this next line as it converts Symbols
       this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion -- Don't convert symbols
@@ -2313,13 +2319,14 @@
    * @returns {void}
    */
   function logError(name, message, error) {
-    if (CFG.DEBUG) {
-      var msg = error && _typeof$1(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
-      var method = typeof console.error === 'function' ? 'error' : 'log';
-      console[method](name + ': ' + message + '. ' + (msg || ''));
-      if (console.trace) {
-        console.trace();
-      }
+    if (!CFG.DEBUG) {
+      return;
+    }
+    var msg = error && _typeof$1(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
+    var method = typeof console.error === 'function' ? 'error' : 'log';
+    console[method](name + ': ' + message + '. ' + (msg || ''));
+    if (console.trace) {
+      console.trace();
     }
   }
 
@@ -2459,8 +2466,9 @@
 
   /**
    * The IDBRequest Object that is returns for all async calls.
-   * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
+   * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
    * @class
+   * @throws {TypeError}
    */
   function IDBRequest() {
     throw new TypeError('Illegal constructor');
@@ -2500,12 +2508,11 @@
       legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
     doneFlagGetters.forEach(function (prop) {
-      Object.defineProperty(_this, '__' + prop, {
+      Object.defineProperties(_this, _defineProperty(_defineProperty({}, '__' + prop, {
         enumerable: false,
         configurable: false,
         writable: true
-      });
-      Object.defineProperty(_this, prop, {
+      }), prop, {
         enumerable: true,
         configurable: true,
         get: function get() {
@@ -2514,7 +2521,7 @@
           }
           return this['__' + prop];
         }
-      });
+      }));
     });
     defineReadonlyProperties(this, readonlyProperties$5, {
       readyState: {
@@ -2559,6 +2566,7 @@
     return this.__transaction;
   };
 
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   // Illegal invocations
   defineReadonlyOuterInterface(IDBRequest.prototype, readonlyProperties$5);
   defineReadonlyOuterInterface(IDBRequest.prototype, doneFlagGetters);
@@ -2573,6 +2581,8 @@
   Object.defineProperty(IDBRequest, 'prototype', {
     writable: false
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
   var openListeners = ['onblocked', 'onupgradeneeded'];
 
   /**
@@ -2582,6 +2592,7 @@
   /**
    * The IDBOpenDBRequest called when a database is opened.
    * @class
+   * @throws {TypeError}
    */
   function IDBOpenDBRequest() {
     throw new TypeError('Illegal constructor');
@@ -2589,12 +2600,16 @@
 
   // @ts-expect-error It's ok
   IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
     enumerable: false,
     writable: true,
     configurable: true,
     value: IDBOpenDBRequest
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
   var IDBOpenDBRequestAlias = IDBOpenDBRequest;
   /**
    * @returns {IDBRequestFull & IDBOpenDBRequest}
@@ -2622,6 +2637,8 @@
     // @ts-expect-error It's ok
     return new IDBOpenDBRequest();
   };
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   defineOuterInterface(IDBOpenDBRequest.prototype, openListeners);
   IDBOpenDBRequest.prototype[Symbol.toStringTag] = 'IDBOpenDBRequestPrototype';
   Object.defineProperty(IDBOpenDBRequest, 'prototype', {
@@ -3000,10 +3017,14 @@
     binary: 500,
     array: 600
   };
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   var keyTypes = /** @type {(KeyType|"invalid")[]} */Object.keys(keyTypeToEncodedChar);
   keyTypes.forEach(function (k) {
     keyTypeToEncodedChar[k] = String.fromCodePoint(/** @type {number} */keyTypeToEncodedChar[k]);
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
   var encodedCharToKeyType = keyTypes.reduce(function (o, k) {
     o[keyTypeToEncodedChar[k]] = k;
     return o;
@@ -3089,13 +3110,12 @@
             if (key > -1) {
               sign = signValues.indexOf('smallNegative');
               exponent = padBase32Exponent(significantDigitIndex);
-              mantissa = flipBase32(padBase32Mantissa(key32));
               // Non-negative exponent case:
             } else {
               sign = signValues.indexOf('bigNegative');
               exponent = flipBase32(padBase32Exponent(decimalIndex !== -1 ? decimalIndex : key32.length));
-              mantissa = flipBase32(padBase32Mantissa(key32));
             }
+            mantissa = flipBase32(padBase32Mantissa(key32));
             // Non-negative cases:
             // Negative exponent case:
           } else if (key < 1) {
@@ -3129,9 +3149,9 @@
         var mantissa = key.slice(5, 16);
         switch (signValues[sign]) {
           case 'negativeInfinity':
-            return Number.NEGATIVE_INFINITY;
+            return -Infinity;
           case 'positiveInfinity':
-            return Number.POSITIVE_INFINITY;
+            return Infinity;
           case 'bigPositive':
             return pow32(mantissa, exponent);
           case 'smallPositive':
@@ -3264,9 +3284,7 @@
       decode: function decode(key) {
         // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
         var k = key.slice(2);
-        var arr = k.length ? k.split(',').map(function (s) {
-          return Number.parseInt(s);
-        }) : [];
+        var arr = k.length ? k.split(',').map(Number) : [];
         var buffer = new ArrayBuffer(arr.length);
         var uint8 = new Uint8Array(buffer);
         uint8.set(arr);
@@ -3355,7 +3373,7 @@
    */
   function roundToPrecision(num) {
     var precision = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 16;
-    return Number.parseFloat(num.toPrecision(precision));
+    return Number(num.toPrecision(precision));
   }
 
   /**
@@ -3423,7 +3441,7 @@
    */
   function getCopyBytesHeldByBufferSource(O) {
     var offset = 0;
-    var length = 0;
+    var length;
     if (ArrayBuffer.isView(O)) {
       // Has [[ViewedArrayBuffer]] internal slot
       var arrayBuffer = O.buffer;
@@ -3456,7 +3474,7 @@
   * @returns {KeyValueObject}
   */
   function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
-    seen = seen || [];
+    seen || (seen = []);
     if (seen.includes(input)) {
       return {
         type: 'array',
@@ -3860,7 +3878,6 @@
               continue;
             }
             if (key.length === 1) {
-              // eslint-disable-next-line sonarjs/updated-loop-counter -- Convenient
               key = key[0];
             } else {
               var nested = findMultiEntryMatches(key, range);
@@ -4043,8 +4060,13 @@
    * @returns {void}
    */
   function setCurrentNumber(tx, store, num, successCb, failCb) {
-    num = num === MAX_ALLOWED_CURRENT_NUMBER ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
-    : num + 1;
+    num = 1 + (num === MAX_ALLOWED_CURRENT_NUMBER
+    // Since incrementing by one will have no effect in JavaScript on this
+    // unsafe max, we represent the max as a number incremented by two.
+    // The getting of the current number is never returned to the user and
+    // is only used in safe comparisons, so it is safe for us to represent
+    // it in this manner
+    ? num + 1 : num);
     return assignCurrentNumber(tx, store, num, successCb, failCb);
   }
 
@@ -4157,7 +4179,7 @@
 
   /**
    * The IndexedDB KeyRange object.
-   * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
+   * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
    * @throws {TypeError}
    * @class
    */
@@ -4178,6 +4200,7 @@
   IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
     /**
      * @class
+     * @throws {DOMException|Error}
      */
     function IDBKeyRange() {
       this[Symbol.toStringTag] = 'IDBKeyRange';
@@ -4274,6 +4297,8 @@
     return IDBKeyRange.__createInstance(lower, upper, arguments[2], arguments[3]);
   };
   IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRangePrototype';
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   readonlyProperties$4.forEach(function (prop) {
     Object.defineProperty(IDBKeyRange.prototype, '__' + prop, {
       enumerable: false,
@@ -4294,7 +4319,7 @@
     // desc.configurable = true; // Default
     Object.defineProperty(IDBKeyRange.prototype, prop, desc);
   });
-  Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
+  Object.defineProperties(IDBKeyRange, _defineProperty(_defineProperty({}, Symbol.hasInstance, {
     value:
     /**
      * @param {object} obj
@@ -4303,10 +4328,11 @@
     function value(obj) {
       return isObj(obj) && 'upper' in obj && 'lowerOpen' in obj && typeof obj.lowerOpen === 'boolean';
     }
-  });
-  Object.defineProperty(IDBKeyRange, 'prototype', {
+  }), "prototype", {
     writable: false
-  });
+  }));
+
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
   /**
    * @param {IDBKeyRangeFull|undefined} range
@@ -4318,34 +4344,35 @@
    * @returns {void}
    */
   function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
-    if (range && (range.lower !== undefined || range.upper !== undefined)) {
-      if (addAnd) {
-        sql.push('AND');
+    if (!(range && (range.lower !== undefined || range.upper !== undefined))) {
+      return;
+    }
+    if (addAnd) {
+      sql.push('AND');
+    }
+    var encodedLowerKey, encodedUpperKey;
+    var hasLower = range.lower !== undefined;
+    var hasUpper = range.upper !== undefined;
+    if (hasLower) {
+      encodedLowerKey = checkCached ? range.__lowerCached : _encode(range.lower);
+    }
+    if (hasUpper) {
+      encodedUpperKey = checkCached ? range.__upperCached : _encode(range.upper);
+    }
+    if (hasLower) {
+      sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedLowerKey));
+      if (hasUpper && encodedLowerKey === encodedUpperKey && !range.lowerOpen && !range.upperOpen) {
+        sql.push(quotedKeyColumnName, '=', '?');
+        return;
       }
-      var encodedLowerKey, encodedUpperKey;
-      var hasLower = range.lower !== undefined;
-      var hasUpper = range.upper !== undefined;
-      if (hasLower) {
-        encodedLowerKey = checkCached ? range.__lowerCached : _encode(range.lower);
-      }
-      if (hasUpper) {
-        encodedUpperKey = checkCached ? range.__upperCached : _encode(range.upper);
-      }
-      if (hasLower) {
-        sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedLowerKey));
-        if (hasUpper && encodedLowerKey === encodedUpperKey && !range.lowerOpen && !range.upperOpen) {
-          sql.push(quotedKeyColumnName, '=', '?');
-          return;
-        }
-        sql.push(quotedKeyColumnName, range.lowerOpen ? '>' : '>=', '?');
-      }
-      if (hasLower && hasUpper) {
-        sql.push('AND');
-      }
-      if (hasUpper) {
-        sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
-        sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedUpperKey));
-      }
+      sql.push(quotedKeyColumnName, range.lowerOpen ? '>' : '>=', '?');
+    }
+    if (hasLower && hasUpper) {
+      sql.push('AND');
+    }
+    if (hasUpper) {
+      sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
+      sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedUpperKey));
     }
   }
 
@@ -4446,7 +4473,9 @@
       if (!arguments.length) {
         throw new TypeError('DOMStringList.item must be supplied a value');
       }
-      if (key < 0 || key >= this.length || !Number.isInteger(key)) {
+      if (key < 0 || key >= this.length ||
+      // eslint-disable-next-line unicorn/prefer-number-is-safe-integer -- We want all
+      !Number.isInteger(key)) {
         return null;
       }
       return this._items[key];
@@ -4476,8 +4505,9 @@
      * @returns {string[]}
      */
     sortList: function sortList() {
-      // http://w3c.github.io/IndexedDB/#sorted-list
+      // https://w3c.github.io/IndexedDB/#sorted-list
       // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
+      // eslint-disable-next-line unicorn/require-array-sort-compare -- IndexedDB requires code unit comparison (default behavior)
       this._items.sort();
       this.addIndexes();
       return this._items;
@@ -4530,7 +4560,7 @@
       (_this$_items = this._items).splice.apply(_this$_items, arguments);
       this._length = this._items.length;
       for (var i in this) {
-        if (i === String(Number.parseInt(i))) {
+        if (i === String(Math.trunc(Number(i)))) {
           delete this[i];
         }
       }
@@ -4558,6 +4588,7 @@
     }, _callee, this);
   }));
 
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   /**
    * @typedef {any} AnyValue
    */
@@ -4572,6 +4603,7 @@
   });
   var DOMStringListAlias = DOMStringList;
   Object.defineProperty(DOMStringList, '__createInstance', {
+    /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
     /**
      * @returns {DOMStringListFull}
      */
@@ -4705,8 +4737,9 @@
 
   /**
    * The IndexedDB Transaction.
-   * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
+   * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
    * @class
+   * @throws {TypeError}
    */
   function IDBTransaction() {
     throw new TypeError('Illegal constructor');
@@ -4729,6 +4762,7 @@
       // @ts-expect-error It's ok
       me[Symbol.toStringTag] = 'IDBTransaction';
       defineReadonlyProperties(me, readonlyProperties$3);
+      // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Debugging only
       me.__id = ++uniqueID; // for debugging simultaneous transactions
       me.__active = true;
       me.__running = false;
@@ -5139,7 +5173,7 @@
     if (!store) {
       throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + me.db.name);
     }
-    if (!me.__storeHandles[objectStoreName] ||
+    if (!Object.hasOwn(me.__storeHandles, objectStoreName) ||
     // These latter conditions are to allow store
     //   recreation to create new clone object
     me.__storeHandles[objectStoreName].__pendingDelete || me.__storeHandles[objectStoreName].__deleted) {
@@ -5247,7 +5281,7 @@
               }
               q.req.dispatchEvent(reqEvt); // No need to catch errors
               resolve();
-            });
+            }, 0);
           });
         });
       }, SyncPromise.resolve(undefined)).then(function () {
@@ -5261,7 +5295,7 @@
           me.dispatchEvent(evt);
           me.__storeHandles = {};
           me.dispatchEvent(createEvent('__abort'));
-        });
+        }, 0);
         return undefined;
       }).catch(function (err) {
         console.log('Abort error');
@@ -5384,6 +5418,8 @@
   IDBTransaction.prototype.__getParent = function () {
     return this.db;
   };
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   defineOuterInterface(IDBTransaction.prototype, listeners$1);
   defineReadonlyOuterInterface(IDBTransaction.prototype, readonlyProperties$3);
   Object.defineProperty(IDBTransaction.prototype, 'constructor', {
@@ -6852,7 +6888,7 @@
       }
     });
 
-  // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
+  // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
   var typeson = new Typeson().register(ne);
 
@@ -6862,6 +6898,7 @@
    * @returns {void}
    */
   function register(func) {
+    // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
     typeson = new Typeson().register(func(ne));
   }
 
@@ -6950,7 +6987,8 @@
 
   /**
    * IDB Index.
-   * @see http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
+   * @see https://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
+   * @throws {TypeError}
    * @class
    */
   function IDBIndex() {
@@ -7004,67 +7042,69 @@
       me.__unique = Boolean(optionalParams && optionalParams.unique);
       me.__deleted = Boolean(indexProperties.__deleted);
       me.__objectStore.__cursors = indexProperties.cursors || [];
-      Object.defineProperty(me, '__currentName', {
-        /**
-         * @this {IDBIndexFull}
-         * @returns {string}
-         */
-        get: function get() {
-          return '__pendingName' in me ? (/** @type {string} */me.__pendingName) : me.name;
-        }
-      });
-      Object.defineProperty(me, 'name', {
-        enumerable: false,
-        configurable: false,
-        /**
-         * @this {IDBIndexFull}
-         * @returns {string}
-         */
-        get: function get() {
-          return this.__name;
+      Object.defineProperties(me, {
+        __currentName: {
+          /**
+           * @this {IDBIndexFull}
+           * @returns {string}
+           */
+          get: function get() {
+            return '__pendingName' in me ? (/** @type {string} */me.__pendingName) : me.name;
+          }
         },
-        /**
-         * @param {string} newName
-         * @this {IDBIndexFull}
-         * @returns {void}
-         */
-        set: function set(newName) {
-          var me = this;
-          newName = convertToDOMString(newName);
-          var oldName = me.name;
-          IDBTransaction.__assertVersionChange(me.objectStore.transaction);
-          IDBTransaction.__assertActive(me.objectStore.transaction);
-          IDBIndexAlias.__invalidStateIfDeleted(me);
-          IDBObjectStore.__invalidStateIfDeleted(me);
-          if (newName === oldName) {
-            return;
-          }
-          if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted && !me.objectStore.__indexes[newName].__pendingDelete) {
-            throw createDOMException('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.__currentName);
-          }
-          me.__name = newName;
-          var objectStore = me.objectStore;
-          delete objectStore.__indexes[oldName];
-          objectStore.__indexes[newName] = me;
-          objectStore.indexNames.splice(objectStore.indexNames.indexOf(oldName), 1, newName);
-          var storeHandle = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */objectStore.transaction.__storeHandles[objectStore.name];
-          var oldIndexHandle = storeHandle.__indexHandles[oldName];
-          oldIndexHandle.__name = newName; // Fix old references
-          storeHandle.__indexHandles[newName] = oldIndexHandle; // Ensure new reference accessible
-          me.__pendingName = oldName;
-          var colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat(
-          // @ts-expect-error Has numeric indexes instead of iterator
-          _toConsumableArray(objectStore.indexNames).filter(function (indexName) {
-            return indexName !== newName;
-          }).map(function (indexName) {
-            return [escapeIndexNameForSQL(indexName), 'BLOB'];
-          }));
-          me.__renameIndex(objectStore, oldName, newName, colInfoToPreserveArr, function (tx, success) {
-            IDBIndexAlias.__updateIndexList(store, tx, function (store) {
-              delete storeHandle.__pendingName;
-              success(store);
+        name: {
+          enumerable: false,
+          configurable: false,
+          /**
+           * @this {IDBIndexFull}
+           * @returns {string}
+           */
+          get: function get() {
+            return this.__name;
+          },
+          /**
+           * @param {string} newName
+           * @this {IDBIndexFull}
+           * @returns {void}
+           */
+          set: function set(newName) {
+            var me = this;
+            newName = convertToDOMString(newName);
+            var oldName = me.name;
+            IDBTransaction.__assertVersionChange(me.objectStore.transaction);
+            IDBTransaction.__assertActive(me.objectStore.transaction);
+            IDBIndexAlias.__invalidStateIfDeleted(me);
+            IDBObjectStore.__invalidStateIfDeleted(me);
+            if (newName === oldName) {
+              return;
+            }
+            if (Object.hasOwn(me.objectStore.__indexes, newName) && !me.objectStore.__indexes[newName].__deleted && !me.objectStore.__indexes[newName].__pendingDelete) {
+              throw createDOMException('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.__currentName);
+            }
+            me.__name = newName;
+            var objectStore = me.objectStore;
+            delete objectStore.__indexes[oldName];
+            objectStore.__indexes[newName] = me;
+            objectStore.indexNames.splice(objectStore.indexNames.indexOf(oldName), 1, newName);
+            var storeHandle = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */objectStore.transaction.__storeHandles[objectStore.name];
+            var oldIndexHandle = storeHandle.__indexHandles[oldName];
+            oldIndexHandle.__name = newName; // Fix old references
+            storeHandle.__indexHandles[newName] = oldIndexHandle; // Ensure new reference accessible
+            me.__pendingName = oldName;
+            var colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat(
+            // @ts-expect-error Has numeric indexes instead of iterator
+            _toConsumableArray(objectStore.indexNames).filter(function (indexName) {
+              return indexName !== newName;
+            }).map(function (indexName) {
+              return [escapeIndexNameForSQL(indexName), 'BLOB'];
+            }));
+            me.__renameIndex(objectStore, oldName, newName, colInfoToPreserveArr, function (tx, success) {
+              IDBIndexAlias.__updateIndexList(store, tx, function (store) {
+                delete storeHandle.__pendingName;
+                success(store);
+              });
             });
-          });
+          }
         }
       });
     }
@@ -7179,7 +7219,7 @@
                   var indexKeyStr = /** @type {string} */
                   _encode(indexKey.value, index.multiEntry);
                   if (index.unique) {
-                    if (indexValues[indexKeyStr]) {
+                    if (Object.hasOwn(indexValues, indexKeyStr)) {
                       indexValues = {};
                       failure(createDOMException('ConstraintError', 'Duplicate values already exist within the store'));
                       return;
@@ -7511,7 +7551,7 @@
     var listColInfoToPreserve = colInfoToPreserve.length ? colInfoToPreserve.join(', ') + ', ' : '';
     var listColsToPreserve = colNamesToPreserve.length ? colNamesToPreserve.join(', ') + ', ' : '';
 
-    // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
+    // We could adapt the approach at https://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
@@ -7617,6 +7657,7 @@
    * @typedef {any} AnyValue
    */
 
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     /**
      * @param {AnyValue} obj
@@ -7632,6 +7673,7 @@
   Object.defineProperty(IDBIndex, 'prototype', {
     writable: false
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
   /**
    * @param {number|null} count
@@ -7808,8 +7850,9 @@
 
   /**
    * IndexedDB Object Store.
-   * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
+   * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
    * @class
+   * @throws {TypeError}
    */
   function IDBObjectStore() {
     throw new TypeError('Illegal constructor');
@@ -7874,84 +7917,87 @@
       me.__indexNames = DOMStringList.__createInstance();
       var indexList = storeProperties.indexList;
       for (var indexName in indexList) {
-        if (Object.hasOwn(indexList, indexName)) {
-          var index = IDBIndex.__createInstance(me, indexList[indexName]);
-          me.__indexes[index.name] = index;
-          if (!index.__deleted) {
-            me.indexNames.push(index.name);
-          }
+        if (!Object.hasOwn(indexList, indexName)) {
+          continue;
+        }
+        var index = IDBIndex.__createInstance(me, indexList[indexName]);
+        me.__indexes[index.name] = index;
+        if (!index.__deleted) {
+          me.indexNames.push(index.name);
         }
       }
       me.__oldIndexNames = me.indexNames.clone();
-      Object.defineProperty(this, '__currentName', {
-        get: function get() {
-          return '__pendingName' in this ? this.__pendingName : this.name;
-        }
-      });
-      Object.defineProperty(this, 'name', {
-        enumerable: false,
-        configurable: false,
-        /**
-         * @this {IDBObjectStoreFull}
-         * @returns {string}
-         */
-        get: function get() {
-          return this.__name;
+      Object.defineProperties(this, {
+        __currentName: {
+          get: function get() {
+            return '__pendingName' in this ? this.__pendingName : this.name;
+          }
         },
-        /**
-         * @param {string} name
-         * @this {IDBObjectStoreFull}
-         * @returns {void}
-         */
-        set: function set(name) {
-          var me = this;
-          name = convertToDOMString(name);
-          var oldName = me.name;
-          IDBObjectStoreAlias.__invalidStateIfDeleted(me);
-          IDBTransaction.__assertVersionChange(me.transaction);
-          IDBTransaction.__assertActive(me.transaction);
-          if (oldName === name) {
-            return;
-          }
-          if (me.__idbdb.__objectStores[name] && !me.__idbdb.__objectStores[name].__pendingDelete) {
-            throw createDOMException('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
-          }
-          me.__name = name;
-          var oldStore = me.__idbdb.__objectStores[oldName];
-          oldStore.__name = name; // Fix old references
-          me.__idbdb.__objectStores[name] = oldStore; // Ensure new reference accessible
-          delete me.__idbdb.__objectStores[oldName]; // Ensure won't be found
+        name: {
+          enumerable: false,
+          configurable: false,
+          /**
+           * @this {IDBObjectStoreFull}
+           * @returns {string}
+           */
+          get: function get() {
+            return this.__name;
+          },
+          /**
+           * @param {string} name
+           * @this {IDBObjectStoreFull}
+           * @returns {void}
+           */
+          set: function set(name) {
+            var me = this;
+            name = convertToDOMString(name);
+            var oldName = me.name;
+            IDBObjectStoreAlias.__invalidStateIfDeleted(me);
+            IDBTransaction.__assertVersionChange(me.transaction);
+            IDBTransaction.__assertActive(me.transaction);
+            if (oldName === name) {
+              return;
+            }
+            if (Object.hasOwn(me.__idbdb.__objectStores, name) && !me.__idbdb.__objectStores[name].__pendingDelete) {
+              throw createDOMException('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
+            }
+            me.__name = name;
+            var oldStore = me.__idbdb.__objectStores[oldName];
+            oldStore.__name = name; // Fix old references
+            me.__idbdb.__objectStores[name] = oldStore; // Ensure new reference accessible
+            delete me.__idbdb.__objectStores[oldName]; // Ensure won't be found
 
-          me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(oldName), 1, name);
-          var oldHandle = /** @type {IDBObjectStoreFull} */
-          /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__storeHandles[oldName];
-          oldHandle.__name = name; // Fix old references
-          /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
-          me.transaction.__storeHandles[name] = oldHandle; // Ensure new reference accessible
+            me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(oldName), 1, name);
+            var oldHandle = /** @type {IDBObjectStoreFull} */
+            /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__storeHandles[oldName];
+            oldHandle.__name = name; // Fix old references
+            /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
+            me.transaction.__storeHandles[name] = oldHandle; // Ensure new reference accessible
 
-          me.__pendingName = oldName;
-          var sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
-          var sqlValues = [escapeSQLiteStatement(name), escapeSQLiteStatement(oldName)];
-          if (CFG.DEBUG) {
-            console.log(sql, sqlValues);
-          }
-          /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
-          me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
-            tx.executeSql(sql, sqlValues, function (tx) {
-              // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
-              var sql = 'ALTER TABLE ' + escapeStoreNameForSQL(oldName) + ' RENAME TO ' + escapeStoreNameForSQL(name);
-              if (CFG.DEBUG) {
-                console.log(sql);
-              }
-              tx.executeSql(sql, [], function () {
-                delete me.__pendingName;
-                success();
+            me.__pendingName = oldName;
+            var sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
+            var sqlValues = [escapeSQLiteStatement(name), escapeSQLiteStatement(oldName)];
+            if (CFG.DEBUG) {
+              console.log(sql, sqlValues);
+            }
+            /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
+            me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
+              tx.executeSql(sql, sqlValues, function (tx) {
+                // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
+                var sql = 'ALTER TABLE ' + escapeStoreNameForSQL(oldName) + ' RENAME TO ' + escapeStoreNameForSQL(name);
+                if (CFG.DEBUG) {
+                  console.log(sql);
+                }
+                tx.executeSql(sql, [], function () {
+                  delete me.__pendingName;
+                  success();
+                });
+              }, function (tx, err) {
+                error(err);
+                return false;
               });
-            }, function (tx, err) {
-              error(err);
-              return false;
             });
-          });
+          }
         }
       });
     }
@@ -8015,7 +8061,7 @@
     var transaction = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     db.__versionTransaction;
     var storeHandles = transaction.__storeHandles;
-    if (!storeHandles[storeName] ||
+    if (!Object.hasOwn(storeHandles, storeName) ||
     // These latter conditions are to allow store
     //   recreation to create new clone object
     storeHandles[storeName].__pendingDelete || storeHandles[storeName].__deleted) {
@@ -8361,7 +8407,6 @@
         return false;
       });
       return undefined;
-      // eslint-disable-next-line sonarjs/no-invariant-returns -- Convenient
     }).catch(function (err) {
       /**
        * @returns {void}
@@ -8792,7 +8837,7 @@
     if (!index || index.__deleted) {
       throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.__currentName);
     }
-    if (!me.__indexHandles[indexName] || me.__indexes[indexName].__pendingDelete || me.__indexes[indexName].__deleted) {
+    if (!Object.hasOwn(me.__indexHandles, indexName) || me.__indexes[indexName].__pendingDelete || me.__indexes[indexName].__deleted) {
       me.__indexHandles[indexName] = IDBIndex.__clone(index, me);
     }
     return me.__indexHandles[indexName];
@@ -8822,7 +8867,7 @@
     IDBTransaction.__assertVersionChange(me.transaction);
     IDBObjectStore.__invalidStateIfDeleted(me);
     IDBTransaction.__assertActive(me.transaction);
-    if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted && !me.__indexes[indexName].__pendingDelete) {
+    if (Object.hasOwn(me.__indexes, indexName) && !me.__indexes[indexName].__deleted && !me.__indexes[indexName].__pendingDelete) {
       throw createDOMException('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.__currentName);
     }
     keyPath = convertToSequenceDOMString(keyPath);
@@ -8832,7 +8877,7 @@
     if (Array.isArray(keyPath) && optionalParameters && optionalParameters.multiEntry) {
       throw createDOMException('InvalidAccessError', 'The keyPath argument was an array and the multiEntry option is true.');
     }
-    optionalParameters = optionalParameters || {};
+    optionalParameters || (optionalParameters = {});
     /** @type {import('./IDBIndex.js').IDBIndexProperties} */
     var indexProperties = {
       columnName: indexName,
@@ -8870,6 +8915,8 @@
     }
     IDBIndex.__deleteIndex(me, index);
   };
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   defineReadonlyOuterInterface(IDBObjectStore.prototype, readonlyProperties$1);
   defineOuterInterface(IDBObjectStore.prototype, ['name']);
   IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStorePrototype';
@@ -9104,8 +9151,9 @@
 
   /**
    * IDB Database Object.
-   * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
+   * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
    * @class
+   * @throws {TypeError}
    */
   function IDBDatabase() {
     this.__versionTransaction = null;
@@ -9249,7 +9297,7 @@
     if (keyPath !== null && !isValidKeyPath(keyPath)) {
       throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }
-    if (this.__objectStores[storeName] && !this.__objectStores[storeName].__pendingDelete) {
+    if (Object.hasOwn(this.__objectStores, storeName) && !this.__objectStores[storeName].__pendingDelete) {
       throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
     var autoInc = createOptions.autoIncrement;
@@ -9327,6 +9375,7 @@
     ? _toConsumableArray(new Set(
     // to be unique
     convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
+    // eslint-disable-next-line unicorn/require-array-sort-compare -- IndexedDB requires code unit comparison (default behavior)
     )).toSorted() // must be sorted
     : [convertToDOMString(storeNames)];
 
@@ -9341,7 +9390,7 @@
     //   prioritizing readonly but not starving readwrite).
     // Even for readonly transactions, due to [issue 17](https://github.com/nolanlawson/node-websql/issues/17),
     //   we're not currently actually running the SQL requests in parallel.
-    mode = mode || 'readonly';
+    mode || (mode = 'readonly');
     IDBTransaction.__assertNotVersionChange(this.__versionTransaction);
     if (this.__closePending) {
       throw createDOMException('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
@@ -9400,13 +9449,14 @@
           var evt = createEvent('close');
           setTimeout(function () {
             me.dispatchEvent(evt);
-          });
+          }, 0);
         }
       };
       trans.__abortTransaction(createDOMException('AbortError', 'The connection was force-closed: ' + (msg || '')));
     });
     me.__transactions = [];
   };
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   defineOuterInterface(IDBDatabase.prototype, listeners);
   defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties);
   Object.defineProperty(IDBDatabase.prototype, 'constructor', {
@@ -9436,6 +9486,7 @@
    * @returns {void}
    */
   var setFS = function setFS(_fs) {
+    // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
     fs = _fs;
   };
 
@@ -9506,7 +9557,7 @@
     var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : getOrigin();
     var cb = arguments.length > 3 ? arguments[3] : undefined;
     /* eslint-enable default-param-last -- Keep cb at end */
-    if (!connectionQueue[origin][name]) {
+    if (!Object.hasOwn(connectionQueue[origin], name)) {
       connectionQueue[origin][name] = [];
     }
     connectionQueue[origin][name].push({
@@ -9561,7 +9612,7 @@
           setTimeout(function () {
             entry.dispatchEvent(e); // No need to catch errors
             resolve(undefined);
-          });
+          }, 0);
         });
       });
     }, SyncPromise.resolve(undefined)).then(function () {
@@ -9592,7 +9643,7 @@
           } else {
             resolve(undefined);
           }
-        });
+        }, 0);
       });
     });
   }
@@ -9649,7 +9700,7 @@
   function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
     var useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
     if (useMemoryDatabase) {
-      var latestSQLiteDBCached = websqlDBCache[name] ? getLatestCachedWebSQLDB(name) : null;
+      var latestSQLiteDBCached = Object.hasOwn(websqlDBCache, name) ? getLatestCachedWebSQLDB(name) : null;
       if (!latestSQLiteDBCached) {
         console.warn('Could not find a memory database instance to delete.');
         databaseDeleted();
@@ -9747,6 +9798,7 @@
     if (sysdb) {
       success();
     } else {
+      // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
       sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : path.join(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), '1', 'System Database', CFG.DEFAULT_DB_SIZE);
       sysdb.transaction(function (systx) {
         systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], function (systx) {
@@ -9763,6 +9815,7 @@
   /**
    * IDBFactory Class.
    * @see https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
+   * @throws {TypeError}
    * @class
    */
   function IDBFactory() {
@@ -9831,6 +9884,7 @@
     var req = IDBOpenDBRequest.__createInstance();
     var calledDbCreateError = false;
     if (CFG.autoName && name === '') {
+      // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
       name = 'autoNamedDatabase_' + nameCounter++;
     }
     name = String(name); // cast to a string
@@ -9889,7 +9943,7 @@
           req.__done = true;
         }
         var connection = IDBDatabase.__createInstance(db, name, oldVersion, version, data);
-        if (!me.__connections[name]) {
+        if (!Object.hasOwn(me.__connections, name)) {
           me.__connections[name] = [];
         }
         me.__connections[name].push(connection);
@@ -9984,7 +10038,7 @@
                   connection.__upgradeTransaction = null;
                   // We ensure any cache is deleted before any request error events fire and try to reopen
                   if (useDatabaseCache) {
-                    if (name in websqlDBCache) {
+                    if (Object.hasOwn(websqlDBCache, name)) {
                       delete websqlDBCache[name][version];
                     }
                   }
@@ -10009,7 +10063,7 @@
                       dbCreateError(err);
                       return false;
                     });
-                  });
+                  }, 0);
                 };
 
                 // eslint-disable-next-line camelcase -- Clear API
@@ -10082,12 +10136,12 @@
     function openDB(oldVersion) {
       /** @type {DatabaseFull} */
       var db;
-      if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
+      if ((useMemoryDatabase || useDatabaseCache) && Object.hasOwn(websqlDBCache, name) && Object.hasOwn(websqlDBCache[name], version)) {
         db = websqlDBCache[name][version];
       } else {
         db = me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
         if (useDatabaseCache) {
-          if (!(name in websqlDBCache)) {
+          if (!Object.hasOwn(websqlDBCache, name)) {
             websqlDBCache[name] = {};
           }
           websqlDBCache[name][version] = db;
@@ -10101,7 +10155,7 @@
         if (useDatabaseCache) {
           setTimeout(function () {
             dbCreateError(err);
-          });
+          }, 0);
         } else {
           dbCreateError(err);
         }
@@ -10126,7 +10180,7 @@
     addRequestToConnectionQueue(req, name, /* origin */undefined, function () {
       var latestCachedVersion;
       if (useDatabaseCache) {
-        if (!(name in websqlDBCache)) {
+        if (!Object.hasOwn(websqlDBCache, name)) {
           websqlDBCache[name] = {};
         }
         latestCachedVersion = getLatestCachedWebSQLVersion(name);
@@ -10246,7 +10300,7 @@
         /** @type {DatabaseDeleted} */
         function databaseDeleted() {
           sysdbFinishedCbDelete(false, function () {
-            if (useDatabaseCache && name in websqlDBCache) {
+            if (useDatabaseCache && Object.hasOwn(websqlDBCache, name)) {
               delete websqlDBCache[name]; // New calls will treat as though never existed
             }
             delete me.__connections[name];
@@ -10381,7 +10435,7 @@
   * @todo forceClose: Test
   * This is provided to facilitate unit-testing of the
   *  closing of a database connection with a forced flag:
-  * <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+  * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
   * @param {string} dbName
   * @param {Integer} connIdx
   * @param {string} msg
@@ -10405,12 +10459,13 @@
           forceClose(connection);
         });
       });
-    } else if (!me.__connections[dbName]) {
+    } else if (!Object.hasOwn(me.__connections, dbName)) {
       console.log('No database connections with that name to force close');
     } else if (isNullish(connIdx)) {
       me.__connections[dbName].forEach(function (conn) {
         forceClose(conn);
       });
+      // eslint-disable-next-line unicorn/prefer-number-is-safe-integer -- Ok
     } else if (!Number.isInteger(connIdx) || connIdx < 0 || connIdx > me.__connections[dbName].length - 1) {
       throw new TypeError('If providing an argument, __forceClose must be called with a ' + 'numeric index to indicate a specific connection to close');
     } else {
@@ -10428,9 +10483,13 @@
     connectionQueue[origin] = {};
   };
   IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactoryPrototype';
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   Object.defineProperty(IDBFactory, 'prototype', {
     writable: false
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
   var shimIndexedDB = IDBFactory.__createInstance();
 
   /**
@@ -10481,6 +10540,7 @@
 
   /**
    * @class
+   * @throws {TypeError}
    */
   function IDBCursor() {
     throw new TypeError('Illegal constructor');
@@ -10490,7 +10550,7 @@
   /* eslint-disable func-name-matching -- API */
   /**
    * The IndexedDB Cursor Object.
-   * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
+   * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
    * @param {IDBKeyRange} query
    * @param {string} direction
    * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
@@ -10579,22 +10639,16 @@
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       args[_key2] = arguments[_key2];
     }
+    var key = args[0],
+      primaryKey = args[1],
+      tx = args[2],
+      success = args[3],
+      error = args[4],
+      recordsToLoad = args[5];
     if (this.__multiEntryIndex) {
-      var key = args[0],
-        primaryKey = args[1],
-        tx = args[2],
-        success = args[3],
-        error = args[4],
-        recordsToLoad = args[5];
       this.__findMultiEntry(key, primaryKey, tx, success, error, recordsToLoad);
     } else {
-      var _key3 = args[0],
-        _primaryKey = args[1],
-        _tx = args[2],
-        _success = args[3],
-        _error = args[4],
-        _recordsToLoad = args[5];
-      this.__findBasic(_key3, _primaryKey, _tx, _success, _error, _recordsToLoad);
+      this.__findBasic(key, primaryKey, tx, success, error, recordsToLoad);
     }
   };
 
@@ -10623,7 +10677,7 @@
    */
   IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error, recordsToLoad) {
     var continueCall = recordsToLoad !== undefined;
-    recordsToLoad = recordsToLoad || 1;
+    recordsToLoad || (recordsToLoad = 1);
     var me = this;
     var quotedKeyColumnName = sqlQuote(me.__keyColumnName);
     var quotedKey = sqlQuote('key');
@@ -10947,7 +11001,7 @@
       if (!me.__matchedKeys) {
         me.__matchedKeys = {};
       }
-      if (me.__matchedKeys[rowItem.matchingKey]) {
+      if (me.__matchedKeys[rowItem.matchingKey] === true) {
         callback(undefined, undefined, undefined);
         return;
       }
@@ -11075,8 +11129,8 @@
       me.__find(key, primaryKey, tx, triggerSuccess, /** @type {FindError} */
       function () {
         me.__advanceCount = undefined;
-        for (var _len3 = arguments.length, args = new Array(_len3), _key4 = 0; _key4 < _len3; _key4++) {
-          args[_key4] = arguments[_key4];
+        for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+          args[_key3] = arguments[_key3];
         }
         var t = args[0],
           err = args[1];
@@ -11205,6 +11259,7 @@
       if (cmp(me.primaryKey, evaluatedKey) !== 0) {
         throw createDOMException('DataError', 'The key of the supplied value to `update` is not equal to the cursor\'s effective key');
       }
+      // eslint-disable-next-line unicorn/prefer-hoisting-branch-code -- Different
       addToQueue(clonedValue);
     } else {
       var _clonedValue = clone(valueToUpdate);
@@ -11254,18 +11309,23 @@
     }, undefined, me);
   };
   IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   defineReadonlyOuterInterface(IDBCursor.prototype, ['source', 'direction', 'key', 'primaryKey', 'request']);
   Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
   /**
    * @class
+   * @throws {TypeError}
    */
   function IDBCursorWithValue() {
     throw new TypeError('Illegal constructor');
   }
 
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   // @ts-expect-error It's ok
   IDBCursorWithValue.prototype = Object.create(IDBCursor.prototype);
   Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
@@ -11274,6 +11334,8 @@
     configurable: true,
     value: IDBCursorWithValue
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
   var IDBCursorWithValueAlias = IDBCursorWithValue;
   /**
    *
@@ -11281,8 +11343,8 @@
    * @returns {IDBCursorWithValueFull}
    */
   IDBCursorWithValue.__createInstance = function () {
-    for (var _len4 = arguments.length, args = new Array(_len4), _key5 = 0; _key5 < _len4; _key5++) {
-      args[_key5] = arguments[_key5];
+    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      args[_key4] = arguments[_key4];
     }
     /**
      * @class
@@ -11306,6 +11368,8 @@
     // @ts-expect-error It's ok
     return new IDBCursorWithValue();
   };
+
+  /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   defineReadonlyOuterInterface(IDBCursorWithValue.prototype, ['value']);
   IDBCursorWithValue.prototype[Symbol.toStringTag] = 'IDBCursorWithValuePrototype';
   Object.defineProperty(IDBCursorWithValue, 'prototype', {
@@ -11337,7 +11401,7 @@
       });
       return;
     }
-    if (!(prop in CFG)) {
+    if (!Object.hasOwn(CFG, prop)) {
       throw new Error(prop + ' is not a valid configuration property');
     }
     // @ts-expect-error Should not be `never` here!
@@ -11540,7 +11604,7 @@
             setFS(CFG.fs);
           }
           if (CFG.fullIDLSupport) {
-            // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+            // Slow per MDN so off by default! Though apparently needed for WebIDL: https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
 
             Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
             Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
@@ -11577,7 +11641,7 @@
 
       /** @type {GetConfig} */
       IDB.shimIndexedDB.__getConfig = function (prop) {
-        if (!(prop in CFG)) {
+        if (!Object.hasOwn(CFG, prop)) {
           throw new Error(prop + ' is not a valid configuration property');
         }
         return CFG[prop];
@@ -11608,12 +11672,12 @@
     // Workaround to prevent an error in Firefox
     if (!('indexedDB' in IDB) && typeof window !== 'undefined') {
       // 2nd condition avoids problems in Node
-      IDB.indexedDB = /** @type {IDBFactory} */IDB.indexedDB || 'webkitIndexedDB' in IDB && IDB.webkitIndexedDB || 'mozIndexedDB' in IDB && IDB.mozIndexedDB || 'oIndexedDB' in IDB && IDB.oIndexedDB || 'msIndexedDB' in IDB && IDB.msIndexedDB;
+      IDB.indexedDB || (IDB.indexedDB = /** @type {IDBFactory} */
+      'webkitIndexedDB' in IDB && IDB.webkitIndexedDB || 'mozIndexedDB' in IDB && IDB.mozIndexedDB || 'oIndexedDB' in IDB && IDB.oIndexedDB || 'msIndexedDB' in IDB && IDB.msIndexedDB);
     }
 
     // Detect browsers with known IndexedDB issues (e.g. Android pre-4.4)
-    var poorIndexedDbSupport = false;
-    if (typeof navigator !== 'undefined' &&
+    var poorIndexedDbSupport = typeof navigator !== 'undefined' &&
     // Not apparently defined in React Native
     navigator.userAgent && (
     // Ignore Node or other environments
@@ -11621,13 +11685,11 @@
     /Android (?:2|3|4\.[0-3])/.test(navigator.userAgent) && !navigator.userAgent.includes('Chrome') ||
     // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
     (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) &&
-    // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
-    // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
-    // and detect version 9: http://stackoverflow.com/a/26363560/271577
+    // Exclude genuine Safari: https://stackoverflow.com/a/7768006/271577
+    // Detect iOS: https://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
+    // and detect version 9: https://stackoverflow.com/a/26363560/271577
     /(iPad|iPhone|iPod)(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])* o[s\u017F] 9_/i.test(navigator.userAgent) && typeof window !== 'undefined' && !('MSStream' in window) // But avoid IE11
-    )) {
-      poorIndexedDbSupport = true;
-    }
+    );
     if (!CFG.DEFAULT_DB_SIZE) {
       CFG.DEFAULT_DB_SIZE = (
       // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
@@ -11640,10 +11702,10 @@
     if (!CFG.avoidAutoShim && (!IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
       IDB.shimIndexedDB.__useShim();
     } else {
-      IDB.IDBDatabase = IDB.IDBDatabase || 'webkitIDBDatabase' in IDB && IDB.webkitIDBDatabase;
-      IDB.IDBTransaction = IDB.IDBTransaction || 'webkitIDBTransaction' in IDB && IDB.webkitIDBTransaction || {};
-      IDB.IDBCursor = IDB.IDBCursor || 'webkitIDBCursor' in IDB && IDB.webkitIDBCursor;
-      IDB.IDBKeyRange = IDB.IDBKeyRange || 'webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange;
+      IDB.IDBDatabase || (IDB.IDBDatabase = 'webkitIDBDatabase' in IDB && IDB.webkitIDBDatabase);
+      IDB.IDBTransaction || (IDB.IDBTransaction = 'webkitIDBTransaction' in IDB && IDB.webkitIDBTransaction || {});
+      IDB.IDBCursor || (IDB.IDBCursor = 'webkitIDBCursor' in IDB && IDB.webkitIDBCursor);
+      IDB.IDBKeyRange || (IDB.IDBKeyRange = 'webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange);
     }
     return /** @type {ShimmedObject} */IDB;
   }

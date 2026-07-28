@@ -173,7 +173,7 @@
             browserInfo.version = '11';
             browserInfo.isIE = true;
             browserInfo.isMobile = userAgent.includes('Windows Phone');
-        } else if ((offset = userAgent.indexOf('Safari')) !== -1) {
+        } else if (userAgent.includes('Safari')) {
             browserInfo.name = 'Safari';
             browserInfo.isSafari = true;
             browserInfo.isMobile = userAgent.includes('Mobile Safari');
@@ -194,7 +194,7 @@
             browserInfo.version = browserInfo.version.slice(0, offset);
         }
 
-        browserInfo.version = Number.parseFloat(browserInfo.version);
+        browserInfo.version = Number(browserInfo.version);
 
         return browserInfo;
     }
@@ -243,9 +243,9 @@
                     // Ensuring a unique integer everytime, for the sake of index get
                     let r;
                     do {
-                        r = Number.parseInt(Math.random() * (arg || 100000));
-                    }
-                    while (generatedNumbers[r]);
+                        // eslint-disable-next-line unicorn/prefer-number-coercion -- Bug
+                        r = Number.parseInt(Math.random() * (arg || 100000), 10);
+                    } while (Object.hasOwn(generatedNumbers, r));
                     generatedNumbers[r] = true;
                     return r;
                 }

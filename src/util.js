@@ -1,5 +1,4 @@
 /* eslint-disable new-cap -- ToString is how it is defined */
-/* eslint-disable sonarjs/no-control-regex -- Needed */
 import CFG from './CFG.js';
 import expandsOnNFD from './unicode-regex.js';
 
@@ -12,11 +11,11 @@ import expandsOnNFD from './unicode-regex.js';
  * @returns {string}
  */
 function escapeUnmatchedSurrogates (arg) {
-    // http://stackoverflow.com/a/6701665/271577
+    // https://stackoverflow.com/a/6701665/271577
     return arg.replaceAll(
         /([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/gu,
         function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
-            // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
+            // Could add a corresponding surrogate for compatibility with `node-sqlite3`: https://bugs.python.org/issue12569 and https://stackoverflow.com/a/6701665/271577
             //   but Chrome having problems
             if (unmatchedHighSurrogate) {
                 return '^2' + unmatchedHighSurrogate.codePointAt()
@@ -33,14 +32,14 @@ function escapeUnmatchedSurrogates (arg) {
  * @returns {string}
  */
 function escapeNameForSQLiteIdentifier (arg) {
-    // http://stackoverflow.com/a/6701665/271577
+    // https://stackoverflow.com/a/6701665/271577
     return '_' + // Prevent empty string
         escapeUnmatchedSurrogates(
             arg.replaceAll('^', '^^') // Escape our escape
-                // http://www.sqlite.org/src/tktview?name=57c971fc74
+                // https://www.sqlite.org/src/tktview?name=57c971fc74
                 .replaceAll('\0', '^0')
                 // We need to avoid identifiers being treated as duplicates based on SQLite's ASCII-only case-insensitive table and column names
-                // (For SQL in general, however, see http://stackoverflow.com/a/17215009/271577
+                // (For SQL in general, however, see https://stackoverflow.com/a/17215009/271577
                 // See also https://www.sqlite.org/faq.html#q18 re: Unicode (non-ASCII) case-insensitive not working
                 .replaceAll(/([A-Z])/gu, '^$1')
         );
@@ -75,7 +74,7 @@ function unescapeSQLiteResponse (arg) {
  */
 function sqlEscape (arg) {
     // https://www.sqlite.org/lang_keywords.html
-    // http://stackoverflow.com/a/6701665/271577
+    // https://stackoverflow.com/a/6701665/271577
     // There is no need to escape ', `, or [], as
     //   we should always be within double quotes
     // NUL should have already been stripped
@@ -114,7 +113,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
         db = db.replace(
             (CFG.databaseCharacterEscapeList
                 ? new RegExp(CFG.databaseCharacterEscapeList, 'gu')
-                : /[\u0000-\u001F\u007F"*/:<>?\\|]/gu), // eslint-disable-line no-control-regex -- Controls needed
+                : /[\u{0000}-\u{001F}\u{007F}"*/:<>?\\|]/gu), // eslint-disable-line no-control-regex -- Controls needed
             function (n0) {
                 // eslint-disable-next-line unicorn/prefer-code-point -- Switch to `codePointAt`?
                 return '^1' + n0.charCodeAt(0).toString(16).padStart(2, '0');
@@ -302,7 +301,9 @@ function isBinary (obj) {
  * @returns {boolean}
  */
 function isIterable (obj) {
-    return isObj(obj) && Symbol.iterator in obj &&
+    return isObj(obj) &&
+        // eslint-disable-next-line unicorn/no-computed-property-existence-check -- May not be "own"
+        Symbol.iterator in obj &&
         typeof obj[Symbol.iterator] === 'function';
 }
 
@@ -398,7 +399,7 @@ function defineReadonlyProperties (obj, props, getter = null) {
     props = typeof props === 'string' ? [props] : props;
     props.forEach(function (prop) {
         let o;
-        if (getter && prop in getter) {
+        if (getter && Object.hasOwn(getter, prop)) {
             o = getter[prop];
         } else {
             Object.defineProperty(obj, '__' + prop, {
@@ -438,7 +439,7 @@ function isIdentifier (item) {
     // ID_Continue (includes Other_ID_Continue)
     const UnicodeIDContinue = CFG.UnicodeIDContinue || '[$0-9A-Z_a-z]';
     const IdentifierStart = '(?:' + UnicodeIDStart + '|[$_])';
-    const IdentifierPart = '(?:' + UnicodeIDContinue + '|[$_\u200C\u200D])';
+    const IdentifierPart = '(?:' + UnicodeIDContinue + '|[$_\u{200C}\u{200D}])';
     return (new RegExp('^' + IdentifierStart + IdentifierPart + '*$', 'u')).test(item);
 }
 
@@ -462,7 +463,7 @@ function isValidKeyPathString (keyPathString) {
 function isValidKeyPath (keyPath) {
     return isValidKeyPathString(keyPath) || (
         Array.isArray(keyPath) && Boolean(keyPath.length) &&
-            // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
+            // Convert array from sparse to dense https://www.2ality.com/2012/06/dense-arrays.html
             // See also https://heycam.github.io/webidl/#idl-DOMString
             [...keyPath].every((pathComponent) => {
                 return isValidKeyPathString(pathComponent);

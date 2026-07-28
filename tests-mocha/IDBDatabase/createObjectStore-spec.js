@@ -24,7 +24,7 @@ describe('IDBDatabase.createObjectStore', function () {
                     expect(store).to.be.an.instanceOf(IDBObjectStore);
                     expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
                     expect(store.name).to.equal('My Store');
-                    expect(store.keyPath).equal(null);
+                    expect(store.keyPath).to.be.null;
                     expect(store.indexNames).to.have.lengthOf(0);
                     if (env.isShimmed || !env.browser.isIE) {
                         expect(store.autoIncrement).equal(false); // IE doesn't have this property
@@ -56,7 +56,7 @@ describe('IDBDatabase.createObjectStore', function () {
                     expect(store).to.be.an.instanceOf(IDBObjectStore);
                     expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
                     expect(store.name).to.equal('My Store');
-                    expect(store.keyPath).equal(null);
+                    expect(store.keyPath).to.be.null;
                     expect(store.indexNames).to.have.lengthOf(0);
                     if (env.isShimmed || !env.browser.isIE) {
                         expect(store.autoIncrement).equal(true); // IE doesn't have this property

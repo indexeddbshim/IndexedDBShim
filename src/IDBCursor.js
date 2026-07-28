@@ -58,6 +58,7 @@ import CFG from './CFG.js';
 
 /**
  * @class
+ * @throws {TypeError}
  */
 function IDBCursor () {
     throw new TypeError('Illegal constructor');
@@ -67,7 +68,7 @@ const IDBCursorAlias = IDBCursor;
 /* eslint-disable func-name-matching -- API */
 /**
  * The IndexedDB Cursor Object.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
  * @param {IDBKeyRange} query
  * @param {string} direction
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
@@ -151,11 +152,10 @@ IDBCursor.__createInstance = function (...args) {
  * @returns {void}
  */
 IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
+    const [key, primaryKey, tx, success, error, recordsToLoad] = args;
     if (this.__multiEntryIndex) {
-        const [key, primaryKey, tx, success, error, recordsToLoad] = args;
         this.__findMultiEntry(key, primaryKey, tx, success, error, recordsToLoad);
     } else {
-        const [key, primaryKey, tx, success, error, recordsToLoad] = args;
         this.__findBasic(key, primaryKey, tx, success, error, recordsToLoad);
     }
 };
@@ -185,7 +185,7 @@ IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recor
  */
 IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error, recordsToLoad) {
     const continueCall = recordsToLoad !== undefined;
-    recordsToLoad = recordsToLoad || 1;
+    recordsToLoad ||= 1;
 
     const me = this;
     const quotedKeyColumnName = util.sqlQuote(me.__keyColumnName);
@@ -496,7 +496,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
         if (!me.__matchedKeys) {
             me.__matchedKeys = {};
         }
-        if (me.__matchedKeys[rowItem.matchingKey]) {
+        if (me.__matchedKeys[rowItem.matchingKey] === true) {
             callback(undefined, undefined, undefined);
             return;
         }
@@ -779,6 +779,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
         if (cmp(me.primaryKey, evaluatedKey) !== 0) {
             throw createDOMException('DataError', 'The key of the supplied value to `update` is not equal to the cursor\'s effective key');
         }
+        // eslint-disable-next-line unicorn/prefer-hoisting-branch-code -- Different
         addToQueue(clonedValue);
     } else {
         const clonedValue = Sca.clone(valueToUpdate);
@@ -836,6 +837,7 @@ IDBCursor.prototype.delete = function () {
 
 IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineReadonlyOuterInterface(
     IDBCursor.prototype,
     ['source', 'direction', 'key', 'primaryKey', 'request']
@@ -843,14 +845,17 @@ util.defineReadonlyOuterInterface(
 Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 /**
  * @class
+ * @throws {TypeError}
  */
 function IDBCursorWithValue () {
     throw new TypeError('Illegal constructor');
 }
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 // @ts-expect-error It's ok
 IDBCursorWithValue.prototype = Object.create(IDBCursor.prototype);
 Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
@@ -859,6 +864,7 @@ Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
     configurable: true,
     value: IDBCursorWithValue
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 const IDBCursorWithValueAlias = IDBCursorWithValue;
 /**
@@ -884,12 +890,13 @@ IDBCursorWithValue.__createInstance = function (...args) {
     return new IDBCursorWithValue();
 };
 
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineReadonlyOuterInterface(IDBCursorWithValue.prototype, ['value']);
-
 IDBCursorWithValue.prototype[Symbol.toStringTag] = 'IDBCursorWithValuePrototype';
 
 Object.defineProperty(IDBCursorWithValue, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 export {IDBCursor, IDBCursorWithValue};

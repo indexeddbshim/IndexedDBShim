@@ -40,7 +40,7 @@ function setConfig (prop, val) {
         });
         return;
     }
-    if (!(prop in CFG)) {
+    if (!Object.hasOwn(CFG, prop)) {
         throw new Error(prop + ' is not a valid configuration property');
     }
     // @ts-expect-error Should not be `never` here!
@@ -264,7 +264,7 @@ function setGlobalVars (idb, initialConfig) {
                     setFS(CFG.fs);
                 }
                 if (CFG.fullIDLSupport) {
-                    // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+                    // Slow per MDN so off by default! Though apparently needed for WebIDL: https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
 
                     Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
                     Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
@@ -303,7 +303,7 @@ function setGlobalVars (idb, initialConfig) {
 
         /** @type {GetConfig} */
         IDB.shimIndexedDB.__getConfig = function (prop) {
-            if (!(prop in CFG)) {
+            if (!Object.hasOwn(CFG, prop)) {
                 throw new Error(prop + ' is not a valid configuration property');
             }
             return CFG[prop];
@@ -332,16 +332,16 @@ function setGlobalVars (idb, initialConfig) {
 
     // Workaround to prevent an error in Firefox
     if (!('indexedDB' in IDB) && typeof window !== 'undefined') { // 2nd condition avoids problems in Node
-        IDB.indexedDB = /** @type {IDBFactory} */ (IDB.indexedDB ||
+        IDB.indexedDB ||= /** @type {IDBFactory} */ (
             ('webkitIndexedDB' in IDB && IDB.webkitIndexedDB) ||
             ('mozIndexedDB' in IDB && IDB.mozIndexedDB) ||
             ('oIndexedDB' in IDB && IDB.oIndexedDB) ||
-            ('msIndexedDB' in IDB && IDB.msIndexedDB));
+            ('msIndexedDB' in IDB && IDB.msIndexedDB)
+        );
     }
 
     // Detect browsers with known IndexedDB issues (e.g. Android pre-4.4)
-    let poorIndexedDbSupport = false;
-    if (
+    const poorIndexedDbSupport = (
         typeof navigator !== 'undefined' &&
         // Not apparently defined in React Native
         navigator.userAgent &&
@@ -353,17 +353,15 @@ function setGlobalVars (idb, initialConfig) {
             ) ||
             (
                 // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
-                (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
-                // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
-                // and detect version 9: http://stackoverflow.com/a/26363560/271577
+                (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) && // Exclude genuine Safari: https://stackoverflow.com/a/7768006/271577
+                // Detect iOS: https://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
+                // and detect version 9: https://stackoverflow.com/a/26363560/271577
                 (/(iPad|iPhone|iPod).* os 9_/ui).test(navigator.userAgent) &&
                 (typeof window !== 'undefined' &&
                 !('MSStream' in window)) // But avoid IE11
             )
         )
-    ) {
-        poorIndexedDbSupport = true;
-    }
+    );
     if (!CFG.DEFAULT_DB_SIZE) {
         CFG.DEFAULT_DB_SIZE = (
             ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
@@ -385,13 +383,13 @@ function setGlobalVars (idb, initialConfig) {
     ) {
         IDB.shimIndexedDB.__useShim();
     } else {
-        IDB.IDBDatabase = IDB.IDBDatabase ||
+        IDB.IDBDatabase ||=
             ('webkitIDBDatabase' in IDB && IDB.webkitIDBDatabase);
-        IDB.IDBTransaction = IDB.IDBTransaction ||
+        IDB.IDBTransaction ||=
             ('webkitIDBTransaction' in IDB && IDB.webkitIDBTransaction) || {};
-        IDB.IDBCursor = IDB.IDBCursor ||
+        IDB.IDBCursor ||=
             ('webkitIDBCursor' in IDB && IDB.webkitIDBCursor);
-        IDB.IDBKeyRange = IDB.IDBKeyRange ||
+        IDB.IDBKeyRange ||=
             ('webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange);
     }
     return /** @type {ShimmedObject} */ (IDB);

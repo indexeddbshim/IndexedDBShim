@@ -163,10 +163,12 @@ describe('IDBDatabase.transaction', function () {
                 expect(store3.transaction).to.equal(tx3);
 
                 tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                    if (tx1.oncomplete.calledThrice) {
-                        db.close();
-                        done();
+                    if (!tx1.oncomplete.calledThrice) {
+                        return;
                     }
+
+                    db.close();
+                    done();
                 });
             });
         });

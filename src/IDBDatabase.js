@@ -23,8 +23,9 @@ const readonlyProperties = ['name', 'version', 'objectStoreNames'];
 
 /**
  * IDB Database Object.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
+ * @throws {TypeError}
  */
 function IDBDatabase () {
     this.__versionTransaction = null;
@@ -165,7 +166,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }
 
-    if (this.__objectStores[storeName] && !this.__objectStores[storeName].__pendingDelete) {
+    if (Object.hasOwn(this.__objectStores, storeName) && !this.__objectStores[storeName].__pendingDelete) {
         throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
 
@@ -244,6 +245,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
         // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
         ? [...new Set( // to be unique
             util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
+            // eslint-disable-next-line unicorn/require-array-sort-compare -- IndexedDB requires code unit comparison (default behavior)
         )].toSorted() // must be sorted
         : [util.convertToDOMString(storeNames)];
 
@@ -258,7 +260,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     //   prioritizing readonly but not starving readwrite).
     // Even for readonly transactions, due to [issue 17](https://github.com/nolanlawson/node-websql/issues/17),
     //   we're not currently actually running the SQL requests in parallel.
-    mode = mode || 'readonly';
+    mode ||= 'readonly';
 
     IDBTransaction.__assertNotVersionChange(this.__versionTransaction);
     if (this.__closePending) {
@@ -321,7 +323,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
                 const evt = createEvent('close');
                 setTimeout(() => {
                     me.dispatchEvent(evt);
-                });
+                }, 0);
             }
         };
         trans.__abortTransaction(createDOMException(
@@ -331,7 +333,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     });
     me.__transactions = [];
 };
-
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineOuterInterface(IDBDatabase.prototype, listeners);
 util.defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties);
 
@@ -345,5 +347,6 @@ Object.defineProperty(IDBDatabase.prototype, 'constructor', {
 Object.defineProperty(IDBDatabase, 'prototype', {
     writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 export default IDBDatabase;
