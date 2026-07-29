@@ -1,11 +1,11 @@
 # CHANGES for indexeddbshim
 
-## 17.0.0 (unreleased)
+## 17.0.0
 
 BREAKING CHANGES:
 - Requires Node ^22.18.0 || >= 24.11.0
 
-- chore: update canvas, devDeps.
+- chore: update canvas, typeson, typeson-registry, devDeps.
 
 ## 16.1.0
 
