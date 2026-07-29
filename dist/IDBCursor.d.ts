@@ -93,6 +93,7 @@ export type AnyValue = any;
  */
 /**
  * @class
+ * @throws {TypeError}
  */
 export function IDBCursor(): void;
 export class IDBCursor {
@@ -251,7 +252,7 @@ export class IDBCursor {
 export namespace IDBCursor {
     /**
      * The IndexedDB Cursor Object.
-     * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
+     * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
      * @param {IDBKeyRange} query
      * @param {string} direction
      * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
@@ -273,6 +274,7 @@ export namespace IDBCursor {
 }
 /**
  * @class
+ * @throws {TypeError}
  */
 export function IDBCursorWithValue(): void;
 export class IDBCursorWithValue {

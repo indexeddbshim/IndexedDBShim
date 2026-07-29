@@ -87,7 +87,8 @@ export function executeFetchIndexData(count: number | null, unboundedDisallowed:
  */
 /**
  * IDB Index.
- * @see http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
+ * @see https://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
+ * @throws {TypeError}
  * @class
  */
 export function IDBIndex(): void;

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v16.1.0 - 7/28/2026 */
+/*! indexeddbshim - v17.0.0 - 7/28/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -11702,10 +11702,12 @@
     if (!CFG.avoidAutoShim && (!IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
       IDB.shimIndexedDB.__useShim();
     } else {
-      IDB.IDBDatabase || (IDB.IDBDatabase = 'webkitIDBDatabase' in IDB && IDB.webkitIDBDatabase);
-      IDB.IDBTransaction || (IDB.IDBTransaction = 'webkitIDBTransaction' in IDB && IDB.webkitIDBTransaction || {});
-      IDB.IDBCursor || (IDB.IDBCursor = 'webkitIDBCursor' in IDB && IDB.webkitIDBCursor);
-      IDB.IDBKeyRange || (IDB.IDBKeyRange = 'webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange);
+      /* eslint-disable unicorn/logical-assignment-operators -- TS */
+      IDB.IDBDatabase = IDB.IDBDatabase || 'webkitIDBDatabase' in IDB && IDB.webkitIDBDatabase;
+      IDB.IDBTransaction = IDB.IDBTransaction || 'webkitIDBTransaction' in IDB && IDB.webkitIDBTransaction || {};
+      IDB.IDBCursor = IDB.IDBCursor || 'webkitIDBCursor' in IDB && IDB.webkitIDBCursor;
+      IDB.IDBKeyRange = IDB.IDBKeyRange || 'webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange;
+      /* eslint-enable unicorn/logical-assignment-operators -- TS */
     }
     return /** @type {ShimmedObject} */IDB;
   }

@@ -115,8 +115,9 @@ export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (resu
  */
 /**
  * The IndexedDB Transaction.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
  * @class
+ * @throws {TypeError}
  */
 declare function IDBTransaction(): void;
 declare class IDBTransaction {

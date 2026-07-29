@@ -48,8 +48,9 @@ export type IDBDatabaseFull = IDBDatabase & EventTarget & {
  */
 /**
  * IDB Database Object.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
+ * @throws {TypeError}
  */
 declare function IDBDatabase(): void;
 declare class IDBDatabase {

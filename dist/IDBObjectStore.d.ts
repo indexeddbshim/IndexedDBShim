@@ -33,8 +33,9 @@ export type KeyValueArray = [import("./Key.js").Key, import("./Key.js").Value];
  */
 /**
  * IndexedDB Object Store.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
  * @class
+ * @throws {TypeError}
  */
 declare function IDBObjectStore(): void;
 declare class IDBObjectStore {

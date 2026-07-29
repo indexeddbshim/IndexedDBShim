@@ -22,7 +22,7 @@ export function setSQLForKeyRange(range: IDBKeyRangeFull | undefined, quotedKeyC
 */
 /**
  * The IndexedDB KeyRange object.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
  * @throws {TypeError}
  * @class
  */

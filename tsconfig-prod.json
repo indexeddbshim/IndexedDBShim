@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "lib": ["DOM", "es2023"],
+    "types": ["node", "websql"],
     "moduleResolution": "nodenext",
     "module": "NodeNext",
     "allowJs": true,
@@ -12,6 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "target": "es2017",
+    "rootDir": "src",
     "outDir": "dist"
   },
   "include": ["src/**/*.js", "typings/shimIndexedDB.d.ts"],

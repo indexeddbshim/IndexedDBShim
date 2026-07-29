@@ -1,4 +1,4 @@
-export type IDBOpenDBRequestFull = IDBRequestFull & IDBOpenDBRequest & {};
+export type IDBOpenDBRequestFull = IDBRequestFull & IDBOpenDBRequest;
 export type IDBRequestFull = IDBRequest & EventTarget & import("eventtargeter").ShimEventTarget & {
     transaction: import("./IDBTransaction.js").IDBTransactionFull;
     __done: boolean;
@@ -15,8 +15,9 @@ export type IDBRequestFull = IDBRequest & EventTarget & import("eventtargeter").
 };
 /**
  * The IDBRequest Object that is returns for all async calls.
- * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
+ * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
  * @class
+ * @throws {TypeError}
  */
 export function IDBRequest(): void;
 export class IDBRequest {
@@ -57,11 +58,12 @@ export namespace IDBRequest {
     function __createInstance(): IDBRequestFull;
 }
 /**
- * @typedef {IDBRequestFull & IDBOpenDBRequest & {}} IDBOpenDBRequestFull
+ * @typedef {IDBRequestFull & IDBOpenDBRequest} IDBOpenDBRequestFull
  */
 /**
  * The IDBOpenDBRequest called when a database is opened.
  * @class
+ * @throws {TypeError}
  */
 export function IDBOpenDBRequest(): void;
 export class IDBOpenDBRequest {

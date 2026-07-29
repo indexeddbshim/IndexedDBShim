@@ -383,14 +383,16 @@ function setGlobalVars (idb, initialConfig) {
     ) {
         IDB.shimIndexedDB.__useShim();
     } else {
-        IDB.IDBDatabase ||=
+        /* eslint-disable unicorn/logical-assignment-operators -- TS */
+        IDB.IDBDatabase = IDB.IDBDatabase ||
             ('webkitIDBDatabase' in IDB && IDB.webkitIDBDatabase);
-        IDB.IDBTransaction ||=
+        IDB.IDBTransaction = IDB.IDBTransaction ||
             ('webkitIDBTransaction' in IDB && IDB.webkitIDBTransaction) || {};
-        IDB.IDBCursor ||=
+        IDB.IDBCursor = IDB.IDBCursor ||
             ('webkitIDBCursor' in IDB && IDB.webkitIDBCursor);
-        IDB.IDBKeyRange ||=
+        IDB.IDBKeyRange = IDB.IDBKeyRange ||
             ('webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange);
+        /* eslint-enable unicorn/logical-assignment-operators -- TS */
     }
     return /** @type {ShimmedObject} */ (IDB);
 }
