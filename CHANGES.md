@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- chore: update devDeps.
+- chore: use more maintained fork of `node-static`
+
 ## 17.0.0
 
 BREAKING CHANGES:
