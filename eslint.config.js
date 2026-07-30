@@ -34,12 +34,6 @@ const rules = {
     'unicorn/no-declarations-before-early-exit': 'off',
     'unicorn/prefer-simple-condition-first': 'off',
 
-    // Until disabled in eslint-config-ash-nazg
-    'unicorn/prefer-then-catch': 'off',
-    'unicorn/max-nested-calls': 'off',
-    'unicorn/no-confusing-array-splice': 'off',
-    'sonarjs/super-linear-regex': 'off',
-
     // If not counted by the testing suite, then flags what is expected
     'sonarjs/no-trivial-assertions': 'off',
 
