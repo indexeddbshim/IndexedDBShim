@@ -1,5 +1,5 @@
 import customOpenDatabase from 'websql-configurable/custom/index.js';
-import SQLiteDatabase from 'websql-configurable/lib/sqlite/SQLiteDatabase.js';
+import SQLiteDatabase from './nodeSQLiteDatabase.js';
 import CFG from './CFG.js';
 
 /**
@@ -12,11 +12,9 @@ function wrappedSQLiteDatabase (name) {
         db._db.configure('busyTimeout', /** @type {number} */ (CFG.sqlBusyTimeout)); // Default is 1000
     }
     if (CFG.sqlTrace) {
-        // @ts-expect-error native API?
         db._db.configure('trace', CFG.sqlTrace);
     }
     if (CFG.sqlProfile) {
-        // @ts-expect-error native API?
         db._db.configure('profile', CFG.sqlProfile);
     }
     return db;
