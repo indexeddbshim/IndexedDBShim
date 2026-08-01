@@ -13,7 +13,11 @@ CFG.win = {openDatabase: nodeWebSQL};
  * @returns {import('./setGlobalVars.js').ShimmedObject|Window}
  */
 const __setGlobalVars = function (idb, initialConfig = {}) {
-    const obj = setGlobalVars(idb, {fs, ...initialConfig});
+    const obj = setGlobalVars(idb, {
+        fs,
+        escapeNULForSQLiteStatements: false,
+        ...initialConfig
+    });
     /* istanbul ignore next -- TS guard */
     if (!obj.shimIndexedDB) {
         return obj;

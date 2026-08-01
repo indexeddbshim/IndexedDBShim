@@ -51,7 +51,12 @@ function escapeNameForSQLiteIdentifier (arg) {
  * @returns {string}
  */
 function escapeSQLiteStatement (arg) {
-    return escapeUnmatchedSurrogates(arg.replaceAll('^', '^^').replaceAll('\0', '^0'));
+    const escaped = arg.replaceAll('^', '^^');
+    return escapeUnmatchedSurrogates(
+        CFG.escapeNULForSQLiteStatements === false
+            ? escaped
+            : escaped.replaceAll('\0', '^0')
+    );
 }
 
 /**
@@ -59,7 +64,11 @@ function escapeSQLiteStatement (arg) {
  * @returns {string}
  */
 function unescapeSQLiteResponse (arg) {
-    return unescapeUnmatchedSurrogates(arg)
+    const unescaped = unescapeUnmatchedSurrogates(arg);
+    if (CFG.escapeNULForSQLiteStatements === false) {
+        return unescaped.replaceAll('^^', '^');
+    }
+    return unescaped
         .replaceAll(/(\^+)0/gu, (_, esc) => {
             return esc.length % 2
                 ? esc.slice(1) + '\0'

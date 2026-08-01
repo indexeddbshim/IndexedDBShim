@@ -1,12 +1,11 @@
-/*! indexeddbshim - v17.0.0 - 7/28/2026 */
+/*! indexeddbshim - v17.0.0 - 7/31/2026 */
 
 'use strict';
 
 var fs$1 = require('node:fs');
 var path = require('path');
 var require$$0 = require('fs');
-var require$$2 = require('events');
-var require$$0$1 = require('util');
+var require$$2 = require('util');
 
 function _typeof(obj) {
   "@babel/helpers - typeof";
@@ -980,6 +979,7 @@ function setPrototypeOfCustomEvent() {
  *   sqlBusyTimeout: number,
  *   sqlTrace: () => void,
  *   sqlProfile: () => void,
+ *   escapeNULForSQLiteStatements: boolean,
  *   createIndexes: boolean
  * }} ConfigValues
  */
@@ -1134,8 +1134,8 @@ val => {
 // Callback not used by default
 'sqlProfile',
 // Callback not used by default
-
-'createIndexes'].forEach(prop => {
+// Defaults to true except in Node builds where we can preserve literal NUL with better-sqlite3
+'escapeNULForSQLiteStatements', 'createIndexes'].forEach(prop => {
   /** @type {(val: any) => void} */
   let validator;
   if (Array.isArray(prop)) {
@@ -1215,7 +1215,8 @@ function escapeNameForSQLiteIdentifier(arg) {
  * @returns {string}
  */
 function escapeSQLiteStatement(arg) {
-  return escapeUnmatchedSurrogates(arg.replaceAll('^', '^^').replaceAll('\0', '^0'));
+  const escaped = arg.replaceAll('^', '^^');
+  return escapeUnmatchedSurrogates(CFG.escapeNULForSQLiteStatements === false ? escaped : escaped.replaceAll('\0', '^0'));
 }
 
 /**
@@ -1223,7 +1224,11 @@ function escapeSQLiteStatement(arg) {
  * @returns {string}
  */
 function unescapeSQLiteResponse(arg) {
-  return unescapeUnmatchedSurrogates(arg).replaceAll(/(\^+)0/gu, (_, esc) => {
+  const unescaped = unescapeUnmatchedSurrogates(arg);
+  if (CFG.escapeNULForSQLiteStatements === false) {
+    return unescaped.replaceAll('^^', '^');
+  }
+  return unescaped.replaceAll(/(\^+)0/gu, (_, esc) => {
     return esc.length % 2 ? esc.slice(1) + '\0' : _;
   }).replaceAll('^^', '^');
 }
@@ -2885,14 +2890,22 @@ const types = {
         encoded[i] = encodedItem;
       }
       encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
-      return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
+      let encodedKey = JSON.stringify(encoded);
+      if (CFG.escapeNULForSQLiteStatements === false) {
+        encodedKey = encodedKey.replaceAll('\\u0000', '\0');
+      }
+      return keyTypeToEncodedChar.array + '-' + encodedKey;
     },
     /**
      * @param {string} key
      * @returns {ValueTypeArray}
      */
     decode(key) {
-      const decoded = JSON.parse(key.slice(2));
+      let decodedKey = key.slice(2);
+      if (CFG.escapeNULForSQLiteStatements === false) {
+        decodedKey = decodedKey.replaceAll('\0', '\\u0000');
+      }
+      const decoded = JSON.parse(decodedKey);
       decoded.pop(); // remove the extra item
       for (let i = 0; i < decoded.length; i++) {
         const item = decoded[i];
@@ -10747,21 +10760,21 @@ function requireNextTick() {
   return nextTick;
 }
 
-var queueMicrotask = {};
+var queueMicrotask$1 = {};
 
 var hasRequiredQueueMicrotask;
 function requireQueueMicrotask() {
-  if (hasRequiredQueueMicrotask) return queueMicrotask;
+  if (hasRequiredQueueMicrotask) return queueMicrotask$1;
   hasRequiredQueueMicrotask = 1;
-  queueMicrotask.test = function () {
+  queueMicrotask$1.test = function () {
     return typeof commonjsGlobal.queueMicrotask === 'function';
   };
-  queueMicrotask.install = function (func) {
+  queueMicrotask$1.install = function (func) {
     return function () {
       commonjsGlobal.queueMicrotask(func);
     };
   };
-  return queueMicrotask;
+  return queueMicrotask$1;
 }
 
 var mutation = {};
@@ -10860,11 +10873,11 @@ function requireTimeout() {
   return timeout;
 }
 
-var lib;
-var hasRequiredLib;
-function requireLib() {
-  if (hasRequiredLib) return lib;
-  hasRequiredLib = 1;
+var lib$1;
+var hasRequiredLib$1;
+function requireLib$1() {
+  if (hasRequiredLib$1) return lib$1;
+  hasRequiredLib$1 = 1;
   var types = [requireNextTick(), requireQueueMicrotask(), requireMutation(), requireMessageChannel(), requireStateChange(), requireTimeout()];
   var draining;
   var currentQueue;
@@ -10939,7 +10952,7 @@ function requireLib() {
         return fun.apply(null, array);
     }
   };
-  lib = immediate;
+  lib$1 = immediate;
   function immediate(task) {
     var args = new Array(arguments.length - 1);
     if (arguments.length > 1) {
@@ -10953,11 +10966,11 @@ function requireLib() {
       scheduleDrain();
     }
   }
-  return lib;
+  return lib$1;
 }
 
-var libExports = requireLib();
-var immediate = /*@__PURE__*/getDefaultExportFromCjs(libExports);
+var libExports$1 = requireLib$1();
+var immediate = /*@__PURE__*/getDefaultExportFromCjs(libExports$1);
 
 var tinyQueue;
 var hasRequiredTinyQueue;
@@ -11314,584 +11327,1002 @@ function customOpenDatabase(SQLiteDatabase, opts) {
   return (...args) => openDatabase(args);
 }
 
-var sqlite3$1 = {exports: {}};
+var lib = {exports: {}};
+
+var util = {};
+
+var hasRequiredUtil;
+function requireUtil() {
+  if (hasRequiredUtil) return util;
+  hasRequiredUtil = 1;
+  util.getBooleanOption = (options, key) => {
+    let value = false;
+    if (key in options && typeof (value = options[key]) !== 'boolean') {
+      throw new TypeError(`Expected the "${key}" option to be a boolean`);
+    }
+    return value;
+  };
+  util.cppdb = Symbol();
+  util.inspect = Symbol.for('nodejs.util.inspect.custom');
+  return util;
+}
+
+var sqliteError;
+var hasRequiredSqliteError;
+function requireSqliteError() {
+  if (hasRequiredSqliteError) return sqliteError;
+  hasRequiredSqliteError = 1;
+  class SqliteError extends Error {
+    constructor(message, code) {
+      if (typeof code !== 'string') {
+        throw new TypeError('Expected second argument to be a string');
+      }
+      super('' + message);
+      this.code = code;
+      if (typeof Error.captureStackTrace === 'function') {
+        Error.captureStackTrace(this, SqliteError);
+      }
+    }
+  }
+  Object.defineProperty(SqliteError.prototype, 'name', {
+    value: 'SqliteError',
+    writable: true,
+    enumerable: false,
+    configurable: true
+  });
+  sqliteError = SqliteError;
+  return sqliteError;
+}
+
+var wrappers = {};
+
+var hasRequiredWrappers;
+function requireWrappers() {
+  if (hasRequiredWrappers) return wrappers;
+  hasRequiredWrappers = 1;
+  const {
+    cppdb
+  } = requireUtil();
+  wrappers.prepare = function prepare(sql) {
+    return this[cppdb].prepare(sql, this, false, false);
+  };
+  wrappers.exec = function exec(sql) {
+    this[cppdb].exec(sql);
+    return this;
+  };
+  wrappers.close = function close() {
+    this[cppdb].close();
+    return this;
+  };
+  wrappers.loadExtension = function loadExtension(...args) {
+    this[cppdb].loadExtension(...args);
+    return this;
+  };
+  wrappers.defaultSafeIntegers = function defaultSafeIntegers(...args) {
+    this[cppdb].defaultSafeIntegers(...args);
+    return this;
+  };
+  wrappers.unsafeMode = function unsafeMode(...args) {
+    this[cppdb].unsafeMode(...args);
+    return this;
+  };
+  wrappers.getters = {
+    name: {
+      get: function name() {
+        return this[cppdb].name;
+      },
+      enumerable: true
+    },
+    open: {
+      get: function open() {
+        return this[cppdb].open;
+      },
+      enumerable: true
+    },
+    inTransaction: {
+      get: function inTransaction() {
+        return this[cppdb].inTransaction;
+      },
+      enumerable: true
+    },
+    readonly: {
+      get: function readonly() {
+        return this[cppdb].readonly;
+      },
+      enumerable: true
+    },
+    memory: {
+      get: function memory() {
+        return this[cppdb].memory;
+      },
+      enumerable: true
+    }
+  };
+  return wrappers;
+}
+
+var transaction;
+var hasRequiredTransaction;
+function requireTransaction() {
+  if (hasRequiredTransaction) return transaction;
+  hasRequiredTransaction = 1;
+  const {
+    cppdb
+  } = requireUtil();
+  const controllers = new WeakMap();
+  transaction = function transaction(fn) {
+    if (typeof fn !== 'function') throw new TypeError('Expected first argument to be a function');
+    const db = this[cppdb];
+    const controller = getController(db, this);
+    const {
+      apply
+    } = Function.prototype;
+
+    // Each version of the transaction function has these same properties
+    const properties = {
+      default: {
+        value: wrapTransaction(apply, fn, db, controller.default)
+      },
+      deferred: {
+        value: wrapTransaction(apply, fn, db, controller.deferred)
+      },
+      immediate: {
+        value: wrapTransaction(apply, fn, db, controller.immediate)
+      },
+      exclusive: {
+        value: wrapTransaction(apply, fn, db, controller.exclusive)
+      },
+      database: {
+        value: this,
+        enumerable: true
+      }
+    };
+    Object.defineProperties(properties.default.value, properties);
+    Object.defineProperties(properties.deferred.value, properties);
+    Object.defineProperties(properties.immediate.value, properties);
+    Object.defineProperties(properties.exclusive.value, properties);
+
+    // Return the default version of the transaction function
+    return properties.default.value;
+  };
+
+  // Return the database's cached transaction controller, or create a new one
+  const getController = (db, self) => {
+    let controller = controllers.get(db);
+    if (!controller) {
+      const shared = {
+        commit: db.prepare('COMMIT', self, false, false),
+        rollback: db.prepare('ROLLBACK', self, false, false),
+        savepoint: db.prepare('SAVEPOINT `\t_bs3.\t`', self, false, false),
+        release: db.prepare('RELEASE `\t_bs3.\t`', self, false, false),
+        rollbackTo: db.prepare('ROLLBACK TO `\t_bs3.\t`', self, false, false)
+      };
+      controllers.set(db, controller = {
+        default: Object.assign({
+          begin: db.prepare('BEGIN', self, false, false)
+        }, shared),
+        deferred: Object.assign({
+          begin: db.prepare('BEGIN DEFERRED', self, false, false)
+        }, shared),
+        immediate: Object.assign({
+          begin: db.prepare('BEGIN IMMEDIATE', self, false, false)
+        }, shared),
+        exclusive: Object.assign({
+          begin: db.prepare('BEGIN EXCLUSIVE', self, false, false)
+        }, shared)
+      });
+    }
+    return controller;
+  };
+
+  // Return a new transaction function by wrapping the given function
+  const wrapTransaction = (apply, fn, db, {
+    begin,
+    commit,
+    rollback,
+    savepoint,
+    release,
+    rollbackTo
+  }) => function sqliteTransaction() {
+    let before, after, undo;
+    if (db.inTransaction) {
+      before = savepoint;
+      after = release;
+      undo = rollbackTo;
+    } else {
+      before = begin;
+      after = commit;
+      undo = rollback;
+    }
+    before.run();
+    try {
+      const result = apply.call(fn, this, arguments);
+      if (result && typeof result.then === 'function') {
+        throw new TypeError('Transaction function cannot return a promise');
+      }
+      after.run();
+      return result;
+    } catch (ex) {
+      if (db.inTransaction) {
+        undo.run();
+        if (undo !== rollback) after.run();
+      }
+      throw ex;
+    }
+  };
+  return transaction;
+}
+
+var pragma;
+var hasRequiredPragma;
+function requirePragma() {
+  if (hasRequiredPragma) return pragma;
+  hasRequiredPragma = 1;
+  const {
+    getBooleanOption,
+    cppdb
+  } = requireUtil();
+  pragma = function pragma(source, options) {
+    if (options == null) options = {};
+    if (typeof source !== 'string') throw new TypeError('Expected first argument to be a string');
+    if (typeof options !== 'object') throw new TypeError('Expected second argument to be an options object');
+    const simple = getBooleanOption(options, 'simple');
+    const stmt = this[cppdb].prepare(`PRAGMA ${source}`, this, true, false);
+    return simple ? stmt.pluck().get() : stmt.all();
+  };
+  return pragma;
+}
+
+var explain;
+var hasRequiredExplain;
+function requireExplain() {
+  if (hasRequiredExplain) return explain;
+  hasRequiredExplain = 1;
+  const {
+    cppdb
+  } = requireUtil();
+  explain = function explain(source) {
+    if (typeof source !== 'string') throw new TypeError('Expected first argument to be a string');
+    const stmt = this[cppdb].prepare(`EXPLAIN ${source}`, this, false, true);
+    return stmt.all();
+  };
+  return explain;
+}
+
+var backup;
+var hasRequiredBackup;
+function requireBackup() {
+  if (hasRequiredBackup) return backup;
+  hasRequiredBackup = 1;
+  const fs = require$$0;
+  const path$1 = path;
+  const {
+    promisify
+  } = require$$2;
+  const {
+    cppdb
+  } = requireUtil();
+  const fsAccess = promisify(fs.access);
+  backup = async function backup(filename, options) {
+    if (options == null) options = {};
+
+    // Validate arguments
+    if (typeof filename !== 'string') throw new TypeError('Expected first argument to be a string');
+    if (typeof options !== 'object') throw new TypeError('Expected second argument to be an options object');
+
+    // Interpret options
+    filename = filename.trim();
+    const attachedName = 'attached' in options ? options.attached : 'main';
+    const handler = 'progress' in options ? options.progress : null;
+
+    // Validate interpreted options
+    if (!filename) throw new TypeError('Backup filename cannot be an empty string');
+    if (filename === ':memory:') throw new TypeError('Invalid backup filename ":memory:"');
+    if (typeof attachedName !== 'string') throw new TypeError('Expected the "attached" option to be a string');
+    if (!attachedName) throw new TypeError('The "attached" option cannot be an empty string');
+    if (handler != null && typeof handler !== 'function') throw new TypeError('Expected the "progress" option to be a function');
+
+    // Make sure the specified directory exists
+    await fsAccess(path$1.dirname(filename)).catch(() => {
+      throw new TypeError('Cannot save backup because the directory does not exist');
+    });
+    const isNewFile = await fsAccess(filename).then(() => false, () => true);
+    return runBackup(this[cppdb].backup(this, attachedName, filename, isNewFile), handler || null);
+  };
+  const runBackup = (backup, handler) => {
+    let rate = 0;
+    let useDefault = true;
+    return new Promise((resolve, reject) => {
+      setImmediate(function step() {
+        try {
+          const progress = backup.transfer(rate);
+          if (!progress.remainingPages) {
+            backup.close();
+            resolve(progress);
+            return;
+          }
+          if (useDefault) {
+            useDefault = false;
+            rate = 100;
+          }
+          if (handler) {
+            const ret = handler(progress);
+            if (ret !== undefined) {
+              if (typeof ret === 'number' && ret === ret) rate = Math.max(0, Math.min(0x7fffffff, Math.round(ret)));else throw new TypeError('Expected progress callback to return a number or undefined');
+            }
+          }
+          setImmediate(step);
+        } catch (err) {
+          backup.close();
+          reject(err);
+        }
+      });
+    });
+  };
+  return backup;
+}
+
+var serialize;
+var hasRequiredSerialize;
+function requireSerialize() {
+  if (hasRequiredSerialize) return serialize;
+  hasRequiredSerialize = 1;
+  const {
+    cppdb
+  } = requireUtil();
+  serialize = function serialize(options) {
+    if (options == null) options = {};
+
+    // Validate arguments
+    if (typeof options !== 'object') throw new TypeError('Expected first argument to be an options object');
+
+    // Interpret and validate options
+    const attachedName = 'attached' in options ? options.attached : 'main';
+    if (typeof attachedName !== 'string') throw new TypeError('Expected the "attached" option to be a string');
+    if (!attachedName) throw new TypeError('The "attached" option cannot be an empty string');
+    return this[cppdb].serialize(attachedName);
+  };
+  return serialize;
+}
+
+var _function;
+var hasRequired_function;
+function require_function() {
+  if (hasRequired_function) return _function;
+  hasRequired_function = 1;
+  const {
+    getBooleanOption,
+    cppdb
+  } = requireUtil();
+  _function = function defineFunction(name, options, fn) {
+    // Apply defaults
+    if (options == null) options = {};
+    if (typeof options === 'function') {
+      fn = options;
+      options = {};
+    }
+
+    // Validate arguments
+    if (typeof name !== 'string') throw new TypeError('Expected first argument to be a string');
+    if (typeof fn !== 'function') throw new TypeError('Expected last argument to be a function');
+    if (typeof options !== 'object') throw new TypeError('Expected second argument to be an options object');
+    if (!name) throw new TypeError('User-defined function name cannot be an empty string');
+
+    // Interpret options
+    const safeIntegers = 'safeIntegers' in options ? +getBooleanOption(options, 'safeIntegers') : 2;
+    const deterministic = getBooleanOption(options, 'deterministic');
+    const directOnly = getBooleanOption(options, 'directOnly');
+    const varargs = getBooleanOption(options, 'varargs');
+    let argCount = -1;
+
+    // Determine argument count
+    if (!varargs) {
+      argCount = fn.length;
+      if (!Number.isInteger(argCount) || argCount < 0) throw new TypeError('Expected function.length to be a positive integer');
+      if (argCount > 100) throw new RangeError('User-defined functions cannot have more than 100 arguments');
+    }
+    this[cppdb].function(fn, name, argCount, safeIntegers, deterministic, directOnly);
+    return this;
+  };
+  return _function;
+}
+
+var aggregate;
+var hasRequiredAggregate;
+function requireAggregate() {
+  if (hasRequiredAggregate) return aggregate;
+  hasRequiredAggregate = 1;
+  const {
+    getBooleanOption,
+    cppdb
+  } = requireUtil();
+  aggregate = function defineAggregate(name, options) {
+    // Validate arguments
+    if (typeof name !== 'string') throw new TypeError('Expected first argument to be a string');
+    if (typeof options !== 'object' || options === null) throw new TypeError('Expected second argument to be an options object');
+    if (!name) throw new TypeError('User-defined function name cannot be an empty string');
+
+    // Interpret options
+    const start = 'start' in options ? options.start : null;
+    const step = getFunctionOption(options, 'step', true);
+    const inverse = getFunctionOption(options, 'inverse', false);
+    const result = getFunctionOption(options, 'result', false);
+    const safeIntegers = 'safeIntegers' in options ? +getBooleanOption(options, 'safeIntegers') : 2;
+    const deterministic = getBooleanOption(options, 'deterministic');
+    const directOnly = getBooleanOption(options, 'directOnly');
+    const varargs = getBooleanOption(options, 'varargs');
+    let argCount = -1;
+
+    // Determine argument count
+    if (!varargs) {
+      argCount = Math.max(getLength(step), inverse ? getLength(inverse) : 0);
+      if (argCount > 0) argCount -= 1;
+      if (argCount > 100) throw new RangeError('User-defined functions cannot have more than 100 arguments');
+    }
+    this[cppdb].aggregate(start, step, inverse, result, name, argCount, safeIntegers, deterministic, directOnly);
+    return this;
+  };
+  const getFunctionOption = (options, key, required) => {
+    const value = key in options ? options[key] : null;
+    if (typeof value === 'function') return value;
+    if (value != null) throw new TypeError(`Expected the "${key}" option to be a function`);
+    if (required) throw new TypeError(`Missing required option "${key}"`);
+    return null;
+  };
+  const getLength = ({
+    length
+  }) => {
+    if (Number.isInteger(length) && length >= 0) return length;
+    throw new TypeError('Expected function.length to be a positive integer');
+  };
+  return aggregate;
+}
+
+var table;
+var hasRequiredTable;
+function requireTable() {
+  if (hasRequiredTable) return table;
+  hasRequiredTable = 1;
+  const {
+    cppdb
+  } = requireUtil();
+  table = function defineTable(name, factory) {
+    // Validate arguments
+    if (typeof name !== 'string') throw new TypeError('Expected first argument to be a string');
+    if (!name) throw new TypeError('Virtual table module name cannot be an empty string');
+
+    // Determine whether the module is eponymous-only or not
+    let eponymous = false;
+    if (typeof factory === 'object' && factory !== null) {
+      eponymous = true;
+      factory = defer(parseTableDefinition(factory, 'used', name));
+    } else {
+      if (typeof factory !== 'function') throw new TypeError('Expected second argument to be a function or a table definition object');
+      factory = wrapFactory(factory);
+    }
+    this[cppdb].table(factory, name, eponymous);
+    return this;
+  };
+  function wrapFactory(factory) {
+    return function virtualTableFactory(moduleName, databaseName, tableName, ...args) {
+      const thisObject = {
+        module: moduleName,
+        database: databaseName,
+        table: tableName
+      };
+
+      // Generate a new table definition by invoking the factory
+      const def = apply.call(factory, thisObject, args);
+      if (typeof def !== 'object' || def === null) {
+        throw new TypeError(`Virtual table module "${moduleName}" did not return a table definition object`);
+      }
+      return parseTableDefinition(def, 'returned', moduleName);
+    };
+  }
+  function parseTableDefinition(def, verb, moduleName) {
+    // Validate required properties
+    if (!hasOwnProperty.call(def, 'rows')) {
+      throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition without a "rows" property`);
+    }
+    if (!hasOwnProperty.call(def, 'columns')) {
+      throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition without a "columns" property`);
+    }
+
+    // Validate "rows" property
+    const rows = def.rows;
+    if (typeof rows !== 'function' || Object.getPrototypeOf(rows) !== GeneratorFunctionPrototype) {
+      throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition with an invalid "rows" property (should be a generator function)`);
+    }
+
+    // Validate "columns" property
+    let columns = def.columns;
+    if (!Array.isArray(columns) || !isStringArray(columns = [...columns])) {
+      throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition with an invalid "columns" property (should be an array of strings)`);
+    }
+    if (columns.length !== new Set(columns).size) {
+      throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition with duplicate column names`);
+    }
+    if (!columns.length) {
+      throw new RangeError(`Virtual table module "${moduleName}" ${verb} a table definition with zero columns`);
+    }
+
+    // Validate "parameters" property
+    let parameters;
+    if (hasOwnProperty.call(def, 'parameters')) {
+      parameters = def.parameters;
+      if (!Array.isArray(parameters) || !isStringArray(parameters = [...parameters])) {
+        throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition with an invalid "parameters" property (should be an array of strings)`);
+      }
+    } else {
+      parameters = inferParameters(rows);
+    }
+    if (parameters.length !== new Set(parameters).size) {
+      throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition with duplicate parameter names`);
+    }
+    if (parameters.length > 32) {
+      throw new RangeError(`Virtual table module "${moduleName}" ${verb} a table definition with more than the maximum number of 32 parameters`);
+    }
+    for (const parameter of parameters) {
+      if (columns.includes(parameter)) {
+        throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition with column "${parameter}" which was ambiguously defined as both a column and parameter`);
+      }
+    }
+
+    // Validate "safeIntegers" option
+    let safeIntegers = 2;
+    if (hasOwnProperty.call(def, 'safeIntegers')) {
+      const bool = def.safeIntegers;
+      if (typeof bool !== 'boolean') {
+        throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition with an invalid "safeIntegers" property (should be a boolean)`);
+      }
+      safeIntegers = +bool;
+    }
+
+    // Validate "directOnly" option
+    let directOnly = false;
+    if (hasOwnProperty.call(def, 'directOnly')) {
+      directOnly = def.directOnly;
+      if (typeof directOnly !== 'boolean') {
+        throw new TypeError(`Virtual table module "${moduleName}" ${verb} a table definition with an invalid "directOnly" property (should be a boolean)`);
+      }
+    }
+
+    // Generate SQL for the virtual table definition
+    const columnDefinitions = [...parameters.map(identifier).map(str => `${str} HIDDEN`), ...columns.map(identifier)];
+    return [`CREATE TABLE x(${columnDefinitions.join(', ')});`, wrapGenerator(rows, new Map(columns.map((x, i) => [x, parameters.length + i])), moduleName), parameters, safeIntegers, directOnly];
+  }
+  function wrapGenerator(generator, columnMap, moduleName) {
+    return function* virtualTable(...args) {
+      /*
+      	We must defensively clone any buffers in the arguments, because
+      	otherwise the generator could mutate one of them, which would cause
+      	us to return incorrect values for hidden columns, potentially
+      	corrupting the database.
+       */
+      const output = args.map(x => Buffer.isBuffer(x) ? Buffer.from(x) : x);
+      for (let i = 0; i < columnMap.size; ++i) {
+        output.push(null); // Fill with nulls to prevent gaps in array (v8 optimization)
+      }
+      for (const row of generator(...args)) {
+        if (Array.isArray(row)) {
+          extractRowArray(row, output, columnMap.size, moduleName);
+          yield output;
+        } else if (typeof row === 'object' && row !== null) {
+          extractRowObject(row, output, columnMap, moduleName);
+          yield output;
+        } else {
+          throw new TypeError(`Virtual table module "${moduleName}" yielded something that isn't a valid row object`);
+        }
+      }
+    };
+  }
+  function extractRowArray(row, output, columnCount, moduleName) {
+    if (row.length !== columnCount) {
+      throw new TypeError(`Virtual table module "${moduleName}" yielded a row with an incorrect number of columns`);
+    }
+    const offset = output.length - columnCount;
+    for (let i = 0; i < columnCount; ++i) {
+      output[i + offset] = row[i];
+    }
+  }
+  function extractRowObject(row, output, columnMap, moduleName) {
+    let count = 0;
+    for (const key of Object.keys(row)) {
+      const index = columnMap.get(key);
+      if (index === undefined) {
+        throw new TypeError(`Virtual table module "${moduleName}" yielded a row with an undeclared column "${key}"`);
+      }
+      output[index] = row[key];
+      count += 1;
+    }
+    if (count !== columnMap.size) {
+      throw new TypeError(`Virtual table module "${moduleName}" yielded a row with missing columns`);
+    }
+  }
+  function inferParameters({
+    length
+  }) {
+    if (!Number.isInteger(length) || length < 0) {
+      throw new TypeError('Expected function.length to be a positive integer');
+    }
+    const params = [];
+    for (let i = 0; i < length; ++i) {
+      params.push(`$${i + 1}`);
+    }
+    return params;
+  }
+  const {
+    hasOwnProperty
+  } = Object.prototype;
+  const {
+    apply
+  } = Function.prototype;
+  const GeneratorFunctionPrototype = Object.getPrototypeOf(function* () {});
+  const identifier = str => `"${str.replace(/"/g, '""')}"`;
+  const defer = x => () => x;
+  const isStringArray = arr => {
+    for (let i = 0; i < arr.length; ++i) {
+      if (typeof arr[i] !== 'string') return false;
+    }
+    return true;
+  };
+  return table;
+}
+
+var inspect;
+var hasRequiredInspect;
+function requireInspect() {
+  if (hasRequiredInspect) return inspect;
+  hasRequiredInspect = 1;
+  const DatabaseInspection = function Database() {};
+  inspect = function inspect(depth, opts) {
+    return Object.assign(new DatabaseInspection(), this);
+  };
+  return inspect;
+}
+
+var database;
+var hasRequiredDatabase;
+function requireDatabase() {
+  if (hasRequiredDatabase) return database;
+  hasRequiredDatabase = 1;
+  const fs = require$$0;
+  const path$1 = path;
+  const util = requireUtil();
+  const SqliteError = requireSqliteError();
+  database = function createDatabase(getAddon, allowNativeBinding) {
+    function Database(filenameGiven, options) {
+      if (new.target == null) {
+        return new Database(filenameGiven, options);
+      }
+
+      // Apply defaults
+      let buffer;
+      if (Buffer.isBuffer(filenameGiven)) {
+        buffer = filenameGiven;
+        filenameGiven = ':memory:';
+      }
+      if (filenameGiven == null) filenameGiven = '';
+      if (options == null) options = {};
+
+      // Validate arguments
+      if (typeof filenameGiven !== 'string') throw new TypeError('Expected first argument to be a string');
+      if (typeof options !== 'object') throw new TypeError('Expected second argument to be an options object');
+      if ('readOnly' in options) throw new TypeError('Misspelled option "readOnly" should be "readonly"');
+      if ('memory' in options) throw new TypeError('Option "memory" was removed in v7.0.0 (use ":memory:" filename instead)');
+
+      // Interpret options
+      const filename = filenameGiven.trim();
+      const anonymous = filename === '' || filename === ':memory:';
+      const readonly = util.getBooleanOption(options, 'readonly');
+      const fileMustExist = util.getBooleanOption(options, 'fileMustExist');
+      const timeout = 'timeout' in options ? options.timeout : 5000;
+      const verbose = 'verbose' in options ? options.verbose : null;
+      const nativeBinding = 'nativeBinding' in options ? options.nativeBinding : null;
+
+      // Validate interpreted options
+      if (readonly && anonymous && !buffer) throw new TypeError('In-memory/temporary databases cannot be readonly');
+      if (!Number.isInteger(timeout) || timeout < 0) throw new TypeError('Expected the "timeout" option to be a positive integer');
+      if (timeout > 0x7fffffff) throw new RangeError('Option "timeout" cannot be greater than 2147483647');
+      if (verbose != null && typeof verbose !== 'function') throw new TypeError('Expected the "verbose" option to be a function');
+      if (!allowNativeBinding && 'nativeBinding' in options) throw new TypeError('The "nativeBinding" option is only supported by the default better-sqlite3 entrypoint');
+      if (allowNativeBinding && nativeBinding != null && typeof nativeBinding !== 'string' && typeof nativeBinding !== 'object') throw new TypeError('Expected the "nativeBinding" option to be a string or addon object');
+
+      // Load the native addon
+      const addon = getAddon(nativeBinding);
+      if (!addon.isInitialized) {
+        addon.initialize(SqliteError, arrayFactory, arrayAppender, rowFactory, recordFactory);
+        addon.isInitialized = true;
+      }
+
+      // Make sure the specified directory exists
+      if (!anonymous && !filename.startsWith('file:') && !fs.existsSync(path$1.dirname(filename))) {
+        throw new TypeError('Cannot open database because the directory does not exist');
+      }
+      Object.defineProperties(this, {
+        [util.cppdb]: {
+          value: new addon.Database(filename, filenameGiven, anonymous, readonly, fileMustExist, timeout, verbose || null, buffer || null)
+        },
+        ...wrappers.getters
+      });
+    }
+    const wrappers = requireWrappers();
+    Database.prototype.prepare = wrappers.prepare;
+    Database.prototype.transaction = requireTransaction();
+    Database.prototype.pragma = requirePragma();
+    Database.prototype.explain = requireExplain();
+    Database.prototype.backup = requireBackup();
+    Database.prototype.serialize = requireSerialize();
+    Database.prototype.function = require_function();
+    Database.prototype.aggregate = requireAggregate();
+    Database.prototype.table = requireTable();
+    Database.prototype.loadExtension = wrappers.loadExtension;
+    Database.prototype.exec = wrappers.exec;
+    Database.prototype.close = wrappers.close;
+    Database.prototype.defaultSafeIntegers = wrappers.defaultSafeIntegers;
+    Database.prototype.unsafeMode = wrappers.unsafeMode;
+    Database.prototype[util.inspect] = requireInspect();
+    return Database;
+  };
+  function arrayFactory(...values) {
+    return values;
+  }
+  function arrayAppender(array, ...values) {
+    const offset = array.length;
+    for (let i = 0; i < values.length; ++i) {
+      array[offset + i] = values[i];
+    }
+  }
+  function rowFactory(...keys) {
+    if (!keys.includes('__proto__')) {
+      const parameters = keys.map((_, index) => `v${index}`).join(',');
+      const properties = keys.map((key, index) => `${JSON.stringify(key)}:v${index}`).join(',');
+      return Function(`return (${parameters}) => ({${properties}})`)();
+    }
+    return (...values) => {
+      const row = {};
+      for (let i = 0; i < keys.length; ++i) row[keys[i]] = values[i];
+      return row;
+    };
+  }
+  function recordFactory(value) {
+    return {
+      value,
+      done: false
+    };
+  }
+  return database;
+}
 
 function commonjsRequire(path) {
 	throw new Error('Could not dynamically require "' + path + '". Please configure the dynamicRequireTargets or/and ignoreDynamicRequires option of @rollup/plugin-commonjs appropriately for this require call to work.');
 }
 
-var bindings = {exports: {}};
+var binding = {exports: {}};
 
-var fileUriToPath_1;
-var hasRequiredFileUriToPath;
-function requireFileUriToPath() {
-  if (hasRequiredFileUriToPath) return fileUriToPath_1;
-  hasRequiredFileUriToPath = 1;
+var hasRequiredBinding;
+function requireBinding() {
+  if (hasRequiredBinding) return binding.exports;
+  hasRequiredBinding = 1;
+  (function (module, exports) {
+
+    const fs = require$$0;
+    const path$1 = path;
+    const PREBUILD_PLATFORMS = ['linux', 'darwin', 'win32'];
+    const PREBUILD_ARCHS = ['x64', 'arm64'];
+    let DEFAULT_ADDON;
+    function getBinding(nativeBinding) {
+      // If a path was provided, load the binding from the filesystem.
+      if (typeof nativeBinding === 'string') {
+        // See <https://webpack.js.org/api/module-variables/#__non_webpack_require__-webpack-specific>
+        const requireFunc = typeof __non_webpack_require__ === 'function' ? __non_webpack_require__ : commonjsRequire;
+        return requireFunc(path$1.resolve(nativeBinding).replace(/(\.node)?$/, '.node'));
+      }
+
+      // If an object was provided, use it as the binding directly.
+      if (typeof nativeBinding === 'object' && nativeBinding !== null) {
+        return nativeBinding;
+      }
+
+      // If we're using the default binding and it already exists, just return it.
+      if (DEFAULT_ADDON) {
+        return DEFAULT_ADDON;
+      }
+
+      // Otherwise, try to find the binding as a prebuilt binary.
+      let filename = getPrebuildPath();
+      if (filename) {
+        return DEFAULT_ADDON = commonjsRequire(filename);
+      }
+
+      // If no prebuilt binary was found, try the default node-gyp locations.
+      filename = path$1.join(__dirname, '..', 'build', 'Debug', 'better_sqlite3.node');
+      if (!fs.existsSync(filename)) {
+        filename = path$1.join(__dirname, '..', 'build', 'Release', 'better_sqlite3.node');
+      }
+      return DEFAULT_ADDON = commonjsRequire(filename);
+    }
+    function getPrebuildPath() {
+      if (PREBUILD_PLATFORMS.includes(process.platform) && PREBUILD_ARCHS.includes(process.arch)) {
+        const target = `${isLinuxMusl() ? 'linuxmusl' : process.platform}-${process.arch}`;
+        const filename = path$1.join(__dirname, '..', 'prebuilds', `${target}.node`);
+        if (fs.existsSync(filename)) {
+          return filename;
+        }
+      }
+      return null;
+    }
+    function isLinuxMusl() {
+      return process.platform === 'linux' && !process.report.getReport().header.glibcVersionRuntime;
+    }
+    exports.getBinding = getBinding;
+    exports.getPrebuildPath = getPrebuildPath;
+
+    // This script is executed directly by binding.gyp to detect prebuilt binaries.
+    if (require.main === module) {
+      process.stdout.write(getPrebuildPath() ? '1' : '0');
+    }
+  })(binding, binding.exports);
+  return binding.exports;
+}
+
+var hasRequiredLib;
+function requireLib() {
+  if (hasRequiredLib) return lib.exports;
+  hasRequiredLib = 1;
+  lib.exports = requireDatabase()(requireBinding().getBinding, true);
+  lib.exports.SqliteError = requireSqliteError();
+  return lib.exports;
+}
+
+var libExports = requireLib();
+var Database = /*@__PURE__*/getDefaultExportFromCjs(libExports);
+
+class SQLiteResult {
   /**
-   * Module dependencies.
+   * @param {Error|null|undefined} error
+   * @param {number|undefined} insertId
+   * @param {number} rowsAffected
+   * @param {object[]} rows
    */
-
-  var sep = path.sep || '/';
-
-  /**
-   * Module exports.
-   */
-
-  fileUriToPath_1 = fileUriToPath;
-
-  /**
-   * File URI to Path function.
-   *
-   * @param {String} uri
-   * @return {String} path
-   * @api public
-   */
-
-  function fileUriToPath(uri) {
-    if ('string' != typeof uri || uri.length <= 7 || 'file://' != uri.substring(0, 7)) {
-      throw new TypeError('must pass in a file:// URI to convert to a file path');
-    }
-    var rest = decodeURI(uri.substring(7));
-    var firstSlash = rest.indexOf('/');
-    var host = rest.substring(0, firstSlash);
-    var path = rest.substring(firstSlash + 1);
-
-    // 2.  Scheme Definition
-    // As a special case, <host> can be the string "localhost" or the empty
-    // string; this is interpreted as "the machine from which the URL is
-    // being interpreted".
-    if ('localhost' == host) host = '';
-    if (host) {
-      host = sep + sep + host;
-    }
-
-    // 3.2  Drives, drive letters, mount points, file system root
-    // Drive letters are mapped into the top of a file URI in various ways,
-    // depending on the implementation; some applications substitute
-    // vertical bar ("|") for the colon after the drive letter, yielding
-    // "file:///c|/tmp/test.txt".  In some cases, the colon is left
-    // unchanged, as in "file:///c:/tmp/test.txt".  In other cases, the
-    // colon is simply omitted, as in "file:///c/tmp/test.txt".
-    path = path.replace(/^(.+)\|/, '$1:');
-
-    // for Windows, we need to invert the path separators from what a URI uses
-    if (sep == '\\') {
-      path = path.replace(/\//g, '\\');
-    }
-    if (/^.+\:/.test(path)) ; else {
-      // unix path…
-      path = sep + path;
-    }
-    return host + path;
+  constructor(error, insertId, rowsAffected, rows) {
+    this.error = error;
+    this.insertId = insertId;
+    this.rowsAffected = rowsAffected;
+    this.rows = rows;
   }
-  return fileUriToPath_1;
+}
+const READ_ONLY_ERROR = new Error('could not prepare statement (23 not authorized)');
+
+/**
+ * @typedef {(sql: string, duration: number) => void} SQLProfileCallback
+ */
+
+/**
+ * @typedef {((sql: string) => void)|undefined} SQLTraceCallback
+ */
+
+/**
+ * @param {string} name
+ * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
+ */
+function SQLiteDatabase(name, opts = {}) {
+  const db = new Database(name);
+
+  /** @type {SQLTraceCallback} */
+  let trace = opts.trace;
+  /** @type {SQLProfileCallback|undefined} */
+  let profile = opts.profile;
+  if (opts.busyTimeout) {
+    db.pragma('busy_timeout = ' + Number(opts.busyTimeout));
+  }
+  this._db = {
+    _db: db,
+    /**
+     * Compatibility with node-sqlite3's configure API.
+     * @param {'busyTimeout'|'trace'|'profile'} option
+     * @param {number|((sql: string, duration?: number) => void)} value
+     * @returns {void}
+     */
+    configure(option, value) {
+      if (option === 'busyTimeout') {
+        db.pragma('busy_timeout = ' + Number(/** @type {number} */value));
+        return;
+      }
+      if (option === 'trace') {
+        trace = /** @type {(sql: string) => void} */value;
+        return;
+      }
+      if (option === 'profile') {
+        profile = /** @type {SQLProfileCallback} */value;
+      }
+    },
+    /**
+     * Compatibility with callback-oriented close semantics.
+     * @param {(err?: Error|null) => void} [cb]
+     * @returns {void}
+     */
+    close(cb) {
+      try {
+        db.close();
+        if (cb) {
+          cb(null);
+        }
+      } catch (err) {
+        if (cb) {
+          cb(/** @type {Error} */err);
+        }
+      }
+    },
+    getTrace() {
+      return trace;
+    },
+    getProfile() {
+      return profile;
+    }
+  };
 }
 
 /**
- * Module dependencies.
+ * @param {import('better-sqlite3')} db
+ * @param {string} sql
+ * @param {unknown[]} args
+ * @returns {object[]}
  */
-var hasRequiredBindings;
-function requireBindings() {
-  if (hasRequiredBindings) return bindings.exports;
-  hasRequiredBindings = 1;
-  (function (module, exports) {
-    var fs = require$$0,
-      path$1 = path,
-      fileURLToPath = requireFileUriToPath(),
-      join = path$1.join,
-      dirname = path$1.dirname,
-      exists = fs.accessSync && function (path) {
-        try {
-          fs.accessSync(path);
-        } catch (e) {
-          return false;
-        }
-        return true;
-      } || fs.existsSync || path$1.existsSync,
-      defaults = {
-        arrow: process.env.NODE_BINDINGS_ARROW || ' → ',
-        compiled: process.env.NODE_BINDINGS_COMPILED_DIR || 'compiled',
-        platform: process.platform,
-        arch: process.arch,
-        nodePreGyp: 'node-v' + process.versions.modules + '-' + process.platform + '-' + process.arch,
-        version: process.versions.node,
-        bindings: 'bindings.node',
-        try: [
-        // node-gyp's linked version in the "build" dir
-        ['module_root', 'build', 'bindings'],
-        // node-waf and gyp_addon (a.k.a node-gyp)
-        ['module_root', 'build', 'Debug', 'bindings'], ['module_root', 'build', 'Release', 'bindings'],
-        // Debug files, for development (legacy behavior, remove for node v0.9)
-        ['module_root', 'out', 'Debug', 'bindings'], ['module_root', 'Debug', 'bindings'],
-        // Release files, but manually compiled (legacy behavior, remove for node v0.9)
-        ['module_root', 'out', 'Release', 'bindings'], ['module_root', 'Release', 'bindings'],
-        // Legacy from node-waf, node <= 0.4.x
-        ['module_root', 'build', 'default', 'bindings'],
-        // Production "Release" buildtype binary (meh...)
-        ['module_root', 'compiled', 'version', 'platform', 'arch', 'bindings'],
-        // node-qbs builds
-        ['module_root', 'addon-build', 'release', 'install-root', 'bindings'], ['module_root', 'addon-build', 'debug', 'install-root', 'bindings'], ['module_root', 'addon-build', 'default', 'install-root', 'bindings'],
-        // node-pre-gyp path ./lib/binding/{node_abi}-{platform}-{arch}
-        ['module_root', 'lib', 'binding', 'nodePreGyp', 'bindings']]
-      };
-
-    /**
-     * The main `bindings()` function loads the compiled bindings for a given module.
-     * It uses V8's Error API to determine the parent filename that this function is
-     * being invoked from, which is then used to find the root directory.
-     */
-
-    function bindings(opts) {
-      // Argument surgery
-      if (typeof opts == 'string') {
-        opts = {
-          bindings: opts
-        };
-      } else if (!opts) {
-        opts = {};
-      }
-
-      // maps `defaults` onto `opts` object
-      Object.keys(defaults).map(function (i) {
-        if (!(i in opts)) opts[i] = defaults[i];
-      });
-
-      // Get the module root
-      if (!opts.module_root) {
-        opts.module_root = exports.getRoot(exports.getFileName());
-      }
-
-      // Ensure the given bindings name ends with .node
-      if (path$1.extname(opts.bindings) != '.node') {
-        opts.bindings += '.node';
-      }
-
-      // https://github.com/webpack/webpack/issues/4175#issuecomment-342931035
-      var requireFunc = typeof __webpack_require__ === 'function' ? __non_webpack_require__ : commonjsRequire;
-      var tries = [],
-        i = 0,
-        l = opts.try.length,
-        n,
-        b,
-        err;
-      for (; i < l; i++) {
-        n = join.apply(null, opts.try[i].map(function (p) {
-          return opts[p] || p;
-        }));
-        tries.push(n);
-        try {
-          b = opts.path ? requireFunc.resolve(n) : requireFunc(n);
-          if (!opts.path) {
-            b.path = n;
-          }
-          return b;
-        } catch (e) {
-          if (e.code !== 'MODULE_NOT_FOUND' && e.code !== 'QUALIFIED_PATH_RESOLUTION_FAILED' && !/not find/i.test(e.message)) {
-            throw e;
-          }
-        }
-      }
-      err = new Error('Could not locate the bindings file. Tried:\n' + tries.map(function (a) {
-        return opts.arrow + a;
-      }).join('\n'));
-      err.tries = tries;
-      throw err;
-    }
-    module.exports = exports = bindings;
-
-    /**
-     * Gets the filename of the JavaScript file that invokes this function.
-     * Used to help find the root directory of a module.
-     * Optionally accepts an filename argument to skip when searching for the invoking filename
-     */
-
-    exports.getFileName = function getFileName(calling_file) {
-      var origPST = Error.prepareStackTrace,
-        origSTL = Error.stackTraceLimit,
-        dummy = {},
-        fileName;
-      Error.stackTraceLimit = 10;
-      Error.prepareStackTrace = function (e, st) {
-        for (var i = 0, l = st.length; i < l; i++) {
-          fileName = st[i].getFileName();
-          if (fileName !== __filename) {
-            if (calling_file) {
-              if (fileName !== calling_file) {
-                return;
-              }
-            } else {
-              return;
-            }
-          }
-        }
-      };
-
-      // run the 'prepareStackTrace' function above
-      Error.captureStackTrace(dummy);
-      dummy.stack;
-
-      // cleanup
-      Error.prepareStackTrace = origPST;
-      Error.stackTraceLimit = origSTL;
-
-      // handle filename that starts with "file://"
-      var fileSchema = 'file://';
-      if (fileName.indexOf(fileSchema) === 0) {
-        fileName = fileURLToPath(fileName);
-      }
-      return fileName;
-    };
-
-    /**
-     * Gets the root directory of a module, given an arbitrary filename
-     * somewhere in the module tree. The "root directory" is the directory
-     * containing the `package.json` file.
-     *
-     *   In:  /home/nate/node-native-module/lib/index.js
-     *   Out: /home/nate/node-native-module
-     */
-
-    exports.getRoot = function getRoot(file) {
-      var dir = dirname(file),
-        prev;
-      while (true) {
-        if (dir === '.') {
-          // Avoids an infinite loop in rare cases, like the REPL
-          dir = process.cwd();
-        }
-        if (exists(join(dir, 'package.json')) || exists(join(dir, 'node_modules'))) {
-          // Found the 'package.json' file or 'node_modules' dir; we're done
-          return dir;
-        }
-        if (prev === dir) {
-          // Got to the top
-          throw new Error('Could not find module root given file: "' + file + '". Do you have a `package.json` file? ');
-        }
-        // Try the parent dir next
-        prev = dir;
-        dir = join(dir, '..');
-      }
-    };
-  })(bindings, bindings.exports);
-  return bindings.exports;
+function runSelect(db, sql, args) {
+  const stmt = db.prepare(sql);
+  return stmt.reader ? stmt.all(...args) : [];
 }
 
-var sqlite3Binding;
-var hasRequiredSqlite3Binding;
-function requireSqlite3Binding() {
-  if (hasRequiredSqlite3Binding) return sqlite3Binding;
-  hasRequiredSqlite3Binding = 1;
-  sqlite3Binding = requireBindings()('node_sqlite3.node');
-  return sqlite3Binding;
-}
-
-var trace = {};
-
-var hasRequiredTrace;
-function requireTrace() {
-  if (hasRequiredTrace) return trace;
-  hasRequiredTrace = 1;
-  // Inspired by https://github.com/tlrobinson/long-stack-traces
-  const util = require$$0$1;
-  function extendTrace(object, property, pos) {
-    const old = object[property];
-    object[property] = function () {
-      const error = new Error();
-      const name = object.constructor.name + '#' + property + '(' + Array.prototype.slice.call(arguments).map(function (el) {
-        return util.inspect(el, false, 0);
-      }).join(', ') + ')';
-      if (typeof pos === 'undefined') pos = -1;
-      if (pos < 0) pos += arguments.length;
-      const cb = arguments[pos];
-      if (typeof arguments[pos] === 'function') {
-        arguments[pos] = function replacement() {
-          const err = arguments[0];
-          if (err && err.stack && !err.__augmented) {
-            err.stack = filter(err).join('\n');
-            err.stack += '\n--> in ' + name;
-            err.stack += '\n' + filter(error).slice(1).join('\n');
-            err.__augmented = true;
-          }
-          return cb.apply(this, arguments);
-        };
-      }
-      return old.apply(this, arguments);
-    };
-  }
-  trace.extendTrace = extendTrace;
-  function filter(error) {
-    return error.stack.split('\n').filter(function (line) {
-      return line.indexOf(__filename) < 0;
-    });
-  }
-  return trace;
-}
-
-var hasRequiredSqlite3;
-function requireSqlite3() {
-  if (hasRequiredSqlite3) return sqlite3$1.exports;
-  hasRequiredSqlite3 = 1;
-  (function (module, exports) {
-    const path$1 = path;
-    const sqlite3 = requireSqlite3Binding();
-    const EventEmitter = require$$2.EventEmitter;
-    module.exports = sqlite3;
-    function normalizeMethod(fn) {
-      return function (sql) {
-        let errBack;
-        const args = Array.prototype.slice.call(arguments, 1);
-        if (typeof args[args.length - 1] === 'function') {
-          const callback = args[args.length - 1];
-          errBack = function (err) {
-            if (err) {
-              callback(err);
-            }
-          };
-        }
-        const statement = new Statement(this, sql, errBack);
-        return fn.call(this, statement, args);
-      };
-    }
-    function inherits(target, source) {
-      for (const k in source.prototype) target.prototype[k] = source.prototype[k];
-    }
-    sqlite3.cached = {
-      Database: function (file, a, b) {
-        if (file === '' || file === ':memory:') {
-          // Don't cache special databases.
-          return new Database(file, a, b);
-        }
-        let db;
-        file = path$1.resolve(file);
-        if (!sqlite3.cached.objects[file]) {
-          db = sqlite3.cached.objects[file] = new Database(file, a, b);
-        } else {
-          // Make sure the callback is called.
-          db = sqlite3.cached.objects[file];
-          const callback = typeof a === 'number' ? b : a;
-          if (typeof callback === 'function') {
-            function cb() {
-              callback.call(db, null);
-            }
-            if (db.open) process.nextTick(cb);else db.once('open', cb);
-          }
-        }
-        return db;
-      },
-      objects: {}
-    };
-    const Database = sqlite3.Database;
-    const Statement = sqlite3.Statement;
-    const Backup = sqlite3.Backup;
-    inherits(Database, EventEmitter);
-    inherits(Statement, EventEmitter);
-    inherits(Backup, EventEmitter);
-
-    // Database#prepare(sql, [bind1, bind2, ...], [callback])
-    Database.prototype.prepare = normalizeMethod(function (statement, params) {
-      return params.length ? statement.bind.apply(statement, params) : statement;
-    });
-
-    // Database#run(sql, [bind1, bind2, ...], [callback])
-    Database.prototype.run = normalizeMethod(function (statement, params) {
-      statement.run.apply(statement, params).finalize();
-      return this;
-    });
-
-    // Database#get(sql, [bind1, bind2, ...], [callback])
-    Database.prototype.get = normalizeMethod(function (statement, params) {
-      statement.get.apply(statement, params).finalize();
-      return this;
-    });
-
-    // Database#all(sql, [bind1, bind2, ...], [callback])
-    Database.prototype.all = normalizeMethod(function (statement, params) {
-      statement.all.apply(statement, params).finalize();
-      return this;
-    });
-
-    // Database#each(sql, [bind1, bind2, ...], [callback], [complete])
-    Database.prototype.each = normalizeMethod(function (statement, params) {
-      statement.each.apply(statement, params).finalize();
-      return this;
-    });
-    Database.prototype.map = normalizeMethod(function (statement, params) {
-      statement.map.apply(statement, params).finalize();
-      return this;
-    });
-
-    // Database#backup(filename, [callback])
-    // Database#backup(filename, destName, sourceName, filenameIsDest, [callback])
-    Database.prototype.backup = function () {
-      let backup;
-      if (arguments.length <= 2) {
-        // By default, we write the main database out to the main database of the named file.
-        // This is the most likely use of the backup api.
-        backup = new Backup(this, arguments[0], 'main', 'main', true, arguments[1]);
-      } else {
-        // Otherwise, give the user full control over the sqlite3_backup_init arguments.
-        backup = new Backup(this, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4]);
-      }
-      // Per the sqlite docs, exclude the following errors as non-fatal by default.
-      backup.retryErrors = [sqlite3.BUSY, sqlite3.LOCKED];
-      return backup;
-    };
-    Statement.prototype.map = function () {
-      const params = Array.prototype.slice.call(arguments);
-      const callback = params.pop();
-      params.push(function (err, rows) {
-        if (err) return callback(err);
-        const result = {};
-        if (rows.length) {
-          const keys = Object.keys(rows[0]);
-          const key = keys[0];
-          if (keys.length > 2) {
-            // Value is an object
-            for (let i = 0; i < rows.length; i++) {
-              result[rows[i][key]] = rows[i];
-            }
-          } else {
-            const value = keys[1];
-            // Value is a plain value
-            for (let i = 0; i < rows.length; i++) {
-              result[rows[i][key]] = rows[i][value];
-            }
-          }
-        }
-        callback(err, result);
-      });
-      return this.all.apply(this, params);
-    };
-    let isVerbose = false;
-    const supportedEvents = ['trace', 'profile', 'change'];
-    Database.prototype.addListener = Database.prototype.on = function (type) {
-      const val = EventEmitter.prototype.addListener.apply(this, arguments);
-      if (supportedEvents.indexOf(type) >= 0) {
-        this.configure(type, true);
-      }
-      return val;
-    };
-    Database.prototype.removeListener = function (type) {
-      const val = EventEmitter.prototype.removeListener.apply(this, arguments);
-      if (supportedEvents.indexOf(type) >= 0 && !this._events[type]) {
-        this.configure(type, false);
-      }
-      return val;
-    };
-    Database.prototype.removeAllListeners = function (type) {
-      const val = EventEmitter.prototype.removeAllListeners.apply(this, arguments);
-      if (supportedEvents.indexOf(type) >= 0) {
-        this.configure(type, false);
-      }
-      return val;
-    };
-
-    // Save the stack trace over EIO callbacks.
-    sqlite3.verbose = function () {
-      if (!isVerbose) {
-        const trace = requireTrace();
-        ['prepare', 'get', 'run', 'all', 'each', 'map', 'close', 'exec'].forEach(function (name) {
-          trace.extendTrace(Database.prototype, name);
-        });
-        ['bind', 'get', 'run', 'all', 'each', 'map', 'reset', 'finalize'].forEach(function (name) {
-          trace.extendTrace(Statement.prototype, name);
-        });
-        isVerbose = true;
-      }
-      return sqlite3;
-    };
-  })(sqlite3$1);
-  return sqlite3$1.exports;
-}
-
-var sqlite3Exports = requireSqlite3();
-var sqlite3 = /*@__PURE__*/getDefaultExportFromCjs(sqlite3Exports);
-
-function SQLiteResult(error, insertId, rowsAffected, rows) {
-  this.error = error;
-  this.insertId = insertId;
-  this.rowsAffected = rowsAffected;
-  this.rows = rows;
-}
-
-var READ_ONLY_ERROR = new Error('could not prepare statement (23 not authorized)');
-function SQLiteDatabase(name, opts) {
-  opts = opts || {};
-  this._db = new sqlite3.Database(name);
-  if (opts.busyTimeout) {
-    this._db.configure('busyTimeout', opts.busyTimeout); // Default is 1000
-  }
-  if (opts.trace) {
-    this._db.configure('trace', opts.trace);
-  }
-  if (opts.profile) {
-    this._db.configure('profile', opts.profile);
-  }
-}
-function runSelect(db, sql, args, cb) {
-  db.all(sql, args, function (err, rows) {
-    if (err) {
-      return cb(new SQLiteResult(err));
-    }
-    var insertId = void 0;
-    var rowsAffected = 0;
-    var resultSet = new SQLiteResult(null, insertId, rowsAffected, rows);
-    cb(resultSet);
-  });
-}
-function runNonSelect(db, sql, args, cb) {
-  db.run(sql, args, function (err) {
-    if (err) {
-      return cb(new SQLiteResult(err));
-    }
-    /* jshint validthis:true */
-    var executionResult = this;
-    var insertId = executionResult.lastID;
-    var rowsAffected = executionResult.changes;
-    var rows = [];
-    var resultSet = new SQLiteResult(null, insertId, rowsAffected, rows);
-    cb(resultSet);
-  });
+/**
+ * @param {import('better-sqlite3')} db
+ * @param {string} sql
+ * @param {unknown[]} args
+ * @returns {import('better-sqlite3').RunResult}
+ */
+function runNonSelect(db, sql, args) {
+  const stmt = db.prepare(sql);
+  return stmt.run(...args);
 }
 SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
-  var db = this._db;
-  var len = queries.length;
-  var results = new Array(len);
-  var i = 0;
-  function checkDone() {
-    if (++i === len) {
-      callback(null, results);
-    } else {
-      doNext();
-    }
-  }
-  function onQueryComplete(i) {
-    return function (res) {
-      results[i] = res;
-      checkDone();
-    };
-  }
-  function doNext() {
-    var query = queries[i];
-    var sql = query.sql;
-    var args = query.args;
-
-    // TODO: It seems like the node-sqlite3 API either allows:
-    // 1) all(), which returns results but not rowsAffected or lastID
-    // 2) run(), which doesn't return results, but returns rowsAffected and lastID
-    // So we try to sniff whether it's a SELECT query or not.
-    // This is inherently error-prone, although it will probably work in the 99%
-    // case.
-    var isSelect = /^\s*SELECT\b/i.test(sql);
+  const db = this._db._db;
+  const len = queries.length;
+  const results = new Array(len);
+  for (let i = 0; i < len; i++) {
+    const query = queries[i];
+    const sql = query.sql;
+    const args = query.args;
+    const isSelect = /^\s*SELECT\b/iu.test(sql);
     if (readOnly && !isSelect) {
-      onQueryComplete(i)(new SQLiteResult(READ_ONLY_ERROR));
-    } else if (isSelect) {
-      runSelect(db, sql, args, onQueryComplete(i));
-    } else {
-      runNonSelect(db, sql, args, onQueryComplete(i));
+      results[i] = new SQLiteResult(READ_ONLY_ERROR);
+      continue;
+    }
+    const trace = this._db.getTrace();
+    const profile = this._db.getProfile();
+    const start = profile ? process.hrtime.bigint() : 0n;
+    try {
+      if (trace) {
+        trace(sql);
+      }
+      if (isSelect) {
+        const rows = runSelect(db, sql, args);
+        results[i] = new SQLiteResult(null, undefined, 0, rows);
+      } else {
+        const executionResult = runNonSelect(db, sql, args);
+        const insertId = Number(executionResult.lastInsertRowid);
+        results[i] = new SQLiteResult(null, insertId, executionResult.changes, []);
+      }
+    } catch (err) {
+      results[i] = new SQLiteResult(/** @type {Error} */err);
+    } finally {
+      if (profile) {
+        profile(sql, Number(process.hrtime.bigint() - start));
+      }
     }
   }
-  doNext();
+  queueMicrotask(() => {
+    callback(null, results);
+  });
 };
 
 /**
@@ -11927,6 +12358,7 @@ CFG.win = {
 const __setGlobalVars = function (idb, initialConfig = {}) {
   return setGlobalVars(idb, {
     fs: fs$1,
+    escapeNULForSQLiteStatements: false,
     ...initialConfig
   });
 };

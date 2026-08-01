@@ -42,6 +42,7 @@
  *   sqlBusyTimeout: number,
  *   sqlTrace: () => void,
  *   sqlProfile: () => void,
+ *   escapeNULForSQLiteStatements: boolean,
  *   createIndexes: boolean
  * }} ConfigValues
  */
@@ -215,6 +216,8 @@ const CFG = /** @type {ConfigValues} */ ({});
     'sqlBusyTimeout', // Defaults to 1000
     'sqlTrace', // Callback not used by default
     'sqlProfile', // Callback not used by default
+    // Defaults to true except in Node builds where we can preserve literal NUL with better-sqlite3
+    'escapeNULForSQLiteStatements',
 
     'createIndexes'
 ]).forEach((prop) => {

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.0.0 - 7/28/2026 */
+/*! indexeddbshim - v17.0.0 - 7/31/2026 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -1307,6 +1307,7 @@
    *   sqlBusyTimeout: number,
    *   sqlTrace: () => void,
    *   sqlProfile: () => void,
+   *   escapeNULForSQLiteStatements: boolean,
    *   createIndexes: boolean
    * }} ConfigValues
    */
@@ -1461,8 +1462,8 @@
   // Callback not used by default
   'sqlProfile',
   // Callback not used by default
-
-  'createIndexes'].forEach(function (prop) {
+  // Defaults to true except in Node builds where we can preserve literal NUL with better-sqlite3
+  'escapeNULForSQLiteStatements', 'createIndexes'].forEach(function (prop) {
     /** @type {(val: any) => void} */
     var validator;
     if (Array.isArray(prop)) {
@@ -1543,7 +1544,8 @@
    * @returns {string}
    */
   function escapeSQLiteStatement(arg) {
-    return escapeUnmatchedSurrogates(arg.replaceAll('^', '^^').replaceAll('\0', '^0'));
+    var escaped = arg.replaceAll('^', '^^');
+    return escapeUnmatchedSurrogates(CFG.escapeNULForSQLiteStatements === false ? escaped : escaped.replaceAll('\0', '^0'));
   }
 
   /**
@@ -1551,7 +1553,11 @@
    * @returns {string}
    */
   function unescapeSQLiteResponse(arg) {
-    return unescapeUnmatchedSurrogates(arg).replaceAll(/(\^+)0/g, function (_, esc) {
+    var unescaped = unescapeUnmatchedSurrogates(arg);
+    if (CFG.escapeNULForSQLiteStatements === false) {
+      return unescaped.replaceAll('^^', '^');
+    }
+    return unescaped.replaceAll(/(\^+)0/g, function (_, esc) {
       return esc.length % 2 ? esc.slice(1) + '\0' : _;
     }).replaceAll('^^', '^');
   }
@@ -3216,14 +3222,22 @@
           _iterator.f();
         }
         encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
-        return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
+        var encodedKey = JSON.stringify(encoded);
+        if (CFG.escapeNULForSQLiteStatements === false) {
+          encodedKey = encodedKey.replaceAll("\\u0000", '\0');
+        }
+        return keyTypeToEncodedChar.array + '-' + encodedKey;
       },
       /**
        * @param {string} key
        * @returns {ValueTypeArray}
        */
       decode: function decode(key) {
-        var decoded = JSON.parse(key.slice(2));
+        var decodedKey = key.slice(2);
+        if (CFG.escapeNULForSQLiteStatements === false) {
+          decodedKey = decodedKey.replaceAll('\0', "\\u0000");
+        }
+        var decoded = JSON.parse(decodedKey);
         decoded.pop(); // remove the extra item
         for (var i = 0; i < decoded.length; i++) {
           var item = decoded[i];

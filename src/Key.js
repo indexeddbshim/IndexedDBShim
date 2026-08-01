@@ -283,14 +283,22 @@ const types = {
                 encoded[i] = encodedItem;
             }
             encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
-            return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
+            let encodedKey = JSON.stringify(encoded);
+            if (CFG.escapeNULForSQLiteStatements === false) {
+                encodedKey = encodedKey.replaceAll('\\u0000', '\0');
+            }
+            return keyTypeToEncodedChar.array + '-' + encodedKey;
         },
         /**
          * @param {string} key
          * @returns {ValueTypeArray}
          */
         decode (key) {
-            const decoded = JSON.parse(key.slice(2));
+            let decodedKey = key.slice(2);
+            if (CFG.escapeNULForSQLiteStatements === false) {
+                decodedKey = decodedKey.replaceAll('\0', '\\u0000');
+            }
+            const decoded = JSON.parse(decodedKey);
             decoded.pop(); // remove the extra item
             for (let i = 0; i < decoded.length; i++) {
                 const item = decoded[i];

@@ -83,6 +83,7 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Co
         'IDBObjectStore/get-spec.js',
         'IDBObjectStore/index-spec.js',
         'IDBObjectStore/indexNames-spec.js',
+        'IDBObjectStore/issue334-nul-range-spec.js',
         'IDBObjectStore/openKeyCursor-spec.js',
         'IDBObjectStore/put-spec.js',
         'IDBTransaction/objectStore-spec.js',
