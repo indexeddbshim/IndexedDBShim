@@ -909,7 +909,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     ({version} = data.rows.item(0));
 
                     const openConnections = me.__connections[name] || [];
-                    triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () { // eslint-disable-line promise/catch-or-return -- Sync promise
+                    triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () {
                         // Since we need two databases which can't be in a single transaction, we
                         //  do this deleting from `dbVersions` first since the `__sys__` deleting
                         //  only impacts file memory whereas this one is critical for avoiding it
@@ -938,7 +938,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                         });
                         return undefined;
                     // @ts-expect-error It's ok
-                    }, dbError);
+                    }).catch(dbError);
                     return undefined;
                 }, dbError);
             });

@@ -276,11 +276,11 @@ const leftBracketRegex = /\[/gu;
  * @param {SQLTransaction} tx
  * @param {KeySuccess} success
  * @param {FindError} error
- * @param {Integer|undefined} recordsToLoad
+ * @param {Integer} [recordsToLoad]
  * @this {IDBCursorFull}
  * @returns {void}
  */
-IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error, recordsToLoad) {
+IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error, recordsToLoad = 1) {
     const me = this;
 
     if (me.__multiEntryExhausted) {

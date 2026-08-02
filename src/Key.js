@@ -285,7 +285,7 @@ const types = {
             encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
             let encodedKey = JSON.stringify(encoded);
             if (CFG.escapeNULForSQLiteStatements === false) {
-                encodedKey = encodedKey.replaceAll('\\u0000', '\0');
+                encodedKey = encodedKey.replaceAll(String.raw`\u0000`, '\0');
             }
             return keyTypeToEncodedChar.array + '-' + encodedKey;
         },
@@ -296,7 +296,7 @@ const types = {
         decode (key) {
             let decodedKey = key.slice(2);
             if (CFG.escapeNULForSQLiteStatements === false) {
-                decodedKey = decodedKey.replaceAll('\0', '\\u0000');
+                decodedKey = decodedKey.replaceAll('\0', String.raw`\u0000`);
             }
             const decoded = JSON.parse(decodedKey);
             decoded.pop(); // remove the extra item
