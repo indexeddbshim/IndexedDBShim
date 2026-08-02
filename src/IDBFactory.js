@@ -593,7 +593,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     req.__result
                                 ).__versionTransaction = null;
                                 sysdbFinishedCb(systx, false, function () {
-                                    req.transaction.__transFinishedCb(false, function () {
+                                    req.transaction.__callTransFinishedCb(false, function () {
                                         ev.complete();
                                         req.__transaction = null;
                                     });
@@ -716,6 +716,13 @@ IDBFactory.prototype.open = function (name /* , version */) {
     function openDB (oldVersion) {
         /** @type {DatabaseFull} */
         let db;
+        if (version === undefined) {
+            // Resolve before use as a cache key below, or a `open(name)` call
+            //  (no explicit version) would cache/look up under `undefined`
+            //  instead of the actual version, causing a second, separate
+            //  connection to be opened for the same database on reopen.
+            version = oldVersion || 1;
+        }
         if ((useMemoryDatabase || useDatabaseCache) && Object.hasOwn(websqlDBCache, name) && Object.hasOwn(websqlDBCache[name], version)) {
             db = websqlDBCache[name][version];
         } else {
@@ -733,9 +740,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
             }
         }
 
-        if (version === undefined) {
-            version = oldVersion || 1;
-        }
         if (oldVersion > version) {
             const err = createDOMException('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
             if (useDatabaseCache) {

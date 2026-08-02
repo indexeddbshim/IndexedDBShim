@@ -595,11 +595,16 @@ function runContinuationSafely (fn) {
     }
     const queue = [fn];
     continuationState.queue = queue;
-    while (queue.length) {
-        const next = /** @type {() => void} */ (queue.shift());
-        next();
+    try {
+        while (queue.length) {
+            const next = /** @type {() => void} */ (queue.shift());
+            next();
+        }
+    } finally {
+        // Ensure a thrown exception can't leave the queue permanently
+        // stuck (which would silently swallow all future continuations).
+        continuationState.queue = null;
     }
-    continuationState.queue = null;
 }
 
 export {escapeSQLiteStatement, unescapeSQLiteResponse,
