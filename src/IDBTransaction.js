@@ -214,7 +214,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
                     return;
                 }
-                executeNextRequest();
+                util.runContinuationSafely(executeNextRequest);
             }
 
             /**
@@ -282,7 +282,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     try {
                         q = me.__requests[i];
                         if (!q.req) {
-                            q.op(tx, q.args, executeNextRequest, error);
+                            q.op(tx, q.args, () => util.runContinuationSafely(executeNextRequest), error);
                             return;
                         }
                         if (q.req.__done) { // Avoid continuing with aborted requests

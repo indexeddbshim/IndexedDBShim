@@ -71,6 +71,7 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Co
         'IDBIndex/get-spec.js',
         'IDBIndex/getKey-spec.js',
         'IDBIndex/openCursor-spec.js',
+        'IDBIndex/multi-entry-cursor-regression-spec.js',
         'IDBIndex/openKeyCursor-spec.js',
         'IDBKeyRange/includes-spec.js',
         'IDBObjectStore/add-put-spec.js',
