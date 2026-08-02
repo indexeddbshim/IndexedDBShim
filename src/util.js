@@ -557,6 +557,51 @@ function isNullish (v) {
     return v === null || v === undefined;
 }
 
+/**
+ * Cursor/request continuation chains can call each other synchronously
+ * (e.g. walking a large prefetched buffer, or advancing many interleaved
+ * cursors in one transaction) which, for large enough record counts, can
+ * exceed the JS engine's call stack ("Maximum call stack size exceeded").
+ *
+ * This can't be fixed by deferring continuations to a microtask/macrotask:
+ * the transaction machinery synchronously checks (once the current call
+ * stack unwinds) whether there are any pending requests left in order to
+ * decide it's safe to commit; deferring a continuation opens a real gap in
+ * which that check runs first and the transaction completes prematurely,
+ * with the deferred continuation then acting on an already-finished
+ * transaction (a hang, since it can never resolve).
+ *
+ * Instead, this implements a true trampoline: the first call starts a
+ * synchronous work queue and drains it in a flat loop; any call made while
+ * already draining (i.e. a continuation triggering another continuation)
+ * is simply appended to that same queue and returns immediately instead of
+ * recursing. This keeps everything synchronous (so no completion-check
+ * race is introduced) while preventing the call stack from growing with
+ * each successive continuation.
+ */
+const continuationState = {
+    /** @type {Array<() => void>|null} */
+    queue: null
+};
+
+/**
+ * @param {() => void} fn
+ * @returns {void}
+ */
+function runContinuationSafely (fn) {
+    if (continuationState.queue) {
+        continuationState.queue.push(fn);
+        return;
+    }
+    const queue = [fn];
+    continuationState.queue = queue;
+    while (queue.length) {
+        const next = /** @type {() => void} */ (queue.shift());
+        next();
+    }
+    continuationState.queue = null;
+}
+
 export {escapeSQLiteStatement, unescapeSQLiteResponse,
     escapeDatabaseNameForSQLAndFiles, unescapeDatabaseNameForSQLAndFiles,
     escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForSQLKeyColumn,
@@ -567,4 +612,4 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     defineListenerProperties, defineReadonlyProperties,
     isValidKeyPath, enforceRange,
     convertToDOMString, convertToSequenceDOMString,
-    isNullish};
+    isNullish, runContinuationSafely};

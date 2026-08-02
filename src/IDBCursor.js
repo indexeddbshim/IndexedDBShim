@@ -46,6 +46,9 @@ import CFG from './CFG.js';
  *   __unique: boolean,
  *   __sqlDirection: "DESC"|"ASC",
  *   __matchedKeys: {[key: string]: true},
+ *   __continuationKey: import('./Key.js').Key|undefined,
+ *   __continuationPrimaryKey: import('./Key.js').Key|undefined,
+ *   __multiEntryExhausted: boolean,
  *   __invalidateCache: () => void
  * }} IDBCursorFull
  */
@@ -117,6 +120,9 @@ IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColu
     this.__valueDecoder = this.__keyOnly ? Key : Sca;
     this.__count = count;
     this.__prefetchedIndex = -1;
+    this.__continuationKey = undefined;
+    this.__continuationPrimaryKey = undefined;
+    this.__multiEntryExhausted = false;
     this.__multiEntryIndex = this.__indexSource
         ? 'multiEntry' in source && source.multiEntry
         : false;
@@ -277,70 +283,100 @@ const leftBracketRegex = /\[/gu;
 IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error, recordsToLoad) {
     const me = this;
 
-    if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
-        if (CFG.DEBUG) { console.log('Reached end of multiEntry cursor'); }
+    if (me.__multiEntryExhausted) {
+        if (CFG.DEBUG) { console.log('[multiEntry] Reached end of multiEntry cursor (already exhausted)'); }
         success(undefined, undefined, undefined);
         return;
     }
 
     const quotedKeyColumnName = util.sqlQuote(me.__keyColumnName);
-    const sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.__currentName)];
-    /** @type {string[]} */
-    const sqlValues = [];
-    sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && (me.__range.lower !== undefined && Array.isArray(me.__range.upper))) {
-        if (me.__range.upper.indexOf(me.__range.lower) === 0) {
-            sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
-            sqlValues.push(
-                '%' + util.sqlLIKEEscape(
-                    /** @type {string} */ (me.__range.__lowerCached).slice(0, -1)
-                ) + '%'
-            );
-        }
-    }
+    const quotedKey = util.sqlQuote('key');
 
     // Determine the ORDER BY direction based on the cursor.
     const direction = me.__sqlDirection;
     const op = direction === 'ASC' ? '>' : '<';
-    const quotedKey = util.sqlQuote('key');
 
-    if (primaryKey !== undefined) {
-        sql.push('AND', quotedKey, op + '= ?');
-        // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-        sqlValues.push(/** @type {string} */ (Key.encode(primaryKey)));
-    }
-    if (key !== undefined) {
-        sql.push('AND', quotedKeyColumnName, op + '= ?');
-        // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
-        sqlValues.push(/** @type {string} */ (Key.encode(key)));
-    } else if (me.__key !== undefined) {
-        sql.push('AND', quotedKeyColumnName, op + ' ?');
-        // Key.convertValueToKey(me.__key); // Already checked when entered
-        sqlValues.push(/** @type {string} */ (Key.encode(me.__key)));
-    }
-
-    if (!me.__count) {
-        // 1. Sort by key
-        sql.push('ORDER BY', quotedKeyColumnName, direction);
-
-        // 2. Sort by primaryKey (if defined and not unique)
-        if (!me.__unique && me.__keyColumnName !== 'key') { // Avoid adding 'key' twice
-            sql.push(',', util.sqlQuote('key'), direction);
+    /**
+     * Runs (and, if a batch of underlying rows produces no matching
+     * multi-entry values, repeatedly re-runs) the query for the next batch
+     * of underlying rows, advancing `me.__continuationKey`/
+     * `me.__continuationPrimaryKey` (tracking the last *physical* row
+     * scanned) each time, until either some matches are found or the
+     * underlying table is exhausted.
+     * @returns {void}
+     */
+    function runQuery () {
+        const sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.__currentName)];
+        /** @type {string[]} */
+        const sqlValues = [];
+        sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
+        if (me.__range && (me.__range.lower !== undefined && Array.isArray(me.__range.upper))) {
+            if (me.__range.upper.indexOf(me.__range.lower) === 0) {
+                sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
+                sqlValues.push(
+                    '%' + util.sqlLIKEEscape(
+                        /** @type {string} */ (me.__range.__lowerCached).slice(0, -1)
+                    ) + '%'
+                );
+            }
         }
 
-        // 3. Sort by position (if defined)
-
-        if (!me.__unique && me.__indexSource) {
-            // 4. Sort by object store position (if defined and not unique)
-            sql.push(',', util.sqlQuote(me.__valueColumnName), direction);
+        if (primaryKey !== undefined) {
+            sql.push('AND', quotedKey, op + '= ?');
+            // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
+            sqlValues.push(/** @type {string} */ (Key.encode(primaryKey)));
         }
-        sql.push('LIMIT', String(recordsToLoad));
-    }
-    const sqlStr = sql.join(' ');
-    if (CFG.DEBUG) { console.log(sqlStr, sqlValues); }
+        if (key !== undefined) {
+            sql.push('AND', quotedKeyColumnName, op + '= ?');
+            // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
+            sqlValues.push(/** @type {string} */ (Key.encode(key)));
+        } else if (me.__continuationKey !== undefined) {
+            // Resume from the last underlying (physical) row we scanned, not
+            // from the last *matching* multi-entry value (which lives in a
+            // different key-space than the raw index column and cannot be
+            // reliably compared against it, e.g. for array index keys).
+            sql.push(
+                'AND (', quotedKeyColumnName, op, '?',
+                'OR (', quotedKeyColumnName, '= ?', 'AND', quotedKey, op, '?))'
+            );
+            const encodedContinuationKey = /** @type {string} */ (
+                Key.encode(me.__continuationKey, true)
+            );
+            sqlValues.push(
+                encodedContinuationKey,
+                encodedContinuationKey,
+                /** @type {string} */ (Key.encode(me.__continuationPrimaryKey))
+            );
+        }
 
-    tx.executeSql(sqlStr, sqlValues, function (tx, data) {
-        if (data.rows.length > 0) {
+        if (!me.__count) {
+            // 1. Sort by key
+            sql.push('ORDER BY', quotedKeyColumnName, direction);
+
+            // 2. Sort by primaryKey (if defined and not unique)
+            if (!me.__unique && me.__keyColumnName !== 'key') { // Avoid adding 'key' twice
+                sql.push(',', util.sqlQuote('key'), direction);
+            }
+
+            // 3. Sort by position (if defined)
+
+            if (!me.__unique && me.__indexSource) {
+                // 4. Sort by object store position (if defined and not unique)
+                sql.push(',', util.sqlQuote(me.__valueColumnName), direction);
+            }
+            sql.push('LIMIT', String(recordsToLoad));
+        }
+        const sqlStr = sql.join(' ');
+        if (CFG.DEBUG) { console.log('[multiEntry] query', sqlStr, sqlValues); }
+
+        tx.executeSql(sqlStr, sqlValues, function (tx, data) {
+            if (data.rows.length === 0) {
+                me.__multiEntryExhausted = true;
+                if (CFG.DEBUG) { console.log('[multiEntry] Reached end of multiEntry cursor (no more rows)'); }
+                success(undefined, undefined, undefined);
+                return;
+            }
+
             if (me.__count) { // Avoid caching and other processing below
                 let ct = 0;
                 for (let i = 0; i < data.rows.length; i++) {
@@ -352,6 +388,17 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 success(undefined, ct, undefined);
                 return;
             }
+
+            // Track how far we've physically scanned, regardless of whether
+            // this batch produced any matches, so the next batch (if any)
+            // resumes after this one instead of re-scanning or stopping early.
+            const lastRawRow = data.rows.item(data.rows.length - 1);
+            me.__continuationKey = Key.decode(lastRawRow[me.__keyColumnName], true);
+            me.__continuationPrimaryKey = Key.decode(lastRawRow.key);
+            if (data.rows.length < recordsToLoad) {
+                me.__multiEntryExhausted = true;
+            }
+
             const rows = [];
             for (let i = 0; i < data.rows.length; i++) {
                 const rowItem = data.rows.item(i);
@@ -373,6 +420,18 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                     rows.push(clone);
                 }
             }
+
+            if (rows.length === 0) {
+                if (me.__multiEntryExhausted) {
+                    if (CFG.DEBUG) { console.log('[multiEntry] Reached end of multiEntry cursor (last batch had no matches)'); }
+                    success(undefined, undefined, undefined);
+                    return;
+                }
+                if (CFG.DEBUG) { console.log('[multiEntry] batch had no matches; fetching next batch'); }
+                runQuery();
+                return;
+            }
+
             const reverse = me.direction.indexOf('prev') === 0;
             rows.sort(function (a, b) {
                 if (a.matchingKey.replaceAll(leftBracketRegex, 'z') < b.matchingKey.replaceAll(leftBracketRegex, 'z')) {
@@ -390,37 +449,28 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 return 0;
             });
 
-            if (rows.length > 1) {
-                me.__prefetchedIndex = 0;
-                me.__prefetchedData = {
-                    data: rows,
-                    length: rows.length,
-                    /**
-                     * @param {Integer} index
-                     * @returns {RowItemNonNull}
-                     */
-                    item (index) {
-                        return this.data[index];
-                    }
-                };
-                if (CFG.DEBUG) { console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor'); }
-                me.__decode(rows[0], success);
-            } else if (rows.length === 1) {
-                if (CFG.DEBUG) { console.log('Reached end of multiEntry cursor'); }
-                me.__decode(rows[0], success);
-            } else {
-                if (CFG.DEBUG) { console.log('Reached end of multiEntry cursor'); }
-                success(undefined, undefined, undefined);
-            }
-        } else {
-            if (CFG.DEBUG) { console.log('Reached end of multiEntry cursor'); }
-            success(undefined, undefined, undefined);
-        }
-    }, function (tx, err) {
-        if (CFG.DEBUG) { console.log('Could not execute Cursor.continue', sqlStr, sqlValues); }
-        error(err);
-        return false;
-    });
+            me.__prefetchedIndex = 0;
+            me.__prefetchedData = {
+                data: rows,
+                length: rows.length,
+                /**
+                 * @param {Integer} index
+                 * @returns {RowItemNonNull}
+                 */
+                item (index) {
+                    return this.data[index];
+                }
+            };
+            if (CFG.DEBUG) { console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor'); }
+            me.__decode(rows[0], success);
+        }, function (tx, err) {
+            if (CFG.DEBUG) { console.log('[multiEntry] Could not execute Cursor.continue', sqlStr, sqlValues); }
+            error(err);
+            return false;
+        });
+    }
+
+    runQuery();
 };
 
 /**
@@ -540,6 +590,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
 IDBCursor.prototype.__invalidateCache = function () {
     // @ts-expect-error Why is this not being found?
     this.__prefetchedData = null;
+    this.__multiEntryExhausted = false;
 };
 
 /**
@@ -599,9 +650,8 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
                     me.__advanceCount--;
                     me.__key = k;
                     me.__continue(undefined, true);
-                    /** @type {() => void} */ (
-                        executeNextRequest
-                    )(); // We don't call success yet but do need to advance the transaction queue
+                    // We don't call success yet but do need to advance the transaction queue
+                    util.runContinuationSafely(/** @type {() => void} */ (executeNextRequest));
                     return;
                 }
                 me.__advanceCount = undefined;
@@ -627,12 +677,12 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
                             return;
                         }
                         // @ts-expect-error Todo: Our bug to fix
-                        cursorContinue(tx, args, success, error);
+                        util.runContinuationSafely(() => cursorContinue(tx, args, success, error));
                     }
                     if (me.__unique && !me.__multiEntryIndex &&
                         encKey === Key.encode(me.key, me.__multiEntryIndex)) {
                         // @ts-expect-error Todo: Our bug to fix
-                        cursorContinue(tx, args, success, error);
+                        util.runContinuationSafely(() => cursorContinue(tx, args, success, error));
                         return;
                     }
                     checkKey();

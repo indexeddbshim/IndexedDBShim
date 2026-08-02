@@ -38,8 +38,10 @@ function SQLiteDatabase (name, opts = {}) {
     const db = new Database(name);
 
     /** @type {SQLTraceCallback} */
+    // eslint-disable-next-line prefer-destructuring -- TS
     let trace = opts.trace;
     /** @type {SQLProfileCallback|undefined} */
+    // eslint-disable-next-line prefer-destructuring -- TS
     let profile = opts.profile;
 
     if (opts.busyTimeout) {
@@ -94,7 +96,7 @@ function SQLiteDatabase (name, opts = {}) {
 }
 
 /**
- * @param {import('better-sqlite3')} db
+ * @param {import('better-sqlite3').Database} db
  * @param {string} sql
  * @param {unknown[]} args
  * @returns {object[]}
@@ -105,7 +107,7 @@ function runSelect (db, sql, args) {
 }
 
 /**
- * @param {import('better-sqlite3')} db
+ * @param {import('better-sqlite3').Database} db
  * @param {string} sql
  * @param {unknown[]} args
  * @returns {import('better-sqlite3').RunResult}
@@ -115,10 +117,13 @@ function runNonSelect (db, sql, args) {
     return stmt.run(...args);
 }
 
+/**
+ *
+ */
 SQLiteDatabase.prototype.exec = function exec (queries, readOnly, callback) {
     const db = this._db._db;
     const len = queries.length;
-    const results = new Array(len);
+    const results = Array.from({length: len});
 
     for (let i = 0; i < len; i++) {
         const query = queries[i];
