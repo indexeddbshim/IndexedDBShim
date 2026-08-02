@@ -6,9 +6,9 @@ import Database from 'better-sqlite3';
 class SQLiteResult {
     /**
      * @param {Error|null|undefined} error
-     * @param {number|undefined} insertId
-     * @param {number} rowsAffected
-     * @param {object[]} rows
+     * @param {number|undefined} [insertId]
+     * @param {number} [rowsAffected]
+     * @param {object[]} [rows]
      */
     constructor (error, insertId, rowsAffected, rows) {
         this.error = error;
@@ -33,8 +33,10 @@ const READ_ONLY_ERROR = new Error(
 /**
  * @param {string} name
  * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
+ * @returns {void}
  */
 function SQLiteDatabase (name, opts = {}) {
+    /** @type {import('better-sqlite3').Database} */
     const db = new Database(name);
 
     /** @type {SQLTraceCallback} */
@@ -48,7 +50,10 @@ function SQLiteDatabase (name, opts = {}) {
         db.pragma('busy_timeout = ' + Number(opts.busyTimeout));
     }
 
-    this._db = {
+    // Kept untyped (rather than the better-sqlite3 `Database` type) since that
+    //  type is internal to `@types/better-sqlite3` and can't be named in this
+    //  file's emitted declaration.
+    this._db = /** @type {any} */ ({
         _db: db,
         /**
          * Compatibility with node-sqlite3's configure API.
@@ -78,13 +83,14 @@ function SQLiteDatabase (name, opts = {}) {
             try {
                 db.close();
                 if (cb) {
-                    cb(null);
+                    return cb(null);
                 }
             } catch (err) {
                 if (cb) {
-                    cb(/** @type {Error} */ (err));
+                    return cb(/** @type {Error} */ (err));
                 }
             }
+            return undefined;
         },
         getTrace () {
             return trace;
@@ -92,7 +98,7 @@ function SQLiteDatabase (name, opts = {}) {
         getProfile () {
             return profile;
         }
-    };
+    });
 }
 
 /**
@@ -103,7 +109,7 @@ function SQLiteDatabase (name, opts = {}) {
  */
 function runSelect (db, sql, args) {
     const stmt = db.prepare(sql);
-    return stmt.reader ? stmt.all(...args) : [];
+    return stmt.reader ? /** @type {object[]} */ (stmt.all(...args)) : [];
 }
 
 /**
@@ -118,7 +124,10 @@ function runNonSelect (db, sql, args) {
 }
 
 /**
- *
+ * @param {{sql: string, args: unknown[]}[]} queries
+ * @param {boolean} readOnly
+ * @param {(err: Error|null, results?: SQLiteResult[]) => void} callback
+ * @returns {void}
  */
 SQLiteDatabase.prototype.exec = function exec (queries, readOnly, callback) {
     const db = this._db._db;
@@ -135,7 +144,8 @@ SQLiteDatabase.prototype.exec = function exec (queries, readOnly, callback) {
         }
         const trace = this._db.getTrace();
         const profile = this._db.getProfile();
-        const start = profile ? process.hrtime.bigint() : 0n;
+        // eslint-disable-next-line unicorn/prefer-bigint-literals -- `0n` needs ES2020+ target for tsc
+        const start = profile ? process.hrtime.bigint() : BigInt(0);
         try {
             if (trace) {
                 trace(sql);

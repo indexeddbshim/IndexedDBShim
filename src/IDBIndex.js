@@ -733,8 +733,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 );
                             })
                         );
-                        SyncPromise.all(indexCreations).then(
-                            finish,
+                        SyncPromise.all(indexCreations).then(finish).catch(
                             /** @type {(reason: any) => PromiseLike<never>} */
                             (error)
                         ).catch((err) => {
