@@ -107,6 +107,68 @@ globalThis.window = globalThis; // We'll allow ourselves to use `window.indexedD
 setGlobalVars(); // See signature below
 ```
 
+### Jest (or other test environments with a `jsdom`/`Window`-like global)
+
+If you call `setGlobalVars(global)` (or `setGlobalVars(window)`) inside a
+Jest test/setup file, accessing `indexedDB` afterwards can throw:
+
+```
+TypeError: Illegal invocation
+```
+
+This happens because the `indexedDB` getter performs a brand check (much
+like native browsers do) to ensure it is invoked with the same `this` it
+was defined on. Under Jest, the object accessing `indexedDB` (e.g. jsdom's
+`Window`) is not always reference-equal to the object passed to
+`setGlobalVars`, so the check fails.
+
+As a workaround, set `shimNS` on the target global *before* calling
+`setGlobalVars`, so the brand check is bypassed for that object:
+
+```js
+// e.g., jest/testSetup.js
+import setGlobalVars from 'indexeddbshim';
+
+global.shimNS = true;
+setGlobalVars(global);
+```
+
+#### I never call `setGlobalVars` myself (e.g. React Native/Expo + `jest-expo`)
+
+You can still hit this even if your *test* never touches `indexedDB`
+directly (e.g. a plain component-render test). It means some module in
+your import chain (a dependency, a polyfill file, etc.) pulls in the
+*invasive* build of `indexeddbshim`, which auto-invokes `setGlobalVars()`
+as a side effect of being imported.
+
+Because that happens at import time, you must set `shimNS` on the global
+*before* that import chain runs — a normal test file `beforeEach`/import is
+too late. Use Jest's `setupFiles` (which runs before the test framework and
+any test file imports are evaluated) for this:
+
+```js
+// jest.config.js
+module.exports = {
+    preset: 'jest-expo',
+    setupFiles: ['./jest/shim-ns-setup.js']
+};
+```
+
+```js
+// jest/shim-ns-setup.js
+if (typeof global.window === 'undefined') {
+    global.window = global;
+}
+global.window.shimNS = true;
+global.shimNS = true;
+```
+
+If you're using `setupFilesAfterEnv` instead (e.g. because you also need
+`@testing-library/jest-native` matchers), it will be too late if the
+offending import happens as part of loading another `setupFilesAfterEnv`
+module or the test file itself — keep the `shimNS` assignment in
+`setupFiles` so it always runs first.
+
 ## ES6 Modules
 
 ### Bundler for Browser
