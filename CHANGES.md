@@ -1,7 +1,13 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 17.1.0
 
+- fix: support NUL bytes in Node; fixes #334
+- fix: WebSQL transaction-completion race - (pre-existing bug, not caused by this branch)
+- fix: cursor recursion/stack-overflow hang - flattened recursive continuation calls (`cursorContinue`, `checkKey`, `executeNextRequest`) into a trampoline (`runContinuationSafely` in util.js) to avoid "Maximum call stack size exceeded" on large record sets (IDBCursor.js heavily refactored, 222 lines changed).
+- refactor: use better-sqlite3 in place of sqlite3
+- docs: Note on jest environment
+- chore: `.nojekyll` added to fix GitHub Pages build
 - chore: update devDeps.
 - chore: use more maintained fork of `node-static`
 
