@@ -31,6 +31,7 @@ export type IDBTransactionFull = EventTarget & {
     };
     __requestsFinished: boolean;
     __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void;
+    __callTransFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void;
     __transactionEndCallback: () => void;
     __transactionFinished: boolean;
     __completed: boolean;
@@ -81,6 +82,7 @@ export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (resu
  *   },
  *   __requestsFinished: boolean,
  *   __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
+ *   __callTransFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
  *   __transactionEndCallback: () => void,
  *   __transactionFinished: boolean,
  *   __completed: boolean,
@@ -128,6 +130,25 @@ declare class IDBTransaction {
      * @returns {void}
      */
     __transFinishedCb(err: boolean, cb: (bool: boolean) => void): void;
+    /**
+     * In Node, the real (SQL-commit-capable) `__transFinishedCb` is only
+     * installed once the underlying WebSQL driver's own SQL-queue-idle check
+     * has fired at least once for this transaction (asynchronously, via the
+     * `nonstandardTransCb` passed to `db.transaction`/`.readTransaction`).
+     * Since our own request processing can now finish synchronously (e.g., a
+     * trivial upgrade using a synchronous SQL driver), it is possible to reach
+     * transaction completion here before that has happened, in which case
+     * `__transFinishedCb` is still the non-committing default above. Calling
+     * that default directly would silently skip the actual SQL commit and
+     * leave the underlying WebSQL transaction "running" forever, hanging any
+     * later transaction on that same database connection. So, if the real
+     * callback isn't installed yet, defer and retry until it is.
+     * @this {IDBTransactionFull}
+     * @param {boolean} err
+     * @param {(bool?: boolean) => void} cb
+     * @returns {void}
+     */
+    __callTransFinishedCb(this: IDBTransactionFull, err: boolean, cb: (bool?: boolean) => void): void;
     /**
      * @this {IDBTransactionFull}
      * @returns {void}

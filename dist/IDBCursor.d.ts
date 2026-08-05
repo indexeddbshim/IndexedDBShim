@@ -31,6 +31,9 @@ export type IDBCursorFull = IDBCursor & {
     __matchedKeys: {
         [key: string]: true;
     };
+    __continuationKey: import("./Key.js").Key | undefined;
+    __continuationPrimaryKey: import("./Key.js").Key | undefined;
+    __multiEntryExhausted: boolean;
     __invalidateCache: () => void;
 };
 export type IDBCursorWithValueFull = IDBCursorFull & {
@@ -83,6 +86,9 @@ export type AnyValue = any;
  *   __unique: boolean,
  *   __sqlDirection: "DESC"|"ASC",
  *   __matchedKeys: {[key: string]: true},
+ *   __continuationKey: import('./Key.js').Key|undefined,
+ *   __continuationPrimaryKey: import('./Key.js').Key|undefined,
+ *   __multiEntryExhausted: boolean,
  *   __invalidateCache: () => void
  * }} IDBCursorFull
  */
@@ -133,11 +139,11 @@ export class IDBCursor {
      * @param {SQLTransaction} tx
      * @param {KeySuccess} success
      * @param {FindError} error
-     * @param {Integer|undefined} recordsToLoad
+     * @param {Integer} [recordsToLoad]
      * @this {IDBCursorFull}
      * @returns {void}
      */
-    __findMultiEntry(this: IDBCursorFull, key: undefined | import("./Key.js").Key, primaryKey: undefined | import("./Key.js").Key, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad: Integer | undefined): void;
+    __findMultiEntry(this: IDBCursorFull, key: undefined | import("./Key.js").Key, primaryKey: undefined | import("./Key.js").Key, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad?: Integer): void;
     /**
      * @typedef {any} StructuredCloneValue
      */
@@ -195,6 +201,7 @@ export class IDBCursor {
      */
     __invalidateCache(this: IDBCursorFull): void;
     __prefetchedData: any;
+    __multiEntryExhausted: boolean | undefined;
     /**
      *
      * @param {import('./Key.js').Key} [key]

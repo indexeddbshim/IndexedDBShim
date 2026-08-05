@@ -172,4 +172,9 @@ export function convertToSequenceDOMString(val: AnyValue): string | string[];
  * @returns {v is null|undefined}
  */
 export function isNullish(v: AnyValue): v is null | undefined;
+/**
+ * @param {() => void} fn
+ * @returns {void}
+ */
+export function runContinuationSafely(fn: () => void): void;
 //# sourceMappingURL=util.d.ts.map
