@@ -1,5 +1,5 @@
 describe('Issue 334: NUL key-range bound', function () {
-    it('should not include values beyond ["Johnson", "\\0") in a compound range', function (done) {
+    it(String.raw`should not include values beyond ["Johnson", "\0") in a compound range`, function (done) {
         util.generateDatabaseName(function (err, dbName) {
             if (err) {
                 done(err);
