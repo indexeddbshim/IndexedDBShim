@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.0.0 - 7/31/2026 */
+/*! indexeddbshim - v17.0.0 - 8/5/2026 */
 
 'use strict';
 
@@ -1644,6 +1644,56 @@ function isNullish(v) {
 }
 
 /**
+ * Cursor/request continuation chains can call each other synchronously
+ * (e.g. walking a large prefetched buffer, or advancing many interleaved
+ * cursors in one transaction) which, for large enough record counts, can
+ * exceed the JS engine's call stack ("Maximum call stack size exceeded").
+ *
+ * This can't be fixed by deferring continuations to a microtask/macrotask:
+ * the transaction machinery synchronously checks (once the current call
+ * stack unwinds) whether there are any pending requests left in order to
+ * decide it's safe to commit; deferring a continuation opens a real gap in
+ * which that check runs first and the transaction completes prematurely,
+ * with the deferred continuation then acting on an already-finished
+ * transaction (a hang, since it can never resolve).
+ *
+ * Instead, this implements a true trampoline: the first call starts a
+ * synchronous work queue and drains it in a flat loop; any call made while
+ * already draining (i.e. a continuation triggering another continuation)
+ * is simply appended to that same queue and returns immediately instead of
+ * recursing. This keeps everything synchronous (so no completion-check
+ * race is introduced) while preventing the call stack from growing with
+ * each successive continuation.
+ */
+const continuationState = {
+  /** @type {Array<() => void>|null} */
+  queue: null
+};
+
+/**
+ * @param {() => void} fn
+ * @returns {void}
+ */
+function runContinuationSafely(fn) {
+  if (continuationState.queue) {
+    continuationState.queue.push(fn);
+    return;
+  }
+  const queue = [fn];
+  continuationState.queue = queue;
+  try {
+    while (queue.length) {
+      const next = /** @type {() => void} */queue.shift();
+      next();
+    }
+  } finally {
+    // Ensure a thrown exception can't leave the queue permanently
+    // stuck (which would silently swallow all future continuations).
+    continuationState.queue = null;
+  }
+}
+
+/**
  * @typedef {Error} DebuggingError
  */
 
@@ -2892,7 +2942,7 @@ const types = {
       encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
       let encodedKey = JSON.stringify(encoded);
       if (CFG.escapeNULForSQLiteStatements === false) {
-        encodedKey = encodedKey.replaceAll('\\u0000', '\0');
+        encodedKey = encodedKey.replaceAll(String.raw`\u0000`, '\0');
       }
       return keyTypeToEncodedChar.array + '-' + encodedKey;
     },
@@ -2903,7 +2953,7 @@ const types = {
     decode(key) {
       let decodedKey = key.slice(2);
       if (CFG.escapeNULForSQLiteStatements === false) {
-        decodedKey = decodedKey.replaceAll('\0', '\\u0000');
+        decodedKey = decodedKey.replaceAll('\0', String.raw`\u0000`);
       }
       const decoded = JSON.parse(decodedKey);
       decoded.pop(); // remove the extra item
@@ -4325,6 +4375,7 @@ const readonlyProperties$3 = ['objectStoreNames', 'mode', 'db', 'error'];
  *   },
  *   __requestsFinished: boolean,
  *   __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
+ *   __callTransFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
  *   __transactionEndCallback: () => void,
  *   __transactionFinished: boolean,
  *   __completed: boolean,
@@ -4433,6 +4484,35 @@ IDBTransaction.prototype = EventTargetFactory.createInstance({
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
   cb(Boolean(err));
 };
+
+/**
+ * In Node, the real (SQL-commit-capable) `__transFinishedCb` is only
+ * installed once the underlying WebSQL driver's own SQL-queue-idle check
+ * has fired at least once for this transaction (asynchronously, via the
+ * `nonstandardTransCb` passed to `db.transaction`/`.readTransaction`).
+ * Since our own request processing can now finish synchronously (e.g., a
+ * trivial upgrade using a synchronous SQL driver), it is possible to reach
+ * transaction completion here before that has happened, in which case
+ * `__transFinishedCb` is still the non-committing default above. Calling
+ * that default directly would silently skip the actual SQL commit and
+ * leave the underlying WebSQL transaction "running" forever, hanging any
+ * later transaction on that same database connection. So, if the real
+ * callback isn't installed yet, defer and retry until it is.
+ * @this {IDBTransactionFull}
+ * @param {boolean} err
+ * @param {(bool?: boolean) => void} cb
+ * @returns {void}
+ */
+IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
+  const me = this;
+  if (me.__transFinishedCb === IDBTransaction.prototype.__transFinishedCb) {
+    setTimeout(() => {
+      me.__callTransFinishedCb(err, cb);
+    }, 0);
+    return;
+  }
+  me.__transFinishedCb(err, cb);
+};
 /**
  * @this {IDBTransactionFull}
  * @returns {void}
@@ -4492,7 +4572,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
         return;
       }
-      executeNextRequest();
+      runContinuationSafely(executeNextRequest);
     }
 
     /**
@@ -4564,7 +4644,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         try {
           q = me.__requests[i];
           if (!q.req) {
-            q.op(tx, q.args, executeNextRequest, error);
+            q.op(tx, q.args, () => runContinuationSafely(executeNextRequest), error);
             return;
           }
           if (q.req.__done) {
@@ -6938,7 +7018,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                 reject(err);
               });
             }));
-            SyncPromise.all(indexCreations).then(finish, /** @type {(reason: any) => PromiseLike<never>} */
+            SyncPromise.all(indexCreations).then(finish).catch(/** @type {(reason: any) => PromiseLike<never>} */
             error).catch(err => {
               console.log('Index rename error');
               throw err;
@@ -9083,7 +9163,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */
                 req.__result.__versionTransaction = null;
                 sysdbFinishedCb(systx, false, function () {
-                  req.transaction.__transFinishedCb(false, function () {
+                  req.transaction.__callTransFinishedCb(false, function () {
                     ev.complete();
                     req.__transaction = null;
                   });
@@ -9194,6 +9274,13 @@ IDBFactory.prototype.open = function (name /* , version */) {
   function openDB(oldVersion) {
     /** @type {DatabaseFull} */
     let db;
+    if (version === undefined) {
+      // Resolve before use as a cache key below, or a `open(name)` call
+      //  (no explicit version) would cache/look up under `undefined`
+      //  instead of the actual version, causing a second, separate
+      //  connection to be opened for the same database on reopen.
+      version = oldVersion || 1;
+    }
     if ((useMemoryDatabase || useDatabaseCache) && Object.hasOwn(websqlDBCache, name) && Object.hasOwn(websqlDBCache[name], version)) {
       db = websqlDBCache[name][version];
     } else {
@@ -9204,9 +9291,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
         }
         websqlDBCache[name][version] = db;
       }
-    }
-    if (version === undefined) {
-      version = oldVersion || 1;
     }
     if (oldVersion > version) {
       const err = createDOMException('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
@@ -9376,7 +9460,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
           } = data.rows.item(0));
           const openConnections = me.__connections[name] || [];
           triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () {
-            // eslint-disable-line promise/catch-or-return -- Sync promise
             // Since we need two databases which can't be in a single transaction, we
             //  do this deleting from `dbVersions` first since the `__sys__` deleting
             //  only impacts file memory whereas this one is critical for avoiding it
@@ -9405,7 +9488,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             });
             return undefined;
             // @ts-expect-error It's ok
-          }, dbError);
+          }).catch(dbError);
           return undefined;
         }, dbError);
       });
@@ -9587,6 +9670,9 @@ const shimIndexedDB = IDBFactory.__createInstance();
  *   __unique: boolean,
  *   __sqlDirection: "DESC"|"ASC",
  *   __matchedKeys: {[key: string]: true},
+ *   __continuationKey: import('./Key.js').Key|undefined,
+ *   __continuationPrimaryKey: import('./Key.js').Key|undefined,
+ *   __multiEntryExhausted: boolean,
  *   __invalidateCache: () => void
  * }} IDBCursorFull
  */
@@ -9660,6 +9746,9 @@ IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColum
   this.__valueDecoder = this.__keyOnly ? Key : Sca;
   this.__count = count;
   this.__prefetchedIndex = -1;
+  this.__continuationKey = undefined;
+  this.__continuationPrimaryKey = undefined;
+  this.__multiEntryExhausted = false;
   this.__multiEntryIndex = this.__indexSource ? 'multiEntry' in source && source.multiEntry : false;
   this.__unique = this.direction.includes('unique');
   this.__sqlDirection = ['prev', 'prevunique'].includes(this.direction) ? 'DESC' : 'ASC';
@@ -9812,73 +9901,96 @@ const leftBracketRegex = /\[/gu;
  * @param {SQLTransaction} tx
  * @param {KeySuccess} success
  * @param {FindError} error
- * @param {Integer|undefined} recordsToLoad
+ * @param {Integer} [recordsToLoad]
  * @this {IDBCursorFull}
  * @returns {void}
  */
-IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error, recordsToLoad) {
+IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error, recordsToLoad = 1) {
   const me = this;
-  if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
+  if (me.__multiEntryExhausted) {
     if (CFG.DEBUG) {
-      console.log('Reached end of multiEntry cursor');
+      console.log('[multiEntry] Reached end of multiEntry cursor (already exhausted)');
     }
     success(undefined, undefined, undefined);
     return;
   }
   const quotedKeyColumnName = sqlQuote(me.__keyColumnName);
-  const sql = ['SELECT * FROM', escapeStoreNameForSQL(me.__store.__currentName)];
-  /** @type {string[]} */
-  const sqlValues = [];
-  sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-  if (me.__range && me.__range.lower !== undefined && Array.isArray(me.__range.upper)) {
-    if (me.__range.upper.indexOf(me.__range.lower) === 0) {
-      sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
-      sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */me.__range.__lowerCached.slice(0, -1)) + '%');
-    }
-  }
+  const quotedKey = sqlQuote('key');
 
   // Determine the ORDER BY direction based on the cursor.
   const direction = me.__sqlDirection;
   const op = direction === 'ASC' ? '>' : '<';
-  const quotedKey = sqlQuote('key');
-  if (primaryKey !== undefined) {
-    sql.push('AND', quotedKey, op + '= ?');
-    // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-    sqlValues.push(/** @type {string} */encode$1(primaryKey));
-  }
-  if (key !== undefined) {
-    sql.push('AND', quotedKeyColumnName, op + '= ?');
-    // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
-    sqlValues.push(/** @type {string} */encode$1(key));
-  } else if (me.__key !== undefined) {
-    sql.push('AND', quotedKeyColumnName, op + ' ?');
-    // Key.convertValueToKey(me.__key); // Already checked when entered
-    sqlValues.push(/** @type {string} */encode$1(me.__key));
-  }
-  if (!me.__count) {
-    // 1. Sort by key
-    sql.push('ORDER BY', quotedKeyColumnName, direction);
 
-    // 2. Sort by primaryKey (if defined and not unique)
-    if (!me.__unique && me.__keyColumnName !== 'key') {
-      // Avoid adding 'key' twice
-      sql.push(',', sqlQuote('key'), direction);
+  /**
+   * Runs (and, if a batch of underlying rows produces no matching
+   * multi-entry values, repeatedly re-runs) the query for the next batch
+   * of underlying rows, advancing `me.__continuationKey`/
+   * `me.__continuationPrimaryKey` (tracking the last *physical* row
+   * scanned) each time, until either some matches are found or the
+   * underlying table is exhausted.
+   * @returns {void}
+   */
+  function runQuery() {
+    const sql = ['SELECT * FROM', escapeStoreNameForSQL(me.__store.__currentName)];
+    /** @type {string[]} */
+    const sqlValues = [];
+    sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
+    if (me.__range && me.__range.lower !== undefined && Array.isArray(me.__range.upper)) {
+      if (me.__range.upper.indexOf(me.__range.lower) === 0) {
+        sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
+        sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */me.__range.__lowerCached.slice(0, -1)) + '%');
+      }
     }
-
-    // 3. Sort by position (if defined)
-
-    if (!me.__unique && me.__indexSource) {
-      // 4. Sort by object store position (if defined and not unique)
-      sql.push(',', sqlQuote(me.__valueColumnName), direction);
+    if (primaryKey !== undefined) {
+      sql.push('AND', quotedKey, op + '= ?');
+      // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
+      sqlValues.push(/** @type {string} */encode$1(primaryKey));
     }
-    sql.push('LIMIT', String(recordsToLoad));
-  }
-  const sqlStr = sql.join(' ');
-  if (CFG.DEBUG) {
-    console.log(sqlStr, sqlValues);
-  }
-  tx.executeSql(sqlStr, sqlValues, function (tx, data) {
-    if (data.rows.length > 0) {
+    if (key !== undefined) {
+      sql.push('AND', quotedKeyColumnName, op + '= ?');
+      // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
+      sqlValues.push(/** @type {string} */encode$1(key));
+    } else if (me.__continuationKey !== undefined) {
+      // Resume from the last underlying (physical) row we scanned, not
+      // from the last *matching* multi-entry value (which lives in a
+      // different key-space than the raw index column and cannot be
+      // reliably compared against it, e.g. for array index keys).
+      sql.push('AND (', quotedKeyColumnName, op, '?', 'OR (', quotedKeyColumnName, '= ?', 'AND', quotedKey, op, '?))');
+      const encodedContinuationKey = /** @type {string} */
+      encode$1(me.__continuationKey, true);
+      sqlValues.push(encodedContinuationKey, encodedContinuationKey, /** @type {string} */encode$1(me.__continuationPrimaryKey));
+    }
+    if (!me.__count) {
+      // 1. Sort by key
+      sql.push('ORDER BY', quotedKeyColumnName, direction);
+
+      // 2. Sort by primaryKey (if defined and not unique)
+      if (!me.__unique && me.__keyColumnName !== 'key') {
+        // Avoid adding 'key' twice
+        sql.push(',', sqlQuote('key'), direction);
+      }
+
+      // 3. Sort by position (if defined)
+
+      if (!me.__unique && me.__indexSource) {
+        // 4. Sort by object store position (if defined and not unique)
+        sql.push(',', sqlQuote(me.__valueColumnName), direction);
+      }
+      sql.push('LIMIT', String(recordsToLoad));
+    }
+    const sqlStr = sql.join(' ');
+    if (CFG.DEBUG) {
+      console.log('[multiEntry] query', sqlStr, sqlValues);
+    }
+    tx.executeSql(sqlStr, sqlValues, function (tx, data) {
+      if (data.rows.length === 0) {
+        me.__multiEntryExhausted = true;
+        if (CFG.DEBUG) {
+          console.log('[multiEntry] Reached end of multiEntry cursor (no more rows)');
+        }
+        success(undefined, undefined, undefined);
+        return;
+      }
       if (me.__count) {
         // Avoid caching and other processing below
         let ct = 0;
@@ -9890,6 +10002,16 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         }
         success(undefined, ct, undefined);
         return;
+      }
+
+      // Track how far we've physically scanned, regardless of whether
+      // this batch produced any matches, so the next batch (if any)
+      // resumes after this one instead of re-scanning or stopping early.
+      const lastRawRow = data.rows.item(data.rows.length - 1);
+      me.__continuationKey = decode$1(lastRawRow[me.__keyColumnName], true);
+      me.__continuationPrimaryKey = decode$1(lastRawRow.key);
+      if (data.rows.length < recordsToLoad) {
+        me.__multiEntryExhausted = true;
       }
       const rows = [];
       for (let i = 0; i < data.rows.length; i++) {
@@ -9910,6 +10032,20 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
           rows.push(clone);
         }
       }
+      if (rows.length === 0) {
+        if (me.__multiEntryExhausted) {
+          if (CFG.DEBUG) {
+            console.log('[multiEntry] Reached end of multiEntry cursor (last batch had no matches)');
+          }
+          success(undefined, undefined, undefined);
+          return;
+        }
+        if (CFG.DEBUG) {
+          console.log('[multiEntry] batch had no matches; fetching next batch');
+        }
+        runQuery();
+        return;
+      }
       const reverse = me.direction.indexOf('prev') === 0;
       rows.sort(function (a, b) {
         if (a.matchingKey.replaceAll(leftBracketRegex, 'z') < b.matchingKey.replaceAll(leftBracketRegex, 'z')) {
@@ -9926,47 +10062,31 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         }
         return 0;
       });
-      if (rows.length > 1) {
-        me.__prefetchedIndex = 0;
-        me.__prefetchedData = {
-          data: rows,
-          length: rows.length,
-          /**
-           * @param {Integer} index
-           * @returns {RowItemNonNull}
-           */
-          item(index) {
-            return this.data[index];
-          }
-        };
-        if (CFG.DEBUG) {
-          console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
+      me.__prefetchedIndex = 0;
+      me.__prefetchedData = {
+        data: rows,
+        length: rows.length,
+        /**
+         * @param {Integer} index
+         * @returns {RowItemNonNull}
+         */
+        item(index) {
+          return this.data[index];
         }
-        me.__decode(rows[0], success);
-      } else if (rows.length === 1) {
-        if (CFG.DEBUG) {
-          console.log('Reached end of multiEntry cursor');
-        }
-        me.__decode(rows[0], success);
-      } else {
-        if (CFG.DEBUG) {
-          console.log('Reached end of multiEntry cursor');
-        }
-        success(undefined, undefined, undefined);
-      }
-    } else {
+      };
       if (CFG.DEBUG) {
-        console.log('Reached end of multiEntry cursor');
+        console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
       }
-      success(undefined, undefined, undefined);
-    }
-  }, function (tx, err) {
-    if (CFG.DEBUG) {
-      console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
-    }
-    error(err);
-    return false;
-  });
+      me.__decode(rows[0], success);
+    }, function (tx, err) {
+      if (CFG.DEBUG) {
+        console.log('[multiEntry] Could not execute Cursor.continue', sqlStr, sqlValues);
+      }
+      error(err);
+      return false;
+    });
+  }
+  runQuery();
 };
 
 /**
@@ -10075,6 +10195,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
 IDBCursor.prototype.__invalidateCache = function () {
   // @ts-expect-error Why is this not being found?
   this.__prefetchedData = null;
+  this.__multiEntryExhausted = false;
 };
 
 /**
@@ -10130,8 +10251,8 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
           me.__advanceCount--;
           me.__key = k;
           me.__continue(undefined, true);
-          /** @type {() => void} */
-          executeNextRequest(); // We don't call success yet but do need to advance the transaction queue
+          // We don't call success yet but do need to advance the transaction queue
+          runContinuationSafely(/** @type {() => void} */executeNextRequest);
           return;
         }
         me.__advanceCount = undefined;
@@ -10153,11 +10274,11 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
               return;
             }
             // @ts-expect-error Todo: Our bug to fix
-            cursorContinue(tx, args, success, error);
+            runContinuationSafely(() => cursorContinue(tx, args, success, error));
           }
           if (me.__unique && !me.__multiEntryIndex && encKey === encode$1(me.key, me.__multiEntryIndex)) {
             // @ts-expect-error Todo: Our bug to fix
-            cursorContinue(tx, args, success, error);
+            runContinuationSafely(() => cursorContinue(tx, args, success, error));
             return;
           }
           checkKey();
@@ -12178,12 +12299,15 @@ function requireLib() {
 var libExports = requireLib();
 var Database = /*@__PURE__*/getDefaultExportFromCjs(libExports);
 
+/**
+ *
+ */
 class SQLiteResult {
   /**
    * @param {Error|null|undefined} error
-   * @param {number|undefined} insertId
-   * @param {number} rowsAffected
-   * @param {object[]} rows
+   * @param {number|undefined} [insertId]
+   * @param {number} [rowsAffected]
+   * @param {object[]} [rows]
    */
   constructor(error, insertId, rowsAffected, rows) {
     this.error = error;
@@ -12205,18 +12329,26 @@ const READ_ONLY_ERROR = new Error('could not prepare statement (23 not authorize
 /**
  * @param {string} name
  * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
+ * @returns {void}
  */
 function SQLiteDatabase(name, opts = {}) {
+  /** @type {import('better-sqlite3').Database} */
   const db = new Database(name);
 
   /** @type {SQLTraceCallback} */
+  // eslint-disable-next-line prefer-destructuring -- TS
   let trace = opts.trace;
   /** @type {SQLProfileCallback|undefined} */
+  // eslint-disable-next-line prefer-destructuring -- TS
   let profile = opts.profile;
   if (opts.busyTimeout) {
     db.pragma('busy_timeout = ' + Number(opts.busyTimeout));
   }
-  this._db = {
+
+  // Kept untyped (rather than the better-sqlite3 `Database` type) since that
+  //  type is internal to `@types/better-sqlite3` and can't be named in this
+  //  file's emitted declaration.
+  this._db = /** @type {any} */{
     _db: db,
     /**
      * Compatibility with node-sqlite3's configure API.
@@ -12246,13 +12378,14 @@ function SQLiteDatabase(name, opts = {}) {
       try {
         db.close();
         if (cb) {
-          cb(null);
+          return cb(null);
         }
       } catch (err) {
         if (cb) {
-          cb(/** @type {Error} */err);
+          return cb(/** @type {Error} */err);
         }
       }
+      return undefined;
     },
     getTrace() {
       return trace;
@@ -12264,18 +12397,18 @@ function SQLiteDatabase(name, opts = {}) {
 }
 
 /**
- * @param {import('better-sqlite3')} db
+ * @param {import('better-sqlite3').Database} db
  * @param {string} sql
  * @param {unknown[]} args
  * @returns {object[]}
  */
 function runSelect(db, sql, args) {
   const stmt = db.prepare(sql);
-  return stmt.reader ? stmt.all(...args) : [];
+  return stmt.reader ? (/** @type {object[]} */stmt.all(...args)) : [];
 }
 
 /**
- * @param {import('better-sqlite3')} db
+ * @param {import('better-sqlite3').Database} db
  * @param {string} sql
  * @param {unknown[]} args
  * @returns {import('better-sqlite3').RunResult}
@@ -12284,14 +12417,25 @@ function runNonSelect(db, sql, args) {
   const stmt = db.prepare(sql);
   return stmt.run(...args);
 }
+
+/**
+ * @param {{sql: string, args: unknown[]}[]} queries
+ * @param {boolean} readOnly
+ * @param {(err: Error|null, results?: SQLiteResult[]) => void} callback
+ * @returns {void}
+ */
 SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
   const db = this._db._db;
   const len = queries.length;
-  const results = new Array(len);
+  const results = Array.from({
+    length: len
+  });
   for (let i = 0; i < len; i++) {
     const query = queries[i];
-    const sql = query.sql;
-    const args = query.args;
+    const {
+      sql,
+      args
+    } = query;
     const isSelect = /^\s*SELECT\b/iu.test(sql);
     if (readOnly && !isSelect) {
       results[i] = new SQLiteResult(READ_ONLY_ERROR);
@@ -12299,7 +12443,8 @@ SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
     }
     const trace = this._db.getTrace();
     const profile = this._db.getProfile();
-    const start = profile ? process.hrtime.bigint() : 0n;
+    // eslint-disable-next-line unicorn/prefer-bigint-literals -- `0n` needs ES2020+ target for tsc
+    const start = profile ? process.hrtime.bigint() : BigInt(0);
     try {
       if (trace) {
         trace(sql);
@@ -12335,11 +12480,9 @@ function wrappedSQLiteDatabase(name) {
     db._db.configure('busyTimeout', /** @type {number} */CFG.sqlBusyTimeout); // Default is 1000
   }
   if (CFG.sqlTrace) {
-    // @ts-expect-error native API?
     db._db.configure('trace', CFG.sqlTrace);
   }
   if (CFG.sqlProfile) {
-    // @ts-expect-error native API?
     db._db.configure('profile', CFG.sqlProfile);
   }
   return db;

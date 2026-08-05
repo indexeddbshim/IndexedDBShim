@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.0.0 - 7/31/2026 */
+/*! indexeddbshim - v17.0.0 - 8/5/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -100,6 +100,13 @@
   }
   function _slicedToArray(r, e) {
     return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+  }
+  function _taggedTemplateLiteral(e, t) {
+    return t || (t = e.slice(0)), Object.freeze(Object.defineProperties(e, {
+      raw: {
+        value: Object.freeze(t)
+      }
+    }));
   }
   function _toConsumableArray(r) {
     return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
@@ -774,6 +781,8 @@
     return result;
   }
 
+  var _templateObject, _templateObject2;
+
   /**
    * @typedef {NodeJS.TypedArray|DataView} ArrayBufferView
    */
@@ -1051,7 +1060,7 @@
         encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
         var encodedKey = JSON.stringify(encoded);
         if (CFG.escapeNULForSQLiteStatements === false) {
-          encodedKey = encodedKey.replaceAll("\\u0000", '\0');
+          encodedKey = encodedKey.replaceAll(String.raw(_templateObject || (_templateObject = _taggedTemplateLiteral(["\0"], ["\\u0000"]))), '\0');
         }
         return keyTypeToEncodedChar.array + '-' + encodedKey;
       },
@@ -1062,7 +1071,7 @@
       decode: function decode(key) {
         var decodedKey = key.slice(2);
         if (CFG.escapeNULForSQLiteStatements === false) {
-          decodedKey = decodedKey.replaceAll('\0', "\\u0000");
+          decodedKey = decodedKey.replaceAll('\0', String.raw(_templateObject2 || (_templateObject2 = _taggedTemplateLiteral(["\0"], ["\\u0000"]))));
         }
         var decoded = JSON.parse(decodedKey);
         decoded.pop(); // remove the extra item
