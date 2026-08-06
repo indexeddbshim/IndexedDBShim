@@ -8,8 +8,9 @@
 - refactor: use better-sqlite3 in place of sqlite3
 - docs: Note on jest environment
 - chore: `.nojekyll` added to fix GitHub Pages build
-- chore: update devDeps.
+- chore: update better-sqlite3, sync-promise-expanded
 - chore: use more maintained fork of `node-static`
+- chore: update devDeps.
 
 ## 17.0.0
 
