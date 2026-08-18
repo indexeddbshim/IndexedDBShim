@@ -48,6 +48,7 @@
     "clean-w3c": "rimraf D_^D^B2* D_db* D_test* D_about* D_^I^D^B* D_blank* D_database_name* D_idbtransaction* D_x D_x.sqlite D_y D_y.sqlite D_webworker* D_http*",
     "clean-w3cOld": "rimraf D_db.sqlite* D_test* D_database_name* D_idbtransaction*",
     "copy": "copyup node_modules/core-js-bundle/minified.js node_modules/source-map-support/browser-source-map-support.js node_modules/mocha/mocha.css node_modules/mocha/mocha.js node_modules/chai/chai.js node_modules/sinon/pkg/sinon-no-sourcemaps.js test-support",
+    "fix-permissions": "chmod +x node_modules/npm-run-all/bin/*/index.js",
     "lint": "eslint .",
     "eslint": "npm run lint",
     "sqlite-rebuild": "cd node_modules/sqlite3 && npm i",

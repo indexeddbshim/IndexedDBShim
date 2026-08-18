@@ -9867,6 +9867,51 @@
   }
 
   /**
+   * A cached WebSQL connection (e.g., from a prior `open()`) can keep the
+   *  underlying SQLite file handle open even after `IDBDatabase#close()`
+   *  (which only flags the connection for closing without releasing the
+   *  handle, to allow instance reuse). On Windows, deleting a file while a
+   *  handle to it is still open fails with `EBUSY`, so any cached connections
+   *  for `name` must be actually closed (and evicted, since they're no longer
+   *  usable) before attempting to remove the file.
+   * @param {string} name
+   * @param {() => void} cb
+   * @returns {void}
+   */
+  function closeCachedWebSQLConnections(name, cb) {
+    if (!Object.hasOwn(websqlDBCache, name)) {
+      cb();
+      return;
+    }
+    var dbs = Object.values(websqlDBCache[name]);
+    delete websqlDBCache[name];
+    var remaining = dbs.length;
+    if (remaining === 0) {
+      cb();
+      return;
+    }
+    dbs.forEach(function (db) {
+      var sqliteDB = db._db && db._db._db;
+      if (!sqliteDB || !sqliteDB.close) {
+        remaining--;
+        if (remaining === 0) {
+          cb();
+        }
+        return;
+      }
+      sqliteDB.close(function (err) {
+        if (err) {
+          console.warn('Error closing database connection prior to file removal: ' + err);
+        }
+        remaining--;
+        if (remaining === 0) {
+          cb();
+        }
+      });
+    });
+  }
+
+  /**
    * @param {OpenDatabase} __openDatabase
    * @param {string} name
    * @param {string} escapedDatabaseName
@@ -9903,16 +9948,18 @@
       return;
     }
     if (fs && CFG.deleteDatabaseFiles !== false) {
-      fs.unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), function (err) {
-        if (err && err.code !== 'ENOENT') {
-          // Ignore if file is already deleted
-          dbError({
-            code: 0,
-            message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err
-          });
-          return;
-        }
-        databaseDeleted();
+      closeCachedWebSQLConnections(name, function () {
+        fs.unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), function (err) {
+          if (err && err.code !== 'ENOENT') {
+            // Ignore if file is already deleted
+            dbError({
+              code: 0,
+              message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err
+            });
+            return;
+          }
+          databaseDeleted();
+        });
       });
       return;
     }
