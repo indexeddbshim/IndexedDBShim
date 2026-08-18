@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.2.1 - 8/18/2026 */
+/*! indexeddbshim - v17.2.2 - 8/18/2026 */
 
 'use strict';
 
@@ -4515,6 +4515,17 @@ IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
 IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
   const me = this;
   if (me.__transFinishedCb === IDBTransaction.prototype.__transFinishedCb) {
+    // Standard (3-argument) `transaction()` implementations (browser WebSQL,
+    //  `cordova-plugin-sqlite-2`, etc.) never invoke the non-standard 4th
+    //  callback that installs the real `__transFinishedCb`, so waiting for
+    //  it here would defer forever. Detect that via arity and, if it's not
+    //  supported, just call the default (the driver auto-commits on its own).
+    const dbConn = me.db && me.db.__db;
+    const supportsNonstandardTransCb = Boolean(dbConn && typeof dbConn.transaction === 'function' && dbConn.transaction.length >= 4);
+    if (!supportsNonstandardTransCb) {
+      me.__transFinishedCb(err, cb);
+      return;
+    }
     setTimeout(() => {
       me.__callTransFinishedCb(err, cb);
     }, 0);
@@ -8911,7 +8922,12 @@ function closeCachedWebSQLConnections(name, cb) {
       }
       return;
     }
-    sqliteDB.close(err => {
+    sqliteDB.close(
+    /**
+     * @param {Error} err
+     * @returns {void}
+     */
+    err => {
       if (err) {
         console.warn('Error closing database connection prior to file removal: ' + err);
       }
