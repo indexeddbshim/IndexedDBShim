@@ -63,6 +63,7 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Co
         'IDBFactory/databases-spec.js',
         'IDBFactory/deleteDatabase-spec.js',
         'IDBFactory/open-spec.js',
+        'IDBFactory/issue383-standard-driver-spec.js',
         'IDBDatabase/close-spec.js',
         'IDBDatabase/createObjectStore-spec.js',
         'IDBDatabase/deleteObjectStore-spec.js',

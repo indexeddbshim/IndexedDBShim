@@ -252,15 +252,21 @@ function closeCachedWebSQLConnections (name, cb) {
             }
             return;
         }
-        sqliteDB.close((err) => {
-            if (err) {
-                console.warn('Error closing database connection prior to file removal: ' + err);
+        sqliteDB.close(
+            /**
+             * @param {Error} err
+             * @returns {void}
+             */
+            (err) => {
+                if (err) {
+                    console.warn('Error closing database connection prior to file removal: ' + err);
+                }
+                remaining--;
+                if (remaining === 0) {
+                    cb();
+                }
             }
-            remaining--;
-            if (remaining === 0) {
-                cb();
-            }
-        });
+        );
     });
 }
 

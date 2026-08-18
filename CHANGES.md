@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## 17.2.2
+
+- fix EBUSY on Windows deleteDatabase: release cached SQLite handle before unlink; fixes #382
+- fix: don't wait forever for non-standard transaction callback on standard WebSQL drivers (fixes #383)
+
 ## 17.2.1
 
 - fix: `IDBFactory.deleteDatabase` reentrancy bug on unlink failure
