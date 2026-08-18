@@ -9453,9 +9453,17 @@ IDBFactory.prototype.deleteDatabase = function (name) {
    * @returns {boolean}
    */
   function dbError(tx, err) {
-    if (calledDBError || err === true) {
+    if (calledDBError) {
       return false;
     }
+    // Must be set synchronously (not inside the `sysdbFinishedCbDelete` callback below) to
+    //  guard against reentrancy: `sysdbFinishedCbDelete` -> `rollback`/`commit` -> websql-configurable's
+    //  `done()` -> `currentTask.errorCallback(er)`, which is this very `dbError`, calling back into
+    //  us before the first invocation has finished. Without this, a second rollback/commit gets
+    //  issued on the shared `sysdb` connection after it has already moved on to the next queued
+    //  transaction, corrupting that connection's task queue (see issue with unrelated `open()` calls
+    //  failing/crashing after a `deleteDatabase` file-removal error).
+    calledDBError = true;
     const er = webSQLErrback(/** @type {SQLError} */err || tx);
     sysdbFinishedCbDelete(true, function () {
       req.__done = true;
@@ -9467,7 +9475,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         cancelable: true
       });
       req.dispatchEvent(e);
-      calledDBError = true;
     });
     return false;
   }

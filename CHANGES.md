@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 17.2.1
+
+- fix: `IDBFactory.deleteDatabase` reentrancy bug on unlink failure
+
 ## 17.2.0
 
 - chore: update typeson, typeson-registry, devDeps.

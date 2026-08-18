@@ -1,3 +1,6 @@
+// To renable, need to package this as a separate repo:
+//     "sourcemap-transformer": "git+https://github.com/brettz9/sourcemap-transformer.git",
+
 import sourcemapTransformer from 'sourcemap-transformer';
 
 const {transformSourceMapString} = sourcemapTransformer;

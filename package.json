@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "17.2.0",
+  "version": "17.2.1",
   "type": "module",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
@@ -21,8 +21,8 @@
       "web-platform-tests/**",
       "coverage",
       "ignore",
-      ".eslintrc.js",
-      ".mocharc.cjs",
+      "eslint.config.js",
+      ".mocharc.js",
       "tests-mocha/**",
       "tests-polyfill/**",
       "test-support/**"
@@ -210,7 +210,6 @@
     "rollup-plugin-node-polyfills": "^0.2.1",
     "sinon": "^22.1.0",
     "source-map-support": "0.5.21",
-    "sourcemap-transformer": "git+https://github.com/brettz9/sourcemap-transformer.git",
     "typescript": "^6.0.3",
     "w3c-blob": "0.0.1",
     "ws": "^8.21.3"
