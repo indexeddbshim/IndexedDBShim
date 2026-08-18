@@ -32,14 +32,14 @@ import CFG from './CFG.js';
  */
 
 /**
-* @typedef {object} KeyValueObject
-* @property {KeyType|"NaN"|"null"|"undefined"|"boolean"|"object"|"symbol"|
-*   "function"|"bigint"} type If not `KeyType`, indicates invalid value
-* @property {Value} [value]
-* @property {boolean} [invalid]
-* @property {string} [message]
-* @todo Specify acceptable `value` more precisely
-*/
+ * @typedef {object} KeyValueObject
+ * @property {KeyType|"NaN"|"null"|"undefined"|"boolean"|"object"|"symbol"|
+ *   "function"|"bigint"} type If not `KeyType`, indicates invalid value
+ * @property {Value} [value]
+ * @property {boolean} [invalid]
+ * @property {string} [message]
+ * @todo Specify acceptable `value` more precisely
+ */
 
 /**
  * @typedef {number|string|Date|ArrayBuffer} ValueTypePrimitive
@@ -474,10 +474,10 @@ function convertValueToKey (input, seen) {
 }
 
 /**
-* Currently not in use.
-* @param {Value} input
-* @returns {KeyValueObject}
-*/
+ * Currently not in use.
+ * @param {Value} input
+ * @returns {KeyValueObject}
+ */
 function convertValueToMultiEntryKey (input) {
     return convertValueToKeyValueDecoded(input, null, true, true);
 }
@@ -516,17 +516,17 @@ function getCopyBytesHeldByBufferSource (O) {
 }
 
 /**
-* Shortcut utility to avoid returning full keys from `convertValueToKey`
-*   and subsequent need to process in calling code unless `fullKeys` is
-*   set; may throw.
-* @param {Value} input
-* @param {Value[]|null} [seen]
-* @param {boolean} [multiEntry]
-* @param {boolean} [fullKeys]
-* @throws {TypeError} See `getCopyBytesHeldByBufferSource`
-* @todo Document other allowable `input`
-* @returns {KeyValueObject}
-*/
+ * Shortcut utility to avoid returning full keys from `convertValueToKey`
+ *   and subsequent need to process in calling code unless `fullKeys` is
+ *   set; may throw.
+ * @param {Value} input
+ * @param {Value[]|null} [seen]
+ * @param {boolean} [multiEntry]
+ * @param {boolean} [fullKeys]
+ * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
+ * @todo Document other allowable `input`
+ * @returns {KeyValueObject}
+ */
 function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
     seen ||= [];
     if (seen.includes(input)) {
@@ -623,12 +623,12 @@ function convertValueToMultiEntryKeyDecoded (key, fullKeys) {
 }
 
 /**
-* An internal utility.
-* @param {Value} input
-* @param {Value[]|null|undefined} [seen]
-* @throws {DOMException} `DataError`
-* @returns {KeyValueObject}
-*/
+ * An internal utility.
+ * @param {Value} input
+ * @param {Value[]|null|undefined} [seen]
+ * @throws {DOMException} `DataError`
+ * @returns {KeyValueObject}
+ */
 function convertValueToKeyRethrowingAndIfInvalid (input, seen) {
     const key = convertValueToKey(input, seen);
     if (key.invalid) {
@@ -649,26 +649,26 @@ function extractKeyFromValueUsingKeyPath (value, keyPath, multiEntry) {
     return extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, true);
 }
 /**
-* Not currently in use.
-* @param {Value} value
-* @param {KeyPath} keyPath
-* @param {boolean} multiEntry
-* @returns {KeyPathEvaluateValue}
-*/
+ * Not currently in use.
+ * @param {Value} value
+ * @param {KeyPath} keyPath
+ * @param {boolean} multiEntry
+ * @returns {KeyPathEvaluateValue}
+ */
 function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
     return evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, true);
 }
 
 /**
-* May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
-*    or `{invalid: true}` (e.g., `NaN`).
-* @param {Value} value
-* @param {KeyPath} keyPath
-* @param {boolean} [multiEntry]
-* @param {boolean} [fullKeys]
-* @returns {KeyValueObject|KeyPathEvaluateValue}
-* @todo Document other possible return?
-*/
+ * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
+ *    or `{invalid: true}` (e.g., `NaN`).
+ * @param {Value} value
+ * @param {KeyPath} keyPath
+ * @param {boolean} [multiEntry]
+ * @param {boolean} [fullKeys]
+ * @returns {KeyValueObject|KeyPathEvaluateValue}
+ * @todo Document other possible return?
+ */
 function extractKeyValueDecodedFromValueUsingKeyPath (value, keyPath, multiEntry, fullKeys) {
     const r = evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys);
     if (r.failure) {
@@ -899,11 +899,11 @@ function findMultiEntryMatches (keyEntry, range) {
 }
 
 /**
-* Not currently in use but keeping for spec parity.
-* @param {Key} key
-* @throws {Error} Upon a "bad key"
-* @returns {ValueType}
-*/
+ * Not currently in use but keeping for spec parity.
+ * @param {Key} key
+ * @throws {Error} Upon a "bad key"
+ * @returns {ValueType}
+ */
 function convertKeyToValue (key) {
     const {type, value} = key;
     switch (type) {
@@ -985,10 +985,10 @@ const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `N
  */
 
 /**
-* @callback SQLFailureCallback
-* @param {DOMException|Error} exception
-* @returns {void}
-*/
+ * @callback SQLFailureCallback
+ * @param {DOMException|Error} exception
+ * @returns {void}
+ */
 
 /**
  *

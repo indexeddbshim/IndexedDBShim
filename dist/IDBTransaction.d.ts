@@ -239,10 +239,10 @@ declare class IDBTransaction {
      */
     abort(this: IDBTransactionFull): void;
     /**
-    * Used by our `EventTarget.prototype` library to implement bubbling/capturing.
+     * Used by our `EventTarget.prototype` library to implement bubbling/capturing.
      * @this {IDBTransactionFull}
-    * @returns {import('./IDBDatabase.js').IDBDatabaseFull}
-    */
+     * @returns {import('./IDBDatabase.js').IDBDatabaseFull}
+     */
     __getParent(this: IDBTransactionFull): import("./IDBDatabase.js").IDBDatabaseFull;
 }
 declare namespace IDBTransaction {

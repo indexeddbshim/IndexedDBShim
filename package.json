@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "17.1.0",
+  "version": "17.2.0",
   "type": "module",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
@@ -161,8 +161,8 @@
     "canvas": "^3.2.3",
     "eventtargeter": "0.9.0",
     "sync-promise-expanded": "^2.0.0",
-    "typeson": "10.0.0",
-    "typeson-registry": "13.0.0",
+    "typeson": "10.2.0",
+    "typeson-registry": "13.1.0",
     "websql-configurable": "^3.0.3"
   },
   "devDependencies": {
@@ -176,11 +176,11 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^1.0.0",
     "@types/better-sqlite3": "^9.6.0",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@types/websql": "^0.0.30",
     "@unicode/unicode-17.0.0": "^1.6.17",
     "babel-plugin-add-module-exports": "1.0.4",
-    "bson": "^7.3.1",
+    "bson": "^7.3.2",
     "builtin-modules": "^5.3.0",
     "c8": "^12.0.0",
     "chai": "6.2.2",
@@ -191,9 +191,9 @@
     "coveradge": "^0.8.2",
     "cyclonejs": "1.1.4",
     "delay-cli": "^3.0.0",
-    "eslint": "^10.8.0",
-    "eslint-config-ash-nazg": "^42.1.1",
-    "globals": "^17.9.0",
+    "eslint": "^10.8.1",
+    "eslint-config-ash-nazg": "^42.5.0",
+    "globals": "^17.11.0",
     "is-date-object": "1.1.0",
     "isomorphic-fetch": "^3.0.0",
     "jsdom": "^30.0.1",
@@ -213,7 +213,7 @@
     "sourcemap-transformer": "git+https://github.com/brettz9/sourcemap-transformer.git",
     "typescript": "^6.0.3",
     "w3c-blob": "0.0.1",
-    "ws": "^8.21.2"
+    "ws": "^8.21.3"
   },
   "allowScripts": {
     "es5-ext@0.10.64": true,

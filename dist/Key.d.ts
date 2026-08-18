@@ -58,24 +58,24 @@ export function decode(key: Key, inArray?: boolean): undefined | ValueType;
  */
 export function roundTrip(key: Key, inArray?: boolean): undefined | ValueType;
 /**
-* Not currently in use but keeping for spec parity.
-* @param {Key} key
-* @throws {Error} Upon a "bad key"
-* @returns {ValueType}
-*/
+ * Not currently in use but keeping for spec parity.
+ * @param {Key} key
+ * @throws {Error} Upon a "bad key"
+ * @returns {ValueType}
+ */
 export function convertKeyToValue(key: Key): ValueType;
 /**
-* Shortcut utility to avoid returning full keys from `convertValueToKey`
-*   and subsequent need to process in calling code unless `fullKeys` is
-*   set; may throw.
-* @param {Value} input
-* @param {Value[]|null} [seen]
-* @param {boolean} [multiEntry]
-* @param {boolean} [fullKeys]
-* @throws {TypeError} See `getCopyBytesHeldByBufferSource`
-* @todo Document other allowable `input`
-* @returns {KeyValueObject}
-*/
+ * Shortcut utility to avoid returning full keys from `convertValueToKey`
+ *   and subsequent need to process in calling code unless `fullKeys` is
+ *   set; may throw.
+ * @param {Value} input
+ * @param {Value[]|null} [seen]
+ * @param {boolean} [multiEntry]
+ * @param {boolean} [fullKeys]
+ * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
+ * @todo Document other allowable `input`
+ * @returns {KeyValueObject}
+ */
 export function convertValueToKeyValueDecoded(input: Value, seen?: Value[] | null, multiEntry?: boolean, fullKeys?: boolean): KeyValueObject;
 /**
  *
@@ -94,18 +94,18 @@ export function convertValueToMultiEntryKeyDecoded(key: Key, fullKeys?: boolean)
  */
 export function convertValueToKey(input: Value, seen?: Value[] | null | undefined): KeyValueObject;
 /**
-* Currently not in use.
-* @param {Value} input
-* @returns {KeyValueObject}
-*/
+ * Currently not in use.
+ * @param {Value} input
+ * @returns {KeyValueObject}
+ */
 export function convertValueToMultiEntryKey(input: Value): KeyValueObject;
 /**
-* An internal utility.
-* @param {Value} input
-* @param {Value[]|null|undefined} [seen]
-* @throws {DOMException} `DataError`
-* @returns {KeyValueObject}
-*/
+ * An internal utility.
+ * @param {Value} input
+ * @param {Value[]|null|undefined} [seen]
+ * @throws {DOMException} `DataError`
+ * @returns {KeyValueObject}
+ */
 export function convertValueToKeyRethrowingAndIfInvalid(input: Value, seen?: Value[] | null | undefined): KeyValueObject;
 /**
  *
@@ -117,23 +117,23 @@ export function convertValueToKeyRethrowingAndIfInvalid(input: Value, seen?: Val
  */
 export function extractKeyFromValueUsingKeyPath(value: Value, keyPath: KeyPath, multiEntry: boolean): KeyValueObject | KeyPathEvaluateValue;
 /**
-* Not currently in use.
-* @param {Value} value
-* @param {KeyPath} keyPath
-* @param {boolean} multiEntry
-* @returns {KeyPathEvaluateValue}
-*/
+ * Not currently in use.
+ * @param {Value} value
+ * @param {KeyPath} keyPath
+ * @param {boolean} multiEntry
+ * @returns {KeyPathEvaluateValue}
+ */
 export function evaluateKeyPathOnValue(value: Value, keyPath: KeyPath, multiEntry: boolean): KeyPathEvaluateValue;
 /**
-* May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
-*    or `{invalid: true}` (e.g., `NaN`).
-* @param {Value} value
-* @param {KeyPath} keyPath
-* @param {boolean} [multiEntry]
-* @param {boolean} [fullKeys]
-* @returns {KeyValueObject|KeyPathEvaluateValue}
-* @todo Document other possible return?
-*/
+ * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
+ *    or `{invalid: true}` (e.g., `NaN`).
+ * @param {Value} value
+ * @param {KeyPath} keyPath
+ * @param {boolean} [multiEntry]
+ * @param {boolean} [fullKeys]
+ * @returns {KeyValueObject|KeyPathEvaluateValue}
+ * @todo Document other possible return?
+ */
 export function extractKeyValueDecodedFromValueUsingKeyPath(value: Value, keyPath: KeyPath, multiEntry?: boolean, fullKeys?: boolean): KeyValueObject | KeyPathEvaluateValue;
 /**
  * Sets the inline key value.

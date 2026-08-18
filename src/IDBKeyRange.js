@@ -6,11 +6,11 @@ const readonlyProperties = /** @type {const} */ (['lower', 'upper', 'lowerOpen',
 
 /**
  * @typedef {globalThis.IDBKeyRange & {
-*   __lowerCached: string|null|false,
-*   __upperCached: string|null|false,
-*   __lowerOpen: boolean,
-* }} IDBKeyRangeFull
-*/
+ *   __lowerCached: string|null|false,
+ *   __upperCached: string|null|false,
+ *   __lowerOpen: boolean,
+ * }} IDBKeyRangeFull
+ */
 
 /**
  * The IndexedDB KeyRange object.

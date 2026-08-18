@@ -67,7 +67,7 @@
 
         /**
          * Safe duration by which transaction should have expired.
-        */
+         */
         transactionDuration: 1000
     };
 
@@ -200,10 +200,10 @@
     }
 
     /**
-    * @typedef {object} SimulatedElement
-    * @property {{style: object}} style
-    * @property {string} [className]
-    */
+     * @typedef {object} SimulatedElement
+     * @property {{style: object}} style
+     * @property {string} [className]
+     */
     /**
      * A "safe" wrapper around `document.getElementById`
      * @param {string} id

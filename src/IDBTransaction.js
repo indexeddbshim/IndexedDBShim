@@ -776,10 +776,10 @@ IDBTransaction.__assertActive = function (tx) {
 };
 
 /**
-* Used by our `EventTarget.prototype` library to implement bubbling/capturing.
+ * Used by our `EventTarget.prototype` library to implement bubbling/capturing.
  * @this {IDBTransactionFull}
-* @returns {import('./IDBDatabase.js').IDBDatabaseFull}
-*/
+ * @returns {import('./IDBDatabase.js').IDBDatabaseFull}
+ */
 IDBTransaction.prototype.__getParent = function () {
     return this.db;
 };

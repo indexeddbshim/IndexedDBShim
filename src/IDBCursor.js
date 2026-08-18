@@ -482,19 +482,19 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
  */
 
 /**
-* @callback SuccessArg
-* @param {StructuredCloneValue} value
-* @param {import('./IDBRequest.js').IDBRequestFull} req
-* @returns {void}
-*/
+ * @callback SuccessArg
+ * @param {StructuredCloneValue} value
+ * @param {import('./IDBRequest.js').IDBRequestFull} req
+ * @returns {void}
+ */
 
 /**
-* @callback SuccessCallback
-* @param {IndexedDBKey} key
-* @param {StructuredCloneValue} value
-* @param {IndexedDBKey} primaryKey
-* @returns {void}
-*/
+ * @callback SuccessCallback
+ * @param {IndexedDBKey} key
+ * @param {StructuredCloneValue} value
+ * @param {IndexedDBKey} primaryKey
+ * @returns {void}
+ */
 
 /**
  * Creates an "onsuccess" callback.
@@ -522,11 +522,11 @@ IDBCursor.prototype.__onsuccess = function (success) {
 
 /**
  * @typedef {{
-*   matchingKey: string,
-*   key: string,
-*   [k: string]: string
-* }} RowItemNonNull
-*/
+ *   matchingKey: string,
+ *   key: string,
+ *   [k: string]: string
+ * }} RowItemNonNull
+ */
 
 /**
  *

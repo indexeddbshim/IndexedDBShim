@@ -388,7 +388,7 @@ function IDBFactory () {
  *   __connections: {
  *     [key: string]: import('./IDBDatabase.js').IDBDatabaseFull[]
  *   }
-* }} IDBFactoryFull
+ * }} IDBFactoryFull
  */
 
 const IDBFactoryAlias = IDBFactory;
@@ -970,14 +970,14 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 };
 
 /**
-* May return outdated information if a database has since been deleted.
-* @see https://github.com/w3c/IndexedDB/pull/240/files
-* @this {IDBFactoryFull}
-* @returns {Promise<{
-*   name: string,
-*   version: Integer
-* }[]>}
-*/
+ * May return outdated information if a database has since been deleted.
+ * @see https://github.com/w3c/IndexedDB/pull/240/files
+ * @this {IDBFactoryFull}
+ * @returns {Promise<{
+ *   name: string,
+ *   version: Integer
+ * }[]>}
+ */
 IDBFactory.prototype.databases = function () {
     const me = this;
     let calledDbCreateError = false;
@@ -1022,17 +1022,17 @@ IDBFactory.prototype.databases = function () {
 };
 
 /**
-* @todo forceClose: Test
-* This is provided to facilitate unit-testing of the
-*  closing of a database connection with a forced flag:
-* <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
-* @param {string} dbName
-* @param {Integer} connIdx
-* @param {string} msg
-* @throws {TypeError}
-* @this {IDBFactoryFull}
-* @returns {void}
-*/
+ * @todo forceClose: Test
+ * This is provided to facilitate unit-testing of the
+ *  closing of a database connection with a forced flag:
+ * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+ * @param {string} dbName
+ * @param {Integer} connIdx
+ * @param {string} msg
+ * @throws {TypeError}
+ * @this {IDBFactoryFull}
+ * @returns {void}
+ */
 IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     const me = this;
     /**

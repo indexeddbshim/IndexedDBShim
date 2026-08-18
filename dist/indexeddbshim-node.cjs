@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.1.0 - 8/6/2026 */
+/*! indexeddbshim - v17.2.0 - 8/18/2026 */
 
 'use strict';
 
@@ -2155,11 +2155,11 @@ const createDOMException = useNativeDOMException
 // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
 ?
 /**
-* @param {string} name
-* @param {string} message
-* @param {ErrorLike} [error]
-* @returns {DOMException}
-*/
+ * @param {string} name
+ * @param {string} message
+ * @param {ErrorLike} [error]
+ * @returns {DOMException}
+ */
 function (name, message, error) {
   logError(name, message, error);
   return createNativeDOMException(name, message);
@@ -2167,11 +2167,11 @@ function (name, message, error) {
 // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
 :
 /**
-* @param {string} name
-* @param {string} message
-* @param {ErrorLike} [error]
-* @returns {Error}
-*/
+ * @param {string} name
+ * @param {string} message
+ * @param {ErrorLike} [error]
+ * @returns {Error}
+ */
 function (name, message, error) {
   logError(name, message, error);
   return createNonNativeDOMException(name, message);
@@ -2714,14 +2714,14 @@ function cmp(first, second) {
  */
 
 /**
-* @typedef {object} KeyValueObject
-* @property {KeyType|"NaN"|"null"|"undefined"|"boolean"|"object"|"symbol"|
-*   "function"|"bigint"} type If not `KeyType`, indicates invalid value
-* @property {Value} [value]
-* @property {boolean} [invalid]
-* @property {string} [message]
-* @todo Specify acceptable `value` more precisely
-*/
+ * @typedef {object} KeyValueObject
+ * @property {KeyType|"NaN"|"null"|"undefined"|"boolean"|"object"|"symbol"|
+ *   "function"|"bigint"} type If not `KeyType`, indicates invalid value
+ * @property {Value} [value]
+ * @property {boolean} [invalid]
+ * @property {string} [message]
+ * @todo Specify acceptable `value` more precisely
+ */
 
 /**
  * @typedef {number|string|Date|ArrayBuffer} ValueTypePrimitive
@@ -3138,10 +3138,10 @@ function convertValueToKey(input, seen) {
 }
 
 /**
-* Currently not in use.
-* @param {Value} input
-* @returns {KeyValueObject}
-*/
+ * Currently not in use.
+ * @param {Value} input
+ * @returns {KeyValueObject}
+ */
 function convertValueToMultiEntryKey(input) {
   return convertValueToKeyValueDecoded(input, null, true, true);
 }
@@ -3176,17 +3176,17 @@ function getCopyBytesHeldByBufferSource(O) {
 }
 
 /**
-* Shortcut utility to avoid returning full keys from `convertValueToKey`
-*   and subsequent need to process in calling code unless `fullKeys` is
-*   set; may throw.
-* @param {Value} input
-* @param {Value[]|null} [seen]
-* @param {boolean} [multiEntry]
-* @param {boolean} [fullKeys]
-* @throws {TypeError} See `getCopyBytesHeldByBufferSource`
-* @todo Document other allowable `input`
-* @returns {KeyValueObject}
-*/
+ * Shortcut utility to avoid returning full keys from `convertValueToKey`
+ *   and subsequent need to process in calling code unless `fullKeys` is
+ *   set; may throw.
+ * @param {Value} input
+ * @param {Value[]|null} [seen]
+ * @param {boolean} [multiEntry]
+ * @param {boolean} [fullKeys]
+ * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
+ * @todo Document other allowable `input`
+ * @returns {KeyValueObject}
+ */
 function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
   seen ||= [];
   if (seen.includes(input)) {
@@ -3328,12 +3328,12 @@ function convertValueToMultiEntryKeyDecoded(key, fullKeys) {
 }
 
 /**
-* An internal utility.
-* @param {Value} input
-* @param {Value[]|null|undefined} [seen]
-* @throws {DOMException} `DataError`
-* @returns {KeyValueObject}
-*/
+ * An internal utility.
+ * @param {Value} input
+ * @param {Value[]|null|undefined} [seen]
+ * @throws {DOMException} `DataError`
+ * @returns {KeyValueObject}
+ */
 function convertValueToKeyRethrowingAndIfInvalid(input, seen) {
   const key = convertValueToKey(input, seen);
   if (key.invalid) {
@@ -3354,26 +3354,26 @@ function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
   return extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, true);
 }
 /**
-* Not currently in use.
-* @param {Value} value
-* @param {KeyPath} keyPath
-* @param {boolean} multiEntry
-* @returns {KeyPathEvaluateValue}
-*/
+ * Not currently in use.
+ * @param {Value} value
+ * @param {KeyPath} keyPath
+ * @param {boolean} multiEntry
+ * @returns {KeyPathEvaluateValue}
+ */
 function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
   return evaluateKeyPathOnValueToDecodedValue(value, keyPath);
 }
 
 /**
-* May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
-*    or `{invalid: true}` (e.g., `NaN`).
-* @param {Value} value
-* @param {KeyPath} keyPath
-* @param {boolean} [multiEntry]
-* @param {boolean} [fullKeys]
-* @returns {KeyValueObject|KeyPathEvaluateValue}
-* @todo Document other possible return?
-*/
+ * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
+ *    or `{invalid: true}` (e.g., `NaN`).
+ * @param {Value} value
+ * @param {KeyPath} keyPath
+ * @param {boolean} [multiEntry]
+ * @param {boolean} [fullKeys]
+ * @returns {KeyValueObject|KeyPathEvaluateValue}
+ * @todo Document other possible return?
+ */
 function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, fullKeys) {
   const r = evaluateKeyPathOnValueToDecodedValue(value, keyPath);
   if (r.failure) {
@@ -3585,11 +3585,11 @@ function findMultiEntryMatches(keyEntry, range) {
 }
 
 /**
-* Not currently in use but keeping for spec parity.
-* @param {Key} key
-* @throws {Error} Upon a "bad key"
-* @returns {ValueType}
-*/
+ * Not currently in use but keeping for spec parity.
+ * @param {Key} key
+ * @throws {Error} Upon a "bad key"
+ * @returns {ValueType}
+ */
 function convertKeyToValue(key) {
   const {
     type,
@@ -3683,10 +3683,10 @@ const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `N
  */
 
 /**
-* @callback SQLFailureCallback
-* @param {DOMException|Error} exception
-* @returns {void}
-*/
+ * @callback SQLFailureCallback
+ * @param {DOMException|Error} exception
+ * @returns {void}
+ */
 
 /**
  *
@@ -3855,11 +3855,11 @@ const readonlyProperties$4 = /** @type {const} */['lower', 'upper', 'lowerOpen',
 
 /**
  * @typedef {globalThis.IDBKeyRange & {
-*   __lowerCached: string|null|false,
-*   __upperCached: string|null|false,
-*   __lowerOpen: boolean,
-* }} IDBKeyRangeFull
-*/
+ *   __lowerCached: string|null|false,
+ *   __upperCached: string|null|false,
+ *   __lowerOpen: boolean,
+ * }} IDBKeyRangeFull
+ */
 
 /**
  * The IndexedDB KeyRange object.
@@ -5117,10 +5117,10 @@ IDBTransaction.__assertActive = function (tx) {
 };
 
 /**
-* Used by our `EventTarget.prototype` library to implement bubbling/capturing.
+ * Used by our `EventTarget.prototype` library to implement bubbling/capturing.
  * @this {IDBTransactionFull}
-* @returns {import('./IDBDatabase.js').IDBDatabaseFull}
-*/
+ * @returns {import('./IDBDatabase.js').IDBDatabaseFull}
+ */
 IDBTransaction.prototype.__getParent = function () {
   return this.db;
 };
@@ -5154,7 +5154,7 @@ TypesonPromise.__typeson__type__ = "TypesonPromise", "undefined" != typeof Symbo
     }).then(r, n);
   });
 }, TypesonPromise.prototype.catch = function (e) {
-  return this.then(() => {}, e);
+  return this.then(void 0, e);
 }, TypesonPromise.resolve = function (e) {
   return new TypesonPromise(t => {
     t(e);
@@ -5210,26 +5210,31 @@ function escapeKeyPathComponent(e) {
 function unescapeKeyPathComponent(e) {
   return e.replaceAll("~1", ".").replaceAll("~0", "~").replace(/^''$/u, "").replaceAll("''''", "''");
 }
-function getByKeyPath(e, t) {
-  if ("" === t) return e;
-  if (null === e || "object" != typeof e) throw new TypeError("Unexpected non-object type");
-  const r = t.indexOf(".");
-  if (-1 !== r) {
-    const n = e[unescapeKeyPathComponent(t.slice(0, r))];
-    return void 0 === n ? void 0 : getByKeyPath(n, t.slice(r + 1));
+function getByKeyPath(t, r, n) {
+  if ("" === r) return t;
+  if (null === t || "object" != typeof t) throw new TypeError("Unexpected non-object type");
+  const o = r.indexOf("."),
+    s = unescapeKeyPathComponent(-1 === o ? r : r.slice(0, o));
+  if (e(t, s)) {
+    if (-1 !== o) {
+      const e = t[s];
+      return void 0 === e ? void 0 : getByKeyPath(e, r.slice(o + 1));
+    }
+    return t[s];
   }
-  return e[unescapeKeyPathComponent(t)];
 }
-function setAtKeyPath(e, t, r) {
-  if ("" === t) return r;
-  let n = e,
-    o = t;
+function setAtKeyPath(t, r, n, o) {
+  if ("" === r) return n;
+  let s = t,
+    a = r;
   for (;;) {
-    if (!n || "object" != typeof n) throw new TypeError("Unexpected non-object type");
-    if ("__proto__" === o) throw new TypeError("Invalid property");
-    const t = o.indexOf(".");
-    if (-1 === t) return n[unescapeKeyPathComponent(o)] = r, e;
-    n = n[unescapeKeyPathComponent(o.slice(0, t))], o = o.slice(t + 1);
+    if (!s || "object" != typeof s) throw new TypeError("Unexpected non-object type");
+    const r = a.indexOf("."),
+      i = unescapeKeyPathComponent(-1 === r ? a : a.slice(0, r));
+    if ("__proto__" === i) throw new TypeError("Invalid property");
+    if (-1 === r) return s[i] = n, t;
+    if (!e(s, i)) throw new TypeError("Invalid property");
+    s = s[i], a = a.slice(r + 1);
   }
 }
 function getJSONType(e) {
@@ -5239,7 +5244,7 @@ function getJSONType(e) {
  * @file Typeson - JSON with types.
  * @license The MIT License (MIT)
  * @copyright (c) 2016-2018 David Fahlander, Brett Zamir
-*/
+ */
 const {
     keys: r,
     hasOwn: n
@@ -5248,6 +5253,14 @@ const {
     isArray: o
   } = Array,
   s = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
+function setOwnEnumerable(e, t, r) {
+  Object.defineProperty(e, t, {
+    configurable: true,
+    enumerable: true,
+    value: r,
+    writable: true
+  });
+}
 function nestedPathsFirst(e, t) {
   if ("" === e.keypath) return -1;
   let r = e.keypath.match(/\./gu) ?? 0,
@@ -5303,10 +5316,16 @@ class Typeson {
     });
   }
   specialTypeNames(e, t, r = {}) {
-    return r.returnTypeNames = true, this.encapsulate(e, t, r);
+    return this.encapsulate(e, t, {
+      ...r,
+      returnTypeNames: true
+    });
   }
   rootTypeName(e, t, r = {}) {
-    return r.iterateNone = true, this.encapsulate(e, t, r);
+    return this.encapsulate(e, t, {
+      ...r,
+      iterateNone: true
+    });
   }
   encapsulate(e, t, a) {
     const i = {
@@ -5318,12 +5337,13 @@ class Typeson {
         sync: c
       } = i,
       y = {},
-      l = [],
       u = [],
+      l = [],
       p = [],
       f = !("cyclic" in i) || i.cyclic,
       {
-        encapsulateObserver: d
+        encapsulateObserver: d,
+        encapsulateError: m
       } = i,
       finish = e => {
         const t = Object.values(y);
@@ -5347,14 +5367,10 @@ class Typeson {
         return await Promise.all(r.map(async function (r) {
           const n = [],
             [o] = t.splice(0, 1),
-            [s,, a, i, c, y, l] = o,
-            u = _encapsulate(s, r, a, i, n, true, l),
-            p = hasConstructorOf(u, TypesonPromise);
-          if (s && p) {
-            const t = await u.p;
-            return c[y] = t, checkPromises(e, n);
-          }
-          return s ? c[y] = u : e = p ? u.p : u, checkPromises(e, n);
+            [s,, a, i, c, y, u] = o,
+            l = _encapsulate(s, r, a, i, n, true, u),
+            p = hasConstructorOf(l, TypesonPromise);
+          return s && p ? (setOwnEnumerable(c, y, await l.p), checkPromises(e, n)) : (s ? setOwnEnumerable(c, y, l) : e = p ? l.p : l, checkPromises(e, n));
         })), e;
       },
       _adaptBuiltinStateObjectProperties = (e, t, r) => {
@@ -5368,45 +5384,70 @@ class Typeson {
         });
       },
       _encapsulate = (e, t, s, a, c, p, f) => {
-        let m,
-          h = {};
-        const g = d ? function (r) {
-          const n = f ?? a.type ?? getJSONType(t);
-          d(Object.assign(r ?? h, {
-            keypath: e,
-            value: t,
-            cyclic: s,
-            stateObj: a,
-            promisesData: c,
-            resolvingTypesonPromise: p,
-            awaitingTypesonPromise: hasConstructorOf(t, TypesonPromise)
-          }, {
-            type: n
-          }));
-        } : null;
-        if (["string", "boolean", "number", "undefined"].includes(typeof t)) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (m = a.replaced ? t : replace(e, t, a, c, false, p, g), m !== t && (h = {
-          replaced: m
-        })) : m = t, g && g(), m;
-        if (null === t) return g && g(), t;
+        let h,
+          g = {};
+        const b = d ? function (r) {
+            const n = f ?? a.type ?? getJSONType(t);
+            d(Object.assign(r ?? g, {
+              keypath: e,
+              value: t,
+              cyclic: s,
+              stateObj: a,
+              promisesData: c,
+              resolvingTypesonPromise: p,
+              awaitingTypesonPromise: hasConstructorOf(t, TypesonPromise)
+            }, {
+              type: n
+            }));
+          } : null,
+          getEncapsulatedValue = (e, t, r) => {
+            try {
+              return {
+                value: _encapsulate(e, t[r], Boolean(s), a, c, p)
+              };
+            } catch (n) {
+              if (!m) throw n;
+              const o = f ?? a.type ?? getJSONType(t),
+                s = m({
+                  keypath: e,
+                  error: n,
+                  parent: t,
+                  key: r,
+                  stateObj: a,
+                  type: o
+                });
+              if (!s) throw n;
+              if ("substitute" in s) return {
+                value: s.substitute,
+                substitute: true
+              };
+              if (s.ignore) return;
+              throw n;
+            }
+          };
+        if (["string", "boolean", "number", "undefined"].includes(typeof t)) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (h = a.replaced ? t : replace(e, t, a, c, false, p, b), h !== t && (g = {
+          replaced: h
+        })) : h = t, b && b(), h;
+        if (null === t) return b && b(), t;
         if (s && t && "object" == typeof t && !a.iterateIn && !a.iterateUnsetNumeric) {
-          const r = l.indexOf(t);
-          if (-1 !== r) return y[e] = "#", g && g({
-            cyclicKeypath: u[r]
-          }), "#" + u[r];
-          true === s && (l.push(t), u.push(e));
+          const r = u.indexOf(t);
+          if (-1 !== r) return y[e] = "#", b && b({
+            cyclicKeypath: l[r]
+          }), "#" + l[r];
+          true === s && (u.push(t), l.push(e));
         }
-        const b = isPlainObject(t),
-          v = o(t),
-          O = (b || v) && (!this.plainObjectReplacers.length || a.replaced) || a.iterateIn ? t : replace(e, t, a, c, b || v, null, g);
-        let w;
-        if (O !== t ? (m = O, h = {
-          replaced: O
-        }) : "" === e && hasConstructorOf(t, TypesonPromise) ? (c.push([e, t, s, a, void 0, void 0, a.type]), m = t) : v && "object" !== a.iterateIn || "array" === a.iterateIn ? (w = new Array(t.length), h = {
-          clone: w
-        }) : !b && (["function", "symbol"].includes(typeof t) || "toJSON" in t || hasConstructorOf(t, TypesonPromise) || hasConstructorOf(t, Promise) || hasConstructorOf(t, ArrayBuffer)) && "object" !== a.iterateIn ? m = t : (w = {}, a.addLength && (w.length = t.length), h = {
-          clone: w
-        }), g && g(), i.iterateNone) return w ?? m;
-        if (!w) return m;
+        const v = isPlainObject(t),
+          O = o(t),
+          w = (v || O) && (!this.plainObjectReplacers.length || a.replaced) || a.iterateIn ? t : replace(e, t, a, c, v || O, null, b);
+        let T;
+        if (w !== t ? (h = w, g = {
+          replaced: w
+        }) : "" === e && hasConstructorOf(t, TypesonPromise) ? (c.push([e, t, s, a, void 0, void 0, a.type]), h = t) : O && "object" !== a.iterateIn || "array" === a.iterateIn ? (T = new Array(t.length), g = {
+          clone: T
+        }) : !v && ("object" != typeof t || "toJSON" in t || hasConstructorOf(t, TypesonPromise) || hasConstructorOf(t, Promise) || hasConstructorOf(t, ArrayBuffer)) && "object" !== a.iterateIn ? h = t : (T = {}, a.addLength && (T.length = t.length), g = {
+          clone: T
+        }), b && b(), i.iterateNone) return T ?? h;
+        if (!T) return h;
         if (a.iterateIn) {
           for (const r in t) {
             const o = {
@@ -5414,11 +5455,12 @@ class Typeson {
             };
             _adaptBuiltinStateObjectProperties(a, o, () => {
               const n = e + (e ? "." : "") + escapeKeyPathComponent(r),
-                o = _encapsulate(n, t[r], Boolean(s), a, c, p);
-              hasConstructorOf(o, TypesonPromise) ? c.push([n, o, Boolean(s), a, w, r, a.type]) : void 0 !== o && (w[r] = o);
+                o = getEncapsulatedValue(n, t, r),
+                i = o && o.value;
+              hasConstructorOf(i, TypesonPromise) ? c.push([n, i, Boolean(s), a, T, r, a.type]) : o && (void 0 !== i || "substitute" in o) && setOwnEnumerable(T, r, i);
             });
           }
-          g && g({
+          b && b({
             endIterateIn: true,
             end: true
           });
@@ -5427,10 +5469,11 @@ class Typeson {
           _adaptBuiltinStateObjectProperties(a, {
             ownKeys: true
           }, () => {
-            const e = _encapsulate(n, t[r], Boolean(s), a, c, p);
-            hasConstructorOf(e, TypesonPromise) ? c.push([n, e, Boolean(s), a, w, r, a.type]) : void 0 !== e && (w[r] = e);
+            const e = getEncapsulatedValue(n, t, r),
+              o = e && e.value;
+            hasConstructorOf(o, TypesonPromise) ? c.push([n, o, Boolean(s), a, T, r, a.type]) : e && (void 0 !== o || "substitute" in e) && setOwnEnumerable(T, r, o);
           });
-        }), g && g({
+        }), b && b({
           endIterateOwn: true,
           end: true
         });
@@ -5443,21 +5486,21 @@ class Typeson {
               ownKeys: false
             }, () => {
               const e = _encapsulate(r, void 0, Boolean(s), a, c, p);
-              hasConstructorOf(e, TypesonPromise) ? c.push([r, e, Boolean(s), a, w, n, a.type]) : void 0 !== e && (w[n] = e);
+              hasConstructorOf(e, TypesonPromise) ? c.push([r, e, Boolean(s), a, T, n, a.type]) : void 0 !== e && setOwnEnumerable(T, n, e);
             });
           }
-          g && g({
+          b && b({
             endIterateUnsetNumeric: true,
             end: true
           });
         }
-        return w;
+        return T;
       },
       replace = (e, t, r, n, o, s, a) => {
         const i = o ? this.plainObjectReplacers : this.nonplainObjectReplacers;
-        let l = i.length;
-        for (; l--;) {
-          const o = i[l];
+        let u = i.length;
+        for (; u--;) {
+          const o = i[u];
           if (o.test(t, r)) {
             const {
               type: i
@@ -5472,24 +5515,24 @@ class Typeson {
             }), (c || !o.replaceAsync) && !o.replace) return a && a({
               typeDetected: true
             }), _encapsulate(e, t, f && "readonly", r, n, s, i);
-            let l;
+            let u;
             if (a && a({
               replacing: true
             }), c || !o.replaceAsync) {
               if (void 0 === o.replace) throw new TypeError("Missing replacer");
-              l = o.replace(t, r);
-            } else l = o.replaceAsync(t, r);
-            return _encapsulate(e, l, f && "readonly", r, n, s, i);
+              u = o.replace(t, r);
+            } else u = o.replaceAsync(t, r);
+            return _encapsulate(e, u, f && "readonly", r, n, s, i);
           }
         }
         return t;
       },
-      m = _encapsulate("", e, f, t ?? {}, p);
+      h = _encapsulate("", e, f, t ?? {}, p);
     if (p.length) return c && i.throwOnBadSyncType ? (() => {
       throw new TypeError("Sync method requested but async result obtained");
-    })() : Promise.resolve(checkPromises(m, p)).then(finish);
+    })() : Promise.resolve(checkPromises(h, p)).then(finish);
     if (!c && i.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
-    return c && i.stringification ? [finish(m)] : c ? finish(m) : Promise.resolve(finish(m));
+    return c && i.stringification ? [finish(h)] : c ? finish(h) : Promise.resolve(finish(h));
   }
   encapsulateSync(e, t, r) {
     return this.encapsulate(e, t, {
@@ -5525,15 +5568,15 @@ class Typeson {
     if (!i || "object" != typeof i || Array.isArray(i)) return finishRevival(e);
     const c = [],
       y = Object.create(null),
-      l = {};
-    let u = true;
-    i.$ && isPlainObject(i.$) && (e = e.$, i = i.$, u = false);
+      u = {};
+    let l = true;
+    i.$ && isPlainObject(i.$) && (e = e.$, i = i.$, l = false);
     const executeReviver = (e, t) => {
         const [r] = this.revivers[e] ?? [];
         if (!r) throw new Error("Unregistered type: " + e);
         if (a && !("revive" in r)) return t;
-        if (!a && r.reviveAsync) return r.reviveAsync(t, l);
-        if (r.revive) return r.revive(t, l);
+        if (!a && r.reviveAsync) return r.reviveAsync(t, u);
+        if (r.revive) return r.revive(t, u);
         throw new Error("Missing reviver");
       },
       p = [];
@@ -5571,23 +5614,23 @@ class Typeson {
       }, void 0);
     })();
     let d;
-    return hasConstructorOf(f, TypesonPromise) ? d = f.then(() => e) : (d = function _revive(e, t, s, l, f) {
-      if (u && "$types" === e) return;
+    return hasConstructorOf(f, TypesonPromise) ? d = f.then(() => e) : (d = function _revive(e, t, s, u, f) {
+      if (l && "$types" === e) return;
       const d = p.length,
-        m = i[e],
+        m = n(i, e) ? i[e] : void 0,
         h = o(t);
       if (h || isPlainObject(t)) {
         const o = h ? new Array(t.length) : {};
         for (r(t).forEach(r => {
           const n = _revive(e + (e ? "." : "") + escapeKeyPathComponent(r), t[r], s ?? o, o, r),
-            set = e => (hasConstructorOf(e, Undefined) ? o[r] = void 0 : void 0 !== e && (o[r] = e), e);
+            set = e => (hasConstructorOf(e, Undefined) ? setOwnEnumerable(o, r, void 0) : void 0 !== e && setOwnEnumerable(o, r, e), e);
           hasConstructorOf(n, TypesonPromise) ? p.push(n.then(e => set(e))) : set(n);
         }), t = o; c.length;) {
           const [[e, t, r, o]] = c,
             s = n(y, t),
             a = s ? y[t] : getByKeyPath(e, t);
           if (!s && void 0 === a) break;
-          r[o] = a, c.shift();
+          setOwnEnumerable(r, o, a), c.shift();
         }
       }
       if (!m) return y[e] = t, t;
@@ -5595,7 +5638,7 @@ class Typeson {
         const e = t.slice(1),
           r = n(y, e),
           o = r ? y[e] : getByKeyPath(s, e);
-        return r || void 0 !== o || c.push([s, e, l, f]), o;
+        return r || void 0 !== o || c.push([s, e, u, f]), o;
       }
       const applyType = t => {
         const r = [].concat(m).reduce(function reducer(e, t) {
@@ -5635,11 +5678,10 @@ class Typeson {
           if ("#" === t) throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");
           if (a.includes(t)) throw new TypeError("Plain JSON object types are reserved as type names");
           let r = e[t];
-          const s = r && "function" != typeof r && !Array.isArray(r) && r.testPlainObjects ? this.plainObjectReplacers : this.nonplainObjectReplacers,
-            i = s.filter(function (e) {
-              return e.type === t;
-            });
-          if (i.length && (s.splice(s.indexOf(i[0]), 1), delete this.revivers[t], delete this.types[t]), "function" == typeof r) {
+          if ([this.plainObjectReplacers, this.nonplainObjectReplacers].forEach(e => {
+            const r = e.findIndex(e => e.type === t);
+            -1 !== r && e.splice(r, 1);
+          }), delete this.revivers[t], delete this.types[t], "function" == typeof r) {
             const e = r;
             r = {
               test: t => t && t.constructor === e,
@@ -5657,13 +5699,13 @@ class Typeson {
             };
           }
           if (!r?.test) return;
-          const c = {
+          const s = {
             type: t,
             test: r.test.bind(r)
           };
-          r.replace && (c.replace = r.replace.bind(r)), r.replaceAsync && (c.replaceAsync = r.replaceAsync.bind(r));
-          const y = "number" == typeof n.fallback ? n.fallback : n.fallback ? 0 : 1 / 0;
-          if (r.testPlainObjects ? this.plainObjectReplacers.splice(y, 0, c) : this.nonplainObjectReplacers.splice(y, 0, c), r.revive || r.reviveAsync) {
+          r.replace && (s.replace = r.replace.bind(r)), r.replaceAsync && (s.replaceAsync = r.replaceAsync.bind(r));
+          const i = "number" == typeof n.fallback ? n.fallback : n.fallback ? 0 : 1 / 0;
+          if (r.testPlainObjects ? this.plainObjectReplacers.splice(i, 0, s) : this.nonplainObjectReplacers.splice(i, 0, s), r.revive || r.reviveAsync) {
             const e = {};
             r.revive && (e.revive = r.revive.bind(r)), r.reviveAsync && (e.reviveAsync = r.reviveAsync.bind(r)), this.revivers[t] = [e, {
               plain: r.testPlainObjects
@@ -5681,12 +5723,12 @@ class Undefined {}
 Undefined.__typeson__type__ = "TypesonUndefined";
 const a = ["null", "boolean", "number", "string", "array", "object"];
 for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), y = 0; y < 64; y++) c[i.codePointAt(y)] = y;
-var l = function encode(e, t, r) {
+var u = function encode(e, t, r) {
     null == r && (r = e.byteLength);
     for (var n = new Uint8Array(e, 0, r), o = n.length, s = "", a = 0; a < o; a += 3) s += i[n[a] >> 2], s += i[(3 & n[a]) << 4 | n[a + 1] >> 4], s += i[(15 & n[a + 1]) << 2 | n[a + 2] >> 6], s += i[63 & n[a + 2]];
     return o % 3 == 2 ? s = s.slice(0, -1) + "=" : o % 3 == 1 && (s = s.slice(0, -2) + "=="), s;
   },
-  u = function decode(e, t) {
+  l = function decode(e, t) {
     var r = e.length;
     if (r % 4) throw new Error("Bad base64 length: not divisible by four");
     var n,
@@ -5696,8 +5738,8 @@ var l = function encode(e, t, r) {
       i = .75 * e.length,
       y = 0;
     "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-    for (var l = new ArrayBuffer(i, t), u = new Uint8Array(l), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], o = c[e.codePointAt(p + 1)], s = c[e.codePointAt(p + 2)], a = c[e.codePointAt(p + 3)], u[y++] = n << 2 | o >> 4, u[y++] = (15 & o) << 4 | s >> 2, u[y++] = (3 & s) << 6 | 63 & a;
-    return l;
+    for (var u = new ArrayBuffer(i, t), l = new Uint8Array(u), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], o = c[e.codePointAt(p + 1)], s = c[e.codePointAt(p + 2)], a = c[e.codePointAt(p + 3)], l[y++] = n << 2 | o >> 4, l[y++] = (15 & o) << 4 | s >> 2, l[y++] = (3 & s) << 6 | 63 & a;
+    return u;
   };
 const p = {
     arraybuffer: {
@@ -5708,14 +5750,14 @@ const p = {
         return -1 !== r ? {
           index: r
         } : (t.buffers.push(e), {
-          s: l(e),
+          s: u(e),
           maxByteLength: e.maxByteLength,
           resizable: e.resizable
         });
       },
       revive(e, t) {
         if (t.buffers || (t.buffers = []), Object.hasOwn(e, "index")) return t.buffers[e.index];
-        const r = u(e.s, e.resizable ? {
+        const r = l(e.s, e.resizable ? {
           maxByteLength: e.maxByteLength
         } : void 0);
         return t.buffers.push(r), r;
@@ -5818,7 +5860,7 @@ const b = {
           byteOffset: t,
           byteLength: r
         } : (n.buffers.push(e), {
-          encoded: l(e),
+          encoded: u(e),
           maxByteLength: e.maxByteLength,
           resizable: e.resizable,
           byteOffset: t,
@@ -5836,7 +5878,7 @@ const b = {
           resizable: i
         } = e;
         let c;
-        return "index" in e ? c = t.buffers[s] : (c = u(o, i ? {
+        return "index" in e ? c = t.buffers[s] : (c = l(o, i ? {
           maxByteLength: a
         } : a), t.buffers.push(c)), new DataView(c, r, n);
       }
@@ -6009,7 +6051,7 @@ function create$2(e) {
   };
 }
 [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(e => create$2(e)), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
-const N = {
+const E = {
     file: {
       test: e => "File" === toStringTag(e),
       replace(e) {
@@ -6046,8 +6088,8 @@ const N = {
       })
     }
   },
-  _ = {
-    file: N.file,
+  N = {
+    file: E.file,
     filelist: {
       test: e => "FileList" === toStringTag(e),
       replace(e) {
@@ -6071,7 +6113,7 @@ const N = {
       }
     }
   },
-  B = {
+  _ = {
     imagebitmap: {
       test: e => "ImageBitmap" === toStringTag(e) || e && e.dataset && "ImageBitmap" === e.dataset.toStringTag,
       replace(e) {
@@ -6106,7 +6148,7 @@ const N = {
       }
     }
   },
-  E = {
+  B = {
     imagedata: {
       test: e => "ImageData" === toStringTag(e),
       replace: e => ({
@@ -6117,7 +6159,7 @@ const N = {
       revive: e => new ImageData(new Uint8ClampedArray(e.array), e.width, e.height)
     }
   },
-  C = {
+  I = {
     infinity: {
       test: e => e === 1 / 0,
       replace: () => "Infinity",
@@ -6152,7 +6194,7 @@ const N = {
       revive: () => -0
     }
   },
-  k = {
+  R = {
     StringObject: {
       test: e => "String" === toStringTag(e) && "object" == typeof e,
       replace: String,
@@ -6169,7 +6211,7 @@ const N = {
       revive: e => new Number(e)
     }
   },
-  $ = {
+  K = {
     regexp: {
       test: e => "RegExp" === toStringTag(e),
       replace: e => ({
@@ -6182,7 +6224,7 @@ const N = {
       }) => new RegExp(e, t)
     }
   },
-  J = {
+  z = {
     set: {
       test: e => "Set" === toStringTag(e),
       replace: e => e.values().toArray(),
@@ -6217,7 +6259,7 @@ const W = {};
       } : (n.buffers.push(e), {
         maxByteLength: e.maxByteLength,
         resizable: e.resizable,
-        encoded: l(e),
+        encoded: u(e),
         byteOffset: t,
         length: r
       });
@@ -6233,7 +6275,7 @@ const W = {};
         resizable: c
       } = t;
       let y;
-      return "index" in t ? y = r.buffers[a] : (y = u(s, c ? {
+      return "index" in t ? y = r.buffers[a] : (y = l(s, c ? {
         maxByteLength: i
       } : void 0), r.buffers.push(y)), new e(y, n, o);
     }
@@ -6275,8 +6317,8 @@ const Q = {
       revive() {}
     }
   }],
-  X = [M, C, L, D],
-  re = [G, Q, H, k, X, O, $, E, B, N, _, m, x, j].concat("function" == typeof Map ? U : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? W : [], "function" == typeof DataView ? v : [], "undefined" != typeof crypto ? b : [], "undefined" != typeof BigInt ? [d, f] : [], "undefined" != typeof DOMException ? w : [], "undefined" != typeof DOMRect ? S : [], "undefined" != typeof DOMPoint ? A : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : []),
+  X = [M, I, L, D],
+  re = [G, Q, H, R, X, O, K, B, _, E, N, m, x, j].concat("function" == typeof Map ? U : [], "function" == typeof Set ? z : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? W : [], "function" == typeof DataView ? v : [], "undefined" != typeof crypto ? b : [], "undefined" != typeof BigInt ? [d, f] : [], "undefined" != typeof DOMException ? w : [], "undefined" != typeof DOMRect ? S : [], "undefined" != typeof DOMPoint ? A : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : []),
   ne = re.concat({
     checkDataCloneException: {
       test(e) {
@@ -8981,7 +9023,7 @@ function IDBFactory() {
  *   __connections: {
  *     [key: string]: import('./IDBDatabase.js').IDBDatabaseFull[]
  *   }
-* }} IDBFactoryFull
+ * }} IDBFactoryFull
  */
 
 const IDBFactoryAlias = IDBFactory;
@@ -9528,14 +9570,14 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 };
 
 /**
-* May return outdated information if a database has since been deleted.
-* @see https://github.com/w3c/IndexedDB/pull/240/files
-* @this {IDBFactoryFull}
-* @returns {Promise<{
-*   name: string,
-*   version: Integer
-* }[]>}
-*/
+ * May return outdated information if a database has since been deleted.
+ * @see https://github.com/w3c/IndexedDB/pull/240/files
+ * @this {IDBFactoryFull}
+ * @returns {Promise<{
+ *   name: string,
+ *   version: Integer
+ * }[]>}
+ */
 IDBFactory.prototype.databases = function () {
   const me = this;
   let calledDbCreateError = false;
@@ -9584,17 +9626,17 @@ IDBFactory.prototype.databases = function () {
 };
 
 /**
-* @todo forceClose: Test
-* This is provided to facilitate unit-testing of the
-*  closing of a database connection with a forced flag:
-* <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
-* @param {string} dbName
-* @param {Integer} connIdx
-* @param {string} msg
-* @throws {TypeError}
-* @this {IDBFactoryFull}
-* @returns {void}
-*/
+ * @todo forceClose: Test
+ * This is provided to facilitate unit-testing of the
+ *  closing of a database connection with a forced flag:
+ * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+ * @param {string} dbName
+ * @param {Integer} connIdx
+ * @param {string} msg
+ * @throws {TypeError}
+ * @this {IDBFactoryFull}
+ * @returns {void}
+ */
 IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
   const me = this;
   /**
@@ -10107,19 +10149,19 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
  */
 
 /**
-* @callback SuccessArg
-* @param {StructuredCloneValue} value
-* @param {import('./IDBRequest.js').IDBRequestFull} req
-* @returns {void}
-*/
+ * @callback SuccessArg
+ * @param {StructuredCloneValue} value
+ * @param {import('./IDBRequest.js').IDBRequestFull} req
+ * @returns {void}
+ */
 
 /**
-* @callback SuccessCallback
-* @param {IndexedDBKey} key
-* @param {StructuredCloneValue} value
-* @param {IndexedDBKey} primaryKey
-* @returns {void}
-*/
+ * @callback SuccessCallback
+ * @param {IndexedDBKey} key
+ * @param {StructuredCloneValue} value
+ * @param {IndexedDBKey} primaryKey
+ * @returns {void}
+ */
 
 /**
  * Creates an "onsuccess" callback.
@@ -10147,11 +10189,11 @@ IDBCursor.prototype.__onsuccess = function (success) {
 
 /**
  * @typedef {{
-*   matchingKey: string,
-*   key: string,
-*   [k: string]: string
-* }} RowItemNonNull
-*/
+ *   matchingKey: string,
+ *   key: string,
+ *   [k: string]: string
+ * }} RowItemNonNull
+ */
 
 /**
  *

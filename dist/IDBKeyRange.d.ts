@@ -15,11 +15,11 @@ export type IDBKeyRangeFull = globalThis.IDBKeyRange & {
 export function setSQLForKeyRange(range: IDBKeyRangeFull | undefined, quotedKeyColumnName: string, sql: string[], sqlValues: string[], addAnd?: boolean, checkCached?: boolean): void;
 /**
  * @typedef {globalThis.IDBKeyRange & {
-*   __lowerCached: string|null|false,
-*   __upperCached: string|null|false,
-*   __lowerOpen: boolean,
-* }} IDBKeyRangeFull
-*/
+ *   __lowerCached: string|null|false,
+ *   __upperCached: string|null|false,
+ *   __lowerOpen: boolean,
+ * }} IDBKeyRangeFull
+ */
 /**
  * The IndexedDB KeyRange object.
  * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range

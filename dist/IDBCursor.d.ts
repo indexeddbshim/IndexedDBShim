@@ -151,18 +151,18 @@ export class IDBCursor {
      * @typedef {any} IndexedDBKey
      */
     /**
-    * @callback SuccessArg
-    * @param {StructuredCloneValue} value
-    * @param {import('./IDBRequest.js').IDBRequestFull} req
-    * @returns {void}
-    */
+     * @callback SuccessArg
+     * @param {StructuredCloneValue} value
+     * @param {import('./IDBRequest.js').IDBRequestFull} req
+     * @returns {void}
+     */
     /**
-    * @callback SuccessCallback
-    * @param {IndexedDBKey} key
-    * @param {StructuredCloneValue} value
-    * @param {IndexedDBKey} primaryKey
-    * @returns {void}
-    */
+     * @callback SuccessCallback
+     * @param {IndexedDBKey} key
+     * @param {StructuredCloneValue} value
+     * @param {IndexedDBKey} primaryKey
+     * @returns {void}
+     */
     /**
      * Creates an "onsuccess" callback.
      * @param {SuccessArg} success
@@ -172,11 +172,11 @@ export class IDBCursor {
     __onsuccess(this: IDBCursorFull, success: SuccessArg): SuccessCallback;
     /**
      * @typedef {{
-    *   matchingKey: string,
-    *   key: string,
-    *   [k: string]: string
-    * }} RowItemNonNull
-    */
+     *   matchingKey: string,
+     *   key: string,
+     *   [k: string]: string
+     * }} RowItemNonNull
+     */
     /**
      *
      * @param {RowItemNonNull} rowItem

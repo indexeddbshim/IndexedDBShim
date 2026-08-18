@@ -368,22 +368,22 @@ try {
 const createDOMException = useNativeDOMException
     // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
     ? /**
-     * @param {string} name
-     * @param {string} message
-     * @param {ErrorLike} [error]
-     * @returns {DOMException}
-     */
+       * @param {string} name
+       * @param {string} message
+       * @param {ErrorLike} [error]
+       * @returns {DOMException}
+       */
     function (name, message, error) {
         logError(name, message, error);
         return createNativeDOMException(name, message);
     }
     // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
     : /**
-    * @param {string} name
-    * @param {string} message
-    * @param {ErrorLike} [error]
-    * @returns {Error}
-    */
+       * @param {string} name
+       * @param {string} message
+       * @param {ErrorLike} [error]
+       * @returns {Error}
+       */
     function (name, message, error) {
         logError(name, message, error);
         return createNonNativeDOMException(name, message);

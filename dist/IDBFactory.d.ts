@@ -47,30 +47,30 @@ export class IDBFactory {
      */
     cmp(key1: import("./Key.js").Key, key2: import("./Key.js").Key, ...args: any[]): number;
     /**
-    * May return outdated information if a database has since been deleted.
-    * @see https://github.com/w3c/IndexedDB/pull/240/files
-    * @this {IDBFactoryFull}
-    * @returns {Promise<{
-    *   name: string,
-    *   version: Integer
-    * }[]>}
-    */
+     * May return outdated information if a database has since been deleted.
+     * @see https://github.com/w3c/IndexedDB/pull/240/files
+     * @this {IDBFactoryFull}
+     * @returns {Promise<{
+     *   name: string,
+     *   version: Integer
+     * }[]>}
+     */
     databases(this: IDBFactoryFull): Promise<{
         name: string;
         version: Integer;
     }[]>;
     /**
-    * @todo forceClose: Test
-    * This is provided to facilitate unit-testing of the
-    *  closing of a database connection with a forced flag:
-    * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
-    * @param {string} dbName
-    * @param {Integer} connIdx
-    * @param {string} msg
-    * @throws {TypeError}
-    * @this {IDBFactoryFull}
-    * @returns {void}
-    */
+     * @todo forceClose: Test
+     * This is provided to facilitate unit-testing of the
+     *  closing of a database connection with a forced flag:
+     * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+     * @param {string} dbName
+     * @param {Integer} connIdx
+     * @param {string} msg
+     * @throws {TypeError}
+     * @this {IDBFactoryFull}
+     * @returns {void}
+     */
     __forceClose(this: IDBFactoryFull, dbName: string, connIdx: Integer, msg: string): void;
     /**
      *

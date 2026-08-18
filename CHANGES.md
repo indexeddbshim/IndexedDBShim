@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## 17.2.0
+
+- chore: update typeson, typeson-registry, devDeps.
+- chore: update better-sqlite3, sync-promise-expanded, devDeps.
+
 ## 17.1.0
 
 - fix: support NUL bytes in Node; fixes #334

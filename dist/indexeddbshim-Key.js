@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.1.0 - 8/6/2026 */
+/*! indexeddbshim - v17.2.0 - 8/18/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -638,11 +638,11 @@
   // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
   ?
   /**
-  * @param {string} name
-  * @param {string} message
-  * @param {ErrorLike} [error]
-  * @returns {DOMException}
-  */
+   * @param {string} name
+   * @param {string} message
+   * @param {ErrorLike} [error]
+   * @returns {DOMException}
+   */
   function (name, message, error) {
     logError(name, message, error);
     return createNativeDOMException(name, message);
@@ -650,11 +650,11 @@
   // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
   :
   /**
-  * @param {string} name
-  * @param {string} message
-  * @param {ErrorLike} [error]
-  * @returns {Error}
-  */
+   * @param {string} name
+   * @param {string} message
+   * @param {ErrorLike} [error]
+   * @returns {Error}
+   */
   function (name, message, error) {
     logError(name, message, error);
     return createNonNativeDOMException(name, message);
@@ -812,14 +812,14 @@
    */
 
   /**
-  * @typedef {object} KeyValueObject
-  * @property {KeyType|"NaN"|"null"|"undefined"|"boolean"|"object"|"symbol"|
-  *   "function"|"bigint"} type If not `KeyType`, indicates invalid value
-  * @property {Value} [value]
-  * @property {boolean} [invalid]
-  * @property {string} [message]
-  * @todo Specify acceptable `value` more precisely
-  */
+   * @typedef {object} KeyValueObject
+   * @property {KeyType|"NaN"|"null"|"undefined"|"boolean"|"object"|"symbol"|
+   *   "function"|"bigint"} type If not `KeyType`, indicates invalid value
+   * @property {Value} [value]
+   * @property {boolean} [invalid]
+   * @property {string} [message]
+   * @todo Specify acceptable `value` more precisely
+   */
 
   /**
    * @typedef {number|string|Date|ArrayBuffer} ValueTypePrimitive
@@ -1259,10 +1259,10 @@
   }
 
   /**
-  * Currently not in use.
-  * @param {Value} input
-  * @returns {KeyValueObject}
-  */
+   * Currently not in use.
+   * @param {Value} input
+   * @returns {KeyValueObject}
+   */
   function convertValueToMultiEntryKey(input) {
     return convertValueToKeyValueDecoded(input, null, true, true);
   }
@@ -1297,17 +1297,17 @@
   }
 
   /**
-  * Shortcut utility to avoid returning full keys from `convertValueToKey`
-  *   and subsequent need to process in calling code unless `fullKeys` is
-  *   set; may throw.
-  * @param {Value} input
-  * @param {Value[]|null} [seen]
-  * @param {boolean} [multiEntry]
-  * @param {boolean} [fullKeys]
-  * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
-  * @todo Document other allowable `input`
-  * @returns {KeyValueObject}
-  */
+   * Shortcut utility to avoid returning full keys from `convertValueToKey`
+   *   and subsequent need to process in calling code unless `fullKeys` is
+   *   set; may throw.
+   * @param {Value} input
+   * @param {Value[]|null} [seen]
+   * @param {boolean} [multiEntry]
+   * @param {boolean} [fullKeys]
+   * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
+   * @todo Document other allowable `input`
+   * @returns {KeyValueObject}
+   */
   function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     seen || (seen = []);
     if (seen.includes(input)) {
@@ -1463,12 +1463,12 @@
   }
 
   /**
-  * An internal utility.
-  * @param {Value} input
-  * @param {Value[]|null|undefined} [seen]
-  * @throws {DOMException} `DataError`
-  * @returns {KeyValueObject}
-  */
+   * An internal utility.
+   * @param {Value} input
+   * @param {Value[]|null|undefined} [seen]
+   * @throws {DOMException} `DataError`
+   * @returns {KeyValueObject}
+   */
   function convertValueToKeyRethrowingAndIfInvalid(input, seen) {
     var key = convertValueToKey(input, seen);
     if (key.invalid) {
@@ -1489,26 +1489,26 @@
     return extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, true);
   }
   /**
-  * Not currently in use.
-  * @param {Value} value
-  * @param {KeyPath} keyPath
-  * @param {boolean} multiEntry
-  * @returns {KeyPathEvaluateValue}
-  */
+   * Not currently in use.
+   * @param {Value} value
+   * @param {KeyPath} keyPath
+   * @param {boolean} multiEntry
+   * @returns {KeyPathEvaluateValue}
+   */
   function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
     return evaluateKeyPathOnValueToDecodedValue(value, keyPath);
   }
 
   /**
-  * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
-  *    or `{invalid: true}` (e.g., `NaN`).
-  * @param {Value} value
-  * @param {KeyPath} keyPath
-  * @param {boolean} [multiEntry]
-  * @param {boolean} [fullKeys]
-  * @returns {KeyValueObject|KeyPathEvaluateValue}
-  * @todo Document other possible return?
-  */
+   * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
+   *    or `{invalid: true}` (e.g., `NaN`).
+   * @param {Value} value
+   * @param {KeyPath} keyPath
+   * @param {boolean} [multiEntry]
+   * @param {boolean} [fullKeys]
+   * @returns {KeyValueObject|KeyPathEvaluateValue}
+   * @todo Document other possible return?
+   */
   function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, fullKeys) {
     var r = evaluateKeyPathOnValueToDecodedValue(value, keyPath);
     if (r.failure) {
@@ -1738,11 +1738,11 @@
   }
 
   /**
-  * Not currently in use but keeping for spec parity.
-  * @param {Key} key
-  * @throws {Error} Upon a "bad key"
-  * @returns {ValueType}
-  */
+   * Not currently in use but keeping for spec parity.
+   * @param {Key} key
+   * @throws {Error} Upon a "bad key"
+   * @returns {ValueType}
+   */
   function convertKeyToValue(key) {
     var type = key.type,
       value = key.value;
@@ -1834,10 +1834,10 @@
    */
 
   /**
-  * @callback SQLFailureCallback
-  * @param {DOMException|Error} exception
-  * @returns {void}
-  */
+   * @callback SQLFailureCallback
+   * @param {DOMException|Error} exception
+   * @returns {void}
+   */
 
   /**
    *

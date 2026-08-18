@@ -108,7 +108,7 @@ function WebWorker (workerConfig) {
      *   credentials: "omit"|"include"|"same-origin"
      * }} opts Type defaults to `classic`; `credentials` is `omit` if type=module
      * @returns {void}
-    */
+     */
     const Worker = function (src, opts) {
         // See https://html.spec.whatwg.org/multipage/workers.html#dom-worker
         const self = this; // eslint-disable-line consistent-this -- Clear
