@@ -6,17 +6,22 @@ import * as util from './util.js';
  */
 
 /**
+ * @typedef {Event & {
+ *   __legacyOutputDidListenersThrowError?: boolean,
+ *   debug?: DebuggingError|null
+ * }} EventFull
+ */
+
+/**
  *
  * @param {string} type
  * @param {DebuggingError|null} [debug]
  * @param {EventInit} [evInit]
- * @returns {Event & {
- *   __legacyOutputDidListenersThrowError?: boolean
- * }}
+ * @returns {EventFull}
  */
 function createEvent (type, debug, evInit) {
     // @ts-expect-error It's ok
-    const ev = new ShimEvent(type, evInit);
+    const ev = /** @type {EventFull} */ (new ShimEvent(type, evInit));
     ev.debug = debug;
     return ev;
 }

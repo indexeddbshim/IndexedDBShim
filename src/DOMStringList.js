@@ -38,6 +38,10 @@ if (Object.defineProperty) {
  * @throws {TypeError}
  * @class
  */
+/**
+ * @this {DOMStringListFull}
+ * @returns {never}
+ */
 const DOMStringList = function () {
     /** @type {string[]} */
     this._items = [];
@@ -53,6 +57,7 @@ DOMStringList.prototype = {
 
     /**
      * @param {string} str
+     * @this {DOMStringListFull}
      * @returns {boolean}
      */
     contains (str) {
@@ -64,6 +69,7 @@ DOMStringList.prototype = {
 
     /**
      * @param {number} key
+     * @this {DOMStringListFull}
      * @returns {string|null}
      */
     item (key) {
@@ -80,6 +86,7 @@ DOMStringList.prototype = {
 
     // Helpers. Should only be used internally.
     /**
+     * @this {DOMStringListFull}
      * @returns {DOMStringListFull}
      */
     clone () {
@@ -111,6 +118,7 @@ DOMStringList.prototype = {
         return this._items;
     },
     /**
+     * @this {DOMStringListFull}
      * @param {(value: string, i: Integer, arr: string[]) => void} cb
      * @param {object} thisArg
      * @returns {void}
@@ -120,6 +128,7 @@ DOMStringList.prototype = {
         this._items.forEach(cb, thisArg);
     },
     /**
+     * @this {DOMStringListFull}
      * @param {(value: string, i: Integer, arr: string[]) => any[]} cb
      * @param {object} thisArg
      * @returns {any[]}
@@ -130,6 +139,7 @@ DOMStringList.prototype = {
     },
     /**
      * @param {string} str
+     * @this {DOMStringListFull}
      * @returns {Integer}
      */
     indexOf (str) {
@@ -169,6 +179,11 @@ DOMStringList.prototype = {
     //    and particularly as some methods, e.g., `IDBDatabase.transaction`
     //    expect such sequence<DOMString> (or DOMString), we need an iterator (some of
     //    the Mocha tests rely on these)
+    /**
+     * @this {DOMStringListFull}
+     * @yields {string}
+     * @returns {Generator<string, void, undefined>}
+     */
     *[Symbol.iterator] () {
         let i = 0;
         while (i < this._items.length) {
@@ -199,7 +214,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
     value () {
         /**
          * @class
-         * @this {DOMStringList}
+         * @this {DOMStringListFull}
          */
         const DOMStringList = function DOMStringList () {
             this.toString = function () {
@@ -208,6 +223,10 @@ Object.defineProperty(DOMStringList, '__createInstance', {
             // Internal functions on the prototype have been made non-enumerable below.
             Object.defineProperty(this, 'length', {
                 enumerable: true,
+                /**
+                 * @this {DOMStringListFull}
+                 * @returns {Integer}
+                 */
                 get () {
                     return this._length;
                 }
@@ -216,6 +235,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
             this._length = 0;
         };
         DOMStringList.prototype = DOMStringListAlias.prototype;
+        // @ts-ignore It's ok; needed under some TS versions
         return /** @type {DOMStringListFull} */ (new DOMStringList());
     }
 });
@@ -233,7 +253,6 @@ if (cleanInterface) {
     });
 
     // Illegal invocations
-    // @ts-expect-error No return value
     Object.defineProperty(DOMStringList.prototype, 'length', {
         configurable: true,
         enumerable: true,

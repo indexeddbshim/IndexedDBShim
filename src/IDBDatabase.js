@@ -25,11 +25,12 @@ const readonlyProperties = ['name', 'version', 'objectStoreNames'];
  * IDB Database Object.
  * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
+ * @this {IDBDatabaseFull}
  * @throws {TypeError}
  */
 function IDBDatabase () {
     this.__versionTransaction = null;
-    this.__objectStores = null;
+    this.__objectStores = {};
     /** @type {import('./IDBTransaction.js').IDBTransactionFull[]} */
     this.__transactions = [];
     throw new TypeError('Illegal constructor');
@@ -51,13 +52,14 @@ const IDBDatabaseAlias = IDBDatabase;
  *   name: string,
  *   __forceClose: (msg: string) => void,
  *   __db: import('websql-configurable/lib/websql/WebSQLDatabase.js').default,
+ *   __closePending: boolean,
  *   __oldVersion: Integer,
  *   __version: Integer,
  *   __name: string,
  *   __upgradeTransaction: null|import('./IDBTransaction.js').IDBTransactionFull,
- *   __versionTransaction: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __versionTransaction: null|import('./IDBTransaction.js').IDBTransactionFull,
  *   __transactions: import('./IDBTransaction.js').IDBTransactionFull[],
- *   __objectStores: {[key: string]: IDBObjectStore},
+ *   __objectStores: {[key: string]: import('./IDBObjectStore.js').IDBObjectStoreFull},
  *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
  *   __oldObjectStoreNames: import('./DOMStringList.js').DOMStringListFull,
  *   __unblocking: {
@@ -67,7 +69,7 @@ const IDBDatabaseAlias = IDBDatabase;
  */
 
 /**
- * @param {import('websql-configurable').default} db
+ * @param {import('websql-configurable/lib/websql/WebSQLDatabase.js').default} db
  * @param {string} name
  * @param {Integer} oldVersion
  * @param {Integer} version
@@ -102,10 +104,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this.__objectStores = {};
         this.__objectStoreNames = DOMStringList.__createInstance();
 
-        /**
-         * @type {IDBObjectStoreProperties}
-         */
-        const itemCopy = {};
+        const itemCopy = /** @type {IDBObjectStoreProperties} */ ({});
         for (let i = 0; i < storeProperties.rows.length; i++) {
             const item = storeProperties.rows.item(i);
             // Safari implements `item` getter return object's properties

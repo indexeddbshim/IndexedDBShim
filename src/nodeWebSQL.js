@@ -3,10 +3,18 @@ import SQLiteDatabase from './nodeSQLiteDatabase.js';
 import CFG from './CFG.js';
 
 /**
+ * @typedef {{
+ *   _db: any,
+ *   exec: typeof SQLiteDatabase['prototype']['exec']
+ * }} SQLiteDatabaseInstance
+ */
+
+/**
  * @param {string} name
- * @returns {SQLiteDatabase}
+ * @returns {SQLiteDatabaseInstance}
  */
 function wrappedSQLiteDatabase (name) {
+    // @ts-ignore It's ok; needed under some TS versions
     const db = new SQLiteDatabase(name, {});
     if (CFG.sqlBusyTimeout) {
         db._db.configure('busyTimeout', /** @type {number} */ (CFG.sqlBusyTimeout)); // Default is 1000

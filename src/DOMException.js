@@ -105,17 +105,28 @@ const legacyCodes = {
 };
 
 /**
+ * @typedef {globalThis.DOMException & {
+ *   _code: number,
+ *   _name: string|Code|LegacyCode,
+ *   _message: string
+ * }} DOMExceptionFull
+ */
+
+/**
  *
  * @returns {typeof DOMException}
  */
 function createNonNativeDOMExceptionClass () {
     /**
+     * @class
      * @param {string|undefined} message
      * @param {Code|LegacyCode} name
+     * @this {DOMExceptionFull}
      * @returns {void}
      */
     function DOMException (message, name) {
         // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
+        // @ts-expect-error It's ok
         this[Symbol.toStringTag] = 'DOMException';
         this._code = Object.hasOwn(codes, name)
             ? codes[/** @type {Code} */ (name)]
@@ -166,13 +177,14 @@ function createNonNativeDOMExceptionClass () {
              */
             get () {
                 if (!(this instanceof DOMException ||
-                    // @ts-expect-error Just checking
+                    // @ts-ignore Just checking; needed under some TS versions
                     this instanceof DummyDOMException ||
-                    // @ts-expect-error Just checking
+                    // @ts-ignore Just checking; needed under some TS versions
                     this instanceof Error)) {
                     throw new TypeError('Illegal invocation');
                 }
-                return this[prop === 'name' ? '_name' : '_message'];
+                const me = /** @type {DOMExceptionFull} */ (/** @type {unknown} */ (this));
+                return me[prop === 'name' ? '_name' : '_message'];
             }
         });
     });
@@ -194,7 +206,7 @@ function createNonNativeDOMExceptionClass () {
 
     const keys = Object.keys(codes);
 
-    /** @type {(keyof codes)[]} */ (keys).forEach(
+    /** @type {(keyof typeof codes)[]} */ (keys).forEach(
         (codeName) => {
             Object.defineProperty(DOMException.prototype, codeName, {
                 enumerable: true,
@@ -208,7 +220,7 @@ function createNonNativeDOMExceptionClass () {
             });
         }
     );
-    /** @type {(keyof legacyCodes)[]} */ (Object.keys(legacyCodes)).forEach((
+    /** @type {(keyof typeof legacyCodes)[]} */ (Object.keys(legacyCodes)).forEach((
         codeName
     ) => {
         Object.defineProperty(DOMException.prototype, codeName, {
@@ -229,7 +241,7 @@ function createNonNativeDOMExceptionClass () {
         value: DOMException
     });
 
-    // @ts-expect-error We don't need all its properties
+    // @ts-ignore We don't need all its properties; needed under some TS versions
     return DOMException;
 }
 
@@ -242,6 +254,7 @@ const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
  * @returns {Error}
  */
 function createNonNativeDOMException (name, message) {
+    // @ts-ignore It's ok; needed under some TS versions
     return new ShimNonNativeDOMException(message, name);
 }
 

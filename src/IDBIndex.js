@@ -58,7 +58,23 @@ const IDBIndexAlias = IDBIndex;
  *   __unique: boolean,
  *   __objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
  *   __keyPath: import('./Key.js').KeyPath,
- *   __recreated?: boolean
+ *   __recreated?: boolean,
+ *   __fetchIndexData: (
+ *     range: any,
+ *     opType: "value"|"key"|"count",
+ *     nullDisallowed: boolean,
+ *     count?: number
+ *   ) => import('./IDBRequest.js').IDBRequestFull,
+ *   __renameIndex: (
+ *     store: import('./IDBObjectStore.js').IDBObjectStoreFull,
+ *     oldName: string,
+ *     newName: string,
+ *     colInfoToPreserveArr?: string[][],
+ *     cb?: null|((
+ *       tx: SQLTransaction,
+ *       success: ((store: IDBObjectStore) => void)
+ *     ) => void)
+ *   ) => void
  * }} IDBIndexFull
  */
 
@@ -149,7 +165,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                         ['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
                         ['value', 'BLOB']
                     ].concat(
-                        // @ts-expect-error Has numeric indexes instead of iterator
+                        // @ts-ignore Has numeric indexes instead of iterator; needed under some TS versions
                         [...objectStore.indexNames]
                             .filter((indexName) => indexName !== newName)
                             .map((indexName) => [util.escapeIndexNameForSQL(indexName), 'BLOB'])

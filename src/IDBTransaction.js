@@ -588,7 +588,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         ).forEach(function (store) {
             // Store was already created so we restore to name before the rename
             if ('__pendingName' in store &&
-                me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
+                me.db.__oldObjectStoreNames.indexOf(/** @type {string} */ (store.__pendingName)) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
             ) {
                 store.__name = store.__originalName;
             }
@@ -599,7 +599,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             ).forEach(function (index) {
                 // Index was already created so we restore to name before the rename
                 if ('__pendingName' in index &&
-                    store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
+                    store.__oldIndexNames.indexOf(/** @type {string} */ (index.__pendingName)) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
                 ) {
                     index.__name = index.__originalName;
                 }
@@ -652,7 +652,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                 q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
                 const reqEvt = createEvent('error', q.req.__error, {bubbles: true, cancelable: true});
                 return new SyncPromise(
-                    /** @type {() => void} */
+                    /** @type {(resolve: (value?: any) => void) => void} */
                     (resolve) => {
                         setTimeout(() => {
                             if (!q.req) { // TS guard
@@ -727,7 +727,7 @@ IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
 /**
  *
- * @param {IDBTransactionFull|undefined} tx
+ * @param {IDBTransactionFull|null|undefined} tx
  * @returns {void}
  */
 IDBTransaction.__assertVersionChange = function (tx) {
@@ -737,7 +737,7 @@ IDBTransaction.__assertVersionChange = function (tx) {
 };
 /**
  *
- * @param {IDBTransactionFull} tx
+ * @param {IDBTransactionFull|null} tx
  * @throws {DOMException}
  * @returns {void}
  */
@@ -749,7 +749,7 @@ IDBTransaction.__assertNotVersionChange = function (tx) {
 
 /**
  *
- * @param {IDBTransactionFull|undefined} tx
+ * @param {IDBTransactionFull|null|undefined} tx
  * @throws {DOMException}
  * @returns {void}
  */
@@ -778,7 +778,7 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
 
 /**
  *
- * @param {IDBTransactionFull|undefined} tx
+ * @param {IDBTransactionFull|null|undefined} tx
  * @throws {DOMException}
  * @returns {void}
  */

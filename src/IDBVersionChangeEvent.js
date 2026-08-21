@@ -4,14 +4,26 @@ import * as util from './util.js';
 const readonlyProperties = ['oldVersion', 'newVersion'];
 
 /**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {globalThis.Event & {
+ *   __eventInitDict: {oldVersion?: Integer, newVersion?: Integer|null}
+ * }} IDBVersionChangeEventFull
+ */
+
+/**
  * Babel apparently having a problem adding `hasInstance` to a class,
  * so we are redefining as a function.
  * @class
  * @param {string} type
+ * @this {IDBVersionChangeEventFull}
  */
 function IDBVersionChangeEvent (type /* , eventInitDict */) { // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
     // @ts-expect-error It's passing only one!
     ShimEvent.call(this, type);
+    // @ts-expect-error It's ok
     this[Symbol.toStringTag] = 'IDBVersionChangeEvent';
     this.toString = function () {
         return '[object IDBVersionChangeEvent]';
@@ -25,10 +37,6 @@ IDBVersionChangeEvent.prototype = Object.create(ShimEvent.prototype);
 
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
 
-/**
- * @typedef {number} Integer
- */
-
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 readonlyProperties.forEach((prop) => {
     // Ensure for proper interface testing that "get <name>" is the function name
@@ -40,7 +48,10 @@ readonlyProperties.forEach((prop) => {
             if (!(this instanceof IDBVersionChangeEvent)) {
                 throw new TypeError('Illegal invocation');
             }
-            return (this.__eventInitDict && this.__eventInitDict[prop]) || (prop === 'oldVersion' ? 0 : null);
+            const me = /** @type {IDBVersionChangeEventFull} */ (/** @type {unknown} */ (this));
+            return (me.__eventInitDict && me.__eventInitDict[
+                /** @type {keyof IDBVersionChangeEventFull['__eventInitDict']} */ (prop)
+            ]) || (prop === 'oldVersion' ? 0 : null);
         }
     };
     const desc = /** @type {PropertyDescriptor} */ (

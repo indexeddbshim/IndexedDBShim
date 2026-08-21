@@ -31,7 +31,7 @@ const IDBObjectStoreAlias = IDBObjectStore;
  * @typedef {IDBObjectStore & {
  *   name: string,
  *   keyPath: import('./Key.js').KeyPath,
- *   transaction?: import('./IDBTransaction.js').IDBTransactionFull,
+ *   transaction?: import('./IDBTransaction.js').IDBTransactionFull|null,
  *   indexNames: import('./DOMStringList.js').DOMStringListFull,
  *   autoIncrement: boolean,
  *   __autoIncrement: boolean,
@@ -39,7 +39,7 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *   __indexHandles: {[key: string]: import('./IDBIndex.js').IDBIndexFull},
  *   __indexNames: import('./DOMStringList.js').DOMStringListFull,
  *   __oldIndexNames: import('./DOMStringList.js').DOMStringListFull,
- *   __transaction?: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __transaction?: import('./IDBTransaction.js').IDBTransactionFull|null,
  *   __name: string,
  *   __keyPath: import('./Key.js').KeyPath,
  *   __originalName: string,
@@ -53,13 +53,46 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     import('./IDBCursor.js').IDBCursorWithValueFull
  *   )[],
  *   __idbdb: import('./IDBDatabase.js').IDBDatabaseFull,
+ *   __validateKeyAndValueAndCloneValue: (
+ *     value: import('./Key.js').Value,
+ *     key: import('./Key.js').Key,
+ *     cursorUpdate: boolean
+ *   ) => KeyValueArray,
+ *   __deriveKey: (
+ *     tx: SQLTransaction,
+ *     value: import('./Key.js').Value,
+ *     key: import('./Key.js').Key,
+ *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
+ *     failCb: import('./Key.js').SQLFailureCallback
+ *   ) => void,
+ *   __insertData: (
+ *     tx: SQLTransaction,
+ *     encoded: string,
+ *     value: import('./Key.js').Value,
+ *     clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer,
+ *     oldCn: Integer|undefined,
+ *     success: (clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer) => void,
+ *     error: (err: Error|DOMException) => void
+ *   ) => SyncPromise,
+ *   __overwrite: (
+ *     tx: SQLTransaction,
+ *     key: import('./Key.js').Key,
+ *     cb: (tx: SQLTransaction) => void,
+ *     error: (err: SQLError) => void
+ *   ) => void,
+ *   __get: (
+ *     query: import('./Key.js').Value,
+ *     getKey?: boolean,
+ *     getAll?: boolean,
+ *     count?: Integer
+ *   ) => import('./IDBRequest.js').IDBRequestFull,
  * }} IDBObjectStoreFull
  */
 
 /**
  *
  * @param {import('./IDBDatabase.js').IDBObjectStoreProperties} storeProperties
- * @param {import('./IDBTransaction.js').IDBTransactionFull} [transaction]
+ * @param {import('./IDBTransaction.js').IDBTransactionFull|null} [transaction]
  * @returns {IDBObjectStoreFull}
  */
 IDBObjectStore.__createInstance = function (storeProperties, transaction) {
@@ -315,16 +348,16 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.__currentName), 1);
 
-    const storeHandle = db.__versionTransaction.__storeHandles[store.__currentName];
+    const transaction = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+        db.__versionTransaction
+    );
+    const storeHandle = transaction.__storeHandles[store.__currentName];
     if (storeHandle) {
         storeHandle.__indexNames = DOMStringList.__createInstance();
         storeHandle.__pendingDelete = true;
     }
 
     // Remove the object store from WebSQL
-    const transaction = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
-        db.__versionTransaction
-    );
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
         /**
          * @param {SQLTransaction} tx
@@ -658,6 +691,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
         me.transaction
     ).__createRequest(me);
     const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
+    // @ts-ignore -- Private API
     IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, true, ky);
     return request;
 };
@@ -689,6 +723,7 @@ IDBObjectStore.prototype.put = function (value /* , key */) {
         me.transaction
     ).__createRequest(me);
     const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
+    // @ts-ignore -- Private API
     IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, false, ky);
     return request;
 };

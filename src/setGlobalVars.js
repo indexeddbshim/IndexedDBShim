@@ -104,7 +104,7 @@ function setConfig (prop, val) {
 /**
  *
  * @param {ShimmedObject} [idb]
- * @param {import('./CFG.js').ConfigValues} [initialConfig]
+ * @param {Partial<import('./CFG.js').ConfigValues>} [initialConfig]
  * @returns {ShimmedObject}
  */
 function setGlobalVars (idb, initialConfig) {
@@ -296,9 +296,9 @@ function setGlobalVars (idb, initialConfig) {
             }
         };
 
-        IDB.shimIndexedDB.__debug = function (val) {
+        IDB.shimIndexedDB.__debug = /** @type {(val: boolean) => void} */ (function (val) {
             CFG.DEBUG = val;
-        };
+        });
         IDB.shimIndexedDB.__setConfig = setConfig;
 
         /** @type {GetConfig} */

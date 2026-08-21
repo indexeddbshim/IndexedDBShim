@@ -6,9 +6,12 @@ const readonlyProperties = /** @type {const} */ (['lower', 'upper', 'lowerOpen',
 
 /**
  * @typedef {globalThis.IDBKeyRange & {
+ *   __lower: import('./Key.js').Key|undefined,
+ *   __upper: import('./Key.js').Key|undefined,
  *   __lowerCached: string|null|false,
  *   __upperCached: string|null|false,
  *   __lowerOpen: boolean,
+ *   __upperOpen: boolean,
  * }} IDBKeyRangeFull
  */
 
@@ -19,8 +22,6 @@ const readonlyProperties = /** @type {const} */ (['lower', 'upper', 'lowerOpen',
  * @class
  */
 function IDBKeyRange () {
-    this.__lowerOpen = false;
-    this.__upperOpen = false;
     throw new TypeError('Illegal constructor');
 }
 const IDBKeyRangeAlias = IDBKeyRange;
@@ -35,9 +36,11 @@ const IDBKeyRangeAlias = IDBKeyRange;
 IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
     /**
      * @class
+     * @this {IDBKeyRangeFull}
      * @throws {DOMException|Error}
      */
     function IDBKeyRange () {
+        // @ts-expect-error Should be ok
         this[Symbol.toStringTag] = 'IDBKeyRange';
         if (lower === undefined && upper === undefined) {
             throw createDOMException('DataError', 'Both arguments to the key range method cannot be undefined');

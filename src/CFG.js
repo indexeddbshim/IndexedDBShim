@@ -22,7 +22,8 @@
  *   ) => import('typeson').Preset,
  *   avoidAutoShim: boolean,
  *   win: {
- *     openDatabase: (name: string, version: string, displayName: string, estimatedSize: number) => import('websql-configurable').default
+ *     openDatabase: (name: string, version: string, displayName: string, estimatedSize: number) =>
+ *       import('websql-configurable/lib/websql/WebSQLDatabase.js').default
  *   },
  *   DEFAULT_DB_SIZE: number,
  *   useSQLiteIndexes: boolean,

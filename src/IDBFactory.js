@@ -52,7 +52,7 @@ const hasNullOrigin = () => CFG.checkOrigin !== false && (getOrigin() === 'null'
  *   [key: string]: {
  *     [key: string]: {
  *       req: import('./IDBRequest.js').IDBOpenDBRequestFull,
- *       cb: (req: import('./IDBRequest.js').IDBRequestFull) => void,
+ *       cb: (req: import('./IDBRequest.js').IDBOpenDBRequestFull) => void,
  *     }[]
  *   }
  * }}
@@ -117,7 +117,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
     //    auto-close if unloading
 
     /**
-     * @param {IDBDatabase} connection
+     * @param {import('./IDBDatabase.js').IDBDatabaseFull} connection
      * @returns {boolean|undefined}
      */
     const connectionIsClosed = (connection) => connection.__closePending;
@@ -134,6 +134,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
                 return undefined;
             }
             const e = /** @type {Event & IDBVersionChangeEvent} */ (
+                // @ts-ignore It's ok; needed under some TS versions
                 new IDBVersionChangeEvent('versionchange', {oldVersion, newVersion})
             );
             return new SyncPromise(function (resolve) {
@@ -156,6 +157,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
                 }
             };
             const e = /** @type {Event & IDBVersionChangeEvent} */ (
+                // @ts-ignore It's ok; needed under some TS versions
                 new IDBVersionChangeEvent('blocked', {oldVersion, newVersion})
             );
             setTimeout(() => {
@@ -440,7 +442,9 @@ function IDBFactory () {
  *   __openDatabase: OpenDatabase,
  *   __connections: {
  *     [key: string]: import('./IDBDatabase.js').IDBDatabaseFull[]
- *   }
+ *   },
+ *   __forceClose: (dbName: string, connIdx: Integer, msg: string) => void,
+ *   __setConnectionQueueOrigin: (origin?: string) => void
  * }} IDBFactoryFull
  */
 
@@ -451,8 +455,10 @@ const IDBFactoryAlias = IDBFactory;
 IDBFactory.__createInstance = function () {
     /**
      * @class
+     * @this {IDBFactoryFull}
      */
     function IDBFactory () {
+        // @ts-expect-error It's ok
         this[Symbol.toStringTag] = 'IDBFactory';
         this.__connections = {};
     }
@@ -622,6 +628,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                          */
                         function versionSet () {
                             const e = /** @type {import('eventtargeter').EventWithProps & Event & IDBVersionChangeEvent} */ (
+                                // @ts-ignore It's ok; needed under some TS versions
                                 new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version})
                             );
                             req.__result = connection;
@@ -944,6 +951,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 req.__result = undefined;
                 req.__done = true;
                 const e = /** @type {Event & IDBVersionChangeEvent} */ (
+                    // @ts-ignore It's ok; needed under some TS versions
                     new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null})
                 );
                 req.dispatchEvent(e);

@@ -31,8 +31,10 @@ const READ_ONLY_ERROR = new Error(
  */
 
 /**
+ * @class
  * @param {string} name
  * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
+ * @this {{_db: any}}
  * @returns {void}
  */
 function SQLiteDatabase (name, opts = {}) {

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.2.2 - 8/18/2026 */
+/*! indexeddbshim - v17.2.2 - 8/20/2026 */
 
 'use strict';
 
@@ -959,7 +959,8 @@ function setPrototypeOfCustomEvent() {
  *   ) => import('typeson').Preset,
  *   avoidAutoShim: boolean,
  *   win: {
- *     openDatabase: (name: string, version: string, displayName: string, estimatedSize: number) => import('websql-configurable').default
+ *     openDatabase: (name: string, version: string, displayName: string, estimatedSize: number) =>
+ *       import('websql-configurable/lib/websql/WebSQLDatabase.js').default
  *   },
  *   DEFAULT_DB_SIZE: number,
  *   useSQLiteIndexes: boolean,
@@ -1467,7 +1468,6 @@ function defineListenerProperties(obj, listeners) {
       },
       /**
        * @param {AnyValue} val
-       * @returns {void}
        */
       set [listener](val) {
         obj['__' + listener] = val;
@@ -1698,17 +1698,22 @@ function runContinuationSafely(fn) {
  */
 
 /**
+ * @typedef {Event & {
+ *   __legacyOutputDidListenersThrowError?: boolean,
+ *   debug?: DebuggingError|null
+ * }} EventFull
+ */
+
+/**
  *
  * @param {string} type
  * @param {DebuggingError|null} [debug]
  * @param {EventInit} [evInit]
- * @returns {Event & {
- *   __legacyOutputDidListenersThrowError?: boolean
- * }}
+ * @returns {EventFull}
  */
 function createEvent(type, debug, evInit) {
   // @ts-expect-error It's ok
-  const ev = new ShimEvent(type, evInit);
+  const ev = /** @type {EventFull} */new ShimEvent(type, evInit);
   ev.debug = debug;
   return ev;
 }
@@ -1731,15 +1736,27 @@ Object.defineProperty(ShimEvent, Symbol.hasInstance, {
 const readonlyProperties$6 = ['oldVersion', 'newVersion'];
 
 /**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {globalThis.Event & {
+ *   __eventInitDict: {oldVersion?: Integer, newVersion?: Integer|null}
+ * }} IDBVersionChangeEventFull
+ */
+
+/**
  * Babel apparently having a problem adding `hasInstance` to a class,
  * so we are redefining as a function.
  * @class
  * @param {string} type
+ * @this {IDBVersionChangeEventFull}
  */
 function IDBVersionChangeEvent(type /* , eventInitDict */) {
   // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
   // @ts-expect-error It's passing only one!
   ShimEvent.call(this, type);
+  // @ts-expect-error It's ok
   this[Symbol.toStringTag] = 'IDBVersionChangeEvent';
   this.toString = function () {
     return '[object IDBVersionChangeEvent]';
@@ -1752,10 +1769,6 @@ function IDBVersionChangeEvent(type /* , eventInitDict */) {
 IDBVersionChangeEvent.prototype = Object.create(ShimEvent.prototype);
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
 
-/**
- * @typedef {number} Integer
- */
-
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 readonlyProperties$6.forEach(prop => {
   // Ensure for proper interface testing that "get <name>" is the function name
@@ -1767,7 +1780,8 @@ readonlyProperties$6.forEach(prop => {
       if (!(this instanceof IDBVersionChangeEvent)) {
         throw new TypeError('Illegal invocation');
       }
-      return this.__eventInitDict && this.__eventInitDict[prop] || (prop === 'oldVersion' ? 0 : null);
+      const me = /** @type {IDBVersionChangeEventFull} */ /** @type {unknown} */this;
+      return me.__eventInitDict && me.__eventInitDict[(/** @type {keyof IDBVersionChangeEventFull['__eventInitDict']} */prop)] || (prop === 'oldVersion' ? 0 : null);
     }
   };
   const desc = /** @type {PropertyDescriptor} */
@@ -1898,17 +1912,28 @@ const legacyCodes = {
 };
 
 /**
+ * @typedef {globalThis.DOMException & {
+ *   _code: number,
+ *   _name: string|Code|LegacyCode,
+ *   _message: string
+ * }} DOMExceptionFull
+ */
+
+/**
  *
  * @returns {typeof DOMException}
  */
 function createNonNativeDOMExceptionClass() {
   /**
+   * @class
    * @param {string|undefined} message
    * @param {Code|LegacyCode} name
+   * @this {DOMExceptionFull}
    * @returns {void}
    */
   function DOMException(message, name) {
     // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
+    // @ts-expect-error It's ok
     this[Symbol.toStringTag] = 'DOMException';
     this._code = Object.hasOwn(codes, name) ? codes[(/** @type {Code} */name)] : legacyCodes[(/** @type {LegacyCode} */name)] || 0;
     this._name = name || 'Error';
@@ -1958,13 +1983,14 @@ function createNonNativeDOMExceptionClass() {
        */
       get() {
         if (!(this instanceof DOMException ||
-        // @ts-expect-error Just checking
+        // @ts-ignore Just checking; needed under some TS versions
         this instanceof DummyDOMException ||
-        // @ts-expect-error Just checking
+        // @ts-ignore Just checking; needed under some TS versions
         this instanceof Error)) {
           throw new TypeError('Illegal invocation');
         }
-        return this[prop === 'name' ? '_name' : '_message'];
+        const me = /** @type {DOMExceptionFull} */ /** @type {unknown} */this;
+        return me[prop === 'name' ? '_name' : '_message'];
       }
     });
   });
@@ -1984,7 +2010,7 @@ function createNonNativeDOMExceptionClass() {
   });
   const keys = Object.keys(codes);
 
-  /** @type {(keyof codes)[]} */
+  /** @type {(keyof typeof codes)[]} */
   keys.forEach(codeName => {
     Object.defineProperty(DOMException.prototype, codeName, {
       enumerable: true,
@@ -1997,7 +2023,7 @@ function createNonNativeDOMExceptionClass() {
       value: codes[codeName]
     });
   });
-  /** @type {(keyof legacyCodes)[]} */
+  /** @type {(keyof typeof legacyCodes)[]} */
   Object.keys(legacyCodes).forEach(codeName => {
     Object.defineProperty(DOMException.prototype, codeName, {
       enumerable: true,
@@ -2017,7 +2043,7 @@ function createNonNativeDOMExceptionClass() {
     value: DOMException
   });
 
-  // @ts-expect-error We don't need all its properties
+  // @ts-ignore We don't need all its properties; needed under some TS versions
   return DOMException;
 }
 const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
@@ -2029,6 +2055,7 @@ const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
  * @returns {Error}
  */
 function createNonNativeDOMException(name, message) {
+  // @ts-ignore It's ok; needed under some TS versions
   return new ShimNonNativeDOMException(message, name);
 }
 
@@ -2246,11 +2273,11 @@ IDBRequest.__super = function IDBRequest() {
   defineReadonlyProperties(this, readonlyProperties$5, {
     readyState: {
       /**
-       * @this {IDBRequestFull}
        * @returns {"done"|"pending"}
        */
       get readyState() {
-        return this.__done ? 'done' : 'pending';
+        const me = /** @type {IDBRequestFull} */ /** @type {unknown} */this;
+        return me.__done ? 'done' : 'pending';
       }
     }
   });
@@ -3855,9 +3882,12 @@ const readonlyProperties$4 = /** @type {const} */['lower', 'upper', 'lowerOpen',
 
 /**
  * @typedef {globalThis.IDBKeyRange & {
+ *   __lower: import('./Key.js').Key|undefined,
+ *   __upper: import('./Key.js').Key|undefined,
  *   __lowerCached: string|null|false,
  *   __upperCached: string|null|false,
  *   __lowerOpen: boolean,
+ *   __upperOpen: boolean,
  * }} IDBKeyRangeFull
  */
 
@@ -3868,8 +3898,6 @@ const readonlyProperties$4 = /** @type {const} */['lower', 'upper', 'lowerOpen',
  * @class
  */
 function IDBKeyRange() {
-  this.__lowerOpen = false;
-  this.__upperOpen = false;
   throw new TypeError('Illegal constructor');
 }
 const IDBKeyRangeAlias = IDBKeyRange;
@@ -3884,9 +3912,11 @@ const IDBKeyRangeAlias = IDBKeyRange;
 IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
   /**
    * @class
+   * @this {IDBKeyRangeFull}
    * @throws {DOMException|Error}
    */
   function IDBKeyRange() {
+    // @ts-expect-error Should be ok
     this[Symbol.toStringTag] = 'IDBKeyRange';
     if (lower === undefined && upper === undefined) {
       throw createDOMException('DataError', 'Both arguments to the key range method cannot be undefined');
@@ -4133,6 +4163,10 @@ if (Object.defineProperty) {
  * @throws {TypeError}
  * @class
  */
+/**
+ * @this {DOMStringListFull}
+ * @returns {never}
+ */
 const DOMStringList = function () {
   /** @type {string[]} */
   this._items = [];
@@ -4148,6 +4182,7 @@ DOMStringList.prototype = {
 
   /**
    * @param {string} str
+   * @this {DOMStringListFull}
    * @returns {boolean}
    */
   contains(str) {
@@ -4158,6 +4193,7 @@ DOMStringList.prototype = {
   },
   /**
    * @param {number} key
+   * @this {DOMStringListFull}
    * @returns {string|null}
    */
   item(key) {
@@ -4173,6 +4209,7 @@ DOMStringList.prototype = {
   },
   // Helpers. Should only be used internally.
   /**
+   * @this {DOMStringListFull}
    * @returns {DOMStringListFull}
    */
   clone() {
@@ -4204,6 +4241,7 @@ DOMStringList.prototype = {
     return this._items;
   },
   /**
+   * @this {DOMStringListFull}
    * @param {(value: string, i: Integer, arr: string[]) => void} cb
    * @param {object} thisArg
    * @returns {void}
@@ -4213,6 +4251,7 @@ DOMStringList.prototype = {
     this._items.forEach(cb, thisArg);
   },
   /**
+   * @this {DOMStringListFull}
    * @param {(value: string, i: Integer, arr: string[]) => any[]} cb
    * @param {object} thisArg
    * @returns {any[]}
@@ -4223,6 +4262,7 @@ DOMStringList.prototype = {
   },
   /**
    * @param {string} str
+   * @this {DOMStringListFull}
    * @returns {Integer}
    */
   indexOf(str) {
@@ -4262,6 +4302,11 @@ DOMStringList.prototype = {
   //    and particularly as some methods, e.g., `IDBDatabase.transaction`
   //    expect such sequence<DOMString> (or DOMString), we need an iterator (some of
   //    the Mocha tests rely on these)
+  /**
+   * @this {DOMStringListFull}
+   * @yields {string}
+   * @returns {Generator<string, void, undefined>}
+   */
   *[Symbol.iterator]() {
     let i = 0;
     while (i < this._items.length) {
@@ -4292,7 +4337,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
   value() {
     /**
      * @class
-     * @this {DOMStringList}
+     * @this {DOMStringListFull}
      */
     const DOMStringList = function DOMStringList() {
       this.toString = function () {
@@ -4301,6 +4346,10 @@ Object.defineProperty(DOMStringList, '__createInstance', {
       // Internal functions on the prototype have been made non-enumerable below.
       Object.defineProperty(this, 'length', {
         enumerable: true,
+        /**
+         * @this {DOMStringListFull}
+         * @returns {Integer}
+         */
         get() {
           return this._length;
         }
@@ -4309,6 +4358,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
       this._length = 0;
     };
     DOMStringList.prototype = DOMStringListAlias.prototype;
+    // @ts-ignore It's ok; needed under some TS versions
     return /** @type {DOMStringListFull} */new DOMStringList();
   }
 });
@@ -4324,7 +4374,6 @@ if (cleanInterface) {
   });
 
   // Illegal invocations
-  // @ts-expect-error No return value
   Object.defineProperty(DOMStringList.prototype, 'length', {
     configurable: true,
     enumerable: true,
@@ -4922,7 +4971,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     me.__objectStoreNames = me.db.__oldObjectStoreNames;
     Object.values(me.db.__objectStores).concat(Object.values(me.__storeHandles)).forEach(function (store) {
       // Store was already created so we restore to name before the rename
-      if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
+      if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(/** @type {string} */store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
       ) {
         store.__name = store.__originalName;
       }
@@ -4930,7 +4979,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
       delete store.__pendingDelete;
       Object.values(store.__indexes).concat(Object.values(store.__indexHandles)).forEach(function (index) {
         // Index was already created so we restore to name before the rename
-        if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
+        if ('__pendingName' in index && store.__oldIndexNames.indexOf(/** @type {string} */index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
         ) {
           index.__name = index.__originalName;
         }
@@ -4989,7 +5038,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
           bubbles: true,
           cancelable: true
         });
-        return new SyncPromise(/** @type {() => void} */
+        return new SyncPromise(/** @type {(resolve: (value?: any) => void) => void} */
         resolve => {
           setTimeout(() => {
             if (!q.req) {
@@ -5066,7 +5115,7 @@ IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
 /**
  *
- * @param {IDBTransactionFull|undefined} tx
+ * @param {IDBTransactionFull|null|undefined} tx
  * @returns {void}
  */
 IDBTransaction.__assertVersionChange = function (tx) {
@@ -5076,7 +5125,7 @@ IDBTransaction.__assertVersionChange = function (tx) {
 };
 /**
  *
- * @param {IDBTransactionFull} tx
+ * @param {IDBTransactionFull|null} tx
  * @throws {DOMException}
  * @returns {void}
  */
@@ -5088,7 +5137,7 @@ IDBTransaction.__assertNotVersionChange = function (tx) {
 
 /**
  *
- * @param {IDBTransactionFull|undefined} tx
+ * @param {IDBTransactionFull|null|undefined} tx
  * @throws {DOMException}
  * @returns {void}
  */
@@ -5117,7 +5166,7 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
 
 /**
  *
- * @param {IDBTransactionFull|undefined} tx
+ * @param {IDBTransactionFull|null|undefined} tx
  * @throws {DOMException}
  * @returns {void}
  */
@@ -6466,7 +6515,23 @@ const IDBIndexAlias = IDBIndex;
  *   __unique: boolean,
  *   __objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
  *   __keyPath: import('./Key.js').KeyPath,
- *   __recreated?: boolean
+ *   __recreated?: boolean,
+ *   __fetchIndexData: (
+ *     range: any,
+ *     opType: "value"|"key"|"count",
+ *     nullDisallowed: boolean,
+ *     count?: number
+ *   ) => import('./IDBRequest.js').IDBRequestFull,
+ *   __renameIndex: (
+ *     store: import('./IDBObjectStore.js').IDBObjectStoreFull,
+ *     oldName: string,
+ *     newName: string,
+ *     colInfoToPreserveArr?: string[][],
+ *     cb?: null|((
+ *       tx: SQLTransaction,
+ *       success: ((store: IDBObjectStore) => void)
+ *     ) => void)
+ *   ) => void
  * }} IDBIndexFull
  */
 
@@ -6548,7 +6613,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
           storeHandle.__indexHandles[newName] = oldIndexHandle; // Ensure new reference accessible
           me.__pendingName = oldName;
           const colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat(
-          // @ts-expect-error Has numeric indexes instead of iterator
+          // @ts-ignore Has numeric indexes instead of iterator; needed under some TS versions
           [...objectStore.indexNames].filter(indexName => indexName !== newName).map(indexName => [escapeIndexNameForSQL(indexName), 'BLOB']));
           me.__renameIndex(objectStore, oldName, newName, colInfoToPreserveArr, function (tx, success) {
             IDBIndexAlias.__updateIndexList(store, tx, function (store) {
@@ -7295,7 +7360,7 @@ const IDBObjectStoreAlias = IDBObjectStore;
  * @typedef {IDBObjectStore & {
  *   name: string,
  *   keyPath: import('./Key.js').KeyPath,
- *   transaction?: import('./IDBTransaction.js').IDBTransactionFull,
+ *   transaction?: import('./IDBTransaction.js').IDBTransactionFull|null,
  *   indexNames: import('./DOMStringList.js').DOMStringListFull,
  *   autoIncrement: boolean,
  *   __autoIncrement: boolean,
@@ -7303,7 +7368,7 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *   __indexHandles: {[key: string]: import('./IDBIndex.js').IDBIndexFull},
  *   __indexNames: import('./DOMStringList.js').DOMStringListFull,
  *   __oldIndexNames: import('./DOMStringList.js').DOMStringListFull,
- *   __transaction?: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __transaction?: import('./IDBTransaction.js').IDBTransactionFull|null,
  *   __name: string,
  *   __keyPath: import('./Key.js').KeyPath,
  *   __originalName: string,
@@ -7317,13 +7382,46 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     import('./IDBCursor.js').IDBCursorWithValueFull
  *   )[],
  *   __idbdb: import('./IDBDatabase.js').IDBDatabaseFull,
+ *   __validateKeyAndValueAndCloneValue: (
+ *     value: import('./Key.js').Value,
+ *     key: import('./Key.js').Key,
+ *     cursorUpdate: boolean
+ *   ) => KeyValueArray,
+ *   __deriveKey: (
+ *     tx: SQLTransaction,
+ *     value: import('./Key.js').Value,
+ *     key: import('./Key.js').Key,
+ *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
+ *     failCb: import('./Key.js').SQLFailureCallback
+ *   ) => void,
+ *   __insertData: (
+ *     tx: SQLTransaction,
+ *     encoded: string,
+ *     value: import('./Key.js').Value,
+ *     clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer,
+ *     oldCn: Integer|undefined,
+ *     success: (clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer) => void,
+ *     error: (err: Error|DOMException) => void
+ *   ) => SyncPromise,
+ *   __overwrite: (
+ *     tx: SQLTransaction,
+ *     key: import('./Key.js').Key,
+ *     cb: (tx: SQLTransaction) => void,
+ *     error: (err: SQLError) => void
+ *   ) => void,
+ *   __get: (
+ *     query: import('./Key.js').Value,
+ *     getKey?: boolean,
+ *     getAll?: boolean,
+ *     count?: Integer
+ *   ) => import('./IDBRequest.js').IDBRequestFull,
  * }} IDBObjectStoreFull
  */
 
 /**
  *
  * @param {import('./IDBDatabase.js').IDBObjectStoreProperties} storeProperties
- * @param {import('./IDBTransaction.js').IDBTransactionFull} [transaction]
+ * @param {import('./IDBTransaction.js').IDBTransactionFull|null} [transaction]
  * @returns {IDBObjectStoreFull}
  */
 IDBObjectStore.__createInstance = function (storeProperties, transaction) {
@@ -7558,15 +7656,15 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
   // We don't delete the other index holders in case need reversion
   store.__indexNames = DOMStringList.__createInstance();
   db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.__currentName), 1);
-  const storeHandle = db.__versionTransaction.__storeHandles[store.__currentName];
+  const transaction = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
+  db.__versionTransaction;
+  const storeHandle = transaction.__storeHandles[store.__currentName];
   if (storeHandle) {
     storeHandle.__indexNames = DOMStringList.__createInstance();
     storeHandle.__pendingDelete = true;
   }
 
   // Remove the object store from WebSQL
-  const transaction = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
-  db.__versionTransaction;
   transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
     /**
      * @param {SQLTransaction} tx
@@ -7878,6 +7976,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
   me.transaction.__assertWritable();
   const request = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__createRequest(me);
   const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
+  // @ts-ignore -- Private API
   IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, true, ky);
   return request;
 };
@@ -7905,6 +8004,7 @@ IDBObjectStore.prototype.put = function (value /* , key */) {
   me.transaction.__assertWritable();
   const request = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__createRequest(me);
   const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
+  // @ts-ignore -- Private API
   IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, false, ky);
   return request;
 };
@@ -8360,11 +8460,12 @@ const readonlyProperties = ['name', 'version', 'objectStoreNames'];
  * IDB Database Object.
  * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
+ * @this {IDBDatabaseFull}
  * @throws {TypeError}
  */
 function IDBDatabase() {
   this.__versionTransaction = null;
-  this.__objectStores = null;
+  this.__objectStores = {};
   /** @type {import('./IDBTransaction.js').IDBTransactionFull[]} */
   this.__transactions = [];
   throw new TypeError('Illegal constructor');
@@ -8386,13 +8487,14 @@ const IDBDatabaseAlias = IDBDatabase;
  *   name: string,
  *   __forceClose: (msg: string) => void,
  *   __db: import('websql-configurable/lib/websql/WebSQLDatabase.js').default,
+ *   __closePending: boolean,
  *   __oldVersion: Integer,
  *   __version: Integer,
  *   __name: string,
  *   __upgradeTransaction: null|import('./IDBTransaction.js').IDBTransactionFull,
- *   __versionTransaction: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __versionTransaction: null|import('./IDBTransaction.js').IDBTransactionFull,
  *   __transactions: import('./IDBTransaction.js').IDBTransactionFull[],
- *   __objectStores: {[key: string]: IDBObjectStore},
+ *   __objectStores: {[key: string]: import('./IDBObjectStore.js').IDBObjectStoreFull},
  *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
  *   __oldObjectStoreNames: import('./DOMStringList.js').DOMStringListFull,
  *   __unblocking: {
@@ -8402,7 +8504,7 @@ const IDBDatabaseAlias = IDBDatabase;
  */
 
 /**
- * @param {import('websql-configurable').default} db
+ * @param {import('websql-configurable/lib/websql/WebSQLDatabase.js').default} db
  * @param {string} name
  * @param {Integer} oldVersion
  * @param {Integer} version
@@ -8436,11 +8538,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
     /** @type {{[key: string]: IDBObjectStore}} */
     this.__objectStores = {};
     this.__objectStoreNames = DOMStringList.__createInstance();
-
-    /**
-     * @type {IDBObjectStoreProperties}
-     */
-    const itemCopy = {};
+    const itemCopy = /** @type {IDBObjectStoreProperties} */{};
     for (let i = 0; i < storeProperties.rows.length; i++) {
       const item = storeProperties.rows.item(i);
       // Safari implements `item` getter return object's properties
@@ -8715,7 +8813,7 @@ const hasNullOrigin = () => CFG.checkOrigin !== false && getOrigin() === 'null';
  *   [key: string]: {
  *     [key: string]: {
  *       req: import('./IDBRequest.js').IDBOpenDBRequestFull,
- *       cb: (req: import('./IDBRequest.js').IDBRequestFull) => void,
+ *       cb: (req: import('./IDBRequest.js').IDBOpenDBRequestFull) => void,
  *     }[]
  *   }
  * }}
@@ -8787,7 +8885,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
   //    auto-close if unloading
 
   /**
-   * @param {IDBDatabase} connection
+   * @param {import('./IDBDatabase.js').IDBDatabaseFull} connection
    * @returns {boolean|undefined}
    */
   const connectionIsClosed = connection => connection.__closePending;
@@ -8804,6 +8902,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         return undefined;
       }
       const e = /** @type {Event & IDBVersionChangeEvent} */
+      // @ts-ignore It's ok; needed under some TS versions
       new IDBVersionChangeEvent('versionchange', {
         oldVersion,
         newVersion
@@ -8828,6 +8927,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         }
       };
       const e = /** @type {Event & IDBVersionChangeEvent} */
+      // @ts-ignore It's ok; needed under some TS versions
       new IDBVersionChangeEvent('blocked', {
         oldVersion,
         newVersion
@@ -9085,7 +9185,9 @@ function IDBFactory() {
  *   __openDatabase: OpenDatabase,
  *   __connections: {
  *     [key: string]: import('./IDBDatabase.js').IDBDatabaseFull[]
- *   }
+ *   },
+ *   __forceClose: (dbName: string, connIdx: Integer, msg: string) => void,
+ *   __setConnectionQueueOrigin: (origin?: string) => void
  * }} IDBFactoryFull
  */
 
@@ -9096,8 +9198,10 @@ const IDBFactoryAlias = IDBFactory;
 IDBFactory.__createInstance = function () {
   /**
    * @class
+   * @this {IDBFactoryFull}
    */
   function IDBFactory() {
+    // @ts-expect-error It's ok
     this[Symbol.toStringTag] = 'IDBFactory';
     this.__connections = {};
   }
@@ -9254,6 +9358,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
              */
             function versionSet() {
               const e = /** @type {import('eventtargeter').EventWithProps & Event & IDBVersionChangeEvent} */
+              // @ts-ignore It's ok; needed under some TS versions
               new IDBVersionChangeEvent('upgradeneeded', {
                 oldVersion,
                 newVersion: version
@@ -9553,6 +9658,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         req.__result = undefined;
         req.__done = true;
         const e = /** @type {Event & IDBVersionChangeEvent} */
+        // @ts-ignore It's ok; needed under some TS versions
         new IDBVersionChangeEvent('success', {
           oldVersion: version,
           newVersion: null
@@ -9794,7 +9900,42 @@ const shimIndexedDB = IDBFactory.__createInstance();
  *   __continuationKey: import('./Key.js').Key|undefined,
  *   __continuationPrimaryKey: import('./Key.js').Key|undefined,
  *   __multiEntryExhausted: boolean,
- *   __invalidateCache: () => void
+ *   __invalidateCache: () => void,
+ *   __gotValue: boolean,
+ *   __find: (...args: any[]) => void,
+ *   __findBasic: (
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
+ *     tx: SQLTransaction,
+ *     success: KeySuccess,
+ *     error: FindError,
+ *     recordsToLoad: Integer|undefined
+ *   ) => void,
+ *   __findMultiEntry: (
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
+ *     tx: SQLTransaction,
+ *     success: KeySuccess,
+ *     error: FindError,
+ *     recordsToLoad?: Integer
+ *   ) => void,
+ *   __onsuccess: (success: SuccessArg) => SuccessCallback,
+ *   __decode: (
+ *     rowItem: RowItemNonNull,
+ *     callback: (
+ *       key: import('./Key.js').Key,
+ *       val: import('./Key.js').Value,
+ *       primaryKey: import('./Key.js').Key,
+ *       encKey?: string
+ *     ) => void
+ *   ) => void,
+ *   __sourceOrEffectiveObjStoreDeleted: () => void,
+ *   __continue: (key?: import('./Key.js').Key, advanceContinue?: boolean) => void,
+ *   __continueFinish: (
+ *     key: import('./Key.js').Key,
+ *     primaryKey: import('./Key.js').Key,
+ *     advanceState: boolean
+ *   ) => void
  * }} IDBCursorFull
  */
 
@@ -10189,6 +10330,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         length: rows.length,
         /**
          * @param {Integer} index
+         * @this {{data: RowItemNonNull[]}}
          * @returns {RowItemNonNull}
          */
         item(index) {
@@ -10314,7 +10456,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
  * @returns {void}
  */
 IDBCursor.prototype.__invalidateCache = function () {
-  // @ts-expect-error Why is this not being found?
+  // @ts-ignore Why is this not being found?; needed under some TS versions
   this.__prefetchedData = null;
   this.__multiEntryExhausted = false;
 };
@@ -10727,7 +10869,7 @@ function setConfig(prop, val) {
 /**
  *
  * @param {ShimmedObject} [idb]
- * @param {import('./CFG.js').ConfigValues} [initialConfig]
+ * @param {Partial<import('./CFG.js').ConfigValues>} [initialConfig]
  * @returns {ShimmedObject}
  */
 function setGlobalVars(idb, initialConfig) {
@@ -10899,7 +11041,7 @@ function setGlobalVars(idb, initialConfig) {
         IDB.shimIndexedDB.__setConnectionQueueOrigin();
       }
     };
-    IDB.shimIndexedDB.__debug = function (val) {
+    IDB.shimIndexedDB.__debug = /** @type {(val: boolean) => void} */function (val) {
       CFG.DEBUG = val;
     };
     IDB.shimIndexedDB.__setConfig = setConfig;
@@ -12448,8 +12590,10 @@ const READ_ONLY_ERROR = new Error('could not prepare statement (23 not authorize
  */
 
 /**
+ * @class
  * @param {string} name
  * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
+ * @this {{_db: any}}
  * @returns {void}
  */
 function SQLiteDatabase(name, opts = {}) {
@@ -12592,10 +12736,18 @@ SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
 };
 
 /**
+ * @typedef {{
+ *   _db: any,
+ *   exec: typeof SQLiteDatabase['prototype']['exec']
+ * }} SQLiteDatabaseInstance
+ */
+
+/**
  * @param {string} name
- * @returns {SQLiteDatabase}
+ * @returns {SQLiteDatabaseInstance}
  */
 function wrappedSQLiteDatabase(name) {
+  // @ts-ignore It's ok; needed under some TS versions
   const db = new SQLiteDatabase(name, {});
   if (CFG.sqlBusyTimeout) {
     db._db.configure('busyTimeout', /** @type {number} */CFG.sqlBusyTimeout); // Default is 1000
@@ -12628,7 +12780,7 @@ CFG.win = {
 
 /**
  * @param {import('./setGlobalVars.js').ShimmedObject} idb
- * @param {import('./CFG.js').default} initialConfig
+ * @param {Partial<import('./CFG.js').ConfigValues>} initialConfig
  * @returns {import('./setGlobalVars.js').ShimmedObject|Window}
  */
 const __setGlobalVars = function (idb, initialConfig = {}) {

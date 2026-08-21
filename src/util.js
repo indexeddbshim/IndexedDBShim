@@ -377,7 +377,6 @@ function defineListenerProperties (obj, listeners) {
             },
             /**
              * @param {AnyValue} val
-             * @returns {void}
              */
             set [listener] (val) {
                 obj['__' + listener] = val;

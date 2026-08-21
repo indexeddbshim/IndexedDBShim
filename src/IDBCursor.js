@@ -49,7 +49,42 @@ import CFG from './CFG.js';
  *   __continuationKey: import('./Key.js').Key|undefined,
  *   __continuationPrimaryKey: import('./Key.js').Key|undefined,
  *   __multiEntryExhausted: boolean,
- *   __invalidateCache: () => void
+ *   __invalidateCache: () => void,
+ *   __gotValue: boolean,
+ *   __find: (...args: any[]) => void,
+ *   __findBasic: (
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
+ *     tx: SQLTransaction,
+ *     success: KeySuccess,
+ *     error: FindError,
+ *     recordsToLoad: Integer|undefined
+ *   ) => void,
+ *   __findMultiEntry: (
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
+ *     tx: SQLTransaction,
+ *     success: KeySuccess,
+ *     error: FindError,
+ *     recordsToLoad?: Integer
+ *   ) => void,
+ *   __onsuccess: (success: SuccessArg) => SuccessCallback,
+ *   __decode: (
+ *     rowItem: RowItemNonNull,
+ *     callback: (
+ *       key: import('./Key.js').Key,
+ *       val: import('./Key.js').Value,
+ *       primaryKey: import('./Key.js').Key,
+ *       encKey?: string
+ *     ) => void
+ *   ) => void,
+ *   __sourceOrEffectiveObjStoreDeleted: () => void,
+ *   __continue: (key?: import('./Key.js').Key, advanceContinue?: boolean) => void,
+ *   __continueFinish: (
+ *     key: import('./Key.js').Key,
+ *     primaryKey: import('./Key.js').Key,
+ *     advanceState: boolean
+ *   ) => void
  * }} IDBCursorFull
  */
 
@@ -455,6 +490,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 length: rows.length,
                 /**
                  * @param {Integer} index
+                 * @this {{data: RowItemNonNull[]}}
                  * @returns {RowItemNonNull}
                  */
                 item (index) {
@@ -588,7 +624,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
  * @returns {void}
  */
 IDBCursor.prototype.__invalidateCache = function () {
-    // @ts-expect-error Why is this not being found?
+    // @ts-ignore Why is this not being found?; needed under some TS versions
     this.__prefetchedData = null;
     this.__multiEntryExhausted = false;
 };

@@ -5,7 +5,9 @@ import * as UnicodeIdentifiers from './UnicodeIdentifiers.js';
 import setGlobalVars from './setGlobalVars.js';
 import CFG from './CFG.js';
 
-CFG.win = typeof window !== 'undefined' ? window : self; // For Web Workers
+CFG.win = /** @type {import('./CFG.js').ConfigValues['win']} */ (
+    /** @type {unknown} */ (typeof window !== 'undefined' ? window : self)
+); // For Web Workers
 
 setGlobalVars();
 // END: Same code as in browser.js

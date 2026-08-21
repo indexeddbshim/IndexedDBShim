@@ -73,11 +73,11 @@ IDBRequest.__super = function IDBRequest () {
     util.defineReadonlyProperties(this, readonlyProperties, {
         readyState: {
             /**
-             * @this {IDBRequestFull}
              * @returns {"done"|"pending"}
              */
             get readyState () {
-                return this.__done ? 'done' : 'pending';
+                const me = /** @type {IDBRequestFull} */ (/** @type {unknown} */ (this));
+                return me.__done ? 'done' : 'pending';
             }
         }
     });

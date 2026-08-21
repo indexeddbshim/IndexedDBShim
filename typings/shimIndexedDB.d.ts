@@ -1,4 +1,4 @@
-declare var shimIndexedDB: import('../src/IDBFactory.js').IDBFactory & WindowDatabase & {
+declare var shimIndexedDB: import('../src/IDBFactory.js').IDBFactoryFull & WindowDatabase & {
     __useShim: () => void
     __debug: (val: boolean) => void
     __setConfig: (prop: string, val: import('../src/CFG.js').ConfigValue) => void
