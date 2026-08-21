@@ -30,14 +30,14 @@
 //                          via the WebWorker API generate this type of
 //                          message.
 
-import assert from 'assert';
-import childProcess from 'child_process';
-import fs from 'fs';
-import http from 'http';
-import path, {dirname} from 'path';
-import util from 'util';
-import os from 'os';
-import url, {fileURLToPath} from 'url';
+import assert from 'node:assert';
+import childProcess from 'node:child_process';
+import fs from 'node:fs';
+import http from 'node:http';
+import path, {dirname} from 'node:path';
+import util from 'node:util';
+import os from 'node:os';
+import url, {fileURLToPath} from 'node:url';
 import ws from 'ws';
 import * as wwutil from './webworker-util.js';
 

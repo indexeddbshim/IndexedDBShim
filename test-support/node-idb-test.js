@@ -597,8 +597,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 
         // Polyfill enough for our tests
         // const require = createRequire(import.meta.url);
-        // const cou = require('../node_modules/typeson-registry/polyfills/createObjectURL.umd.js');
-        const cou = await import('typeson-registry/polyfills/createObjectURL.js');
+        // const cou = require('typeson-registry/polyfills');
+        const cou = await import('typeson-registry/polyfills');
 
         global.XMLHttpRequest = window.XMLHttpRequest;
         // Expose the following to the `createObjectURL` polyfill

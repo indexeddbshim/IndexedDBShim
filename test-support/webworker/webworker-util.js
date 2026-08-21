@@ -1,9 +1,9 @@
 // Utilies and other common gook shared between the WebWorker master and
 // its constituent Workers.
 
-import events from 'events';
-import path from 'path';
-import util from 'util';
+import events from 'node:events';
+import path from 'node:path';
+import util from 'node:util';
 
 import * as BSON from 'bson';
 

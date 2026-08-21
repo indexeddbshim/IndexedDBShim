@@ -1,6 +1,6 @@
 /* eslint-disable n/no-sync -- Ok for testing  */
 /* eslint-disable sonarjs/no-mixed-completion-style -- Complex otherwise */
-import fs from 'fs';
+import fs from 'node:fs';
 import * as chai from 'chai';
 
 global.window = global;

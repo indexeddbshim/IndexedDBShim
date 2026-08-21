@@ -1,6 +1,6 @@
 import {readFile, writeFile, readdir, mkdir} from 'node:fs/promises';
-import path from 'path';
-import http from 'http';
+import path from 'node:path';
+import http from 'node:http';
 import {JSDOM} from 'jsdom';
 
 const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';

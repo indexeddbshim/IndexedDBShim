@@ -12,11 +12,11 @@
 //      that is listening for connections. The <script> parameter is the
 //      path to the JavaScript source to be executed as the body of the
 //      worker.
-import fs from 'fs';
-import path from 'path';
-import vm from 'vm';
-import util from 'util';
-import http from 'http';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import util from 'node:util';
+import http from 'node:http';
 import {WebSocket} from 'ws';
 import xmlHttpRequest from 'local-xmlhttprequest';
 import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
