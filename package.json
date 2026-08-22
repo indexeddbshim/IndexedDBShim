@@ -22,7 +22,7 @@
       "coverage",
       "ignore",
       "eslint.config.js",
-      ".mocharc.js",
+      ".mocharc.cjs",
       "tests-mocha/**",
       "tests-polyfill/**",
       "test-support/**"
