@@ -65,7 +65,7 @@
     "coverage:w3cOld": "c8 --silent --no-clean mocha --reporterOptions configFile=mocha-multi-reporters.json,cmrOutput=@es-joy/json-file-reporter+output+w3c --require source-map-support/register tests-polyfill/w3c/test-node.js",
     "coverage:w3c": "NODE_OPTIONS=--max_old_space_size=16384 c8 --silent --no-clean npm run w3c-test-only",
     "test:w3c": "NODE_OPTIONS=--max_old_space_size=16384 NODE_OPTIONS=--trace-warnings node test-support/node-idb-test.js",
-    "w3c-test-only": "node --trace-warnings test-support/node-idb-test.js",
+    "w3c-test-only": "NODE_OPTIONS=--max_old_space_size=16384 node --trace-warnings test-support/node-idb-test.js",
     "coverage:mocha": "c8 --silent --no-clean mocha --reporterOptions configFile=mocha-multi-reporters.json,cmrOutput=@es-joy/json-file-reporter+output+mocha --require source-map-support/register tests-mocha/test-node.js",
     "coverage-badge": "coveradge badges/coverage-badge",
     "coverage:report-only": "c8 report",

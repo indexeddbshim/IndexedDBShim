@@ -126,6 +126,12 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     shimNS.finished = async () => {
         // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Testing
         ct += 1;
+        // jsdom retains a `Window`'s internal resources until `close()` is
+        //   called; without this, creating a new one per test file leaks
+        //   memory across a full run.
+        if (shimNS.window) {
+            shimNS.window.close();
+        }
 
         /**
          * @returns {Promise<void>}
