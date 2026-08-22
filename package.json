@@ -31,6 +31,8 @@
   "scripts": {
     "tsc": "tsc",
     "tsc-prod": "tsc -p tsconfig-prod.json",
+    "tsc:ts7": "npx -y typescript@^7 tsc",
+    "tsc-prod:ts7": "npx -y typescript@^7 tsc -p tsconfig-prod.json",
     "build": "rm -R dist && npm run tsc-prod && npm run rollup",
     "prepublishOnly": "npm run license-badges && npm run build",
     "license-badge": "license-badger --corrections --uncategorizedLicenseTemplate \"\\${license} (\\${name} (\\${version}))\" --filteredTypes=nonempty --textTemplate \"License types\n(project, deps, and bundled devDeps)\" --packageJson --production badges/licenses-badge.svg",
