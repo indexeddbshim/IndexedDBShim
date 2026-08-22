@@ -9,7 +9,7 @@ import CFG from './CFG.js';
 
 let uniqueID = 0;
 const listeners = ['onabort', 'oncomplete', 'onerror'];
-const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
+const readonlyProperties = ['objectStoreNames', 'mode', 'durability', 'db', 'error'];
 
 /**
  * @typedef {number} Integer
@@ -26,6 +26,7 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
 /**
  * @typedef {EventTarget & {
  *   mode: "readonly"|"readwrite"|"versionchange",
+ *   durability: "default"|"strict"|"relaxed",
  *   db: import('./IDBDatabase.js').IDBDatabaseFull,
  *   on__abort: () => void,
  *   on__complete: () => void,
@@ -44,6 +45,7 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
  *   __requests: RequestInfo[],
  *   __db: import('./IDBDatabase.js').IDBDatabaseFull,
  *   __mode: string,
+ *   __durability: string,
  *   __error: null|DOMException|Error,
  *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
  *   __storeHandles: {
@@ -100,9 +102,10 @@ const IDBTransactionAlias = IDBTransaction;
  * @param {import('./IDBDatabase.js').IDBDatabaseFull} db
  * @param {import('./DOMStringList.js').DOMStringListFull} storeNames
  * @param {string} mode
+ * @param {string} [durability]
  * @returns {IDBTransactionFull}
  */
-IDBTransaction.__createInstance = function (db, storeNames, mode) {
+IDBTransaction.__createInstance = function (db, storeNames, mode, durability = 'default') {
     /**
      * @class
      * @this {IDBTransactionFull}
@@ -121,6 +124,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         me.__requests = [];
         me.__objectStoreNames = storeNames;
         me.__mode = mode;
+        me.__durability = durability;
         me.__db = db;
         me.__error = null;
         // @ts-expect-error Part of `ShimEventTarget`

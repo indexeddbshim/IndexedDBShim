@@ -234,12 +234,14 @@ IDBDatabase.prototype.close = function () {
  * @this {IDBDatabaseFull}
  * @returns {import('./IDBTransaction.js').IDBTransactionFull}
  */
-IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
+IDBDatabase.prototype.transaction = function (storeNames /* , mode, options */) {
     if (arguments.length === 0) {
         throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
     }
     // eslint-disable-next-line prefer-rest-params -- API
     let mode = arguments[1];
+    // eslint-disable-next-line prefer-rest-params -- API
+    const options = arguments[2];
     storeNames = util.isIterable(storeNames)
         // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
         ? [...new Set( // to be unique
@@ -282,10 +284,18 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
         throw new TypeError('Invalid transaction mode: ' + mode);
     }
 
+    // Validated and reflected via `IDBTransaction.durability` for spec conformance only;
+    //   the SQLite/WebSQL backend has no equivalent flush/fsync knob to wire this to.
+    let durability = options && options.durability;
+    durability ||= 'default';
+    if (durability !== 'default' && durability !== 'strict' && durability !== 'relaxed') {
+        throw new TypeError('Invalid transaction durability: ' + durability);
+    }
+
     // Do not set transaction state to "inactive" yet (will be set after
     //   timeout on creating transaction instance):
     //   https://github.com/w3c/IndexedDB/issues/87
-    const trans = IDBTransaction.__createInstance(this, objectStoreNames, mode);
+    const trans = IDBTransaction.__createInstance(this, objectStoreNames, mode, durability);
     this.__transactions.push(trans);
     return trans;
 };

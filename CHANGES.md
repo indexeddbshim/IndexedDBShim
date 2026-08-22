@@ -3,6 +3,7 @@
 ## 17.3.0
 
 - feat: add `IDBTransaction.commit()`
+- feat: add `durability` transaction option and `IDBTransaction.durability` attribute (spec conformance only; no effect on the SQLite/WebSQL backend's actual flush behavior)
 - fix: use current spec-enjoined API for a `QuotaExceededError` rather than `DOMException`
 - chore: update typeson-registry, devDeps; lint
 - chore: adjust for TS 7 compatibility
