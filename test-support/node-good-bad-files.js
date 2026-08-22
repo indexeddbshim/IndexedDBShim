@@ -227,7 +227,7 @@ Current DOMException test statuses with 0 files excluded:
 }
 */
 const goodBad = {
-    excludedNormal: ['bindings-inject-key.js', 'event-dispatch-active-flag.js', 'keypath-exceptions.js', 'bindings-inject-keys-bypass-setters.js', 'upgrade-transaction-deactivation-timing.js'],
+    excludedNormal: ['event-dispatch-active-flag.js', 'keypath-exceptions.js', 'bindings-inject-keys-bypass-setters.js', 'upgrade-transaction-deactivation-timing.js'],
     excludedWorkers: ['_interface-objects-003.js', '_interface-objects-004.js'],
     notRunning: ['idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js', 'idbindex_reverse_cursor.any.js', 'structured-clone.any.js'],
     timeout: ['idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js', 'idbindex_reverse_cursor.any.js', 'interleaved-cursors-small.js', 'request-abort-ordering.js', 'structured-clone.any.js', 'transaction-scheduling-within-database.any.js', 'idb-partitioned-basic.tentative.sub.js'],
