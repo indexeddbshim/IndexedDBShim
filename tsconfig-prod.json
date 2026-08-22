@@ -3,7 +3,7 @@
     "lib": ["DOM", "es2023"],
     "types": ["node", "websql"],
     "moduleResolution": "nodenext",
-    "module": "NodeNext",
+    "module": "nodenext",
     "allowJs": true,
     "checkJs": true,
     "noEmit": false,
