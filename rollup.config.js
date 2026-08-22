@@ -43,6 +43,19 @@ const babelNodeOptions = {...babelBrowserOptions,
     ]
 };
 
+// `rollup-plugin-node-polyfills` only recognizes bare builtin specifiers
+//   (e.g., "path"), not the "node:"-prefixed form used in `src/IDBFactory.js`,
+//   so without this, browser bundles get "Unresolved dependencies"/"Missing
+//   shims" warnings for `node:path` instead of being polyfilled.
+const stripNodeProtocol = () => ({
+    name: 'strip-node-protocol',
+    resolveId (source, importer, options) {
+        return source.startsWith('node:')
+            ? this.resolve(source.slice(5), importer, {...options, skipSelf: true})
+            : null;
+    }
+});
+
 const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => {
     const ret = [
         nodeResolve({
@@ -61,6 +74,7 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => 
     ];
     if (addBuiltins) {
         ret.unshift(
+            stripNodeProtocol(),
             inject({
                 Buffer: ['buffer', 'Buffer'],
                 process: 'process/browser',
