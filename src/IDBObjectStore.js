@@ -1,6 +1,6 @@
 import SyncPromise from 'sync-promise-expanded';
 import {createDOMException} from './DOMException.js';
-import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
+import {IDBCursor, IDBCursorWithValue, parseGetAllArgs, collectAll} from './IDBCursor.js';
 import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
 import DOMStringList from './DOMStringList.js';
 import * as util from './util.js';
@@ -797,20 +797,15 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
  *
  * @param {import('./Key.js').Value} query
  * @param {boolean} [getKey]
- * @param {boolean} [getAll]
- * @param {Integer} [count]
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
+IDBObjectStore.prototype.__get = function (query, getKey) {
     const me = this;
-    if (count !== undefined) {
-        count = util.enforceRange(count, 'unsigned long');
-    }
     IDBObjectStore.__invalidStateIfDeleted(me);
     IDBTransaction.__assertActive(me.transaction);
 
-    const range = convertValueToKeyRange(query, !getAll);
+    const range = convertValueToKeyRange(query, true);
 
     const col = getKey ? 'key' : 'value';
     const sql = ['SELECT', util.sqlQuote(col), 'FROM', util.escapeStoreNameForSQL(me.__currentName)];
@@ -820,15 +815,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
         sql.push('WHERE');
         setSQLForKeyRange(range, util.sqlQuote('key'), sql, sqlValues);
     }
-    if (!getAll) {
-        count = 1;
-    }
-    if (count) {
-        if (!Number.isFinite(count)) {
-            throw new TypeError('The count parameter must be a finite number');
-        }
-        sql.push('LIMIT', String(count));
-    }
+    sql.push('LIMIT', '1');
     const sqlStr = sql.join(' ');
     return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         me.transaction
@@ -840,31 +827,12 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
             try {
                 // Opera can't deal with the try-catch here.
                 if (data.rows.length === 0) {
-                    if (getAll) {
-                        success([]);
-                    } else {
-                        success();
-                    }
+                    success();
                     return;
                 }
-                ret = [];
-                if (getKey) {
-                    for (let i = 0; i < data.rows.length; i++) {
-                        // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
-                        ret.push(
-                            Key.decode(util.unescapeSQLiteResponse(data.rows.item(i).key), false)
-                        );
-                    }
-                } else {
-                    for (let i = 0; i < data.rows.length; i++) {
-                        ret.push(
-                            Sca.decode(util.unescapeSQLiteResponse(data.rows.item(i).value))
-                        );
-                    }
-                }
-                if (!getAll) {
-                    ret = ret[0];
-                }
+                ret = getKey
+                    ? Key.decode(util.unescapeSQLiteResponse(data.rows.item(0).key), false)
+                    : Sca.decode(util.unescapeSQLiteResponse(data.rows.item(0).value));
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
                 if (CFG.DEBUG) { console.log(e); }
@@ -908,20 +876,20 @@ IDBObjectStore.prototype.getKey = function (query) {
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-IDBObjectStore.prototype.getAll = function (/* query, count */) {
+IDBObjectStore.prototype.getAll = function (/* queryOrOptions, count */) {
     // eslint-disable-next-line prefer-rest-params -- API
-    const [query, count] = arguments;
-    return this.__get(query, false, true, count);
+    const {query, count, direction} = parseGetAllArgs(arguments);
+    return collectAll(this, query, count, direction, false);
 };
 
 /**
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-IDBObjectStore.prototype.getAllKeys = function (/* query, count */) {
+IDBObjectStore.prototype.getAllKeys = function (/* queryOrOptions, count */) {
     // eslint-disable-next-line prefer-rest-params -- API
-    const [query, count] = arguments;
-    return this.__get(query, true, true, count);
+    const {query, count, direction} = parseGetAllArgs(arguments);
+    return collectAll(this, query, count, direction, true);
 };
 
 /**

@@ -1,6 +1,6 @@
 import SyncPromise from 'sync-promise-expanded';
 import {createDOMException} from './DOMException.js';
-import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
+import {IDBCursor, IDBCursorWithValue, parseGetAllArgs, collectAll} from './IDBCursor.js';
 import * as util from './util.js';
 import * as Key from './Key.js';
 import {setSQLForKeyRange, IDBKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
@@ -593,20 +593,20 @@ IDBIndex.prototype.getKey = function (query) {
  * @this {IDBIndexFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-IDBIndex.prototype.getAll = function (/* query, count */) {
+IDBIndex.prototype.getAll = function (/* queryOrOptions, count */) {
     // eslint-disable-next-line prefer-rest-params -- API
-    const [query, count] = arguments;
-    return this.__fetchIndexData(query, 'value', false, count);
+    const {query, count, direction} = parseGetAllArgs(arguments);
+    return collectAll(this, query, count, direction, false);
 };
 
 /**
  * @this {IDBIndexFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-IDBIndex.prototype.getAllKeys = function (/* query, count */) {
+IDBIndex.prototype.getAllKeys = function (/* queryOrOptions, count */) {
     // eslint-disable-next-line prefer-rest-params -- API
-    const [query, count] = arguments;
-    return this.__fetchIndexData(query, 'key', false, count);
+    const {query, count, direction} = parseGetAllArgs(arguments);
+    return collectAll(this, query, count, direction, true);
 };
 
 /**

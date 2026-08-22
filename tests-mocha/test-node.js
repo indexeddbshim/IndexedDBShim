@@ -75,6 +75,7 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Co
         'IDBIndex/openCursor-spec.js',
         'IDBIndex/multi-entry-cursor-regression-spec.js',
         'IDBIndex/openKeyCursor-spec.js',
+        'IDBIndex/getAll-direction-spec.js',
         'IDBKeyRange/includes-spec.js',
         'IDBObjectStore/add-put-spec.js',
         'IDBObjectStore/add-spec.js',
@@ -89,6 +90,7 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Co
         'IDBObjectStore/issue334-nul-range-spec.js',
         'IDBObjectStore/openKeyCursor-spec.js',
         'IDBObjectStore/put-spec.js',
+        'IDBObjectStore/getAll-direction-spec.js',
         'IDBTransaction/objectStore-spec.js',
         'IDBTransaction/events-spec.js',
         'IDBTransaction/durability-spec.js'

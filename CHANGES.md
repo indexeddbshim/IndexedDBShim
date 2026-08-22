@@ -4,6 +4,8 @@
 
 - feat: add `IDBTransaction.commit()`
 - feat: add `durability` transaction option and `IDBTransaction.durability` attribute (spec conformance only; no effect on the SQLite/WebSQL backend's actual flush behavior)
+- feat: add a `direction` option to `IDBObjectStore`/`IDBIndex` `getAll`/`getAllKeys`, via a single `{query, count, direction}` options object (in addition to the existing `(query, count)` form); results are collected by internally driving a cursor with that direction, so ordering and uniqueness (`nextunique`/`prevunique`), including over `multiEntry` indexes, match cursor iteration exactly
+- fix: `IDBCursor` `nextunique`/`prevunique` iteration over a `multiEntry` index no longer stops early the first time it encounters a duplicate key within a prefetched batch
 - fix: use current spec-enjoined API for a `QuotaExceededError` rather than `DOMException`
 - chore: update typeson-registry, devDeps; lint
 - chore: adjust for TS 7 compatibility

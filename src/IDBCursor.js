@@ -2,6 +2,7 @@ import {IDBRequest} from './IDBRequest.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import {createDOMException} from './DOMException.js';
 import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
+import {createEvent} from './Event.js';
 import {cmp} from './IDBFactory.js';
 import * as util from './util.js';
 import IDBTransaction from './IDBTransaction.js';
@@ -9,6 +10,8 @@ import * as Key from './Key.js';
 import * as Sca from './Sca.js';
 import {IDBIndex} from './IDBIndex.js';
 import CFG from './CFG.js';
+
+const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
 
 /**
  * @typedef {number} Integer
@@ -91,6 +94,7 @@ import CFG from './CFG.js';
 /**
  * @typedef {IDBCursorFull & {
  *   __request: import('./IDBRequest.js').IDBRequestFull,
+ *   value: import('./Key.js').Value,
  * }} IDBCursorWithValueFull
  */
 
@@ -132,7 +136,7 @@ IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColu
     }
     IDBTransaction.__assertActive(store.transaction);
     const range = convertValueToKeyRange(query);
-    if (direction !== undefined && !(['next', 'prev', 'nextunique', 'prevunique'].includes(direction))) {
+    if (direction !== undefined && !cursorDirections.includes(direction)) {
         throw new TypeError(direction + 'is not a valid cursor direction');
     }
 
@@ -715,6 +719,16 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
                         // @ts-expect-error Todo: Our bug to fix
                         util.runContinuationSafely(() => cursorContinue(tx, args, success, error));
                     }
+                    if (me.__multiEntryIndex && me.__unique && encKey === undefined) {
+                        // `__decode` found this row's matching key already seen
+                        //   (tracked via `__matchedKeys`) and signaled a skip by
+                        //   omitting `encKey`; move on to the next prefetched
+                        //   row instead of treating the missing key as the end
+                        //   of the cursor.
+                        // @ts-expect-error Todo: Our bug to fix
+                        util.runContinuationSafely(() => cursorContinue(tx, args, success, error));
+                        return;
+                    }
                     if (me.__unique && !me.__multiEntryIndex &&
                         encKey === Key.encode(me.key, me.__multiEntryIndex)) {
                         // @ts-expect-error Todo: Our bug to fix
@@ -985,4 +999,99 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 });
 /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
-export {IDBCursor, IDBCursorWithValue};
+/**
+ * `getAll`/`getAllKeys` accept either the legacy `(query, count)` signature
+ *   or, per the IndexedDB 3 draft's `getAllRecords` options shape, a single
+ *   `{query, count, direction}` options object. A plain object is never a
+ *   valid IndexedDB key (or key range), so the two forms can be told apart
+ *   unambiguously by the shape of the sole argument.
+ * @param {IArguments} args
+ * @throws {TypeError}
+ * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+ */
+function parseGetAllArgs (args) {
+    /** @type {AnyValue} */
+    let query, count, direction;
+    const arg0 = args[0];
+    if (args.length === 1 && util.isObj(arg0) && !Array.isArray(arg0) && !util.isDate(arg0) &&
+        !util.isBinary(arg0) &&
+        !('upper' in arg0 && 'lowerOpen' in arg0 && typeof arg0.lowerOpen === 'boolean') // IDBKeyRange-like
+    ) {
+        ({query, count, direction} = /** @type {AnyValue} */ (arg0));
+    } else {
+        [query, count] = args;
+    }
+    direction ||= 'next';
+    if (!cursorDirections.includes(direction)) {
+        throw new TypeError('`' + direction + '` is not a valid direction');
+    }
+    return {query, count, direction};
+}
+
+/**
+ * Shared implementation backing `getAll`/`getAllKeys` on both
+ *   `IDBObjectStore` and `IDBIndex`. Rather than issuing a single bulk SQL
+ *   query, this drives an internal cursor with the requested `direction`
+ *   and collects its values, so ordering and uniqueness semantics --
+ *   including `nextunique`/`prevunique` over `multiEntry` indexes -- always
+ *   match what iterating that same cursor manually would produce.
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *   import('./IDBIndex.js').IDBIndexFull} source
+ * @param {import('./Key.js').Value} query
+ * @param {Integer|undefined} count
+ * @param {string} direction
+ * @param {boolean} keysOnly
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
+ */
+function collectAll (source, query, count, direction, keysOnly) {
+    if (count !== undefined) {
+        count = util.enforceRange(count, 'unsigned long');
+    }
+    const isIndexSource = util.instanceOf(source, IDBIndex);
+    const tx = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+        isIndexSource
+            ? /** @type {import('./IDBIndex.js').IDBIndexFull} */ (source).objectStore.transaction
+            : /** @type {import('./IDBObjectStore.js').IDBObjectStoreFull} */ (source).transaction
+    );
+    const outerRequest = tx.__createRequest(source);
+    /** @type {AnyValue[]} */
+    const results = [];
+    const innerRequest = /** @type {import('./IDBRequest.js').IDBRequestFull} */ (
+        // @ts-expect-error It's ok (both `IDBObjectStore` and `IDBIndex` implement this)
+        keysOnly ? source.openKeyCursor(query, direction) : source.openCursor(query, direction)
+    );
+
+    /**
+     * @returns {void}
+     */
+    function finish () {
+        outerRequest.__done = true;
+        outerRequest.__result = /** @type {AnyValue} */ (results);
+        outerRequest.__error = null;
+        outerRequest.dispatchEvent(createEvent('success'));
+    }
+
+    innerRequest.addEventListener('success', function () {
+        const cursor = /** @type {IDBCursorFull} */ (/** @type {unknown} */ (innerRequest.__result));
+        if (cursor === null) {
+            finish();
+            return;
+        }
+        results.push(keysOnly ? cursor.primaryKey : /** @type {IDBCursorWithValueFull} */ (cursor).value);
+        if (count && results.length >= count) {
+            finish();
+            return;
+        }
+        cursor.continue();
+    });
+    innerRequest.addEventListener('error', function () {
+        outerRequest.__done = true;
+        outerRequest.__result = undefined;
+        outerRequest.__error = innerRequest.__error;
+        outerRequest.dispatchEvent(createEvent('error', innerRequest.__error));
+    });
+
+    return outerRequest;
+}
+
+export {IDBCursor, IDBCursorWithValue, parseGetAllArgs, collectAll};
