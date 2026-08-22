@@ -9185,9 +9185,18 @@ function processNextInConnectionQueue(name, origin = getOrigin()) {
     queueItems.shift();
     processNextInConnectionQueue(name, origin);
   }
+  // Only a terminal (`success`/`error`) event advances the queue --
+  //   `blocked` means this request is still pending (waiting on other
+  //   connections to close), so later requests for the same database must
+  //   keep waiting behind it rather than starting concurrently, per
+  //   https://w3c.github.io/IndexedDB/#request-connection-queue.
   req.addEventListener('success', removeFromQueue);
   req.addEventListener('error', removeFromQueue);
-  req.addEventListener('blocked', removeFromQueue);
+  setTimeout(() => {
+    if (queueItems[0] && queueItems[0].req === req) {
+      console.error('QDIAG STUCK name=' + name + ' origin=' + origin + ' queueLen=' + queueItems.length + ' reqDone=' + req.__done); // eslint-disable-line no-console -- temp diag
+    }
+  }, 1500);
   cb(req);
 }
 
