@@ -64,7 +64,7 @@ const IDBDatabaseAlias = IDBDatabase;
  *   __oldObjectStoreNames: import('./DOMStringList.js').DOMStringListFull,
  *   __unblocking: {
  *     check: () => void
- *   }
+ *   }[]
  * }} IDBDatabaseFull
  */
 
@@ -87,6 +87,8 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         util.defineReadonlyProperties(this, readonlyProperties);
         this.__db = db;
         this.__closePending = false;
+        /** @type {{check: () => void}[]} */
+        this.__unblocking = [];
         this.__oldVersion = oldVersion;
         this.__version = version;
         this.__name = name;
@@ -222,9 +224,14 @@ IDBDatabase.prototype.close = function () {
         throw new TypeError('Illegal invocation');
     }
     this.__closePending = true;
-    if (this.__unblocking) {
-        this.__unblocking.check();
-    }
+    // Multiple, separately-issued `open`/`deleteDatabase` requests can each
+    //   be waiting (concurrently) on this same connection to close -- e.g.
+    //   when an earlier one is still "blocked" but has already let the
+    //   connection queue move on to the next request -- so every registered
+    //   waiter must be notified, not just the most recently registered one.
+    this.__unblocking.forEach(function (/** @type {{check: () => void}} */ u) { u.check(); });
+    /** @type {{check: () => void}[]} */
+    this.__unblocking = [];
     this.__transactions = [];
 };
 

@@ -165,7 +165,10 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
                 if (!connectionsClosed()) {
                     openConnections.forEach((connection) => {
                         if (!connectionIsClosed(connection)) {
-                            connection.__unblocking = unblocking;
+                            // Several concurrently-blocked requests can each be
+                            //   waiting on this same connection, so append
+                            //   rather than overwrite -- see `IDBDatabase.close`.
+                            connection.__unblocking.push(unblocking);
                         }
                     });
                 } else {

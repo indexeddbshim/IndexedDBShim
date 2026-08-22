@@ -34,7 +34,7 @@ export type IDBDatabaseFull = IDBDatabase & EventTarget & {
     __oldObjectStoreNames: import("./DOMStringList.js").DOMStringListFull;
     __unblocking: {
         check: () => void;
-    };
+    }[];
 };
 /**
  * @typedef {{
@@ -82,6 +82,10 @@ declare class IDBDatabase {
      */
     close(this: IDBDatabaseFull): void;
     __closePending: boolean | undefined;
+    /** @type {{check: () => void}[]} */
+    __unblocking: {
+        check: () => void;
+    }[] | undefined;
     /**
      * Starts a new transaction.
      * @param {string|string[]} storeNames
@@ -131,7 +135,7 @@ declare namespace IDBDatabase {
      *   __oldObjectStoreNames: import('./DOMStringList.js').DOMStringListFull,
      *   __unblocking: {
      *     check: () => void
-     *   }
+     *   }[]
      * }} IDBDatabaseFull
      */
     /**
