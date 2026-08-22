@@ -28,6 +28,8 @@ export type IDBIndexFull = IDBIndex & {
     __objectStore: import("./IDBObjectStore.js").IDBObjectStoreFull;
     __keyPath: import("./Key.js").KeyPath;
     __recreated?: boolean;
+    __fetchIndexData: (range: any, opType: "value" | "key" | "count", nullDisallowed: boolean, count?: number) => import("./IDBRequest.js").IDBRequestFull;
+    __renameIndex: (store: import("./IDBObjectStore.js").IDBObjectStoreFull, oldName: string, newName: string, colInfoToPreserveArr?: string[][], cb?: null | ((tx: SQLTransaction, success: ((store: IDBObjectStore) => void)) => void)) => void;
 };
 export type IndexList = {
     [key: string]: IDBIndexProperties;
@@ -183,7 +185,23 @@ export namespace IDBIndex {
      *   __unique: boolean,
      *   __objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
      *   __keyPath: import('./Key.js').KeyPath,
-     *   __recreated?: boolean
+     *   __recreated?: boolean,
+     *   __fetchIndexData: (
+     *     range: any,
+     *     opType: "value"|"key"|"count",
+     *     nullDisallowed: boolean,
+     *     count?: number
+     *   ) => import('./IDBRequest.js').IDBRequestFull,
+     *   __renameIndex: (
+     *     store: import('./IDBObjectStore.js').IDBObjectStoreFull,
+     *     oldName: string,
+     *     newName: string,
+     *     colInfoToPreserveArr?: string[][],
+     *     cb?: null|((
+     *       tx: SQLTransaction,
+     *       success: ((store: IDBObjectStore) => void)
+     *     ) => void)
+     *   ) => void
      * }} IDBIndexFull
      */
     /**
@@ -238,7 +256,7 @@ export namespace IDBIndex {
      */
     function __updateIndexList(store: import("./IDBObjectStore.js").IDBObjectStoreFull, tx: SQLTransaction, success: (store: IDBObjectStore) => void, failure?: (tx: SQLTransaction, err: SQLError) => boolean): void;
 }
-import { IDBKeyRange } from './IDBKeyRange.js';
 import IDBObjectStore from './IDBObjectStore.js';
+import { IDBKeyRange } from './IDBKeyRange.js';
 export { IDBIndex as default };
 //# sourceMappingURL=IDBIndex.d.ts.map

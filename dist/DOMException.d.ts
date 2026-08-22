@@ -1,3 +1,8 @@
+export type DOMExceptionFull = globalThis.DOMException & {
+    _code: number;
+    _name: string | Code | LegacyCode;
+    _message: string;
+};
 export type ErrorLike = {
     message: string | DOMString;
 };
@@ -63,9 +68,9 @@ export const createDOMException: ((name: string, message: string, error?: ErrorL
  * @param {SQLError} webSQLErr
  * @returns {(DOMException|Error) & {
  *   sqlError: SQLError
- * }}
+ * }|QuotaExceededError}
  */
-export function webSQLErrback(webSQLErr: SQLError): (DOMException | Error) & {
+export function webSQLErrback(webSQLErr: SQLError): ((DOMException | Error) & {
     sqlError: SQLError;
-};
+}) | QuotaExceededError;
 //# sourceMappingURL=DOMException.d.ts.map

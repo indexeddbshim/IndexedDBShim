@@ -255,24 +255,24 @@ declare namespace IDBTransaction {
     function __createInstance(db: import("./IDBDatabase.js").IDBDatabaseFull, storeNames: import("./DOMStringList.js").DOMStringListFull, mode: string): IDBTransactionFull;
     /**
      *
-     * @param {IDBTransactionFull|undefined} tx
+     * @param {IDBTransactionFull|null|undefined} tx
      * @returns {void}
      */
-    function __assertVersionChange(tx: IDBTransactionFull | undefined): void;
+    function __assertVersionChange(tx: IDBTransactionFull | null | undefined): void;
     /**
      *
-     * @param {IDBTransactionFull} tx
+     * @param {IDBTransactionFull|null} tx
      * @throws {DOMException}
      * @returns {void}
      */
-    function __assertNotVersionChange(tx: IDBTransactionFull): void;
+    function __assertNotVersionChange(tx: IDBTransactionFull | null): void;
     /**
      *
-     * @param {IDBTransactionFull|undefined} tx
+     * @param {IDBTransactionFull|null|undefined} tx
      * @throws {DOMException}
      * @returns {void}
      */
-    function __assertNotFinished(tx: IDBTransactionFull | undefined): void;
+    function __assertNotFinished(tx: IDBTransactionFull | null | undefined): void;
     /**
      *
      * @param {IDBTransactionFull} tx
@@ -281,11 +281,11 @@ declare namespace IDBTransaction {
     function __assertNotFinishedObjectStoreMethod(tx: IDBTransactionFull): void;
     /**
      *
-     * @param {IDBTransactionFull|undefined} tx
+     * @param {IDBTransactionFull|null|undefined} tx
      * @throws {DOMException}
      * @returns {void}
      */
-    function __assertActive(tx: IDBTransactionFull | undefined): void;
+    function __assertActive(tx: IDBTransactionFull | null | undefined): void;
 }
 import { IDBRequest } from './IDBRequest.js';
 import IDBObjectStore from './IDBObjectStore.js';

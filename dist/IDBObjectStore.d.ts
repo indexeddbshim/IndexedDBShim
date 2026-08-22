@@ -3,7 +3,7 @@ export type Integer = number;
 export type IDBObjectStoreFull = IDBObjectStore & {
     name: string;
     keyPath: import("./Key.js").KeyPath;
-    transaction?: import("./IDBTransaction.js").IDBTransactionFull;
+    transaction?: import("./IDBTransaction.js").IDBTransactionFull | null;
     indexNames: import("./DOMStringList.js").DOMStringListFull;
     autoIncrement: boolean;
     __autoIncrement: boolean;
@@ -15,7 +15,7 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     };
     __indexNames: import("./DOMStringList.js").DOMStringListFull;
     __oldIndexNames: import("./DOMStringList.js").DOMStringListFull;
-    __transaction?: import("./IDBTransaction.js").IDBTransactionFull;
+    __transaction?: import("./IDBTransaction.js").IDBTransactionFull | null;
     __name: string;
     __keyPath: import("./Key.js").KeyPath;
     __originalName: string;
@@ -26,6 +26,11 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     __deleted?: boolean;
     __cursors: (import("./IDBCursor.js").IDBCursorFull | import("./IDBCursor.js").IDBCursorWithValueFull)[];
     __idbdb: import("./IDBDatabase.js").IDBDatabaseFull;
+    __validateKeyAndValueAndCloneValue: (value: import("./Key.js").Value, key: import("./Key.js").Key, cursorUpdate: boolean) => KeyValueArray;
+    __deriveKey: (tx: SQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback) => void;
+    __insertData: (tx: SQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void) => SyncPromise;
+    __overwrite: (tx: SQLTransaction, key: import("./Key.js").Key, cb: (tx: SQLTransaction) => void, error: (err: SQLError) => void) => void;
+    __get: (query: import("./Key.js").Value, getKey?: boolean, getAll?: boolean, count?: Integer) => import("./IDBRequest.js").IDBRequestFull;
 };
 export type KeyValueArray = [import("./Key.js").Key, import("./Key.js").Value];
 /**
@@ -198,7 +203,7 @@ declare namespace IDBObjectStore {
      * @typedef {IDBObjectStore & {
      *   name: string,
      *   keyPath: import('./Key.js').KeyPath,
-     *   transaction?: import('./IDBTransaction.js').IDBTransactionFull,
+     *   transaction?: import('./IDBTransaction.js').IDBTransactionFull|null,
      *   indexNames: import('./DOMStringList.js').DOMStringListFull,
      *   autoIncrement: boolean,
      *   __autoIncrement: boolean,
@@ -206,7 +211,7 @@ declare namespace IDBObjectStore {
      *   __indexHandles: {[key: string]: import('./IDBIndex.js').IDBIndexFull},
      *   __indexNames: import('./DOMStringList.js').DOMStringListFull,
      *   __oldIndexNames: import('./DOMStringList.js').DOMStringListFull,
-     *   __transaction?: import('./IDBTransaction.js').IDBTransactionFull,
+     *   __transaction?: import('./IDBTransaction.js').IDBTransactionFull|null,
      *   __name: string,
      *   __keyPath: import('./Key.js').KeyPath,
      *   __originalName: string,
@@ -220,15 +225,48 @@ declare namespace IDBObjectStore {
      *     import('./IDBCursor.js').IDBCursorWithValueFull
      *   )[],
      *   __idbdb: import('./IDBDatabase.js').IDBDatabaseFull,
+     *   __validateKeyAndValueAndCloneValue: (
+     *     value: import('./Key.js').Value,
+     *     key: import('./Key.js').Key,
+     *     cursorUpdate: boolean
+     *   ) => KeyValueArray,
+     *   __deriveKey: (
+     *     tx: SQLTransaction,
+     *     value: import('./Key.js').Value,
+     *     key: import('./Key.js').Key,
+     *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
+     *     failCb: import('./Key.js').SQLFailureCallback
+     *   ) => void,
+     *   __insertData: (
+     *     tx: SQLTransaction,
+     *     encoded: string,
+     *     value: import('./Key.js').Value,
+     *     clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer,
+     *     oldCn: Integer|undefined,
+     *     success: (clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer) => void,
+     *     error: (err: Error|DOMException) => void
+     *   ) => SyncPromise,
+     *   __overwrite: (
+     *     tx: SQLTransaction,
+     *     key: import('./Key.js').Key,
+     *     cb: (tx: SQLTransaction) => void,
+     *     error: (err: SQLError) => void
+     *   ) => void,
+     *   __get: (
+     *     query: import('./Key.js').Value,
+     *     getKey?: boolean,
+     *     getAll?: boolean,
+     *     count?: Integer
+     *   ) => import('./IDBRequest.js').IDBRequestFull,
      * }} IDBObjectStoreFull
      */
     /**
      *
      * @param {import('./IDBDatabase.js').IDBObjectStoreProperties} storeProperties
-     * @param {import('./IDBTransaction.js').IDBTransactionFull} [transaction]
+     * @param {import('./IDBTransaction.js').IDBTransactionFull|null} [transaction]
      * @returns {IDBObjectStoreFull}
      */
-    function __createInstance(storeProperties: import("./IDBDatabase.js").IDBObjectStoreProperties, transaction?: import("./IDBTransaction.js").IDBTransactionFull): IDBObjectStoreFull;
+    function __createInstance(storeProperties: import("./IDBDatabase.js").IDBObjectStoreProperties, transaction?: import("./IDBTransaction.js").IDBTransactionFull | null): IDBObjectStoreFull;
     /**
      * Clones an IDBObjectStore instance for a different IDBTransaction instance.
      * @param {IDBObjectStoreFull} store

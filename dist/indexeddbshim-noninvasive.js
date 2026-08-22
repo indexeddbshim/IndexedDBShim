@@ -1,10 +1,10 @@
-/*! indexeddbshim - v17.2.2 - 8/20/2026 */
+/*! indexeddbshim - v17.3.0 - 8/21/2026 */
 
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.setGlobalVars = factory());
-})(this, (function () { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('node:path')) :
+  typeof define === 'function' && define.amd ? define(['node:path'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.setGlobalVars = factory(global.path));
+})(this, (function (path) { 'use strict';
 
   function _arrayLikeToArray(r, a) {
     (null == a || a > r.length) && (a = r.length);
@@ -2467,16 +2467,21 @@
    * @param {SQLError} webSQLErr
    * @returns {(DOMException|Error) & {
    *   sqlError: SQLError
-   * }}
+   * }|QuotaExceededError}
    */
   function webSQLErrback(webSQLErr) {
-    var name, message;
+    var name,
+      message,
+      useQuotaExceededError = false;
     switch (webSQLErr.code) {
       case 4:
         {
           // SQLError.QUOTA_ERR
           name = 'QuotaExceededError';
           message = 'The operation failed because there was not enough ' + 'remaining storage space, or the storage quota was reached ' + 'and the user declined to give more space to the database.';
+          if (typeof QuotaExceededError !== 'undefined') {
+            useQuotaExceededError = true;
+          }
           break;
         }
       /*
@@ -2496,6 +2501,9 @@
         }
     }
     message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
+    if (useQuotaExceededError) {
+      return new QuotaExceededError(message);
+    }
     var err =
     /**
      * @type {(Error | DOMException) & {
@@ -5667,10 +5675,10 @@
   }
   function hasConstructorOf(r, n) {
     if (!r || "object" != _typeof$1(r)) return false;
-    var o = t(r);
-    if (!o) return null === n;
-    var s = e(o, "constructor") && o.constructor;
-    return "function" != typeof s ? null === n : n === s || null !== n && Function.prototype.toString.call(s) === Function.prototype.toString.call(n) || "function" == typeof n && "string" == typeof s.__typeson__type__ && s.__typeson__type__ === n.__typeson__type__;
+    var a = t(r);
+    if (!a) return null === n;
+    var o = e(a, "constructor") && a.constructor;
+    return "function" != typeof o ? null === n : n === o || null !== n && Function.prototype.toString.call(o) === Function.prototype.toString.call(n) || "function" == typeof n && "string" == typeof o.__typeson__type__ && o.__typeson__type__ === n.__typeson__type__;
   }
   function isPlainObject(e) {
     return !(!e || "Object" !== toStringTag(e)) && (!t(e) || hasConstructorOf(e, Object));
@@ -5692,28 +5700,28 @@
   function getByKeyPath(t, r, n) {
     if ("" === r) return t;
     if (null === t || "object" != _typeof$1(t)) throw new TypeError("Unexpected non-object type");
-    var o = r.indexOf("."),
-      s = unescapeKeyPathComponent(-1 === o ? r : r.slice(0, o));
-    if (e(t, s)) {
-      if (-1 !== o) {
-        var _e = t[s];
-        return void 0 === _e ? void 0 : getByKeyPath(_e, r.slice(o + 1));
+    var a = r.indexOf("."),
+      o = unescapeKeyPathComponent(-1 === a ? r : r.slice(0, a));
+    if (e(t, o)) {
+      if (-1 !== a) {
+        var _e = t[o];
+        return void 0 === _e ? void 0 : getByKeyPath(_e, r.slice(a + 1));
       }
-      return t[s];
+      return t[o];
     }
   }
-  function setAtKeyPath(t, r, n, o) {
+  function setAtKeyPath(t, r, n, a) {
     if ("" === r) return n;
-    var s = t,
-      a = r;
+    var o = t,
+      s = r;
     for (;;) {
-      if (!s || "object" != _typeof$1(s)) throw new TypeError("Unexpected non-object type");
-      var _r = a.indexOf("."),
-        _i = unescapeKeyPathComponent(-1 === _r ? a : a.slice(0, _r));
+      if (!o || "object" != _typeof$1(o)) throw new TypeError("Unexpected non-object type");
+      var _r = s.indexOf("."),
+        _i = unescapeKeyPathComponent(-1 === _r ? s : s.slice(0, _r));
       if ("__proto__" === _i) throw new TypeError("Invalid property");
-      if (-1 === _r) return s[_i] = n, t;
-      if (!e(s, _i)) throw new TypeError("Invalid property");
-      s = s[_i], a = a.slice(_r + 1);
+      if (-1 === _r) return o[_i] = n, t;
+      if (!e(o, _i)) throw new TypeError("Invalid property");
+      o = o[_i], s = s.slice(_r + 1);
     }
   }
   function getJSONType(e) {
@@ -5726,8 +5734,8 @@
    */
   var r = Object.keys,
     n = Object.hasOwn,
-    o = Array.isArray,
-    s = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
+    a = Array.isArray,
+    o = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
   function setOwnEnumerable(e, t, r) {
     Object.defineProperty(e, t, {
       configurable: true,
@@ -5754,8 +5762,8 @@
         n = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), n), {}, {
           stringification: true
         });
-        var s = this.encapsulate(e, null, n);
-        return o(s) ? JSON.stringify(s[0], t, r) : s.then(function (e) {
+        var o = this.encapsulate(e, null, n);
+        return a(o) ? JSON.stringify(o[0], t, r) : o.then(function (e) {
           return JSON.stringify(e, t, r);
         });
       }
@@ -5820,28 +5828,28 @@
       }
     }, {
       key: "encapsulate",
-      value: function encapsulate(e, t, a) {
+      value: function encapsulate(e, t, s) {
         var _this2 = this;
         var i = _objectSpread2(_objectSpread2({
             sync: true
-          }, this.options), a),
+          }, this.options), s),
           c = i.sync,
-          y = {},
-          u = [],
+          u = {},
+          y = [],
           l = [],
           p = [],
           f = !("cyclic" in i) || i.cyclic,
           d = i.encapsulateObserver,
           m = i.encapsulateError,
           finish = function finish(e) {
-            var t = Object.values(y);
+            var t = Object.values(u);
             if (i.iterateNone) return t.length ? t[0] : getJSONType(e);
             if (t.length) {
               if (i.returnTypeNames) return _toConsumableArray(new Set(t));
-              e && isPlainObject(e) && !n(e, "$types") ? e.$types = y : e = {
+              e && isPlainObject(e) && !n(e, "$types") ? e.$types = u : e = {
                 $: e,
                 $types: {
-                  $: y
+                  $: u
                 }
               };
             } else isObject(e) && n(e, "$types") && (e = {
@@ -5865,18 +5873,18 @@
                     _context2.n = 2;
                     return Promise.all(r.map(/*#__PURE__*/function () {
                       var _ref = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(r) {
-                        var n, _t$splice, _t$splice2, o, _o, s, a, i, c, y, u, l, p, _t, _t2, _t3, _t4;
+                        var n, _t$splice, _t$splice2, a, _a, o, s, i, c, u, y, l, p, _t, _t2, _t3, _t4;
                         return _regenerator().w(function (_context) {
                           while (1) switch (_context.n) {
                             case 0:
-                              n = [], _t$splice = t.splice(0, 1), _t$splice2 = _slicedToArray(_t$splice, 1), o = _t$splice2[0], _o = _slicedToArray(o, 7), s = _o[0], a = _o[2], i = _o[3], c = _o[4], y = _o[5], u = _o[6], l = _encapsulate2(s, r, a, i, n, true, u), p = hasConstructorOf(l, TypesonPromise);
-                              if (!(s && p)) {
+                              n = [], _t$splice = t.splice(0, 1), _t$splice2 = _slicedToArray(_t$splice, 1), a = _t$splice2[0], _a = _slicedToArray(a, 7), o = _a[0], s = _a[2], i = _a[3], c = _a[4], u = _a[5], y = _a[6], l = _encapsulate2(o, r, s, i, n, true, y), p = hasConstructorOf(l, TypesonPromise);
+                              if (!(o && p)) {
                                 _context.n = 2;
                                 break;
                               }
                               _t2 = setOwnEnumerable;
                               _t3 = c;
-                              _t4 = y;
+                              _t4 = u;
                               _context.n = 1;
                               return l.p;
                             case 1:
@@ -5885,7 +5893,7 @@
                               _context.n = 3;
                               break;
                             case 2:
-                              _t = (s ? setOwnEnumerable(c, y, l) : e = p ? l.p : l, _checkPromises(e, n));
+                              _t = (o ? setOwnEnumerable(c, u, l) : e = p ? l.p : l, _checkPromises(e, n));
                             case 3:
                               return _context.a(2, _t);
                           }
@@ -5907,25 +5915,25 @@
           }(),
           _adaptBuiltinStateObjectProperties = function _adaptBuiltinStateObjectProperties(e, t, r) {
             Object.assign(e, t);
-            var n = s.map(function (t) {
+            var n = o.map(function (t) {
               var r = e[t];
               return delete e[t], r;
             });
-            r(), s.forEach(function (t, r) {
+            r(), o.forEach(function (t, r) {
               e[t] = n[r];
             });
           },
-          _encapsulate2 = function _encapsulate(e, t, s, a, c, p, f) {
+          _encapsulate2 = function _encapsulate(e, t, o, s, c, p, f) {
             var h,
               g = {};
             var b = d ? function (r) {
                 var _ref2;
-                var n = (_ref2 = f !== null && f !== void 0 ? f : a.type) !== null && _ref2 !== void 0 ? _ref2 : getJSONType(t);
+                var n = (_ref2 = f !== null && f !== void 0 ? f : s.type) !== null && _ref2 !== void 0 ? _ref2 : getJSONType(t);
                 d(Object.assign(r !== null && r !== void 0 ? r : g, {
                   keypath: e,
                   value: t,
-                  cyclic: s,
-                  stateObj: a,
+                  cyclic: o,
+                  stateObj: s,
                   promisesData: c,
                   resolvingTypesonPromise: p,
                   awaitingTypesonPromise: hasConstructorOf(t, TypesonPromise)
@@ -5936,62 +5944,62 @@
               getEncapsulatedValue = function getEncapsulatedValue(e, t, r) {
                 try {
                   return {
-                    value: _encapsulate2(e, t[r], Boolean(s), a, c, p)
+                    value: _encapsulate2(e, t[r], Boolean(o), s, c, p)
                   };
                 } catch (n) {
                   var _ref3;
                   if (!m) throw n;
-                  var _o2 = (_ref3 = f !== null && f !== void 0 ? f : a.type) !== null && _ref3 !== void 0 ? _ref3 : getJSONType(t),
-                    _s = m({
+                  var _a2 = (_ref3 = f !== null && f !== void 0 ? f : s.type) !== null && _ref3 !== void 0 ? _ref3 : getJSONType(t),
+                    _o = m({
                       keypath: e,
                       error: n,
                       parent: t,
                       key: r,
-                      stateObj: a,
-                      type: _o2
+                      stateObj: s,
+                      type: _a2
                     });
-                  if (!_s) throw n;
-                  if ("substitute" in _s) return {
-                    value: _s.substitute,
+                  if (!_o) throw n;
+                  if ("substitute" in _o) return {
+                    value: _o.substitute,
                     substitute: true
                   };
-                  if (_s.ignore) return;
+                  if (_o.ignore) return;
                   throw n;
                 }
               };
-            if (["string", "boolean", "number", "undefined"].includes(_typeof$1(t))) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (h = a.replaced ? t : replace(e, t, a, c, false, p, b), h !== t && (g = {
+            if (["string", "boolean", "number", "undefined"].includes(_typeof$1(t))) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (h = s.replaced ? t : replace(e, t, s, c, false, p, b), h !== t && (g = {
               replaced: h
             })) : h = t, b && b(), h;
             if (null === t) return b && b(), t;
-            if (s && t && "object" == _typeof$1(t) && !a.iterateIn && !a.iterateUnsetNumeric) {
-              var _r2 = u.indexOf(t);
-              if (-1 !== _r2) return y[e] = "#", b && b({
+            if (o && t && "object" == _typeof$1(t) && !s.iterateIn && !s.iterateUnsetNumeric) {
+              var _r2 = y.indexOf(t);
+              if (-1 !== _r2) return u[e] = "#", b && b({
                 cyclicKeypath: l[_r2]
               }), "#" + l[_r2];
-              true === s && (u.push(t), l.push(e));
+              true === o && (y.push(t), l.push(e));
             }
             var v = isPlainObject(t),
-              O = o(t),
-              w = (v || O) && (!_this2.plainObjectReplacers.length || a.replaced) || a.iterateIn ? t : replace(e, t, a, c, v || O, null, b);
-            var T;
-            if (w !== t ? (h = w, g = {
-              replaced: w
-            }) : "" === e && hasConstructorOf(t, TypesonPromise) ? (c.push([e, t, s, a, void 0, void 0, a.type]), h = t) : O && "object" !== a.iterateIn || "array" === a.iterateIn ? (T = new Array(t.length), g = {
-              clone: T
-            }) : !v && ("object" != _typeof$1(t) || "toJSON" in t || hasConstructorOf(t, TypesonPromise) || hasConstructorOf(t, Promise) || hasConstructorOf(t, ArrayBuffer)) && "object" !== a.iterateIn ? h = t : (T = {}, a.addLength && (T.length = t.length), g = {
-              clone: T
-            }), b && b(), i.iterateNone) return T !== null && T !== void 0 ? T : h;
-            if (!T) return h;
-            if (a.iterateIn) {
+              w = a(t),
+              O = (v || w) && (!_this2.plainObjectReplacers.length || s.replaced) || s.iterateIn ? t : replace(e, t, s, c, v || w, null, b);
+            var A;
+            if (O !== t ? (h = O, g = {
+              replaced: O
+            }) : "" === e && hasConstructorOf(t, TypesonPromise) ? (c.push([e, t, o, s, void 0, void 0, s.type]), h = t) : w && "object" !== s.iterateIn || "array" === s.iterateIn ? (A = new Array(t.length), g = {
+              clone: A
+            }) : !v && ("object" != _typeof$1(t) || "toJSON" in t || hasConstructorOf(t, TypesonPromise) || hasConstructorOf(t, Promise) || hasConstructorOf(t, ArrayBuffer)) && "object" !== s.iterateIn ? h = t : (A = {}, s.addLength && (A.length = t.length), g = {
+              clone: A
+            }), b && b(), i.iterateNone) return A !== null && A !== void 0 ? A : h;
+            if (!A) return h;
+            if (s.iterateIn) {
               var _loop = function _loop(_r3) {
-                var o = {
+                var a = {
                   ownKeys: n(t, _r3)
                 };
-                _adaptBuiltinStateObjectProperties(a, o, function () {
+                _adaptBuiltinStateObjectProperties(s, a, function () {
                   var n = e + (e ? "." : "") + escapeKeyPathComponent(_r3),
-                    o = getEncapsulatedValue(n, t, _r3),
-                    i = o && o.value;
-                  hasConstructorOf(i, TypesonPromise) ? c.push([n, i, Boolean(s), a, T, _r3, a.type]) : o && (void 0 !== i || "substitute" in o) && setOwnEnumerable(T, _r3, i);
+                    a = getEncapsulatedValue(n, t, _r3),
+                    i = a && a.value;
+                  hasConstructorOf(i, TypesonPromise) ? c.push([n, i, Boolean(o), s, A, _r3, s.type]) : a && (void 0 !== i || "substitute" in a) && setOwnEnumerable(A, _r3, i);
                 });
               };
               for (var _r3 in t) {
@@ -6003,27 +6011,27 @@
               });
             } else r(t).forEach(function (r) {
               var n = e + (e ? "." : "") + escapeKeyPathComponent(r);
-              _adaptBuiltinStateObjectProperties(a, {
+              _adaptBuiltinStateObjectProperties(s, {
                 ownKeys: true
               }, function () {
                 var e = getEncapsulatedValue(n, t, r),
-                  o = e && e.value;
-                hasConstructorOf(o, TypesonPromise) ? c.push([n, o, Boolean(s), a, T, r, a.type]) : e && (void 0 !== o || "substitute" in e) && setOwnEnumerable(T, r, o);
+                  a = e && e.value;
+                hasConstructorOf(a, TypesonPromise) ? c.push([n, a, Boolean(o), s, A, r, s.type]) : e && (void 0 !== a || "substitute" in e) && setOwnEnumerable(A, r, a);
               });
             }), b && b({
               endIterateOwn: true,
               end: true
             });
-            if (a.iterateUnsetNumeric) {
+            if (s.iterateUnsetNumeric) {
               var _r4 = t.length;
               var _loop2 = function _loop2(_n) {
                 if (_n in t) return 1; // continue
                 var r = "".concat(e).concat(e ? "." : "").concat(String(_n));
-                _adaptBuiltinStateObjectProperties(a, {
+                _adaptBuiltinStateObjectProperties(s, {
                   ownKeys: false
                 }, function () {
-                  var e = _encapsulate2(r, void 0, Boolean(s), a, c, p);
-                  hasConstructorOf(e, TypesonPromise) ? c.push([r, e, Boolean(s), a, T, _n, a.type]) : void 0 !== e && setOwnEnumerable(T, _n, e);
+                  var e = _encapsulate2(r, void 0, Boolean(o), s, c, p);
+                  hasConstructorOf(e, TypesonPromise) ? c.push([r, e, Boolean(o), s, A, _n, s.type]) : void 0 !== e && setOwnEnumerable(A, _n, e);
                 });
               };
               for (var _n = 0; _n < _r4; _n++) {
@@ -6034,33 +6042,33 @@
                 end: true
               });
             }
-            return T;
+            return A;
           },
-          replace = function replace(e, t, r, n, o, s, a) {
-            var i = o ? _this2.plainObjectReplacers : _this2.nonplainObjectReplacers;
-            var u = i.length;
-            for (; u--;) {
-              var _o3 = i[u];
-              if (_o3.test(t, r)) {
-                var _i2 = _o3.type;
+          replace = function replace(e, t, r, n, a, o, s) {
+            var i = a ? _this2.plainObjectReplacers : _this2.nonplainObjectReplacers;
+            var y = i.length;
+            for (; y--;) {
+              var _a3 = i[y];
+              if (_a3.test(t, r)) {
+                var _i2 = _a3.type;
                 if (Object.hasOwn(_this2.revivers, _i2)) {
-                  var _t5 = y[e];
-                  y[e] = _t5 ? [_i2].concat(_t5) : _i2;
+                  var _t5 = u[e];
+                  u[e] = _t5 ? [_i2].concat(_t5) : _i2;
                 }
                 if (Object.assign(r, {
                   type: _i2,
                   replaced: true
-                }), (c || !_o3.replaceAsync) && !_o3.replace) return a && a({
+                }), (c || !_a3.replaceAsync) && !_a3.replace) return s && s({
                   typeDetected: true
-                }), _encapsulate2(e, t, f && "readonly", r, n, s, _i2);
-                var _u = void 0;
-                if (a && a({
+                }), _encapsulate2(e, t, f && "readonly", r, n, o, _i2);
+                var _y = void 0;
+                if (s && s({
                   replacing: true
-                }), c || !_o3.replaceAsync) {
-                  if (void 0 === _o3.replace) throw new TypeError("Missing replacer");
-                  _u = _o3.replace(t, r);
-                } else _u = _o3.replaceAsync(t, r);
-                return _encapsulate2(e, _u, f && "readonly", r, n, s, _i2);
+                }), c || !_a3.replaceAsync) {
+                  if (void 0 === _a3.replace) throw new TypeError("Missing replacer");
+                  _y = _a3.replace(t, r);
+                } else _y = _a3.replaceAsync(t, r);
+                return _encapsulate2(e, _y, f && "readonly", r, n, o, _i2);
               }
             }
             return t;
@@ -6094,13 +6102,13 @@
       key: "revive",
       value: function revive(e, t) {
         var _this3 = this;
-        var s = _objectSpread2(_objectSpread2({
+        var o = _objectSpread2(_objectSpread2({
             sync: true
           }, this.options), t),
-          a = s.sync;
+          s = o.sync;
         function finishRevival(e) {
-          if (a) return e;
-          if (s.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
+          if (s) return e;
+          if (o.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
           return Promise.resolve(e);
         }
         if (!e || "object" != _typeof$1(e) || Array.isArray(e)) return finishRevival(e);
@@ -6108,8 +6116,8 @@
         if (true === i) return finishRevival(e.$);
         if (!i || "object" != _typeof$1(i) || Array.isArray(i)) return finishRevival(e);
         var c = [],
-          y = Object.create(null),
-          u = {};
+          u = Object.create(null),
+          y = {};
         var l = true;
         i.$ && isPlainObject(i.$) && (e = e.$, i = i.$, l = false);
         var executeReviver = function executeReviver(e, t) {
@@ -6118,9 +6126,9 @@
               _ref5 = _slicedToArray(_ref4, 1),
               r = _ref5[0];
             if (!r) throw new Error("Unregistered type: " + e);
-            if (a && !("revive" in r)) return t;
-            if (!a && r.reviveAsync) return r.reviveAsync(t, u);
-            if (r.revive) return r.revive(t, u);
+            if (s && !("revive" in r)) return t;
+            if (!s && r.reviveAsync) return r.reviveAsync(t, y);
+            if (r.revive) return r.revive(t, y);
             throw new Error("Missing reviver");
           },
           p = [];
@@ -6153,51 +6161,51 @@
                 type: n
               });
             });
-            var o = getByKeyPath(e, r);
-            if (o = executeReviver(n, o), hasConstructorOf(o, TypesonPromise)) return o.then(function (t) {
+            var a = getByKeyPath(e, r);
+            if (a = executeReviver(n, a), hasConstructorOf(a, TypesonPromise)) return a.then(function (t) {
               var n = setAtKeyPath(e, r, t);
               n === t && (e = n);
             });
-            var s = setAtKeyPath(e, r, o);
-            s === o && (e = s);
+            var o = setAtKeyPath(e, r, a);
+            o === a && (e = o);
           }, void 0);
         }();
         var d;
         return hasConstructorOf(f, TypesonPromise) ? d = f.then(function () {
           return e;
-        }) : (d = function _revive(e, t, s, u, f) {
+        }) : (d = function _revive(e, t, o, y, f) {
           if (l && "$types" === e) return;
           var d = p.length,
             m = n(i, e) ? i[e] : void 0,
-            h = o(t);
+            h = a(t);
           if (h || isPlainObject(t)) {
-            var _o4 = h ? new Array(t.length) : {};
+            var _a4 = h ? new Array(t.length) : {};
             for (r(t).forEach(function (r) {
-              var n = _revive(e + (e ? "." : "") + escapeKeyPathComponent(r), t[r], s !== null && s !== void 0 ? s : _o4, _o4, r),
+              var n = _revive(e + (e ? "." : "") + escapeKeyPathComponent(r), t[r], o !== null && o !== void 0 ? o : _a4, _a4, r),
                 set = function set(e) {
-                  return hasConstructorOf(e, Undefined) ? setOwnEnumerable(_o4, r, void 0) : void 0 !== e && setOwnEnumerable(_o4, r, e), e;
+                  return hasConstructorOf(e, Undefined) ? setOwnEnumerable(_a4, r, void 0) : void 0 !== e && setOwnEnumerable(_a4, r, e), e;
                 };
               hasConstructorOf(n, TypesonPromise) ? p.push(n.then(function (e) {
                 return set(e);
               })) : set(n);
-            }), t = _o4; c.length;) {
+            }), t = _a4; c.length;) {
               var _c$ = _slicedToArray(c[0], 4),
                 _e2 = _c$[0],
                 _t6 = _c$[1],
                 _r5 = _c$[2],
-                _o5 = _c$[3],
-                _s2 = n(y, _t6),
-                _a = _s2 ? y[_t6] : getByKeyPath(_e2, _t6);
-              if (!_s2 && void 0 === _a) break;
-              setOwnEnumerable(_r5, _o5, _a), c.shift();
+                _a5 = _c$[3],
+                _o2 = n(u, _t6),
+                _s = _o2 ? u[_t6] : getByKeyPath(_e2, _t6);
+              if (!_o2 && void 0 === _s) break;
+              setOwnEnumerable(_r5, _a5, _s), c.shift();
             }
           }
-          if (!m) return y[e] = t, t;
+          if (!m) return u[e] = t, t;
           if ("#" === m) {
             var _e3 = t.slice(1),
-              _r6 = n(y, _e3),
-              _o6 = _r6 ? y[_e3] : getByKeyPath(s, _e3);
-            return _r6 || void 0 !== _o6 || c.push([s, _e3, u, f]), _o6;
+              _r6 = n(u, _e3),
+              _a6 = _r6 ? u[_e3] : getByKeyPath(o, _e3);
+            return _r6 || void 0 !== _a6 || c.push([o, _e3, y, f]), _a6;
           }
           var applyType = function applyType(t) {
             var r = [].concat(m).reduce(function reducer(e, t) {
@@ -6208,10 +6216,10 @@
               return executeReviver(t, e);
             }, t);
             return hasConstructorOf(r, TypesonPromise) ? r.then(function (t) {
-              return y[e] = t, t;
-            }) : (y[e] = r, r);
+              return u[e] = t, t;
+            }) : (u[e] = r, r);
           };
-          return !a && p.length > d ? TypesonPromise.all(p.slice(d)).then(function () {
+          return !s && p.length > d ? TypesonPromise.all(p.slice(d)).then(function () {
             return applyType(t);
           }) : applyType(t);
         }("", e, null), p.length && (d = TypesonPromise.resolve(d).then(function (e) {
@@ -6220,11 +6228,11 @@
           var _ref10 = _slicedToArray(_ref1, 1),
             e = _ref10[0];
           return e;
-        }))), isThenable(d) ? a && s.throwOnBadSyncType ? function () {
+        }))), isThenable(d) ? s && o.throwOnBadSyncType ? function () {
           throw new TypeError("Sync method requested but async result obtained");
-        }() : hasConstructorOf(d, TypesonPromise) ? d.p.then(checkUndefined) : d : !a && s.throwOnBadSyncType ? function () {
+        }() : hasConstructorOf(d, TypesonPromise) ? d.p.then(checkUndefined) : d : !s && o.throwOnBadSyncType ? function () {
           throw new TypeError("Async method requested but sync result obtained");
-        }() : a ? checkUndefined(d) : Promise.resolve(checkUndefined(d));
+        }() : s ? checkUndefined(d) : Promise.resolve(checkUndefined(d));
       }
     }, {
       key: "reviveSync",
@@ -6250,12 +6258,12 @@
         var _this4 = this;
         var n = t !== null && t !== void 0 ? t : {},
           _reg = function reg(e) {
-            o(e) ? e.forEach(function (e) {
+            a(e) ? e.forEach(function (e) {
               _reg(e);
             }) : r(e).forEach(function (t) {
               var _r9;
               if ("#" === t) throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");
-              if (a.includes(t)) throw new TypeError("Plain JSON object types are reserved as type names");
+              if (s.includes(t)) throw new TypeError("Plain JSON object types are reserved as type names");
               var r = e[t];
               if ([_this4.plainObjectReplacers, _this4.nonplainObjectReplacers].forEach(function (e) {
                 var r = e.findIndex(function (e) {
@@ -6275,7 +6283,7 @@
                     return Object.assign(Object.create(_e4.prototype), t);
                   }
                 };
-              } else if (o(r)) {
+              } else if (a(r)) {
                 var _r7 = r,
                   _r8 = _slicedToArray(_r7, 3),
                   _e5 = _r8[0],
@@ -6288,13 +6296,13 @@
                 };
               }
               if (!((_r9 = r) !== null && _r9 !== void 0 && _r9.test)) return;
-              var s = {
+              var o = {
                 type: t,
                 test: r.test.bind(r)
               };
-              r.replace && (s.replace = r.replace.bind(r)), r.replaceAsync && (s.replaceAsync = r.replaceAsync.bind(r));
+              r.replace && (o.replace = r.replace.bind(r)), r.replaceAsync && (o.replaceAsync = r.replaceAsync.bind(r));
               var i = "number" == typeof n.fallback ? n.fallback : n.fallback ? 0 : 1 / 0;
-              if (r.testPlainObjects ? _this4.plainObjectReplacers.splice(i, 0, s) : _this4.nonplainObjectReplacers.splice(i, 0, s), r.revive || r.reviveAsync) {
+              if (r.testPlainObjects ? _this4.plainObjectReplacers.splice(i, 0, o) : _this4.nonplainObjectReplacers.splice(i, 0, o), r.revive || r.reviveAsync) {
                 var _e6 = {};
                 r.revive && (_e6.revive = r.revive.bind(r)), r.reviveAsync && (_e6.reviveAsync = r.reviveAsync.bind(r)), _this4.revivers[t] = [_e6, {
                   plain: r.testPlainObjects
@@ -6313,25 +6321,25 @@
     _classCallCheck(this, Undefined);
   });
   Undefined.__typeson__type__ = "TypesonUndefined";
-  var a = ["null", "boolean", "number", "string", "array", "object"];
-  for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), y = 0; y < 64; y++) c[i.codePointAt(y)] = y;
-  var u = function encode(e, t, r) {
+  var s = ["null", "boolean", "number", "string", "array", "object"];
+  for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), u = 0; u < 64; u++) c[i.codePointAt(u)] = u;
+  var y = function encode(e, t, r) {
       null == r && (r = e.byteLength);
-      for (var n = new Uint8Array(e, 0, r), o = n.length, s = "", a = 0; a < o; a += 3) s += i[n[a] >> 2], s += i[(3 & n[a]) << 4 | n[a + 1] >> 4], s += i[(15 & n[a + 1]) << 2 | n[a + 2] >> 6], s += i[63 & n[a + 2]];
-      return o % 3 == 2 ? s = s.slice(0, -1) + "=" : o % 3 == 1 && (s = s.slice(0, -2) + "=="), s;
+      for (var n = new Uint8Array(e, 0, r), a = n.length, o = "", s = 0; s < a; s += 3) o += i[n[s] >> 2], o += i[(3 & n[s]) << 4 | n[s + 1] >> 4], o += i[(15 & n[s + 1]) << 2 | n[s + 2] >> 6], o += i[63 & n[s + 2]];
+      return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
     },
     l = function decode(e, t) {
       var r = e.length;
       if (r % 4) throw new Error("Bad base64 length: not divisible by four");
       var n,
+        a,
         o,
         s,
-        a,
         i = .75 * e.length,
-        y = 0;
+        u = 0;
       "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-      for (var u = new ArrayBuffer(i, t), l = new Uint8Array(u), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], o = c[e.codePointAt(p + 1)], s = c[e.codePointAt(p + 2)], a = c[e.codePointAt(p + 3)], l[y++] = n << 2 | o >> 4, l[y++] = (15 & o) << 4 | s >> 2, l[y++] = (3 & s) << 6 | 63 & a;
-      return u;
+      for (var y = new ArrayBuffer(i, t), l = new Uint8Array(y), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], a = c[e.codePointAt(p + 1)], o = c[e.codePointAt(p + 2)], s = c[e.codePointAt(p + 3)], l[u++] = n << 2 | a >> 4, l[u++] = (15 & a) << 4 | o >> 2, l[u++] = (3 & o) << 6 | 63 & s;
+      return y;
     };
   var p = {
       arraybuffer: {
@@ -6344,7 +6352,7 @@
           return -1 !== r ? {
             index: r
           } : (t.buffers.push(e), {
-            s: u(e),
+            s: y(e),
             maxByteLength: e.maxByteLength,
             resizable: e.resizable
           });
@@ -6359,6 +6367,61 @@
       }
     },
     f = {
+      audiodata: {
+        test: function test(e) {
+          return "AudioData" === toStringTag(e);
+        },
+        replace: function replace(e) {
+          var t = e.format,
+            r = e.sampleRate,
+            n = e.numberOfFrames,
+            a = e.numberOfChannels,
+            o = e.timestamp,
+            s = t.endsWith("-planar") ? a : 1,
+            i = [];
+          var c = 0;
+          for (var _t8 = 0; _t8 < s; _t8++) {
+            var _r0 = e.allocationSize({
+              planeIndex: _t8
+            });
+            i.push(_r0), c += _r0;
+          }
+          var u = new ArrayBuffer(c);
+          var y = 0;
+          for (var _t9 = 0; _t9 < s; _t9++) {
+            var _r1 = new Uint8Array(u, y, i[_t9]);
+            e.copyTo(_r1, {
+              planeIndex: _t9
+            }), y += i[_t9];
+          }
+          return {
+            format: t,
+            sampleRate: r,
+            numberOfFrames: n,
+            numberOfChannels: a,
+            timestamp: o,
+            data: u
+          };
+        },
+        revive: function revive(_ref11) {
+          var e = _ref11.format,
+            t = _ref11.sampleRate,
+            r = _ref11.numberOfFrames,
+            n = _ref11.numberOfChannels,
+            a = _ref11.timestamp,
+            o = _ref11.data;
+          return new AudioData({
+            format: e,
+            sampleRate: t,
+            numberOfFrames: r,
+            numberOfChannels: n,
+            timestamp: a,
+            data: new Uint8Array(o)
+          });
+        }
+      }
+    },
+    d = {
       bigintObject: {
         test: function test(e) {
           return "object" == _typeof$1(e) && hasConstructorOf(e, BigInt);
@@ -6369,7 +6432,7 @@
         }
       }
     },
-    d = {
+    m = {
       bigint: {
         test: function test(e) {
           return "bigint" == typeof e;
@@ -6387,10 +6450,10 @@
   }
   function string2arraybuffer(e) {
     var t = new Uint8Array(e.length);
-    for (var _r0 = 0; _r0 < e.length; _r0++) t[_r0] = e.charCodeAt(_r0);
+    for (var _r10 = 0; _r10 < e.length; _r10++) t[_r10] = e.charCodeAt(_r10);
     return t.buffer;
   }
-  var m = {
+  var h = {
     blob: {
       test: function test(e) {
         return "Blob" === toStringTag(e);
@@ -6425,15 +6488,15 @@
       }
     }
   };
-  var b = {
+  var v = {
       cryptokey: {
         test: function test(e) {
           return "CryptoKey" === toStringTag(e) && e.extractable;
         },
         replaceAsync: function replaceAsync(e) {
           return new TypesonPromise(/*#__PURE__*/function () {
-            var _ref11 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3(t, r) {
-              var n, _t8;
+            var _ref12 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3(t, r) {
+              var n, _t0;
               return _regenerator().w(function (_context3) {
                 while (1) switch (_context3.p = _context3.n) {
                   case 0:
@@ -6446,8 +6509,8 @@
                     break;
                   case 2:
                     _context3.p = 2;
-                    _t8 = _context3.v;
-                    return _context3.a(2, void r(_t8));
+                    _t0 = _context3.v;
+                    return _context3.a(2, void r(_t0));
                   case 3:
                     t({
                       jwk: n,
@@ -6460,7 +6523,7 @@
               }, _callee3, null, [[0, 2]]);
             }));
             return function (_x4, _x5) {
-              return _ref11.apply(this, arguments);
+              return _ref12.apply(this, arguments);
             };
           }());
         },
@@ -6472,23 +6535,23 @@
         }
       }
     },
-    v = {
+    w = {
       dataview: {
         test: function test(e) {
           return "DataView" === toStringTag(e);
         },
-        replace: function replace(_ref12, n) {
-          var e = _ref12.buffer,
-            t = _ref12.byteOffset,
-            r = _ref12.byteLength;
+        replace: function replace(_ref13, n) {
+          var e = _ref13.buffer,
+            t = _ref13.byteOffset,
+            r = _ref13.byteLength;
           n.buffers || (n.buffers = []);
-          var o = n.buffers.indexOf(e);
-          return -1 !== o ? {
-            index: o,
+          var a = n.buffers.indexOf(e);
+          return -1 !== a ? {
+            index: a,
             byteOffset: t,
             byteLength: r
           } : (n.buffers.push(e), {
-            encoded: u(e),
+            encoded: y(e),
             maxByteLength: e.maxByteLength,
             resizable: e.resizable,
             byteOffset: t,
@@ -6499,14 +6562,14 @@
           t.buffers || (t.buffers = []);
           var r = e.byteOffset,
             n = e.byteLength,
-            o = e.encoded,
-            s = e.index,
-            a = e.maxByteLength,
+            a = e.encoded,
+            o = e.index,
+            s = e.maxByteLength,
             i = e.resizable;
           var c;
-          return "index" in e ? c = t.buffers[s] : (c = l(o, i ? {
-            maxByteLength: a
-          } : a), t.buffers.push(c)), new DataView(c, r, n);
+          return "index" in e ? c = t.buffers[o] : (c = l(a, i ? {
+            maxByteLength: s
+          } : s), t.buffers.push(c)), new DataView(c, r, n);
         }
       }
     },
@@ -6524,7 +6587,7 @@
         }
       }
     },
-    w = {
+    A = {
       domexception: {
         test: function test(e) {
           return "DOMException" === toStringTag(e);
@@ -6535,9 +6598,9 @@
             message: e.message
           };
         },
-        revive: function revive(_ref13) {
-          var e = _ref13.message,
-            t = _ref13.name;
+        revive: function revive(_ref14) {
+          var e = _ref14.message,
+            t = _ref14.name;
           return new DOMException(e, t);
         }
       }
@@ -6581,9 +6644,9 @@
     };
   }
   "undefined" != typeof DOMMatrix && create$5(DOMMatrix), "undefined" != typeof DOMMatrixReadOnly && create$5(DOMMatrixReadOnly);
-  var A = {};
+  var S = {};
   function create$4(e) {
-    A[e.name.toLowerCase()] = {
+    S[e.name.toLowerCase()] = {
       test: function test(t) {
         return toStringTag(t) === e.name;
       },
@@ -6595,12 +6658,12 @@
           w: e.w
         };
       },
-      revive: function revive(_ref14) {
-        var t = _ref14.x,
-          r = _ref14.y,
-          n = _ref14.z,
-          o = _ref14.w;
-        return new e(t, r, n, o);
+      revive: function revive(_ref15) {
+        var t = _ref15.x,
+          r = _ref15.y,
+          n = _ref15.z,
+          a = _ref15.w;
+        return new e(t, r, n, a);
       }
     };
   }
@@ -6618,18 +6681,18 @@
             p4: e.p4
           };
         },
-        revive: function revive(_ref15) {
-          var e = _ref15.p1,
-            t = _ref15.p2,
-            r = _ref15.p3,
-            n = _ref15.p4;
+        revive: function revive(_ref16) {
+          var e = _ref16.p1,
+            t = _ref16.p2,
+            r = _ref16.p3,
+            n = _ref16.p4;
           return new DOMQuad(e, t, r, n);
         }
       }
     },
-    S = {};
+    x = {};
   function create$3(e) {
-    S[e.name.toLowerCase()] = {
+    x[e.name.toLowerCase()] = {
       test: function test(t) {
         return toStringTag(t) === e.name;
       },
@@ -6641,37 +6704,101 @@
           height: e.height
         };
       },
-      revive: function revive(_ref16) {
-        var t = _ref16.x,
-          r = _ref16.y,
-          n = _ref16.width,
-          o = _ref16.height;
-        return new e(t, r, n, o);
+      revive: function revive(_ref17) {
+        var t = _ref17.x,
+          r = _ref17.y,
+          n = _ref17.width,
+          a = _ref17.height;
+        return new e(t, r, n, a);
       }
     };
   }
   "undefined" != typeof DOMRect && create$3(DOMRect), "undefined" != typeof DOMRectReadOnly && create$3(DOMRectReadOnly);
-  var x = {
+  var E = {
+      encodedaudiochunk: {
+        test: function test(e) {
+          return "EncodedAudioChunk" === toStringTag(e);
+        },
+        replace: function replace(e) {
+          var t = e.type,
+            r = e.timestamp,
+            n = e.duration,
+            a = e.byteLength,
+            o = new ArrayBuffer(a);
+          return e.copyTo(o), {
+            type: t,
+            timestamp: r,
+            duration: n,
+            data: o
+          };
+        },
+        revive: function revive(_ref18) {
+          var e = _ref18.type,
+            t = _ref18.timestamp,
+            r = _ref18.duration,
+            n = _ref18.data;
+          return new EncodedAudioChunk({
+            type: e,
+            timestamp: t,
+            duration: r,
+            data: new Uint8Array(n)
+          });
+        }
+      }
+    },
+    j = {
+      encodedvideochunk: {
+        test: function test(e) {
+          return "EncodedVideoChunk" === toStringTag(e);
+        },
+        replace: function replace(e) {
+          var t = e.type,
+            r = e.timestamp,
+            n = e.duration,
+            a = e.byteLength,
+            o = new ArrayBuffer(a);
+          return e.copyTo(o), {
+            type: t,
+            timestamp: r,
+            duration: n,
+            data: o
+          };
+        },
+        revive: function revive(_ref19) {
+          var e = _ref19.type,
+            t = _ref19.timestamp,
+            r = _ref19.duration,
+            n = _ref19.data;
+          return new EncodedVideoChunk({
+            type: e,
+            timestamp: t,
+            duration: r,
+            data: new Uint8Array(n)
+          });
+        }
+      }
+    },
+    C = {
       error: {
         test: function test(e) {
           return "Error" === toStringTag(e);
         },
-        replace: function replace(_ref17) {
-          var e = _ref17.name,
-            t = _ref17.message,
-            r = _ref17.cause,
-            n = _ref17.stack,
-            o = _ref17.fileName,
-            s = _ref17.lineNumber,
-            a = _ref17.columnNumber;
+        replace: function replace(_ref20) {
+          var e = _ref20.name,
+            t = _ref20.message,
+            r = _ref20.cause,
+            n = _ref20.stack,
+            a = _ref20.fileName,
+            o = _ref20.lineNumber,
+            s = _ref20.columnNumber;
           return {
             name: e,
             message: t,
             cause: r,
             stack: n,
-            fileName: o,
-            lineNumber: s,
-            columnNumber: a
+            fileName: a,
+            lineNumber: o,
+            columnNumber: s
           };
         },
         revive: function revive(e) {
@@ -6680,29 +6807,29 @@
         }
       }
     },
-    j = {};
+    B = {};
   function create$2(e) {
-    j[e.name.toLowerCase()] = {
+    B[e.name.toLowerCase()] = {
       test: function test(t) {
         return hasConstructorOf(t, e);
       },
-      replace: function replace(_ref18) {
-        var e = _ref18.name,
-          t = _ref18.message,
-          r = _ref18.cause,
-          n = _ref18.stack,
-          o = _ref18.fileName,
-          s = _ref18.lineNumber,
-          a = _ref18.columnNumber,
-          i = _ref18.errors;
+      replace: function replace(_ref21) {
+        var e = _ref21.name,
+          t = _ref21.message,
+          r = _ref21.cause,
+          n = _ref21.stack,
+          a = _ref21.fileName,
+          o = _ref21.lineNumber,
+          s = _ref21.columnNumber,
+          i = _ref21.errors;
         return {
           name: e,
           message: t,
           cause: r,
           stack: n,
-          fileName: o,
-          lineNumber: s,
-          columnNumber: a,
+          fileName: a,
+          lineNumber: o,
+          columnNumber: s,
           errors: i
         };
       },
@@ -6715,7 +6842,7 @@
   [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(function (e) {
     return create$2(e);
   }), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
-  var E = {
+  var N = {
       file: {
         test: function test(e) {
           return "File" === toStringTag(e);
@@ -6730,11 +6857,11 @@
             lastModified: e.lastModified
           };
         },
-        revive: function revive(_ref19) {
-          var e = _ref19.name,
-            t = _ref19.type,
-            r = _ref19.stringContents,
-            n = _ref19.lastModified;
+        revive: function revive(_ref22) {
+          var e = _ref22.name,
+            t = _ref22.type,
+            r = _ref22.stringContents,
+            n = _ref22.lastModified;
           return new File([string2arraybuffer(r)], e, {
             type: t,
             lastModified: n
@@ -6757,15 +6884,15 @@
         }
       }
     },
-    N = {
-      file: E.file,
+    I = {
+      file: N.file,
       filelist: {
         test: function test(e) {
           return "FileList" === toStringTag(e);
         },
         replace: function replace(e) {
           var t = [];
-          for (var _r1 = 0; _r1 < e.length; _r1++) t[_r1] = e.item(_r1);
+          for (var _r11 = 0; _r11 < e.length; _r11++) t[_r11] = e.item(_r11);
           return t;
         },
         revive: function revive(e) {
@@ -6818,36 +6945,36 @@
           return n.addEventListener("load", function () {
             r.drawImage(n, 0, 0);
           }), n.src = e.dataURL, new TypesonPromise(/*#__PURE__*/function () {
-            var _ref20 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(e, r) {
-              var _t9, _t0;
+            var _ref23 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(e, r) {
+              var _t1, _t10;
               return _regenerator().w(function (_context4) {
                 while (1) switch (_context4.p = _context4.n) {
                   case 0:
                     _context4.p = 0;
-                    _t9 = e;
+                    _t1 = e;
                     _context4.n = 1;
                     return createImageBitmap(t);
                   case 1:
-                    _t9(_context4.v);
+                    _t1(_context4.v);
                     _context4.n = 3;
                     break;
                   case 2:
                     _context4.p = 2;
-                    _t0 = _context4.v;
-                    r(_t0);
+                    _t10 = _context4.v;
+                    r(_t10);
                   case 3:
                     return _context4.a(2);
                 }
               }, _callee4, null, [[0, 2]]);
             }));
             return function (_x6, _x7) {
-              return _ref20.apply(this, arguments);
+              return _ref23.apply(this, arguments);
             };
           }());
         }
       }
     },
-    B = {
+    U = {
       imagedata: {
         test: function test(e) {
           return "ImageData" === toStringTag(e);
@@ -6864,7 +6991,7 @@
         }
       }
     },
-    I = {
+    M = {
       infinity: {
         test: function test(e) {
           return e === 1 / 0;
@@ -6877,7 +7004,7 @@
         }
       }
     },
-    U = {
+    k = {
       map: {
         test: function test(e) {
           return "Map" === toStringTag(e);
@@ -6890,7 +7017,7 @@
         }
       }
     },
-    M = {
+    D = {
       nan: {
         test: function test(e) {
           return Number.isNaN(e);
@@ -6916,7 +7043,7 @@
         }
       }
     },
-    D = {
+    F = {
       negativeZero: {
         test: function test(e) {
           return Object.is(e, -0);
@@ -6929,7 +7056,7 @@
         }
       }
     },
-    R = {
+    K = {
       StringObject: {
         test: function test(e) {
           return "String" === toStringTag(e) && "object" == _typeof$1(e);
@@ -6960,7 +7087,31 @@
         }
       }
     },
-    K = {
+    W = {
+      quotaexceedederror: {
+        test: function test(e) {
+          return "QuotaExceededError" === toStringTag(e);
+        },
+        replace: function replace(_ref25) {
+          var e = _ref25.message,
+            t = _ref25.quota,
+            r = _ref25.requested;
+          return {
+            message: e,
+            quota: t,
+            requested: r
+          };
+        },
+        revive: function revive(_ref26) {
+          var e = _ref26.message,
+            t = _ref26.quota,
+            r = _ref26.requested;
+          var n = {};
+          return null != t && (n.quota = t), null != r && (n.requested = r), new QuotaExceededError(e, n);
+        }
+      }
+    },
+    z = {
       regexp: {
         test: function test(e) {
           return "RegExp" === toStringTag(e);
@@ -6971,14 +7122,14 @@
             flags: (e.global ? "g" : "") + (e.ignoreCase ? "i" : "") + (e.multiline ? "m" : "") + (e.sticky ? "y" : "") + (e.unicode ? "u" : "") + (e.unicodeSets ? "v" : "") + (e.hasIndices ? "d" : "") + (e.dotAll ? "s" : "")
           };
         },
-        revive: function revive(_ref22) {
-          var e = _ref22.source,
-            t = _ref22.flags;
+        revive: function revive(_ref27) {
+          var e = _ref27.source,
+            t = _ref27.flags;
           return new RegExp(e, t);
         }
       }
     },
-    z = {
+    H = {
       set: {
         test: function test(e) {
           return "Set" === toStringTag(e);
@@ -6991,11 +7142,11 @@
         }
       }
     },
-    V = {};
+    G = {};
   "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].concat(_toConsumableArray("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])).forEach(function (e) {
     return function create$1(e) {
       var t = e.name;
-      V[t.toLowerCase()] = {
+      G[t.toLowerCase()] = {
         test: function test(e) {
           return toStringTag(e) === t;
         },
@@ -7008,28 +7159,28 @@
       };
     }(e);
   });
-  var W = {};
+  var X = {};
   "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].concat(_toConsumableArray("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])).forEach(function (e) {
     return function create(e) {
       var t = e.name;
-      W[t.toLowerCase()] = {
+      X[t.toLowerCase()] = {
         test: function test(e) {
           return toStringTag(e) === t;
         },
-        replace: function replace(_ref23, n) {
-          var e = _ref23.buffer,
-            t = _ref23.byteOffset,
-            r = _ref23.length;
+        replace: function replace(_ref28, n) {
+          var e = _ref28.buffer,
+            t = _ref28.byteOffset,
+            r = _ref28.length;
           n.buffers || (n.buffers = []);
-          var o = n.buffers.indexOf(e);
-          return -1 !== o ? {
-            index: o,
+          var a = n.buffers.indexOf(e);
+          return -1 !== a ? {
+            index: a,
             byteOffset: t,
             length: r
           } : (n.buffers.push(e), {
             maxByteLength: e.maxByteLength,
             resizable: e.resizable,
-            encoded: u(e),
+            encoded: y(e),
             byteOffset: t,
             length: r
           });
@@ -7037,20 +7188,20 @@
         revive: function revive(t, r) {
           r.buffers || (r.buffers = []);
           var n = t.byteOffset,
-            o = t.length,
-            s = t.encoded,
-            a = t.index,
+            a = t.length,
+            o = t.encoded,
+            s = t.index,
             i = t.maxByteLength,
             c = t.resizable;
-          var y;
-          return "index" in t ? y = r.buffers[a] : (y = l(s, c ? {
+          var u;
+          return "index" in t ? u = r.buffers[s] : (u = l(o, c ? {
             maxByteLength: i
-          } : void 0), r.buffers.push(y)), new e(y, n, o);
+          } : void 0), r.buffers.push(u)), new e(u, n, a);
         }
       };
     }(e);
   });
-  var Q = {
+  var Y = {
       undef: {
         test: function test(e, t) {
           return void 0 === e && (t.ownKeys || !("ownKeys" in t));
@@ -7063,7 +7214,7 @@
         }
       }
     },
-    G = {
+    Z = {
       userObject: {
         test: function test(e) {
           return isUserObject(e);
@@ -7076,7 +7227,110 @@
         }
       }
     },
-    H = [{
+    ee = {
+      videoframe: {
+        test: function test(e) {
+          return "VideoFrame" === toStringTag(e);
+        },
+        replaceAsync: function replaceAsync(e) {
+          return new TypesonPromise(/*#__PURE__*/function () {
+            var _ref29 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6(t, r) {
+              var _r12, _n3, _a7, _o3, _s2, _i3, _c, _u, _y2, _l, _t14;
+              return _regenerator().w(function (_context6) {
+                while (1) switch (_context6.p = _context6.n) {
+                  case 0:
+                    _context6.p = 0;
+                    _r12 = e.format, _n3 = e.codedWidth, _a7 = e.codedHeight, _o3 = e.timestamp, _s2 = e.duration, _i3 = e.visibleRect, _c = e.displayWidth, _u = e.displayHeight, _y2 = e.colorSpace, _l = new ArrayBuffer(e.allocationSize());
+                    _context6.n = 1;
+                    return e.copyTo(_l);
+                  case 1:
+                    t({
+                      format: _r12,
+                      codedWidth: _n3,
+                      codedHeight: _a7,
+                      timestamp: _o3,
+                      duration: _s2,
+                      visibleRect: {
+                        x: _i3.x,
+                        y: _i3.y,
+                        width: _i3.width,
+                        height: _i3.height
+                      },
+                      displayWidth: _c,
+                      displayHeight: _u,
+                      colorSpace: {
+                        primaries: _y2.primaries,
+                        transfer: _y2.transfer,
+                        matrix: _y2.matrix,
+                        fullRange: _y2.fullRange
+                      },
+                      data: _l
+                    });
+                    _context6.n = 3;
+                    break;
+                  case 2:
+                    _context6.p = 2;
+                    _t14 = _context6.v;
+                    r(_t14);
+                  case 3:
+                    return _context6.a(2);
+                }
+              }, _callee6, null, [[0, 2]]);
+            }));
+            return function (_x9, _x0) {
+              return _ref29.apply(this, arguments);
+            };
+          }());
+        },
+        revive: function revive(_ref30) {
+          var e = _ref30.format,
+            t = _ref30.codedWidth,
+            r = _ref30.codedHeight,
+            n = _ref30.timestamp,
+            a = _ref30.duration,
+            o = _ref30.visibleRect,
+            s = _ref30.displayWidth,
+            i = _ref30.displayHeight,
+            c = _ref30.colorSpace,
+            u = _ref30.data;
+          return new VideoFrame(new Uint8Array(u), {
+            format: e,
+            codedWidth: t,
+            codedHeight: r,
+            timestamp: n,
+            duration: a,
+            visibleRect: o,
+            displayWidth: s,
+            displayHeight: i,
+            colorSpace: c
+          });
+        }
+      }
+    },
+    te = {
+      webtransporterror: {
+        test: function test(e) {
+          return "WebTransportError" === toStringTag(e);
+        },
+        replace: function replace(_ref31) {
+          var e = _ref31.message,
+            t = _ref31.streamErrorCode;
+          return {
+            message: e,
+            streamErrorCode: t
+          };
+        },
+        revive: function revive(_ref32) {
+          var e = _ref32.message,
+            t = _ref32.streamErrorCode;
+          return new WebTransportError({
+            message: e,
+            streamErrorCode: t
+          });
+        }
+      }
+    },
+    re = [{
       arrayNonindexKeys: {
         testPlainObjects: true,
         test: function test(e, t) {
@@ -7090,10 +7344,10 @@
         revive: function revive(e) {
           if (Array.isArray(e)) return e;
           var t = [];
-          return Object.entries(e).forEach(function (_ref24) {
-            var _ref25 = _slicedToArray(_ref24, 2),
-              e = _ref25[0],
-              r = _ref25[1];
+          return Object.entries(e).forEach(function (_ref33) {
+            var _ref34 = _slicedToArray(_ref33, 2),
+              e = _ref34[0],
+              r = _ref34[1];
             t[e] = r;
           }), t;
         }
@@ -7109,13 +7363,21 @@
         revive: function revive() {}
       }
     }],
-    X = [M, I, L, D],
-    re = [G, Q, H, R, X, O, K, B, _, E, N, m, x, j].concat("function" == typeof Map ? U : [], "function" == typeof Set ? z : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? W : [], "function" == typeof DataView ? v : [], "undefined" != typeof crypto ? b : [], "undefined" != typeof BigInt ? [d, f] : [], "undefined" != typeof DOMException ? w : [], "undefined" != typeof DOMRect ? S : [], "undefined" != typeof DOMPoint ? A : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : []),
-    ne = re.concat({
+    ne = [D, M, L, F],
+    ce = [Z, Y, re, K, ne, O, z, U, _, N, I, h, C, B].concat("function" == typeof Map ? k : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
+  var ue = ce.concat({
       checkDataCloneException: {
         test: function test(e) {
           var t = {}.toString.call(e).slice(8, -1);
-          if (["symbol", "function"].includes(_typeof$1(e)) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || e && "object" == _typeof$1(e) && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
+          if (["symbol", "function"].includes(_typeof$1(e)) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || ["ArrayBuffer", "DataView", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array"].includes(t) && function isBufferDetached(e) {
+            if ("boolean" == typeof e.detached) return e.detached;
+            if (0 !== e.byteLength) return false;
+            try {
+              return new Uint8Array(e), !1;
+            } catch (_unused) {
+              return true;
+            }
+          }(e) || e && "object" == _typeof$1(e) && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
           return false;
         }
       }
@@ -7123,7 +7385,7 @@
 
   // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-  var typeson = new Typeson().register(ne);
+  var typeson = new Typeson().register(ue);
 
   /**
    * @param {(preset: import('typeson-registry').Preset) =>
@@ -7132,7 +7394,7 @@
    */
   function register(func) {
     // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
-    typeson = new Typeson().register(func(ne));
+    typeson = new Typeson().register(func(ue));
   }
 
   /**
@@ -9207,216 +9469,6 @@
   Object.defineProperty(IDBObjectStore, 'prototype', {
     writable: false
   });
-
-  // Copyright Joyent, Inc. and other Node contributors.
-  //
-  // Permission is hereby granted, free of charge, to any person obtaining a
-  // copy of this software and associated documentation files (the
-  // "Software"), to deal in the Software without restriction, including
-  // without limitation the rights to use, copy, modify, merge, publish,
-  // distribute, sublicense, and/or sell copies of the Software, and to permit
-  // persons to whom the Software is furnished to do so, subject to the
-  // following conditions:
-  //
-  // The above copyright notice and this permission notice shall be included
-  // in all copies or substantial portions of the Software.
-  //
-  // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-  // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-  // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-  // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-  // resolves . and .. elements in a path array with directory names there
-  // must be no slashes, empty elements, or device names (c:\) in the array
-  // (so also no leading and trailing slashes - it does not distinguish
-  // relative and absolute paths)
-  function normalizeArray(parts, allowAboveRoot) {
-    // if the path tries to go above the root, `up` ends up > 0
-    var up = 0;
-    for (var i = parts.length - 1; i >= 0; i--) {
-      var last = parts[i];
-      if (last === '.') {
-        parts.splice(i, 1);
-      } else if (last === '..') {
-        parts.splice(i, 1);
-        up++;
-      } else if (up) {
-        parts.splice(i, 1);
-        up--;
-      }
-    }
-
-    // if the path is allowed to go above the root, restore leading ..s
-    if (allowAboveRoot) {
-      for (; up--; up) {
-        parts.unshift('..');
-      }
-    }
-    return parts;
-  }
-
-  // Split a filename into [root, dir, basename, ext], unix version
-  // 'root' is just a slash, or nothing.
-  var splitPathRe = /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-  var splitPath = function splitPath(filename) {
-    return splitPathRe.exec(filename).slice(1);
-  };
-
-  // path.resolve([from ...], to)
-  // posix version
-  function resolve() {
-    var resolvedPath = '',
-      resolvedAbsolute = false;
-    for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-      var path = i >= 0 ? arguments[i] : '/';
-
-      // Skip empty and invalid entries
-      if (typeof path !== 'string') {
-        throw new TypeError('Arguments to path.resolve must be strings');
-      } else if (!path) {
-        continue;
-      }
-      resolvedPath = path + '/' + resolvedPath;
-      resolvedAbsolute = path.charAt(0) === '/';
-    }
-
-    // At this point the path should be resolved to a full absolute path, but
-    // handle relative paths to be safe (might happen when process.cwd() fails)
-
-    // Normalize the path
-    resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function (p) {
-      return !!p;
-    }), !resolvedAbsolute).join('/');
-    return (resolvedAbsolute ? '/' : '') + resolvedPath || '.';
-  }
-
-  // path.normalize(path)
-  // posix version
-  function normalize(path) {
-    var isPathAbsolute = isAbsolute(path),
-      trailingSlash = substr(path, -1) === '/';
-
-    // Normalize the path
-    path = normalizeArray(filter(path.split('/'), function (p) {
-      return !!p;
-    }), !isPathAbsolute).join('/');
-    if (!path && !isPathAbsolute) {
-      path = '.';
-    }
-    if (path && trailingSlash) {
-      path += '/';
-    }
-    return (isPathAbsolute ? '/' : '') + path;
-  }
-
-  // posix version
-  function isAbsolute(path) {
-    return path.charAt(0) === '/';
-  }
-
-  // posix version
-  function join() {
-    var paths = Array.prototype.slice.call(arguments, 0);
-    return normalize(filter(paths, function (p, index) {
-      if (typeof p !== 'string') {
-        throw new TypeError('Arguments to path.join must be strings');
-      }
-      return p;
-    }).join('/'));
-  }
-
-  // path.relative(from, to)
-  // posix version
-  function relative(from, to) {
-    from = resolve(from).substr(1);
-    to = resolve(to).substr(1);
-    function trim(arr) {
-      var start = 0;
-      for (; start < arr.length; start++) {
-        if (arr[start] !== '') break;
-      }
-      var end = arr.length - 1;
-      for (; end >= 0; end--) {
-        if (arr[end] !== '') break;
-      }
-      if (start > end) return [];
-      return arr.slice(start, end - start + 1);
-    }
-    var fromParts = trim(from.split('/'));
-    var toParts = trim(to.split('/'));
-    var length = Math.min(fromParts.length, toParts.length);
-    var samePartsLength = length;
-    for (var i = 0; i < length; i++) {
-      if (fromParts[i] !== toParts[i]) {
-        samePartsLength = i;
-        break;
-      }
-    }
-    var outputParts = [];
-    for (var i = samePartsLength; i < fromParts.length; i++) {
-      outputParts.push('..');
-    }
-    outputParts = outputParts.concat(toParts.slice(samePartsLength));
-    return outputParts.join('/');
-  }
-  var sep = '/';
-  var delimiter = ':';
-  function dirname(path) {
-    var result = splitPath(path),
-      root = result[0],
-      dir = result[1];
-    if (!root && !dir) {
-      // No dirname whatsoever
-      return '.';
-    }
-    if (dir) {
-      // It has a dirname, strip trailing slash
-      dir = dir.substr(0, dir.length - 1);
-    }
-    return root + dir;
-  }
-  function basename(path, ext) {
-    var f = splitPath(path)[2];
-    // TODO: make this comparison case-insensitive on windows?
-    if (ext && f.substr(-1 * ext.length) === ext) {
-      f = f.substr(0, f.length - ext.length);
-    }
-    return f;
-  }
-  function extname(path) {
-    return splitPath(path)[3];
-  }
-  var path = {
-    extname: extname,
-    basename: basename,
-    dirname: dirname,
-    sep: sep,
-    delimiter: delimiter,
-    relative: relative,
-    join: join,
-    isAbsolute: isAbsolute,
-    normalize: normalize,
-    resolve: resolve
-  };
-  function filter(xs, f) {
-    if (xs.filter) return xs.filter(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-      if (f(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-  }
-
-  // String.prototype.substr - negative index don't work in IE8
-  var substr = 'ab'.substr(-1) === 'b' ? function (str, start, len) {
-    return str.substr(start, len);
-  } : function (str, start, len) {
-    if (start < 0) start = str.length + start;
-    return str.substr(start, len);
-  };
 
   var listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
   var readonlyProperties = ['name', 'version', 'objectStoreNames'];

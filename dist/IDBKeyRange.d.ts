@@ -1,7 +1,10 @@
 export type IDBKeyRangeFull = globalThis.IDBKeyRange & {
+    __lower: import("./Key.js").Key | undefined;
+    __upper: import("./Key.js").Key | undefined;
     __lowerCached: string | null | false;
     __upperCached: string | null | false;
     __lowerOpen: boolean;
+    __upperOpen: boolean;
 };
 /**
  * @param {IDBKeyRangeFull|undefined} range
@@ -15,9 +18,12 @@ export type IDBKeyRangeFull = globalThis.IDBKeyRange & {
 export function setSQLForKeyRange(range: IDBKeyRangeFull | undefined, quotedKeyColumnName: string, sql: string[], sqlValues: string[], addAnd?: boolean, checkCached?: boolean): void;
 /**
  * @typedef {globalThis.IDBKeyRange & {
+ *   __lower: import('./Key.js').Key|undefined,
+ *   __upper: import('./Key.js').Key|undefined,
  *   __lowerCached: string|null|false,
  *   __upperCached: string|null|false,
  *   __lowerOpen: boolean,
+ *   __upperOpen: boolean,
  * }} IDBKeyRangeFull
  */
 /**
@@ -28,8 +34,6 @@ export function setSQLForKeyRange(range: IDBKeyRangeFull | undefined, quotedKeyC
  */
 export function IDBKeyRange(): void;
 export class IDBKeyRange {
-    __lowerOpen: any;
-    __upperOpen: any;
     /**
      * @param {import('./Key.js').Key} key
      * @this {IDBKeyRangeFull}

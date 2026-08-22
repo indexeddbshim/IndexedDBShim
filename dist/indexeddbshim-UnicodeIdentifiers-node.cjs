@@ -1,10 +1,11 @@
-/*! indexeddbshim - v17.2.2 - 8/20/2026 */
+/*! indexeddbshim - v17.3.0 - 8/21/2026 */
 
 'use strict';
 
 var fs$1 = require('node:fs');
-var path = require('path');
+var path = require('node:path');
 var require$$0 = require('fs');
+var require$$1 = require('path');
 var require$$2 = require('util');
 
 function _typeof(obj) {
@@ -2128,16 +2129,21 @@ function findError(args) {
  * @param {SQLError} webSQLErr
  * @returns {(DOMException|Error) & {
  *   sqlError: SQLError
- * }}
+ * }|QuotaExceededError}
  */
 function webSQLErrback(webSQLErr) {
-  let name, message;
+  let name,
+    message,
+    useQuotaExceededError = false;
   switch (webSQLErr.code) {
     case 4:
       {
         // SQLError.QUOTA_ERR
         name = 'QuotaExceededError';
         message = 'The operation failed because there was not enough ' + 'remaining storage space, or the storage quota was reached ' + 'and the user declined to give more space to the database.';
+        if (typeof QuotaExceededError !== 'undefined') {
+          useQuotaExceededError = true;
+        }
         break;
       }
     /*
@@ -2157,6 +2163,9 @@ function webSQLErrback(webSQLErr) {
       }
   }
   message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
+  if (useQuotaExceededError) {
+    return new QuotaExceededError(message);
+  }
   const err =
   /**
    * @type {(Error | DOMException) & {
@@ -5248,10 +5257,10 @@ function toStringTag(e) {
 }
 function hasConstructorOf(r, n) {
   if (!r || "object" != typeof r) return false;
-  const o = t(r);
-  if (!o) return null === n;
-  const s = e(o, "constructor") && o.constructor;
-  return "function" != typeof s ? null === n : n === s || null !== n && Function.prototype.toString.call(s) === Function.prototype.toString.call(n) || "function" == typeof n && "string" == typeof s.__typeson__type__ && s.__typeson__type__ === n.__typeson__type__;
+  const a = t(r);
+  if (!a) return null === n;
+  const o = e(a, "constructor") && a.constructor;
+  return "function" != typeof o ? null === n : n === o || null !== n && Function.prototype.toString.call(o) === Function.prototype.toString.call(n) || "function" == typeof n && "string" == typeof o.__typeson__type__ && o.__typeson__type__ === n.__typeson__type__;
 }
 function isPlainObject(e) {
   return !(!e || "Object" !== toStringTag(e)) && (!t(e) || hasConstructorOf(e, Object));
@@ -5273,28 +5282,28 @@ function unescapeKeyPathComponent(e) {
 function getByKeyPath(t, r, n) {
   if ("" === r) return t;
   if (null === t || "object" != typeof t) throw new TypeError("Unexpected non-object type");
-  const o = r.indexOf("."),
-    s = unescapeKeyPathComponent(-1 === o ? r : r.slice(0, o));
-  if (e(t, s)) {
-    if (-1 !== o) {
-      const e = t[s];
-      return void 0 === e ? void 0 : getByKeyPath(e, r.slice(o + 1));
+  const a = r.indexOf("."),
+    o = unescapeKeyPathComponent(-1 === a ? r : r.slice(0, a));
+  if (e(t, o)) {
+    if (-1 !== a) {
+      const e = t[o];
+      return void 0 === e ? void 0 : getByKeyPath(e, r.slice(a + 1));
     }
-    return t[s];
+    return t[o];
   }
 }
-function setAtKeyPath(t, r, n, o) {
+function setAtKeyPath(t, r, n, a) {
   if ("" === r) return n;
-  let s = t,
-    a = r;
+  let o = t,
+    s = r;
   for (;;) {
-    if (!s || "object" != typeof s) throw new TypeError("Unexpected non-object type");
-    const r = a.indexOf("."),
-      i = unescapeKeyPathComponent(-1 === r ? a : a.slice(0, r));
+    if (!o || "object" != typeof o) throw new TypeError("Unexpected non-object type");
+    const r = s.indexOf("."),
+      i = unescapeKeyPathComponent(-1 === r ? s : s.slice(0, r));
     if ("__proto__" === i) throw new TypeError("Invalid property");
-    if (-1 === r) return s[i] = n, t;
-    if (!e(s, i)) throw new TypeError("Invalid property");
-    s = s[i], a = a.slice(r + 1);
+    if (-1 === r) return o[i] = n, t;
+    if (!e(o, i)) throw new TypeError("Invalid property");
+    o = o[i], s = s.slice(r + 1);
   }
 }
 function getJSONType(e) {
@@ -5310,9 +5319,9 @@ const {
     hasOwn: n
   } = Object,
   {
-    isArray: o
+    isArray: a
   } = Array,
-  s = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
+  o = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
 function setOwnEnumerable(e, t, r) {
   Object.defineProperty(e, t, {
     configurable: true,
@@ -5337,8 +5346,8 @@ class Typeson {
       ...n,
       stringification: true
     };
-    const s = this.encapsulate(e, null, n);
-    return o(s) ? JSON.stringify(s[0], t, r) : s.then(e => JSON.stringify(e, t, r));
+    const o = this.encapsulate(e, null, n);
+    return a(o) ? JSON.stringify(o[0], t, r) : o.then(e => JSON.stringify(e, t, r));
   }
   stringifySync(e, t, r, n) {
     return this.stringify(e, t, r, {
@@ -5387,17 +5396,17 @@ class Typeson {
       iterateNone: true
     });
   }
-  encapsulate(e, t, a) {
+  encapsulate(e, t, s) {
     const i = {
         sync: true,
         ...this.options,
-        ...a
+        ...s
       },
       {
         sync: c
       } = i,
-      y = {},
-      u = [],
+      u = {},
+      y = [],
       l = [],
       p = [],
       f = !("cyclic" in i) || i.cyclic,
@@ -5406,14 +5415,14 @@ class Typeson {
         encapsulateError: m
       } = i,
       finish = e => {
-        const t = Object.values(y);
+        const t = Object.values(u);
         if (i.iterateNone) return t.length ? t[0] : getJSONType(e);
         if (t.length) {
           if (i.returnTypeNames) return [...new Set(t)];
-          e && isPlainObject(e) && !n(e, "$types") ? e.$types = y : e = {
+          e && isPlainObject(e) && !n(e, "$types") ? e.$types = u : e = {
             $: e,
             $types: {
-              $: y
+              $: u
             }
           };
         } else isObject(e) && n(e, "$types") && (e = {
@@ -5426,33 +5435,33 @@ class Typeson {
         const r = await Promise.all(t.map(e => e[1].p));
         return await Promise.all(r.map(async function (r) {
           const n = [],
-            [o] = t.splice(0, 1),
-            [s,, a, i, c, y, u] = o,
-            l = _encapsulate(s, r, a, i, n, true, u),
+            [a] = t.splice(0, 1),
+            [o,, s, i, c, u, y] = a,
+            l = _encapsulate(o, r, s, i, n, true, y),
             p = hasConstructorOf(l, TypesonPromise);
-          return s && p ? (setOwnEnumerable(c, y, await l.p), checkPromises(e, n)) : (s ? setOwnEnumerable(c, y, l) : e = p ? l.p : l, checkPromises(e, n));
+          return o && p ? (setOwnEnumerable(c, u, await l.p), checkPromises(e, n)) : (o ? setOwnEnumerable(c, u, l) : e = p ? l.p : l, checkPromises(e, n));
         })), e;
       },
       _adaptBuiltinStateObjectProperties = (e, t, r) => {
         Object.assign(e, t);
-        const n = s.map(t => {
+        const n = o.map(t => {
           const r = e[t];
           return delete e[t], r;
         });
-        r(), s.forEach((t, r) => {
+        r(), o.forEach((t, r) => {
           e[t] = n[r];
         });
       },
-      _encapsulate = (e, t, s, a, c, p, f) => {
+      _encapsulate = (e, t, o, s, c, p, f) => {
         let h,
           g = {};
         const b = d ? function (r) {
-            const n = f ?? a.type ?? getJSONType(t);
+            const n = f ?? s.type ?? getJSONType(t);
             d(Object.assign(r ?? g, {
               keypath: e,
               value: t,
-              cyclic: s,
-              stateObj: a,
+              cyclic: o,
+              stateObj: s,
               promisesData: c,
               resolvingTypesonPromise: p,
               awaitingTypesonPromise: hasConstructorOf(t, TypesonPromise)
@@ -5463,61 +5472,61 @@ class Typeson {
           getEncapsulatedValue = (e, t, r) => {
             try {
               return {
-                value: _encapsulate(e, t[r], Boolean(s), a, c, p)
+                value: _encapsulate(e, t[r], Boolean(o), s, c, p)
               };
             } catch (n) {
               if (!m) throw n;
-              const o = f ?? a.type ?? getJSONType(t),
-                s = m({
+              const a = f ?? s.type ?? getJSONType(t),
+                o = m({
                   keypath: e,
                   error: n,
                   parent: t,
                   key: r,
-                  stateObj: a,
-                  type: o
+                  stateObj: s,
+                  type: a
                 });
-              if (!s) throw n;
-              if ("substitute" in s) return {
-                value: s.substitute,
+              if (!o) throw n;
+              if ("substitute" in o) return {
+                value: o.substitute,
                 substitute: true
               };
-              if (s.ignore) return;
+              if (o.ignore) return;
               throw n;
             }
           };
-        if (["string", "boolean", "number", "undefined"].includes(typeof t)) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (h = a.replaced ? t : replace(e, t, a, c, false, p, b), h !== t && (g = {
+        if (["string", "boolean", "number", "undefined"].includes(typeof t)) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (h = s.replaced ? t : replace(e, t, s, c, false, p, b), h !== t && (g = {
           replaced: h
         })) : h = t, b && b(), h;
         if (null === t) return b && b(), t;
-        if (s && t && "object" == typeof t && !a.iterateIn && !a.iterateUnsetNumeric) {
-          const r = u.indexOf(t);
-          if (-1 !== r) return y[e] = "#", b && b({
+        if (o && t && "object" == typeof t && !s.iterateIn && !s.iterateUnsetNumeric) {
+          const r = y.indexOf(t);
+          if (-1 !== r) return u[e] = "#", b && b({
             cyclicKeypath: l[r]
           }), "#" + l[r];
-          true === s && (u.push(t), l.push(e));
+          true === o && (y.push(t), l.push(e));
         }
         const v = isPlainObject(t),
-          O = o(t),
-          w = (v || O) && (!this.plainObjectReplacers.length || a.replaced) || a.iterateIn ? t : replace(e, t, a, c, v || O, null, b);
-        let T;
-        if (w !== t ? (h = w, g = {
-          replaced: w
-        }) : "" === e && hasConstructorOf(t, TypesonPromise) ? (c.push([e, t, s, a, void 0, void 0, a.type]), h = t) : O && "object" !== a.iterateIn || "array" === a.iterateIn ? (T = new Array(t.length), g = {
-          clone: T
-        }) : !v && ("object" != typeof t || "toJSON" in t || hasConstructorOf(t, TypesonPromise) || hasConstructorOf(t, Promise) || hasConstructorOf(t, ArrayBuffer)) && "object" !== a.iterateIn ? h = t : (T = {}, a.addLength && (T.length = t.length), g = {
-          clone: T
-        }), b && b(), i.iterateNone) return T ?? h;
-        if (!T) return h;
-        if (a.iterateIn) {
+          w = a(t),
+          O = (v || w) && (!this.plainObjectReplacers.length || s.replaced) || s.iterateIn ? t : replace(e, t, s, c, v || w, null, b);
+        let A;
+        if (O !== t ? (h = O, g = {
+          replaced: O
+        }) : "" === e && hasConstructorOf(t, TypesonPromise) ? (c.push([e, t, o, s, void 0, void 0, s.type]), h = t) : w && "object" !== s.iterateIn || "array" === s.iterateIn ? (A = new Array(t.length), g = {
+          clone: A
+        }) : !v && ("object" != typeof t || "toJSON" in t || hasConstructorOf(t, TypesonPromise) || hasConstructorOf(t, Promise) || hasConstructorOf(t, ArrayBuffer)) && "object" !== s.iterateIn ? h = t : (A = {}, s.addLength && (A.length = t.length), g = {
+          clone: A
+        }), b && b(), i.iterateNone) return A ?? h;
+        if (!A) return h;
+        if (s.iterateIn) {
           for (const r in t) {
-            const o = {
+            const a = {
               ownKeys: n(t, r)
             };
-            _adaptBuiltinStateObjectProperties(a, o, () => {
+            _adaptBuiltinStateObjectProperties(s, a, () => {
               const n = e + (e ? "." : "") + escapeKeyPathComponent(r),
-                o = getEncapsulatedValue(n, t, r),
-                i = o && o.value;
-              hasConstructorOf(i, TypesonPromise) ? c.push([n, i, Boolean(s), a, T, r, a.type]) : o && (void 0 !== i || "substitute" in o) && setOwnEnumerable(T, r, i);
+                a = getEncapsulatedValue(n, t, r),
+                i = a && a.value;
+              hasConstructorOf(i, TypesonPromise) ? c.push([n, i, Boolean(o), s, A, r, s.type]) : a && (void 0 !== i || "substitute" in a) && setOwnEnumerable(A, r, i);
             });
           }
           b && b({
@@ -5526,27 +5535,27 @@ class Typeson {
           });
         } else r(t).forEach(function (r) {
           const n = e + (e ? "." : "") + escapeKeyPathComponent(r);
-          _adaptBuiltinStateObjectProperties(a, {
+          _adaptBuiltinStateObjectProperties(s, {
             ownKeys: true
           }, () => {
             const e = getEncapsulatedValue(n, t, r),
-              o = e && e.value;
-            hasConstructorOf(o, TypesonPromise) ? c.push([n, o, Boolean(s), a, T, r, a.type]) : e && (void 0 !== o || "substitute" in e) && setOwnEnumerable(T, r, o);
+              a = e && e.value;
+            hasConstructorOf(a, TypesonPromise) ? c.push([n, a, Boolean(o), s, A, r, s.type]) : e && (void 0 !== a || "substitute" in e) && setOwnEnumerable(A, r, a);
           });
         }), b && b({
           endIterateOwn: true,
           end: true
         });
-        if (a.iterateUnsetNumeric) {
+        if (s.iterateUnsetNumeric) {
           const r = t.length;
           for (let n = 0; n < r; n++) {
             if (n in t) continue;
             const r = `${e}${e ? "." : ""}${String(n)}`;
-            _adaptBuiltinStateObjectProperties(a, {
+            _adaptBuiltinStateObjectProperties(s, {
               ownKeys: false
             }, () => {
-              const e = _encapsulate(r, void 0, Boolean(s), a, c, p);
-              hasConstructorOf(e, TypesonPromise) ? c.push([r, e, Boolean(s), a, T, n, a.type]) : void 0 !== e && setOwnEnumerable(T, n, e);
+              const e = _encapsulate(r, void 0, Boolean(o), s, c, p);
+              hasConstructorOf(e, TypesonPromise) ? c.push([r, e, Boolean(o), s, A, n, s.type]) : void 0 !== e && setOwnEnumerable(A, n, e);
             });
           }
           b && b({
@@ -5554,35 +5563,35 @@ class Typeson {
             end: true
           });
         }
-        return T;
+        return A;
       },
-      replace = (e, t, r, n, o, s, a) => {
-        const i = o ? this.plainObjectReplacers : this.nonplainObjectReplacers;
-        let u = i.length;
-        for (; u--;) {
-          const o = i[u];
-          if (o.test(t, r)) {
+      replace = (e, t, r, n, a, o, s) => {
+        const i = a ? this.plainObjectReplacers : this.nonplainObjectReplacers;
+        let y = i.length;
+        for (; y--;) {
+          const a = i[y];
+          if (a.test(t, r)) {
             const {
               type: i
-            } = o;
+            } = a;
             if (Object.hasOwn(this.revivers, i)) {
-              const t = y[e];
-              y[e] = t ? [i].concat(t) : i;
+              const t = u[e];
+              u[e] = t ? [i].concat(t) : i;
             }
             if (Object.assign(r, {
               type: i,
               replaced: true
-            }), (c || !o.replaceAsync) && !o.replace) return a && a({
+            }), (c || !a.replaceAsync) && !a.replace) return s && s({
               typeDetected: true
-            }), _encapsulate(e, t, f && "readonly", r, n, s, i);
-            let u;
-            if (a && a({
+            }), _encapsulate(e, t, f && "readonly", r, n, o, i);
+            let y;
+            if (s && s({
               replacing: true
-            }), c || !o.replaceAsync) {
-              if (void 0 === o.replace) throw new TypeError("Missing replacer");
-              u = o.replace(t, r);
-            } else u = o.replaceAsync(t, r);
-            return _encapsulate(e, u, f && "readonly", r, n, s, i);
+            }), c || !a.replaceAsync) {
+              if (void 0 === a.replace) throw new TypeError("Missing replacer");
+              y = a.replace(t, r);
+            } else y = a.replaceAsync(t, r);
+            return _encapsulate(e, y, f && "readonly", r, n, o, i);
           }
         }
         return t;
@@ -5609,17 +5618,17 @@ class Typeson {
     });
   }
   revive(e, t) {
-    const s = {
+    const o = {
         sync: true,
         ...this.options,
         ...t
       },
       {
-        sync: a
-      } = s;
+        sync: s
+      } = o;
     function finishRevival(e) {
-      if (a) return e;
-      if (s.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
+      if (s) return e;
+      if (o.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
       return Promise.resolve(e);
     }
     if (!e || "object" != typeof e || Array.isArray(e)) return finishRevival(e);
@@ -5627,16 +5636,16 @@ class Typeson {
     if (true === i) return finishRevival(e.$);
     if (!i || "object" != typeof i || Array.isArray(i)) return finishRevival(e);
     const c = [],
-      y = Object.create(null),
-      u = {};
+      u = Object.create(null),
+      y = {};
     let l = true;
     i.$ && isPlainObject(i.$) && (e = e.$, i = i.$, l = false);
     const executeReviver = (e, t) => {
         const [r] = this.revivers[e] ?? [];
         if (!r) throw new Error("Unregistered type: " + e);
-        if (a && !("revive" in r)) return t;
-        if (!a && r.reviveAsync) return r.reviveAsync(t, u);
-        if (r.revive) return r.revive(t, u);
+        if (s && !("revive" in r)) return t;
+        if (!s && r.reviveAsync) return r.reviveAsync(t, y);
+        if (r.revive) return r.revive(t, y);
         throw new Error("Missing reviver");
       },
       p = [];
@@ -5664,41 +5673,41 @@ class Typeson {
           keypath: r,
           type: n
         }));
-        let o = getByKeyPath(e, r);
-        if (o = executeReviver(n, o), hasConstructorOf(o, TypesonPromise)) return o.then(t => {
+        let a = getByKeyPath(e, r);
+        if (a = executeReviver(n, a), hasConstructorOf(a, TypesonPromise)) return a.then(t => {
           const n = setAtKeyPath(e, r, t);
           n === t && (e = n);
         });
-        const s = setAtKeyPath(e, r, o);
-        s === o && (e = s);
+        const o = setAtKeyPath(e, r, a);
+        o === a && (e = o);
       }, void 0);
     })();
     let d;
-    return hasConstructorOf(f, TypesonPromise) ? d = f.then(() => e) : (d = function _revive(e, t, s, u, f) {
+    return hasConstructorOf(f, TypesonPromise) ? d = f.then(() => e) : (d = function _revive(e, t, o, y, f) {
       if (l && "$types" === e) return;
       const d = p.length,
         m = n(i, e) ? i[e] : void 0,
-        h = o(t);
+        h = a(t);
       if (h || isPlainObject(t)) {
-        const o = h ? new Array(t.length) : {};
+        const a = h ? new Array(t.length) : {};
         for (r(t).forEach(r => {
-          const n = _revive(e + (e ? "." : "") + escapeKeyPathComponent(r), t[r], s ?? o, o, r),
-            set = e => (hasConstructorOf(e, Undefined) ? setOwnEnumerable(o, r, void 0) : void 0 !== e && setOwnEnumerable(o, r, e), e);
+          const n = _revive(e + (e ? "." : "") + escapeKeyPathComponent(r), t[r], o ?? a, a, r),
+            set = e => (hasConstructorOf(e, Undefined) ? setOwnEnumerable(a, r, void 0) : void 0 !== e && setOwnEnumerable(a, r, e), e);
           hasConstructorOf(n, TypesonPromise) ? p.push(n.then(e => set(e))) : set(n);
-        }), t = o; c.length;) {
-          const [[e, t, r, o]] = c,
-            s = n(y, t),
-            a = s ? y[t] : getByKeyPath(e, t);
-          if (!s && void 0 === a) break;
-          setOwnEnumerable(r, o, a), c.shift();
+        }), t = a; c.length;) {
+          const [[e, t, r, a]] = c,
+            o = n(u, t),
+            s = o ? u[t] : getByKeyPath(e, t);
+          if (!o && void 0 === s) break;
+          setOwnEnumerable(r, a, s), c.shift();
         }
       }
-      if (!m) return y[e] = t, t;
+      if (!m) return u[e] = t, t;
       if ("#" === m) {
         const e = t.slice(1),
-          r = n(y, e),
-          o = r ? y[e] : getByKeyPath(s, e);
-        return r || void 0 !== o || c.push([s, e, u, f]), o;
+          r = n(u, e),
+          a = r ? u[e] : getByKeyPath(o, e);
+        return r || void 0 !== a || c.push([o, e, y, f]), a;
       }
       const applyType = t => {
         const r = [].concat(m).reduce(function reducer(e, t) {
@@ -5706,14 +5715,14 @@ class Typeson {
           if ("string" != typeof t) throw new TypeError("Bad type JSON");
           return executeReviver(t, e);
         }, t);
-        return hasConstructorOf(r, TypesonPromise) ? r.then(t => (y[e] = t, t)) : (y[e] = r, r);
+        return hasConstructorOf(r, TypesonPromise) ? r.then(t => (u[e] = t, t)) : (u[e] = r, r);
       };
-      return !a && p.length > d ? TypesonPromise.all(p.slice(d)).then(() => applyType(t)) : applyType(t);
-    }("", e, null), p.length && (d = TypesonPromise.resolve(d).then(e => TypesonPromise.all([e, ...p])).then(([e]) => e))), isThenable(d) ? a && s.throwOnBadSyncType ? (() => {
+      return !s && p.length > d ? TypesonPromise.all(p.slice(d)).then(() => applyType(t)) : applyType(t);
+    }("", e, null), p.length && (d = TypesonPromise.resolve(d).then(e => TypesonPromise.all([e, ...p])).then(([e]) => e))), isThenable(d) ? s && o.throwOnBadSyncType ? (() => {
       throw new TypeError("Sync method requested but async result obtained");
-    })() : hasConstructorOf(d, TypesonPromise) ? d.p.then(checkUndefined) : d : !a && s.throwOnBadSyncType ? (() => {
+    })() : hasConstructorOf(d, TypesonPromise) ? d.p.then(checkUndefined) : d : !s && o.throwOnBadSyncType ? (() => {
       throw new TypeError("Async method requested but sync result obtained");
-    })() : a ? checkUndefined(d) : Promise.resolve(checkUndefined(d));
+    })() : s ? checkUndefined(d) : Promise.resolve(checkUndefined(d));
   }
   reviveSync(e, t) {
     return this.revive(e, {
@@ -5732,11 +5741,11 @@ class Typeson {
   register(e, t) {
     const n = t ?? {},
       reg = e => {
-        o(e) ? e.forEach(e => {
+        a(e) ? e.forEach(e => {
           reg(e);
         }) : r(e).forEach(t => {
           if ("#" === t) throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");
-          if (a.includes(t)) throw new TypeError("Plain JSON object types are reserved as type names");
+          if (s.includes(t)) throw new TypeError("Plain JSON object types are reserved as type names");
           let r = e[t];
           if ([this.plainObjectReplacers, this.nonplainObjectReplacers].forEach(e => {
             const r = e.findIndex(e => e.type === t);
@@ -5750,7 +5759,7 @@ class Typeson {
               }),
               revive: t => Object.assign(Object.create(e.prototype), t)
             };
-          } else if (o(r)) {
+          } else if (a(r)) {
             const [e, t, n] = r;
             r = {
               test: e,
@@ -5759,13 +5768,13 @@ class Typeson {
             };
           }
           if (!r?.test) return;
-          const s = {
+          const o = {
             type: t,
             test: r.test.bind(r)
           };
-          r.replace && (s.replace = r.replace.bind(r)), r.replaceAsync && (s.replaceAsync = r.replaceAsync.bind(r));
+          r.replace && (o.replace = r.replace.bind(r)), r.replaceAsync && (o.replaceAsync = r.replaceAsync.bind(r));
           const i = "number" == typeof n.fallback ? n.fallback : n.fallback ? 0 : 1 / 0;
-          if (r.testPlainObjects ? this.plainObjectReplacers.splice(i, 0, s) : this.nonplainObjectReplacers.splice(i, 0, s), r.revive || r.reviveAsync) {
+          if (r.testPlainObjects ? this.plainObjectReplacers.splice(i, 0, o) : this.nonplainObjectReplacers.splice(i, 0, o), r.revive || r.reviveAsync) {
             const e = {};
             r.revive && (e.revive = r.revive.bind(r)), r.reviveAsync && (e.reviveAsync = r.reviveAsync.bind(r)), this.revivers[t] = [e, {
               plain: r.testPlainObjects
@@ -5781,25 +5790,25 @@ class Typeson {
 }
 class Undefined {}
 Undefined.__typeson__type__ = "TypesonUndefined";
-const a = ["null", "boolean", "number", "string", "array", "object"];
-for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), y = 0; y < 64; y++) c[i.codePointAt(y)] = y;
-var u = function encode(e, t, r) {
+const s = ["null", "boolean", "number", "string", "array", "object"];
+for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), u = 0; u < 64; u++) c[i.codePointAt(u)] = u;
+var y = function encode(e, t, r) {
     null == r && (r = e.byteLength);
-    for (var n = new Uint8Array(e, 0, r), o = n.length, s = "", a = 0; a < o; a += 3) s += i[n[a] >> 2], s += i[(3 & n[a]) << 4 | n[a + 1] >> 4], s += i[(15 & n[a + 1]) << 2 | n[a + 2] >> 6], s += i[63 & n[a + 2]];
-    return o % 3 == 2 ? s = s.slice(0, -1) + "=" : o % 3 == 1 && (s = s.slice(0, -2) + "=="), s;
+    for (var n = new Uint8Array(e, 0, r), a = n.length, o = "", s = 0; s < a; s += 3) o += i[n[s] >> 2], o += i[(3 & n[s]) << 4 | n[s + 1] >> 4], o += i[(15 & n[s + 1]) << 2 | n[s + 2] >> 6], o += i[63 & n[s + 2]];
+    return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
   },
   l = function decode(e, t) {
     var r = e.length;
     if (r % 4) throw new Error("Bad base64 length: not divisible by four");
     var n,
+      a,
       o,
       s,
-      a,
       i = .75 * e.length,
-      y = 0;
+      u = 0;
     "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-    for (var u = new ArrayBuffer(i, t), l = new Uint8Array(u), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], o = c[e.codePointAt(p + 1)], s = c[e.codePointAt(p + 2)], a = c[e.codePointAt(p + 3)], l[y++] = n << 2 | o >> 4, l[y++] = (15 & o) << 4 | s >> 2, l[y++] = (3 & s) << 6 | 63 & a;
-    return u;
+    for (var y = new ArrayBuffer(i, t), l = new Uint8Array(y), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], a = c[e.codePointAt(p + 1)], o = c[e.codePointAt(p + 2)], s = c[e.codePointAt(p + 3)], l[u++] = n << 2 | a >> 4, l[u++] = (15 & a) << 4 | o >> 2, l[u++] = (3 & o) << 6 | 63 & s;
+    return y;
   };
 const p = {
     arraybuffer: {
@@ -5810,7 +5819,7 @@ const p = {
         return -1 !== r ? {
           index: r
         } : (t.buffers.push(e), {
-          s: u(e),
+          s: y(e),
           maxByteLength: e.maxByteLength,
           resizable: e.resizable
         });
@@ -5825,13 +5834,67 @@ const p = {
     }
   },
   f = {
+    audiodata: {
+      test: e => "AudioData" === toStringTag(e),
+      replace(e) {
+        const {
+            format: t,
+            sampleRate: r,
+            numberOfFrames: n,
+            numberOfChannels: a,
+            timestamp: o
+          } = e,
+          s = t.endsWith("-planar") ? a : 1,
+          i = [];
+        let c = 0;
+        for (let t = 0; t < s; t++) {
+          const r = e.allocationSize({
+            planeIndex: t
+          });
+          i.push(r), c += r;
+        }
+        const u = new ArrayBuffer(c);
+        let y = 0;
+        for (let t = 0; t < s; t++) {
+          const r = new Uint8Array(u, y, i[t]);
+          e.copyTo(r, {
+            planeIndex: t
+          }), y += i[t];
+        }
+        return {
+          format: t,
+          sampleRate: r,
+          numberOfFrames: n,
+          numberOfChannels: a,
+          timestamp: o,
+          data: u
+        };
+      },
+      revive: ({
+        format: e,
+        sampleRate: t,
+        numberOfFrames: r,
+        numberOfChannels: n,
+        timestamp: a,
+        data: o
+      }) => new AudioData({
+        format: e,
+        sampleRate: t,
+        numberOfFrames: r,
+        numberOfChannels: n,
+        timestamp: a,
+        data: new Uint8Array(o)
+      })
+    }
+  },
+  d = {
     bigintObject: {
       test: e => "object" == typeof e && hasConstructorOf(e, BigInt),
       replace: String,
       revive: e => new Object(BigInt(e))
     }
   },
-  d = {
+  m = {
     bigint: {
       test: e => "bigint" == typeof e,
       replace: String,
@@ -5846,7 +5909,7 @@ function string2arraybuffer(e) {
   for (let r = 0; r < e.length; r++) t[r] = e.charCodeAt(r);
   return t.buffer;
 }
-const m = {
+const h = {
   blob: {
     test: e => "Blob" === toStringTag(e),
     replace(e) {
@@ -5879,7 +5942,7 @@ const m = {
     })
   }
 };
-const b = {
+const v = {
     cryptokey: {
       test: e => "CryptoKey" === toStringTag(e) && e.extractable,
       replaceAsync: e => new TypesonPromise(async (t, r) => {
@@ -5905,7 +5968,7 @@ const b = {
       }
     }
   },
-  v = {
+  w = {
     dataview: {
       test: e => "DataView" === toStringTag(e),
       replace({
@@ -5914,13 +5977,13 @@ const b = {
         byteLength: r
       }, n) {
         n.buffers || (n.buffers = []);
-        const o = n.buffers.indexOf(e);
-        return -1 !== o ? {
-          index: o,
+        const a = n.buffers.indexOf(e);
+        return -1 !== a ? {
+          index: a,
           byteOffset: t,
           byteLength: r
         } : (n.buffers.push(e), {
-          encoded: u(e),
+          encoded: y(e),
           maxByteLength: e.maxByteLength,
           resizable: e.resizable,
           byteOffset: t,
@@ -5932,15 +5995,15 @@ const b = {
         const {
           byteOffset: r,
           byteLength: n,
-          encoded: o,
-          index: s,
-          maxByteLength: a,
+          encoded: a,
+          index: o,
+          maxByteLength: s,
           resizable: i
         } = e;
         let c;
-        return "index" in e ? c = t.buffers[s] : (c = l(o, i ? {
-          maxByteLength: a
-        } : a), t.buffers.push(c)), new DataView(c, r, n);
+        return "index" in e ? c = t.buffers[o] : (c = l(a, i ? {
+          maxByteLength: s
+        } : s), t.buffers.push(c)), new DataView(c, r, n);
       }
     }
   },
@@ -5954,7 +6017,7 @@ const b = {
       revive: e => "NaN" === e ? new Date(NaN) : new Date(e)
     }
   },
-  w = {
+  A = {
     domexception: {
       test: e => "DOMException" === toStringTag(e),
       replace: e => ({
@@ -6000,9 +6063,9 @@ function create$5(e) {
   };
 }
 "undefined" != typeof DOMMatrix && create$5(DOMMatrix), "undefined" != typeof DOMMatrixReadOnly && create$5(DOMMatrixReadOnly);
-const A = {};
+const S = {};
 function create$4(e) {
-  A[e.name.toLowerCase()] = {
+  S[e.name.toLowerCase()] = {
     test: t => toStringTag(t) === e.name,
     replace: e => ({
       x: e.x,
@@ -6014,8 +6077,8 @@ function create$4(e) {
       x: t,
       y: r,
       z: n,
-      w: o
-    }) => new e(t, r, n, o)
+      w: a
+    }) => new e(t, r, n, a)
   };
 }
 "undefined" != typeof DOMPoint && create$4(DOMPoint), "undefined" != typeof DOMPointReadOnly && create$4(DOMPointReadOnly);
@@ -6036,9 +6099,9 @@ const P = {
       }) => new DOMQuad(e, t, r, n)
     }
   },
-  S = {};
+  x = {};
 function create$3(e) {
-  S[e.name.toLowerCase()] = {
+  x[e.name.toLowerCase()] = {
     test: t => toStringTag(t) === e.name,
     replace: e => ({
       x: e.x,
@@ -6050,12 +6113,74 @@ function create$3(e) {
       x: t,
       y: r,
       width: n,
-      height: o
-    }) => new e(t, r, n, o)
+      height: a
+    }) => new e(t, r, n, a)
   };
 }
 "undefined" != typeof DOMRect && create$3(DOMRect), "undefined" != typeof DOMRectReadOnly && create$3(DOMRectReadOnly);
-const x = {
+const E = {
+    encodedaudiochunk: {
+      test: e => "EncodedAudioChunk" === toStringTag(e),
+      replace(e) {
+        const {
+            type: t,
+            timestamp: r,
+            duration: n,
+            byteLength: a
+          } = e,
+          o = new ArrayBuffer(a);
+        return e.copyTo(o), {
+          type: t,
+          timestamp: r,
+          duration: n,
+          data: o
+        };
+      },
+      revive: ({
+        type: e,
+        timestamp: t,
+        duration: r,
+        data: n
+      }) => new EncodedAudioChunk({
+        type: e,
+        timestamp: t,
+        duration: r,
+        data: new Uint8Array(n)
+      })
+    }
+  },
+  j = {
+    encodedvideochunk: {
+      test: e => "EncodedVideoChunk" === toStringTag(e),
+      replace(e) {
+        const {
+            type: t,
+            timestamp: r,
+            duration: n,
+            byteLength: a
+          } = e,
+          o = new ArrayBuffer(a);
+        return e.copyTo(o), {
+          type: t,
+          timestamp: r,
+          duration: n,
+          data: o
+        };
+      },
+      revive: ({
+        type: e,
+        timestamp: t,
+        duration: r,
+        data: n
+      }) => new EncodedVideoChunk({
+        type: e,
+        timestamp: t,
+        duration: r,
+        data: new Uint8Array(n)
+      })
+    }
+  },
+  C = {
     error: {
       test: e => "Error" === toStringTag(e),
       replace: ({
@@ -6063,17 +6188,17 @@ const x = {
         message: t,
         cause: r,
         stack: n,
-        fileName: o,
-        lineNumber: s,
-        columnNumber: a
+        fileName: a,
+        lineNumber: o,
+        columnNumber: s
       }) => ({
         name: e,
         message: t,
         cause: r,
         stack: n,
-        fileName: o,
-        lineNumber: s,
-        columnNumber: a
+        fileName: a,
+        lineNumber: o,
+        columnNumber: s
       }),
       revive(e) {
         const t = new Error(e.message);
@@ -6081,27 +6206,27 @@ const x = {
       }
     }
   },
-  j = {};
+  B = {};
 function create$2(e) {
-  j[e.name.toLowerCase()] = {
+  B[e.name.toLowerCase()] = {
     test: t => hasConstructorOf(t, e),
     replace: ({
       name: e,
       message: t,
       cause: r,
       stack: n,
-      fileName: o,
-      lineNumber: s,
-      columnNumber: a,
+      fileName: a,
+      lineNumber: o,
+      columnNumber: s,
       errors: i
     }) => ({
       name: e,
       message: t,
       cause: r,
       stack: n,
-      fileName: o,
-      lineNumber: s,
-      columnNumber: a,
+      fileName: a,
+      lineNumber: o,
+      columnNumber: s,
       errors: i
     }),
     revive(t) {
@@ -6111,7 +6236,7 @@ function create$2(e) {
   };
 }
 [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(e => create$2(e)), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
-const E = {
+const N = {
     file: {
       test: e => "File" === toStringTag(e),
       replace(e) {
@@ -6148,8 +6273,8 @@ const E = {
       })
     }
   },
-  N = {
-    file: E.file,
+  I = {
+    file: N.file,
     filelist: {
       test: e => "FileList" === toStringTag(e),
       replace(e) {
@@ -6208,7 +6333,7 @@ const E = {
       }
     }
   },
-  B = {
+  U = {
     imagedata: {
       test: e => "ImageData" === toStringTag(e),
       replace: e => ({
@@ -6219,21 +6344,21 @@ const E = {
       revive: e => new ImageData(new Uint8ClampedArray(e.array), e.width, e.height)
     }
   },
-  I = {
+  M = {
     infinity: {
       test: e => e === 1 / 0,
       replace: () => "Infinity",
       revive: () => 1 / 0
     }
   },
-  U = {
+  k = {
     map: {
       test: e => "Map" === toStringTag(e),
       replace: e => e.entries().toArray(),
       revive: e => new Map(e)
     }
   },
-  M = {
+  D = {
     nan: {
       test: e => Number.isNaN(e),
       replace: () => "NaN",
@@ -6247,14 +6372,14 @@ const E = {
       revive: () => -1 / 0
     }
   },
-  D = {
+  F = {
     negativeZero: {
       test: e => Object.is(e, -0),
       replace: () => 0,
       revive: () => -0
     }
   },
-  R = {
+  K = {
     StringObject: {
       test: e => "String" === toStringTag(e) && "object" == typeof e,
       replace: String,
@@ -6271,7 +6396,29 @@ const E = {
       revive: e => new Number(e)
     }
   },
-  K = {
+  W = {
+    quotaexceedederror: {
+      test: e => "QuotaExceededError" === toStringTag(e),
+      replace: ({
+        message: e,
+        quota: t,
+        requested: r
+      }) => ({
+        message: e,
+        quota: t,
+        requested: r
+      }),
+      revive({
+        message: e,
+        quota: t,
+        requested: r
+      }) {
+        const n = {};
+        return null != t && (n.quota = t), null != r && (n.requested = r), new QuotaExceededError(e, n);
+      }
+    }
+  },
+  z = {
     regexp: {
       test: e => "RegExp" === toStringTag(e),
       replace: e => ({
@@ -6284,26 +6431,26 @@ const E = {
       }) => new RegExp(e, t)
     }
   },
-  z = {
+  H = {
     set: {
       test: e => "Set" === toStringTag(e),
       replace: e => e.values().toArray(),
       revive: e => new Set(e)
     }
   },
-  V = {};
+  G = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create$1(e) {
   const t = e.name;
-  V[t.toLowerCase()] = {
+  G[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace: e => (0 === e.byteOffset && e.byteLength === e.buffer.byteLength ? e : e.slice(0)).buffer,
     revive: t => "ArrayBuffer" === toStringTag(t) ? new e(t) : t
   };
 }(e));
-const W = {};
+const X = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create(e) {
   const t = e.name;
-  W[t.toLowerCase()] = {
+  X[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace({
       buffer: e,
@@ -6311,15 +6458,15 @@ const W = {};
       length: r
     }, n) {
       n.buffers || (n.buffers = []);
-      const o = n.buffers.indexOf(e);
-      return -1 !== o ? {
-        index: o,
+      const a = n.buffers.indexOf(e);
+      return -1 !== a ? {
+        index: a,
         byteOffset: t,
         length: r
       } : (n.buffers.push(e), {
         maxByteLength: e.maxByteLength,
         resizable: e.resizable,
-        encoded: u(e),
+        encoded: y(e),
         byteOffset: t,
         length: r
       });
@@ -6328,27 +6475,27 @@ const W = {};
       r.buffers || (r.buffers = []);
       const {
         byteOffset: n,
-        length: o,
-        encoded: s,
-        index: a,
+        length: a,
+        encoded: o,
+        index: s,
         maxByteLength: i,
         resizable: c
       } = t;
-      let y;
-      return "index" in t ? y = r.buffers[a] : (y = l(s, c ? {
+      let u;
+      return "index" in t ? u = r.buffers[s] : (u = l(o, c ? {
         maxByteLength: i
-      } : void 0), r.buffers.push(y)), new e(y, n, o);
+      } : void 0), r.buffers.push(u)), new e(u, n, a);
     }
   };
 }(e));
-const Q = {
+const Y = {
     undef: {
       test: (e, t) => void 0 === e && (t.ownKeys || !("ownKeys" in t)),
       replace: () => 0,
       revive: () => new Undefined()
     }
   },
-  G = {
+  Z = {
     userObject: {
       test: e => isUserObject(e),
       replace: e => ({
@@ -6357,7 +6504,93 @@ const Q = {
       revive: e => e
     }
   },
-  H = [{
+  ee = {
+    videoframe: {
+      test: e => "VideoFrame" === toStringTag(e),
+      replaceAsync: e => new TypesonPromise(async (t, r) => {
+        try {
+          const {
+              format: r,
+              codedWidth: n,
+              codedHeight: a,
+              timestamp: o,
+              duration: s,
+              visibleRect: i,
+              displayWidth: c,
+              displayHeight: u,
+              colorSpace: y
+            } = e,
+            l = new ArrayBuffer(e.allocationSize());
+          await e.copyTo(l), t({
+            format: r,
+            codedWidth: n,
+            codedHeight: a,
+            timestamp: o,
+            duration: s,
+            visibleRect: {
+              x: i.x,
+              y: i.y,
+              width: i.width,
+              height: i.height
+            },
+            displayWidth: c,
+            displayHeight: u,
+            colorSpace: {
+              primaries: y.primaries,
+              transfer: y.transfer,
+              matrix: y.matrix,
+              fullRange: y.fullRange
+            },
+            data: l
+          });
+        } catch (e) {
+          r(e);
+        }
+      }),
+      revive: ({
+        format: e,
+        codedWidth: t,
+        codedHeight: r,
+        timestamp: n,
+        duration: a,
+        visibleRect: o,
+        displayWidth: s,
+        displayHeight: i,
+        colorSpace: c,
+        data: u
+      }) => new VideoFrame(new Uint8Array(u), {
+        format: e,
+        codedWidth: t,
+        codedHeight: r,
+        timestamp: n,
+        duration: a,
+        visibleRect: o,
+        displayWidth: s,
+        displayHeight: i,
+        colorSpace: c
+      })
+    }
+  },
+  te = {
+    webtransporterror: {
+      test: e => "WebTransportError" === toStringTag(e),
+      replace: ({
+        message: e,
+        streamErrorCode: t
+      }) => ({
+        message: e,
+        streamErrorCode: t
+      }),
+      revive: ({
+        message: e,
+        streamErrorCode: t
+      }) => new WebTransportError({
+        message: e,
+        streamErrorCode: t
+      })
+    }
+  },
+  re = [{
     arrayNonindexKeys: {
       testPlainObjects: true,
       test: (e, t) => !!Array.isArray(e) && (Object.keys(e).some(e => String(Number(e)) !== e) && (t.iterateIn = "object", t.addLength = true), true),
@@ -6377,13 +6610,21 @@ const Q = {
       revive() {}
     }
   }],
-  X = [M, I, L, D],
-  re = [G, Q, H, R, X, O, K, B, _, E, N, m, x, j].concat("function" == typeof Map ? U : [], "function" == typeof Set ? z : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? W : [], "function" == typeof DataView ? v : [], "undefined" != typeof crypto ? b : [], "undefined" != typeof BigInt ? [d, f] : [], "undefined" != typeof DOMException ? w : [], "undefined" != typeof DOMRect ? S : [], "undefined" != typeof DOMPoint ? A : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : []),
-  ne = re.concat({
+  ne = [D, M, L, F],
+  ce = [Z, Y, re, K, ne, O, z, U, _, N, I, h, C, B].concat("function" == typeof Map ? k : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
+const ue = ce.concat({
     checkDataCloneException: {
       test(e) {
         const t = {}.toString.call(e).slice(8, -1);
-        if (["symbol", "function"].includes(typeof e) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || e && "object" == typeof e && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
+        if (["symbol", "function"].includes(typeof e) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || ["ArrayBuffer", "DataView", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array"].includes(t) && function isBufferDetached(e) {
+          if ("boolean" == typeof e.detached) return e.detached;
+          if (0 !== e.byteLength) return false;
+          try {
+            return new Uint8Array(e), !1;
+          } catch {
+            return true;
+          }
+        }(e) || e && "object" == typeof e && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
         return false;
       }
     }
@@ -6391,7 +6632,7 @@ const Q = {
 
 // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new Typeson().register(ne);
+let typeson = new Typeson().register(ue);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>
@@ -6400,7 +6641,7 @@ let typeson = new Typeson().register(ne);
  */
 function register(func) {
   // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
-  typeson = new Typeson().register(func(ne));
+  typeson = new Typeson().register(func(ue));
 }
 
 /**
@@ -11979,7 +12220,7 @@ function requireBackup() {
   if (hasRequiredBackup) return backup;
   hasRequiredBackup = 1;
   const fs = require$$0;
-  const path$1 = path;
+  const path = require$$1;
   const {
     promisify
   } = require$$2;
@@ -12007,7 +12248,7 @@ function requireBackup() {
     if (handler != null && typeof handler !== 'function') throw new TypeError('Expected the "progress" option to be a function');
 
     // Make sure the specified directory exists
-    await fsAccess(path$1.dirname(filename)).catch(() => {
+    await fsAccess(path.dirname(filename)).catch(() => {
       throw new TypeError('Cannot save backup because the directory does not exist');
     });
     const isNewFile = await fsAccess(filename).then(() => false, () => true);
@@ -12371,7 +12612,7 @@ function requireDatabase() {
   if (hasRequiredDatabase) return database;
   hasRequiredDatabase = 1;
   const fs = require$$0;
-  const path$1 = path;
+  const path = require$$1;
   const util = requireUtil();
   const SqliteError = requireSqliteError();
   database = function createDatabase(getAddon, allowNativeBinding) {
@@ -12420,7 +12661,7 @@ function requireDatabase() {
       }
 
       // Make sure the specified directory exists
-      if (!anonymous && !filename.startsWith('file:') && !fs.existsSync(path$1.dirname(filename))) {
+      if (!anonymous && !filename.startsWith('file:') && !fs.existsSync(path.dirname(filename))) {
         throw new TypeError('Cannot open database because the directory does not exist');
       }
       Object.defineProperties(this, {
@@ -12491,7 +12732,7 @@ function requireBinding() {
   (function (module, exports) {
 
     const fs = require$$0;
-    const path$1 = path;
+    const path = require$$1;
     const PREBUILD_PLATFORMS = ['linux', 'darwin', 'win32'];
     const PREBUILD_ARCHS = ['x64', 'arm64'];
     let DEFAULT_ADDON;
@@ -12500,7 +12741,7 @@ function requireBinding() {
       if (typeof nativeBinding === 'string') {
         // See <https://webpack.js.org/api/module-variables/#__non_webpack_require__-webpack-specific>
         const requireFunc = typeof __non_webpack_require__ === 'function' ? __non_webpack_require__ : commonjsRequire;
-        return requireFunc(path$1.resolve(nativeBinding).replace(/(\.node)?$/, '.node'));
+        return requireFunc(path.resolve(nativeBinding).replace(/(\.node)?$/, '.node'));
       }
 
       // If an object was provided, use it as the binding directly.
@@ -12520,16 +12761,16 @@ function requireBinding() {
       }
 
       // If no prebuilt binary was found, try the default node-gyp locations.
-      filename = path$1.join(__dirname, '..', 'build', 'Debug', 'better_sqlite3.node');
+      filename = path.join(__dirname, '..', 'build', 'Debug', 'better_sqlite3.node');
       if (!fs.existsSync(filename)) {
-        filename = path$1.join(__dirname, '..', 'build', 'Release', 'better_sqlite3.node');
+        filename = path.join(__dirname, '..', 'build', 'Release', 'better_sqlite3.node');
       }
       return DEFAULT_ADDON = commonjsRequire(filename);
     }
     function getPrebuildPath() {
       if (PREBUILD_PLATFORMS.includes(process.platform) && PREBUILD_ARCHS.includes(process.arch)) {
         const target = `${isLinuxMusl() ? 'linuxmusl' : process.platform}-${process.arch}`;
-        const filename = path$1.join(__dirname, '..', 'prebuilds', `${target}.node`);
+        const filename = path.join(__dirname, '..', 'prebuilds', `${target}.node`);
         if (fs.existsSync(filename)) {
           return filename;
         }

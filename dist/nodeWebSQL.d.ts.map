@@ -1,1 +1,1 @@
-{"version":3,"file":"nodeWebSQL.d.ts","sourceRoot":"","sources":["../src/nodeWebSQL.js"],"names":[],"mappings":";AAsBA,iHAAiE"}
+{"version":3,"file":"nodeWebSQL.d.ts","sourceRoot":"","sources":["../src/nodeWebSQL.js"],"names":[],"mappings":";qCAKa;IACR,GAAG,EAAE,GAAG,CAAC;IACT,IAAI,EAAE,CAAA,OAAO,cAAc,EAAC,WAAW,CAAC,CAAC,MAAM,CAAC,CAAA;CACjD;AAsBJ,iHAAiE;2BA7BtC,yBAAyB"}

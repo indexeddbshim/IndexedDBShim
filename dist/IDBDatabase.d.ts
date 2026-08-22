@@ -20,14 +20,15 @@ export type IDBDatabaseFull = IDBDatabase & EventTarget & {
     name: string;
     __forceClose: (msg: string) => void;
     __db: import("websql-configurable/lib/websql/WebSQLDatabase.js").default;
+    __closePending: boolean;
     __oldVersion: Integer;
     __version: Integer;
     __name: string;
     __upgradeTransaction: null | import("./IDBTransaction.js").IDBTransactionFull;
-    __versionTransaction: import("./IDBTransaction.js").IDBTransactionFull;
+    __versionTransaction: null | import("./IDBTransaction.js").IDBTransactionFull;
     __transactions: import("./IDBTransaction.js").IDBTransactionFull[];
     __objectStores: {
-        [key: string]: IDBObjectStore;
+        [key: string]: import("./IDBObjectStore.js").IDBObjectStoreFull;
     };
     __objectStoreNames: import("./DOMStringList.js").DOMStringListFull;
     __oldObjectStoreNames: import("./DOMStringList.js").DOMStringListFull;
@@ -50,9 +51,10 @@ export type IDBDatabaseFull = IDBDatabase & EventTarget & {
  * IDB Database Object.
  * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
+ * @this {IDBDatabaseFull}
  * @throws {TypeError}
  */
-declare function IDBDatabase(): void;
+declare function IDBDatabase(this: IDBDatabaseFull): void;
 declare class IDBDatabase {
     __versionTransaction: any;
     __objectStores: any;
@@ -117,13 +119,14 @@ declare namespace IDBDatabase {
      *   name: string,
      *   __forceClose: (msg: string) => void,
      *   __db: import('websql-configurable/lib/websql/WebSQLDatabase.js').default,
+     *   __closePending: boolean,
      *   __oldVersion: Integer,
      *   __version: Integer,
      *   __name: string,
      *   __upgradeTransaction: null|import('./IDBTransaction.js').IDBTransactionFull,
-     *   __versionTransaction: import('./IDBTransaction.js').IDBTransactionFull,
+     *   __versionTransaction: null|import('./IDBTransaction.js').IDBTransactionFull,
      *   __transactions: import('./IDBTransaction.js').IDBTransactionFull[],
-     *   __objectStores: {[key: string]: IDBObjectStore},
+     *   __objectStores: {[key: string]: import('./IDBObjectStore.js').IDBObjectStoreFull},
      *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
      *   __oldObjectStoreNames: import('./DOMStringList.js').DOMStringListFull,
      *   __unblocking: {
@@ -132,14 +135,14 @@ declare namespace IDBDatabase {
      * }} IDBDatabaseFull
      */
     /**
-     * @param {import('websql-configurable').default} db
+     * @param {import('websql-configurable/lib/websql/WebSQLDatabase.js').default} db
      * @param {string} name
      * @param {Integer} oldVersion
      * @param {Integer} version
      * @param {SQLResultSet} storeProperties
      * @returns {IDBDatabaseFull}
      */
-    function __createInstance(db: any, name: string, oldVersion: Integer, version: Integer, storeProperties: SQLResultSet): IDBDatabaseFull;
+    function __createInstance(db: import("websql-configurable/lib/websql/WebSQLDatabase.js").default, name: string, oldVersion: Integer, version: Integer, storeProperties: SQLResultSet): IDBDatabaseFull;
 }
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';

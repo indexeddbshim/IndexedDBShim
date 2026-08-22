@@ -8,11 +8,15 @@ export type SQLTraceCallback = ((sql: string) => void) | undefined;
  * @typedef {((sql: string) => void)|undefined} SQLTraceCallback
  */
 /**
+ * @class
  * @param {string} name
  * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
+ * @this {{_db: any}}
  * @returns {void}
  */
-declare function SQLiteDatabase(name: string, opts?: {
+declare function SQLiteDatabase(this: {
+    _db: any;
+}, name: string, opts?: {
     busyTimeout?: number;
     trace?: (sql: string) => void;
     profile?: SQLProfileCallback;
@@ -25,11 +29,15 @@ declare class SQLiteDatabase {
      * @typedef {((sql: string) => void)|undefined} SQLTraceCallback
      */
     /**
+     * @class
      * @param {string} name
      * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
+     * @this {{_db: any}}
      * @returns {void}
      */
-    constructor(name: string, opts?: {
+    constructor(this: {
+        _db: any;
+    }, name: string, opts?: {
         busyTimeout?: number;
         trace?: (sql: string) => void;
         profile?: SQLProfileCallback;

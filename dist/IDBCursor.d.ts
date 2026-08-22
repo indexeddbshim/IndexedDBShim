@@ -35,6 +35,15 @@ export type IDBCursorFull = IDBCursor & {
     __continuationPrimaryKey: import("./Key.js").Key | undefined;
     __multiEntryExhausted: boolean;
     __invalidateCache: () => void;
+    __gotValue: boolean;
+    __find: (...args: any[]) => void;
+    __findBasic: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad: Integer | undefined) => void;
+    __findMultiEntry: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad?: Integer) => void;
+    __onsuccess: (success: SuccessArg) => SuccessCallback;
+    __decode: (rowItem: RowItemNonNull, callback: (key: import("./Key.js").Key, val: import("./Key.js").Value, primaryKey: import("./Key.js").Key, encKey?: string) => void) => void;
+    __sourceOrEffectiveObjStoreDeleted: () => void;
+    __continue: (key?: import("./Key.js").Key, advanceContinue?: boolean) => void;
+    __continueFinish: (key: import("./Key.js").Key, primaryKey: import("./Key.js").Key, advanceState: boolean) => void;
 };
 export type IDBCursorWithValueFull = IDBCursorFull & {
     __request: import("./IDBRequest.js").IDBRequestFull;
@@ -89,7 +98,42 @@ export type AnyValue = any;
  *   __continuationKey: import('./Key.js').Key|undefined,
  *   __continuationPrimaryKey: import('./Key.js').Key|undefined,
  *   __multiEntryExhausted: boolean,
- *   __invalidateCache: () => void
+ *   __invalidateCache: () => void,
+ *   __gotValue: boolean,
+ *   __find: (...args: any[]) => void,
+ *   __findBasic: (
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
+ *     tx: SQLTransaction,
+ *     success: KeySuccess,
+ *     error: FindError,
+ *     recordsToLoad: Integer|undefined
+ *   ) => void,
+ *   __findMultiEntry: (
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
+ *     tx: SQLTransaction,
+ *     success: KeySuccess,
+ *     error: FindError,
+ *     recordsToLoad?: Integer
+ *   ) => void,
+ *   __onsuccess: (success: SuccessArg) => SuccessCallback,
+ *   __decode: (
+ *     rowItem: RowItemNonNull,
+ *     callback: (
+ *       key: import('./Key.js').Key,
+ *       val: import('./Key.js').Value,
+ *       primaryKey: import('./Key.js').Key,
+ *       encKey?: string
+ *     ) => void
+ *   ) => void,
+ *   __sourceOrEffectiveObjStoreDeleted: () => void,
+ *   __continue: (key?: import('./Key.js').Key, advanceContinue?: boolean) => void,
+ *   __continueFinish: (
+ *     key: import('./Key.js').Key,
+ *     primaryKey: import('./Key.js').Key,
+ *     advanceState: boolean
+ *   ) => void
  * }} IDBCursorFull
  */
 /**

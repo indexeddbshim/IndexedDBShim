@@ -14,6 +14,8 @@ export type IDBFactoryFull = globalThis.IDBFactory & {
     __connections: {
         [key: string]: import("./IDBDatabase.js").IDBDatabaseFull[];
     };
+    __forceClose: (dbName: string, connIdx: Integer, msg: string) => void;
+    __setConnectionQueueOrigin: (origin?: string) => void;
 };
 /**
  * IDBFactory Class.
