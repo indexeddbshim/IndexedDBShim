@@ -872,6 +872,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
      */
     function addToQueue (clonedValue) {
         // We set the `invalidateCache` argument to `false` since the old value shouldn't be accessed
+        // @ts-ignore -- API (not erring in TS 6)
         IDBObjectStore.__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
