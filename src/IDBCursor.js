@@ -689,7 +689,21 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
                 if (me.__advanceCount && me.__advanceCount >= 2 && k !== undefined) {
                     me.__advanceCount--;
                     me.__key = k;
-                    me.__continue(undefined, true);
+                    me.__sourceOrEffectiveObjStoreDeleted();
+                    // This is an internal continuation step within a single
+                    //   `advance()` call, not a fresh user-facing dispatch --
+                    //   it's already part of an in-flight, already-validated
+                    //   operation, so briefly reopen the active-handler
+                    //   window `__pushToQueue` (via `__continueFinish`)
+                    //   checks, rather than routing back through the public
+                    //   `__continue()` (which would apply that check as if
+                    //   this were new activity from user code).
+                    const {transaction} = /** @type {{transaction: import('./IDBTransaction.js').IDBTransactionFull}} */ (
+                        me.__store
+                    );
+                    transaction.__handlerActive = true;
+                    me.__continueFinish(undefined, undefined, true);
+                    transaction.__handlerActive = false;
                     // We don't call success yet but do need to advance the transaction queue
                     util.runContinuationSafely(/** @type {() => void} */ (executeNextRequest));
                     return;

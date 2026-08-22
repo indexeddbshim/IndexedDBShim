@@ -39,6 +39,7 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'durability', 'db', 'err
  *   __tx: SQLTransaction,
  *   __id: Integer,
  *   __active: boolean,
+ *   __handlerActive: boolean,
  *   __running: boolean,
  *   __errored: boolean,
  *   __committed: boolean,
@@ -118,6 +119,15 @@ IDBTransaction.__createInstance = function (db, storeNames, mode, durability = '
         // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Debugging only
         me.__id = ++uniqueID; // for debugging simultaneous transactions
         me.__active = true;
+        // Tracks the spec's "active" flag for the purpose of validating new
+        //   requests/`commit()`: true only during the initial synchronous
+        //   script that created the transaction and during each dispatched
+        //   request's synchronous `success`/`error` handler. Deliberately
+        //   kept separate from `__active` above, which additionally (and
+        //   permanently, once false) signals that request-queue processing
+        //   has stopped -- `executeNextRequest` relies on that to know
+        //   whether it's still safe to finish the transaction normally.
+        me.__handlerActive = true;
         me.__running = false;
         me.__errored = false;
         me.__committed = false;
@@ -218,6 +228,15 @@ IDBTransaction.prototype.__executeRequests = function () {
         return;
     }
 
+    // The synchronous script that created this transaction (and
+    //   synchronously queued whatever requests it wanted to) has now
+    //   definitely returned control to the event loop -- this callback was
+    //   itself deferred via `setTimeout(..., 0)` for exactly that reason.
+    //   So the transaction's initial "active" window closes here, until the
+    //   first dispatched request's handler (see `success`/`error` below)
+    //   reopens it.
+    me.__handlerActive = false;
+
     me.__running = true;
 
     me.db.__db[me.mode === 'readonly' ? 'readTransaction' : 'transaction']( // `readTransaction` is optimized, at least in `node-websql`
@@ -255,9 +274,11 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.__error = null;
 
                 me.__active = true;
+                me.__handlerActive = true;
                 const e = createEvent('success');
                 q.req.dispatchEvent(e);
                 // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+                me.__handlerActive = false;
                 if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     if (!me.__committed) { // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
@@ -305,9 +326,11 @@ IDBTransaction.prototype.__executeRequests = function () {
                 });
 
                 me.__active = true;
+                me.__handlerActive = true;
                 const e = createEvent('error', err, {bubbles: true, cancelable: true});
                 q.req.dispatchEvent(e);
                 // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+                me.__handlerActive = false;
                 if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
@@ -517,10 +540,11 @@ IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
 
 /**
  * @throws {DOMException}
+ * @this {IDBTransactionFull}
  * @returns {void}
  */
 IDBTransaction.prototype.__assertActive = function () {
-    if (!this.__active || this.__committed) {
+    if (!this.__active || !this.__handlerActive || this.__committed) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
 };
@@ -749,7 +773,7 @@ IDBTransaction.prototype.commit = function () {
     if (!(me instanceof IDBTransaction)) {
         throw new TypeError('Illegal invocation');
     }
-    if (!me.__active) {
+    if (!me.__active || !me.__handlerActive || me.__committed) {
         throw createDOMException('InvalidStateError', 'Failed to execute \'commit\' on \'IDBTransaction\': The transaction is not active.');
     }
     if (CFG.DEBUG) { console.log('The transaction was explicitly committed', me); }

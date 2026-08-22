@@ -636,7 +636,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             req.__done = true;
 
                             req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished /* , error */) {
+                                // Unlike ordinary requests, this dispatch doesn't go through
+                                //   `IDBTransaction`'s own `success`/`error` closures, so it must
+                                //   open/close the transaction's active-handler window itself.
+                                req.transaction.__handlerActive = true;
                                 req.dispatchEvent(e);
+                                req.transaction.__handlerActive = false;
 
                                 if (e.__legacyOutputDidListenersThrowError) {
                                     logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', /** @type {Error} */ (e.__legacyOutputDidListenersThrowError)); // We do nothing else with this error as per spec

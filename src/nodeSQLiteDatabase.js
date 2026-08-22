@@ -168,9 +168,15 @@ SQLiteDatabase.prototype.exec = function exec (queries, readOnly, callback) {
             }
         }
     }
-    queueMicrotask(() => {
+    // A real timer (not `queueMicrotask`) so this yields to the macrotask
+    //   queue: code that synchronously issues a new request from within
+    //   each request's callback (e.g. to keep a transaction alive) would
+    //   otherwise chain microtask to microtask forever, starving out any
+    //   `setTimeout`-based code (including IndexedDB's own internal request
+    //   scheduling) that never gets a turn to run.
+    setTimeout(() => {
         callback(null, results);
-    });
+    }, 0);
 };
 
 export default SQLiteDatabase;
