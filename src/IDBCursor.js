@@ -1043,7 +1043,13 @@ function parseGetAllArgs (args) {
     const arg0 = args[0];
     if (args.length === 1 && util.isObj(arg0) && !Array.isArray(arg0) && !util.isDate(arg0) &&
         !util.isBinary(arg0) &&
-        !('upper' in arg0 && 'lowerOpen' in arg0 && typeof arg0.lowerOpen === 'boolean') // IDBKeyRange-like
+        !('upper' in arg0 && 'lowerOpen' in arg0 && typeof arg0.lowerOpen === 'boolean') && // IDBKeyRange-like
+        // A plain object with none of these keys could still be an
+        //   (invalid) attempted key -- e.g. WPT's key-conversion-exceptions
+        //   tests pass `{}` expecting a `DataError`, not a filter-less
+        //   `getAll()` -- so only treat it as the options form if it
+        //   actually looks like one.
+        (Object.hasOwn(arg0, 'query') || Object.hasOwn(arg0, 'count') || Object.hasOwn(arg0, 'direction'))
     ) {
         return normalizeGetAllOptions(arg0);
     }
