@@ -8,6 +8,7 @@
 - feat: add `IDBObjectStore`/`IDBIndex` `getAllRecords(options)` per the IndexedDB 3.0 draft, returning `{key, primaryKey, value}` records for a given `{query, count, direction}`
 - fix: `IDBCursor` `nextunique`/`prevunique` iteration over a `multiEntry` index no longer stops early the first time it encounters a duplicate key within a prefetched batch
 - fix: use current spec-enjoined API for a `QuotaExceededError` rather than `DOMException`
+- test: restore the W3C/WPT Node test harness (`npm run w3c-test-only` and friends), which crashed on startup due to a dangling import of the no-longer-installable `sourcemap-transformer` package left over from its removal
 - chore: update typeson-registry, devDeps; lint
 - chore: adjust for TS 7 compatibility
 
