@@ -39,12 +39,10 @@ import util from 'node:util';
 import os from 'node:os';
 import url from 'node:url';
 
-import ws from 'ws';
+import {WebSocketServer} from 'ws';
 import * as wwutil from './webworker-util.js';
 
 const __dirname = import.meta.dirname;
-
-const WebSocketServer = ws.Server;
 
 const isWin = os.platform().startsWith('win');
 
