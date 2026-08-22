@@ -1000,6 +1000,21 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 /**
+ * Validates `direction` and fills in defaults for the `{query, count,
+ *   direction}` shape shared by `getAll`/`getAllKeys`/`getAllRecords`.
+ * @param {AnyValue} options
+ * @throws {TypeError}
+ * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+ */
+function normalizeGetAllOptions (options) {
+    const {query, count, direction = 'next'} = /** @type {AnyValue} */ (options ?? {});
+    if (!cursorDirections.includes(direction)) {
+        throw new TypeError('`' + direction + '` is not a valid direction');
+    }
+    return {query, count, direction};
+}
+
+/**
  * `getAll`/`getAllKeys` accept either the legacy `(query, count)` signature
  *   or, per the IndexedDB 3 draft's `getAllRecords` options shape, a single
  *   `{query, count, direction}` options object. A plain object is never a
@@ -1010,26 +1025,31 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
  * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
  */
 function parseGetAllArgs (args) {
-    /** @type {AnyValue} */
-    let query, count, direction;
     const arg0 = args[0];
     if (args.length === 1 && util.isObj(arg0) && !Array.isArray(arg0) && !util.isDate(arg0) &&
         !util.isBinary(arg0) &&
         !('upper' in arg0 && 'lowerOpen' in arg0 && typeof arg0.lowerOpen === 'boolean') // IDBKeyRange-like
     ) {
-        ({query, count, direction} = /** @type {AnyValue} */ (arg0));
-    } else {
-        [query, count] = args;
+        return normalizeGetAllOptions(arg0);
     }
-    direction ||= 'next';
-    if (!cursorDirections.includes(direction)) {
-        throw new TypeError('`' + direction + '` is not a valid direction');
-    }
-    return {query, count, direction};
+    const [query, count] = args;
+    return normalizeGetAllOptions({query, count});
 }
 
 /**
- * Shared implementation backing `getAll`/`getAllKeys` on both
+ * `getAllRecords` (IndexedDB 3.0) takes a single, optional `IDBGetAllOptions`
+ *   dictionary -- `{query, count, direction}` -- with no legacy positional
+ *   form to disambiguate against.
+ * @param {IArguments} args
+ * @throws {TypeError}
+ * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+ */
+function parseGetAllRecordsArgs (args) {
+    return normalizeGetAllOptions(args[0]);
+}
+
+/**
+ * Shared implementation backing `getAll`/`getAllKeys`/`getAllRecords` on both
  *   `IDBObjectStore` and `IDBIndex`. Rather than issuing a single bulk SQL
  *   query, this drives an internal cursor with the requested `direction`
  *   and collects its values, so ordering and uniqueness semantics --
@@ -1040,10 +1060,10 @@ function parseGetAllArgs (args) {
  * @param {import('./Key.js').Value} query
  * @param {Integer|undefined} count
  * @param {string} direction
- * @param {boolean} keysOnly
+ * @param {"value"|"key"|"record"} mode
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-function collectAll (source, query, count, direction, keysOnly) {
+function collectAll (source, query, count, direction, mode) {
     if (count !== undefined) {
         count = util.enforceRange(count, 'unsigned long');
     }
@@ -1056,9 +1076,12 @@ function collectAll (source, query, count, direction, keysOnly) {
     const outerRequest = tx.__createRequest(source);
     /** @type {AnyValue[]} */
     const results = [];
+    // `getAllRecords` needs each record's value, so it (like `getAll`) must
+    //   use `openCursor` rather than the lighter-weight `openKeyCursor`.
+    const needsValue = mode !== 'key';
     const innerRequest = /** @type {import('./IDBRequest.js').IDBRequestFull} */ (
         // @ts-expect-error It's ok (both `IDBObjectStore` and `IDBIndex` implement this)
-        keysOnly ? source.openKeyCursor(query, direction) : source.openCursor(query, direction)
+        needsValue ? source.openCursor(query, direction) : source.openKeyCursor(query, direction)
     );
 
     /**
@@ -1077,7 +1100,20 @@ function collectAll (source, query, count, direction, keysOnly) {
             finish();
             return;
         }
-        results.push(keysOnly ? cursor.primaryKey : /** @type {IDBCursorWithValueFull} */ (cursor).value);
+        switch (mode) {
+        case 'key':
+            results.push(cursor.primaryKey);
+            break;
+        case 'record':
+            results.push({
+                key: cursor.key,
+                primaryKey: cursor.primaryKey,
+                value: /** @type {IDBCursorWithValueFull} */ (cursor).value
+            });
+            break;
+        default:
+            results.push(/** @type {IDBCursorWithValueFull} */ (cursor).value);
+        }
         if (count && results.length >= count) {
             finish();
             return;
@@ -1094,4 +1130,4 @@ function collectAll (source, query, count, direction, keysOnly) {
     return outerRequest;
 }
 
-export {IDBCursor, IDBCursorWithValue, parseGetAllArgs, collectAll};
+export {IDBCursor, IDBCursorWithValue, parseGetAllArgs, parseGetAllRecordsArgs, collectAll};

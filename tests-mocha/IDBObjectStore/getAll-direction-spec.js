@@ -141,4 +141,32 @@ describe('IDBObjectStore.getAll/getAllKeys direction', function () {
             done();
         });
     });
+
+    it('getAllRecords should return {key, primaryKey, value} matching cursor iteration', function (done) {
+        setup(function (err, store, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
+            collectViaCursor(store, 'prev', function (cursorErr, expectedKeys, expectedValues) {
+                if (cursorErr) {
+                    expect(function () { throw cursorErr; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                const req = store.getAllRecords({direction: 'prev'});
+                req.onsuccess = function () {
+                    expect(req.result).to.deep.equal(expectedKeys.map(function (key, i) {
+                        return {key, primaryKey: key, value: expectedValues[i]};
+                    }));
+                    db.close();
+                    done();
+                };
+                req.onerror = function () {
+                    done(new Error('getAllRecords failed'));
+                };
+            });
+        });
+    });
 });

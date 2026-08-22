@@ -128,4 +128,32 @@ describe('IDBIndex.getAll/getAllKeys direction', function () {
             };
         });
     });
+
+    it('getAllRecords should return {key, primaryKey, value} matching cursor iteration', function (done) {
+        setup(function (err, index, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
+            collectViaCursor(index, 'next', function (cursorErr, expected) {
+                if (cursorErr) {
+                    expect(function () { throw cursorErr; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                const req = index.getAllRecords({direction: 'next'});
+                req.onsuccess = function () {
+                    expect(req.result).to.deep.equal(expected.keys.map(function (key, i) {
+                        return {key, primaryKey: expected.primaryKeys[i], value: expected.values[i]};
+                    }));
+                    db.close();
+                    done();
+                };
+                req.onerror = function () {
+                    done(new Error('getAllRecords failed'));
+                };
+            });
+        });
+    });
 });

@@ -1,6 +1,6 @@
 import SyncPromise from 'sync-promise-expanded';
 import {createDOMException} from './DOMException.js';
-import {IDBCursor, IDBCursorWithValue, parseGetAllArgs, collectAll} from './IDBCursor.js';
+import {IDBCursor, IDBCursorWithValue, parseGetAllArgs, parseGetAllRecordsArgs, collectAll} from './IDBCursor.js';
 import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
 import DOMStringList from './DOMStringList.js';
 import * as util from './util.js';
@@ -879,7 +879,7 @@ IDBObjectStore.prototype.getKey = function (query) {
 IDBObjectStore.prototype.getAll = function (/* queryOrOptions, count */) {
     // eslint-disable-next-line prefer-rest-params -- API
     const {query, count, direction} = parseGetAllArgs(arguments);
-    return collectAll(this, query, count, direction, false);
+    return collectAll(this, query, count, direction, 'value');
 };
 
 /**
@@ -889,7 +889,17 @@ IDBObjectStore.prototype.getAll = function (/* queryOrOptions, count */) {
 IDBObjectStore.prototype.getAllKeys = function (/* queryOrOptions, count */) {
     // eslint-disable-next-line prefer-rest-params -- API
     const {query, count, direction} = parseGetAllArgs(arguments);
-    return collectAll(this, query, count, direction, true);
+    return collectAll(this, query, count, direction, 'key');
+};
+
+/**
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
+ */
+IDBObjectStore.prototype.getAllRecords = function (/* options */) {
+    // eslint-disable-next-line prefer-rest-params -- API
+    const {query, count, direction} = parseGetAllRecordsArgs(arguments);
+    return collectAll(this, query, count, direction, 'record');
 };
 
 /**

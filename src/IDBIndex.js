@@ -1,6 +1,6 @@
 import SyncPromise from 'sync-promise-expanded';
 import {createDOMException} from './DOMException.js';
-import {IDBCursor, IDBCursorWithValue, parseGetAllArgs, collectAll} from './IDBCursor.js';
+import {IDBCursor, IDBCursorWithValue, parseGetAllArgs, parseGetAllRecordsArgs, collectAll} from './IDBCursor.js';
 import * as util from './util.js';
 import * as Key from './Key.js';
 import {setSQLForKeyRange, IDBKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
@@ -596,7 +596,7 @@ IDBIndex.prototype.getKey = function (query) {
 IDBIndex.prototype.getAll = function (/* queryOrOptions, count */) {
     // eslint-disable-next-line prefer-rest-params -- API
     const {query, count, direction} = parseGetAllArgs(arguments);
-    return collectAll(this, query, count, direction, false);
+    return collectAll(this, query, count, direction, 'value');
 };
 
 /**
@@ -606,7 +606,17 @@ IDBIndex.prototype.getAll = function (/* queryOrOptions, count */) {
 IDBIndex.prototype.getAllKeys = function (/* queryOrOptions, count */) {
     // eslint-disable-next-line prefer-rest-params -- API
     const {query, count, direction} = parseGetAllArgs(arguments);
-    return collectAll(this, query, count, direction, true);
+    return collectAll(this, query, count, direction, 'key');
+};
+
+/**
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
+ */
+IDBIndex.prototype.getAllRecords = function (/* options */) {
+    // eslint-disable-next-line prefer-rest-params -- API
+    const {query, count, direction} = parseGetAllRecordsArgs(arguments);
+    return collectAll(this, query, count, direction, 'record');
 };
 
 /**
