@@ -206,11 +206,11 @@ Current worker test statuses with 2 files excluded:
 // Todo: We ought to really run all of the web-platform-tests/dom/events tests
 Event Test counts: 2 files (1 good, 1 bad - '../non-indexedDB/__event-interface.js')
 Current Event test statuses with 0 files excluded:
-  'Pass': 57,
-  'Fail': 13,
+  'Pass': 52,
+  'Fail': 19,
   'Timeout': 0,
   'Not Run': 0,
-  'Total tests': 70
+  'Total tests': 71
 
 // Passing the "exception" (or "domexception") argument to `node-idb-test.js`
 //   will run the `DOMException` tests (from web-platform-tests/WebIDL/ecmascript-binding/es-exceptions)
@@ -219,8 +219,8 @@ Current Event test statuses with 0 files excluded:
 DOMException Test counts: 4 files (3 good, 1 bad)
 Current DOMException test statuses with 0 files excluded:
 {
-  'Pass': 96,
-  'Fail': 10,
+  'Pass': 93,
+  'Fail': 13,
   'Timeout': 0,
   'Not Run': 0,
   'Total tests': 106
