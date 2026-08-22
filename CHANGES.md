@@ -2,6 +2,7 @@
 
 ## 17.3.0
 
+- feat: add `IDBTransaction.commit()`
 - fix: use current spec-enjoined API for a `QuotaExceededError` rather than `DOMException`
 - chore: update typeson-registry, devDeps; lint
 - chore: adjust for TS 7 compatibility

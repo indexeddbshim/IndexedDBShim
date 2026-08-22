@@ -40,6 +40,7 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
  *   __active: boolean,
  *   __running: boolean,
  *   __errored: boolean,
+ *   __committed: boolean,
  *   __requests: RequestInfo[],
  *   __db: import('./IDBDatabase.js').IDBDatabaseFull,
  *   __mode: string,
@@ -68,6 +69,7 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
  *     args?: ObjectArray
  *   ) => void,
  *   __assertActive: () => void,
+ *   commit: () => void,
  *   __addNonRequestToTransactionQueue: (
  *     callback: SQLCallback,
  *     args?: ObjectArray
@@ -115,6 +117,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         me.__active = true;
         me.__running = false;
         me.__errored = false;
+        me.__committed = false;
         me.__requests = [];
         me.__objectStoreNames = storeNames;
         me.__mode = mode;
@@ -253,9 +256,11 @@ IDBTransaction.prototype.__executeRequests = function () {
                 // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
                 if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
-                    // me.__active = false;
-                    me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
-                    return;
+                    if (!me.__committed) { // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
+                        // me.__active = false;
+                        me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
+                        return;
+                    }
                 }
                 util.runContinuationSafely(executeNextRequest);
             }
@@ -302,6 +307,10 @@ IDBTransaction.prototype.__executeRequests = function () {
                 if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
+                    if (me.__committed) { // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
+                        util.runContinuationSafely(executeNextRequest);
+                        return;
+                    }
                     me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
                 }
             }
@@ -507,7 +516,7 @@ IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
  * @returns {void}
  */
 IDBTransaction.prototype.__assertActive = function () {
-    if (!this.__active) {
+    if (!this.__active || this.__committed) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
 };
@@ -720,7 +729,27 @@ IDBTransaction.prototype.abort = function () {
     }
     if (CFG.DEBUG) { console.log('The transaction was aborted', me); }
     IDBTransaction.__assertNotFinished(me);
+    if (me.__committed) {
+        throw createDOMException('InvalidStateError', 'The transaction has already been committed');
+    }
     me.__abortTransaction(null);
+};
+
+/**
+ * @see https://www.w3.org/TR/IndexedDB/#dom-idbtransaction-commit
+ * @this {IDBTransactionFull}
+ * @returns {void}
+ */
+IDBTransaction.prototype.commit = function () {
+    const me = this;
+    if (!(me instanceof IDBTransaction)) {
+        throw new TypeError('Illegal invocation');
+    }
+    if (!me.__active) {
+        throw createDOMException('InvalidStateError', 'Failed to execute \'commit\' on \'IDBTransaction\': The transaction is not active.');
+    }
+    if (CFG.DEBUG) { console.log('The transaction was explicitly committed', me); }
+    me.__committed = true;
 };
 
 IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
@@ -783,7 +812,7 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
  * @returns {void}
  */
 IDBTransaction.__assertActive = function (tx) {
-    if (!tx || !tx.__active) {
+    if (!tx || !tx.__active || tx.__committed) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
 };
