@@ -79,13 +79,16 @@ export class MsgStream extends EventEmitter {
             const ms = getMsgObj(v, fd);
             debug('Process ' + process.pid + ' sending message: ' + util.inspect(ms));
 
-            s.send(BSON.serialize(ms), {binary: true, mask: true});
+            // `BSON.serialize` no longer accepts an array as the root
+            //   document, so wrap it in an object; `deserialize` below
+            //   unwraps it again.
+            s.send(BSON.serialize({m: ms}), {binary: true, mask: true});
         };
 
         s.on('message', function (ms) {
             debug('Process ' + process.pid + ' received message: ' + ms);
 
-            const mo = BSON.deserialize(ms);
+            const {m: mo} = BSON.deserialize(ms);
 
             // Ignore invalid messages; this is probably worth an error, though
             if (!isValidMessage(mo)) {
