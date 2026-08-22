@@ -1,7 +1,7 @@
 // Utilies and other common gook shared between the WebWorker master and
 // its constituent Workers.
 
-import events from 'node:events';
+import {EventEmitter} from 'node:events';
 import path from 'node:path';
 import util from 'node:util';
 
@@ -40,90 +40,94 @@ export const isValidMessage = function (msg) {
 // message with which it was sent.
 //
 // Sending messages is done with the send() method.
+/* eslint-disable unicorn/prefer-event-target -- Existing API */
 /**
  * @class
  * @param {WebSocket} s
  */
-export const MsgStream = function (s) {
-    const self = this; // eslint-disable-line consistent-this -- Clear
-
-    events.EventEmitter.call(self);
-
-    // Sequence numbers for outgoing and incoming FDs
-    let fdsSeqnoSent = 0;
-    let fdsSeqnoRecvd = 0;
-
-    // Collections of messages waiting for FDs and vice-versa. These
-    // are keyed by FD seqno.
-    const msgWaitingForFd = {};
-    const fdWaitingForMsg = {};
-
-    // Get the JS object representing message 'v' with fd 'fd'.
+export class MsgStream extends EventEmitter {
+    /* eslint-enable unicorn/prefer-event-target -- Existing API */
     /**
-     *
-     * @param {[msgType: 0|1|2|100, msg: string]} v
-     * @param {FileDescriptor} fd
-     * @returns {[]}
+     * @param {WebSocket} s
      */
-    const getMsgObj = function (v, fd) {
-        return [(fd !== undefined) ? ++fdsSeqnoSent : 0, v];
-    };
+    constructor (s) {
+        super();
 
-    self.send = function (v, fd) {
-        const ms = getMsgObj(v, fd);
-        debug('Process ' + process.pid + ' sending message: ' + util.inspect(ms));
+        const self = this; // eslint-disable-line consistent-this -- Clear
 
-        s.send(BSON.serialize(ms), {binary: true, mask: true});
-    };
+        // Sequence numbers for outgoing and incoming FDs
+        let fdsSeqnoSent = 0;
+        let fdsSeqnoRecvd = 0;
 
-    s.on('message', function (ms) {
-        debug('Process ' + process.pid + ' received message: ' + ms);
+        // Collections of messages waiting for FDs and vice-versa. These
+        // are keyed by FD seqno.
+        const msgWaitingForFd = {};
+        const fdWaitingForMsg = {};
 
-        const mo = BSON.deserialize(ms);
+        // Get the JS object representing message 'v' with fd 'fd'.
+        /**
+         *
+         * @param {[msgType: 0|1|2|100, msg: string]} v
+         * @param {FileDescriptor} fd
+         * @returns {[]}
+         */
+        const getMsgObj = function (v, fd) {
+            return [(fd !== undefined) ? ++fdsSeqnoSent : 0, v];
+        };
 
-        // Ignore invalid messages; this is probably worth an error, though
-        if (!isValidMessage(mo)) {
-            return;
-        }
+        self.send = function (v, fd) {
+            const ms = getMsgObj(v, fd);
+            debug('Process ' + process.pid + ' sending message: ' + util.inspect(ms));
 
-        let fd;
+            s.send(BSON.serialize(ms), {binary: true, mask: true});
+        };
 
-        const fdSeq = mo[0];
-        const msg = mo[1];
+        s.on('message', function (ms) {
+            debug('Process ' + process.pid + ' received message: ' + ms);
 
-        // If our message has an associated file descriptor that we
-        // have not yet received, queue it for later delivery.
-        if (fdSeq) {
-            // eslint-disable-next-line sonarjs/no-nested-assignment -- Convenient
-            if (!(fd = fdWaitingForMsg[fdSeq])) {
-                msgWaitingForFd[fdSeq] = msg;
+            const mo = BSON.deserialize(ms);
+
+            // Ignore invalid messages; this is probably worth an error, though
+            if (!isValidMessage(mo)) {
                 return;
             }
 
-            delete fdWaitingForMsg[fdSeq];
-        }
+            let fd;
 
-        // We're complete; emit
-        self.emit('msg', msg, fd);
-    });
+            const fdSeq = mo[0];
+            const msg = mo[1];
 
-    s.on('fd', function (fd) {
-        // Look for a message that's waiting for our arrival. If we don't
-        // have one, enqueu the received FD for later delivery.
-        const msg = msgWaitingForFd[++fdsSeqnoRecvd];
-        if (!msg) {
-            fdWaitingForMsg[fdsSeqnoRecvd] = fd;
-            return;
-        }
+            // If our message has an associated file descriptor that we
+            // have not yet received, queue it for later delivery.
+            if (fdSeq) {
+                // eslint-disable-next-line sonarjs/no-nested-assignment -- Convenient
+                if (!(fd = fdWaitingForMsg[fdSeq])) {
+                    msgWaitingForFd[fdSeq] = msg;
+                    return;
+                }
 
-        // There was a message waiting for us; emit
-        delete msgWaitingForFd[fdsSeqnoRecvd];
-        self.emit('msg', msg, fd);
-    });
-};
+                delete fdWaitingForMsg[fdSeq];
+            }
 
-// eslint-disable-next-line unicorn/no-top-level-side-effects -- Would be good
-util.inherits(MsgStream, events.EventEmitter);
+            // We're complete; emit
+            self.emit('msg', msg, fd);
+        });
+
+        s.on('fd', function (fd) {
+            // Look for a message that's waiting for our arrival. If we don't
+            // have one, enqueu the received FD for later delivery.
+            const msg = msgWaitingForFd[++fdsSeqnoRecvd];
+            if (!msg) {
+                fdWaitingForMsg[fdsSeqnoRecvd] = fd;
+                return;
+            }
+
+            // There was a message waiting for us; emit
+            delete msgWaitingForFd[fdsSeqnoRecvd];
+            self.emit('msg', msg, fd);
+        });
+    }
+}
 
 /**
  *
