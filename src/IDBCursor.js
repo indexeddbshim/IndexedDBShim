@@ -2,7 +2,6 @@ import {IDBRequest} from './IDBRequest.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import {createDOMException} from './DOMException.js';
 import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
-import {createEvent} from './Event.js';
 import {cmp} from './IDBFactory.js';
 import * as util from './util.js';
 import IDBTransaction from './IDBTransaction.js';
@@ -1071,11 +1070,24 @@ function parseGetAllRecordsArgs (args) {
 
 /**
  * Shared implementation backing `getAll`/`getAllKeys`/`getAllRecords` on both
- *   `IDBObjectStore` and `IDBIndex`. Rather than issuing a single bulk SQL
- *   query, this drives an internal cursor with the requested `direction`
- *   and collects its values, so ordering and uniqueness semantics --
+ *   `IDBObjectStore` and `IDBIndex`. This walks a `find`/`decode` state
+ *   object using the exact same low-level primitives
+ *   (`__find`/`__findBasic`/`__findMultiEntry`/`__decode`) a real cursor's
+ *   `continue()` uses internally, so ordering and uniqueness semantics --
  *   including `nextunique`/`prevunique` over `multiEntry` indexes -- always
  *   match what iterating that same cursor manually would produce.
+ *
+ * Unlike a real cursor, none of the intermediate steps go through the
+ *   transaction's shared request queue (`__pushToQueue`): each step re-enters
+ *   the same queue slot's op function via a plain synchronous/callback chain
+ *   and only calls the queue's real `success` once, when every record has
+ *   been collected. This makes the whole operation occupy exactly one slot,
+ *   at its true issuance position, so its result event can't be reordered
+ *   relative to sibling requests queued around the same time -- which
+ *   driving this through the public, queue-based `openCursor()`/`continue()`
+ *   API (as this used to) cannot guarantee, since each subsequent `continue()`
+ *   step is appended to the end of the (by-then-longer) queue rather than
+ *   staying next to the steps before it.
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
  *   import('./IDBIndex.js').IDBIndexFull} source
  * @param {import('./Key.js').Value} query
@@ -1089,66 +1101,138 @@ function collectAll (source, query, count, direction, mode) {
         count = util.enforceRange(count, 'unsigned long');
     }
     const isIndexSource = util.instanceOf(source, IDBIndex);
-    const tx = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
-        isIndexSource
-            ? /** @type {import('./IDBIndex.js').IDBIndexFull} */ (source).objectStore.transaction
-            : /** @type {import('./IDBObjectStore.js').IDBObjectStoreFull} */ (source).transaction
+    const indexSource = /** @type {import('./IDBIndex.js').IDBIndexFull} */ (source);
+    const store = /** @type {import('./IDBObjectStore.js').IDBObjectStoreFull} */ (
+        isIndexSource ? indexSource.objectStore : source
     );
-    const outerRequest = tx.__createRequest(source);
-    /** @type {AnyValue[]} */
-    const results = [];
-    // `getAllRecords` needs each record's value, so it (like `getAll`) must
-    //   use `openCursor` rather than the lighter-weight `openKeyCursor`.
-    const needsValue = mode !== 'key';
-    const innerRequest = /** @type {import('./IDBRequest.js').IDBRequestFull} */ (
-        // @ts-expect-error It's ok (both `IDBObjectStore` and `IDBIndex` implement this)
-        needsValue ? source.openCursor(query, direction) : source.openKeyCursor(query, direction)
-    );
+    const tx = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (store.transaction);
 
-    /**
-     * @returns {void}
-     */
-    function finish () {
-        outerRequest.__done = true;
-        outerRequest.__result = /** @type {AnyValue} */ (results);
-        outerRequest.__error = null;
-        outerRequest.dispatchEvent(createEvent('success'));
+    IDBObjectStore.__invalidStateIfDeleted(store);
+    if (isIndexSource) {
+        IDBIndex.__invalidStateIfDeleted(indexSource);
+    }
+    IDBTransaction.__assertActive(tx);
+    const range = convertValueToKeyRange(query);
+    const multiEntryIndex = isIndexSource && Boolean(indexSource.multiEntry);
+    if (range !== undefined) {
+        // Encode the key range and cache the encoded values, matching what a
+        //   real cursor's constructor does, since `__findMultiEntry` reads
+        //   these cached values back off the range.
+        range.__lowerCached = range.lower !== undefined && Key.encode(range.lower, multiEntryIndex);
+        range.__upperCached = range.upper !== undefined && Key.encode(range.upper, multiEntryIndex);
     }
 
-    innerRequest.addEventListener('success', function () {
-        const cursor = /** @type {IDBCursorFull} */ (/** @type {unknown} */ (innerRequest.__result));
-        if (cursor === null) {
-            finish();
-            return;
-        }
-        switch (mode) {
-        case 'key':
-            results.push(cursor.primaryKey);
-            break;
-        case 'record':
-            results.push({
-                key: cursor.key,
-                primaryKey: cursor.primaryKey,
-                value: /** @type {IDBCursorWithValueFull} */ (cursor).value
-            });
-            break;
-        default:
-            results.push(/** @type {IDBCursorWithValueFull} */ (cursor).value);
-        }
-        if (count && results.length >= count) {
-            finish();
-            return;
-        }
-        cursor.continue();
-    });
-    innerRequest.addEventListener('error', function () {
-        outerRequest.__done = true;
-        outerRequest.__result = undefined;
-        outerRequest.__error = innerRequest.__error;
-        outerRequest.dispatchEvent(createEvent('error', innerRequest.__error));
-    });
+    // `getAllRecords` needs each record's value, so it (like `getAll`) must
+    //   decode the `value` column rather than the lighter-weight `key`-only
+    //   reads `getAllKeys` can get away with.
+    const needsValue = mode !== 'key';
+    const keyColumnName = isIndexSource ? util.escapeIndexNameForSQLKeyColumn(indexSource.name) : 'key';
+    const valueColumnName = needsValue ? 'value' : 'key';
 
-    return outerRequest;
+    // Inherits from `IDBCursor.prototype` (rather than being a plain object)
+    //   because `__find` dispatches to `this.__findBasic`/`this.__findMultiEntry`
+    //   as methods on `this`, not as functions looked up separately.
+    /** @type {IDBCursorFull} */
+    const state = /** @type {IDBCursorFull} */ (/** @type {unknown} */ (Object.assign(Object.create(IDBCursor.prototype), {
+        __store: store,
+        __indexSource: isIndexSource,
+        __range: range,
+        __keyColumnName: keyColumnName,
+        __valueColumnName: valueColumnName,
+        __valueDecoder: valueColumnName === 'key' ? Key : Sca,
+        __count: false,
+        __prefetchedIndex: -1,
+        __prefetchedData: null,
+        __continuationKey: undefined,
+        __continuationPrimaryKey: undefined,
+        __multiEntryExhausted: false,
+        __multiEntryIndex: multiEntryIndex,
+        __unique: direction.includes('unique'),
+        __sqlDirection: ['prev', 'prevunique'].includes(direction) ? 'DESC' : 'ASC',
+        __key: undefined
+    })));
+    // `direction` (unlike the `__`-prefixed internals above) is exposed as a
+    //   readonly getter on `IDBCursor.prototype` (via `defineReadonlyOuterInterface`)
+    //   that throws unless shadowed by an own property, exactly as a real
+    //   cursor's constructor shadows it -- a plain assignment would instead
+    //   hit that inherited accessor, which has no setter.
+    Object.defineProperty(state, 'direction', {writable: false, value: direction});
+
+    return tx.__addToTransactionQueue(function collectAllOp (sqlTx, args, success, error) {
+        /** @type {AnyValue[]} */
+        const results = [];
+        const recordsToLoad = count || CFG.cursorPreloadPackSize || 100;
+
+        /**
+         * @param {import('./Key.js').Key} k
+         * @param {import('./Key.js').Value} val
+         * @param {import('./Key.js').Key} primKey
+         * @returns {void}
+         */
+        function acceptOrFinish (k, val, primKey) {
+            if (k === undefined) {
+                success(results);
+                return;
+            }
+            state.__key = k;
+            switch (mode) {
+            case 'key':
+                results.push(primKey);
+                break;
+            case 'record':
+                results.push({key: k, primaryKey: primKey, value: val});
+                break;
+            default:
+                results.push(val);
+            }
+            if (count && results.length >= count) {
+                success(results);
+                return;
+            }
+            util.runContinuationSafely(step);
+        }
+
+        /**
+         * @returns {void}
+         */
+        function step () {
+            if (state.__prefetchedData) {
+                state.__prefetchedIndex++;
+                if (state.__prefetchedIndex < state.__prefetchedData.length) {
+                    IDBCursor.prototype.__decode.call(
+                        state, state.__prefetchedData.item(state.__prefetchedIndex),
+                        /**
+                         * @param {import('./Key.js').Key} k
+                         * @param {import('./Key.js').Value} val
+                         * @param {import('./Key.js').Key} primKey
+                         * @param {string} [encKey]
+                         * @returns {void}
+                         */
+                        function (k, val, primKey, encKey) {
+                            if (state.__multiEntryIndex && state.__unique && encKey === undefined) {
+                                // `__decode` already saw this matching key (tracked
+                                //   via `__matchedKeys`) and signaled a skip.
+                                util.runContinuationSafely(step);
+                                return;
+                            }
+                            if (state.__unique && !state.__multiEntryIndex &&
+                                encKey === Key.encode(state.__key, state.__multiEntryIndex)) {
+                                util.runContinuationSafely(step);
+                                return;
+                            }
+                            acceptOrFinish(k, val, primKey);
+                        }
+                    );
+                    return;
+                }
+            }
+            IDBCursor.prototype.__find.call(
+                state, undefined, undefined, sqlTx, acceptOrFinish, error, recordsToLoad
+            );
+        }
+
+        step();
+    }, undefined, source);
 }
 
 export {IDBCursor, IDBCursorWithValue, parseGetAllArgs, parseGetAllRecordsArgs, collectAll};

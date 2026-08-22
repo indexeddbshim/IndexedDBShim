@@ -7,6 +7,7 @@ export type RequestInfo = {
 };
 export type IDBTransactionFull = EventTarget & {
     mode: "readonly" | "readwrite" | "versionchange";
+    durability: "default" | "strict" | "relaxed";
     db: import("./IDBDatabase.js").IDBDatabaseFull;
     on__abort: () => void;
     on__complete: () => void;
@@ -19,11 +20,14 @@ export type IDBTransactionFull = EventTarget & {
     __tx: SQLTransaction;
     __id: Integer;
     __active: boolean;
+    __handlerActive: boolean;
     __running: boolean;
     __errored: boolean;
+    __committed: boolean;
     __requests: RequestInfo[];
     __db: import("./IDBDatabase.js").IDBDatabaseFull;
     __mode: string;
+    __durability: string;
     __error: null | DOMException | Error;
     __objectStoreNames: import("./DOMStringList.js").DOMStringListFull;
     __storeHandles: {
@@ -40,6 +44,7 @@ export type IDBTransactionFull = EventTarget & {
     __createRequest: (source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
     __pushToQueue: (request: import("./IDBRequest.js").IDBRequestFull | null, callback: SQLCallback, args?: ObjectArray) => void;
     __assertActive: () => void;
+    commit: () => void;
     __addNonRequestToTransactionQueue: (callback: SQLCallback, args?: ObjectArray) => void;
     __addToTransactionQueue: (callback: SQLCallback, args: ObjectArray | undefined, source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
     __assertWritable: () => void;
@@ -58,6 +63,7 @@ export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (resu
 /**
  * @typedef {EventTarget & {
  *   mode: "readonly"|"readwrite"|"versionchange",
+ *   durability: "default"|"strict"|"relaxed",
  *   db: import('./IDBDatabase.js').IDBDatabaseFull,
  *   on__abort: () => void,
  *   on__complete: () => void,
@@ -70,11 +76,14 @@ export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (resu
  *   __tx: SQLTransaction,
  *   __id: Integer,
  *   __active: boolean,
+ *   __handlerActive: boolean,
  *   __running: boolean,
  *   __errored: boolean,
+ *   __committed: boolean,
  *   __requests: RequestInfo[],
  *   __db: import('./IDBDatabase.js').IDBDatabaseFull,
  *   __mode: string,
+ *   __durability: string,
  *   __error: null|DOMException|Error,
  *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
  *   __storeHandles: {
@@ -100,6 +109,7 @@ export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (resu
  *     args?: ObjectArray
  *   ) => void,
  *   __assertActive: () => void,
+ *   commit: () => void,
  *   __addNonRequestToTransactionQueue: (
  *     callback: SQLCallback,
  *     args?: ObjectArray
@@ -154,6 +164,7 @@ declare class IDBTransaction {
      * @returns {void}
      */
     __executeRequests(this: IDBTransactionFull): void;
+    __handlerActive: boolean | undefined;
     __running: boolean | undefined;
     /**
      * Creates a new IDBRequest for the transaction.
@@ -203,9 +214,10 @@ declare class IDBTransaction {
     __pushToQueue(this: IDBTransactionFull, request: import("./IDBRequest.js").IDBRequestFull | null, callback: SQLCallback, args: ObjectArray): void;
     /**
      * @throws {DOMException}
+     * @this {IDBTransactionFull}
      * @returns {void}
      */
-    __assertActive(): void;
+    __assertActive(this: IDBTransactionFull): void;
     /**
      * @throws {DOMException}
      * @this {IDBTransactionFull}
@@ -239,6 +251,13 @@ declare class IDBTransaction {
      */
     abort(this: IDBTransactionFull): void;
     /**
+     * @see https://www.w3.org/TR/IndexedDB/#dom-idbtransaction-commit
+     * @this {IDBTransactionFull}
+     * @returns {void}
+     */
+    commit(this: IDBTransactionFull): void;
+    __committed: boolean | undefined;
+    /**
      * Used by our `EventTarget.prototype` library to implement bubbling/capturing.
      * @this {IDBTransactionFull}
      * @returns {import('./IDBDatabase.js').IDBDatabaseFull}
@@ -250,9 +269,10 @@ declare namespace IDBTransaction {
      * @param {import('./IDBDatabase.js').IDBDatabaseFull} db
      * @param {import('./DOMStringList.js').DOMStringListFull} storeNames
      * @param {string} mode
+     * @param {string} [durability]
      * @returns {IDBTransactionFull}
      */
-    function __createInstance(db: import("./IDBDatabase.js").IDBDatabaseFull, storeNames: import("./DOMStringList.js").DOMStringListFull, mode: string): IDBTransactionFull;
+    function __createInstance(db: import("./IDBDatabase.js").IDBDatabaseFull, storeNames: import("./DOMStringList.js").DOMStringListFull, mode: string, durability?: string): IDBTransactionFull;
     /**
      *
      * @param {IDBTransactionFull|null|undefined} tx

@@ -116,12 +116,10 @@ declare class IDBObjectStore {
      *
      * @param {import('./Key.js').Value} query
      * @param {boolean} [getKey]
-     * @param {boolean} [getAll]
-     * @param {Integer} [count]
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    __get(this: IDBObjectStoreFull, query: import("./Key.js").Value, getKey?: boolean, getAll?: boolean, count?: Integer): import("./IDBRequest.js").IDBRequestFull;
+    __get(this: IDBObjectStoreFull, query: import("./Key.js").Value, getKey?: boolean): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {import('./Key.js').Value} query
@@ -147,6 +145,11 @@ declare class IDBObjectStore {
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
     getAllKeys(this: IDBObjectStoreFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
+    /**
+     * @this {IDBObjectStoreFull}
+     * @returns {import('./IDBRequest.js').IDBRequestFull}
+     */
+    getAllRecords(this: IDBObjectStoreFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {import('./Key.js').Value} query

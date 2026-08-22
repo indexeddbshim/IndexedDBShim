@@ -150,6 +150,11 @@ export class IDBIndex {
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
+    getAllRecords(this: IDBIndexFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
+    /**
+     * @this {IDBIndexFull}
+     * @returns {import('./IDBRequest.js').IDBRequestFull}
+     */
     count(this: IDBIndexFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *

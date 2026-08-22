@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.0 - 8/21/2026 */
+/*! indexeddbshim - v17.3.0 - 8/22/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -1909,13 +1909,18 @@
    * @returns {void}
    */
   function setCurrentNumber(tx, store, num, successCb, failCb) {
-    num = 1 + (num === MAX_ALLOWED_CURRENT_NUMBER
-    // Since incrementing by one will have no effect in JavaScript on this
-    // unsafe max, we represent the max as a number incremented by two.
-    // The getting of the current number is never returned to the user and
-    // is only used in safe comparisons, so it is safe for us to represent
-    // it in this manner
-    ? num + 1 : num);
+    // Since incrementing by one has no effect in JavaScript on this unsafe
+    //   max (`MAX_ALLOWED_CURRENT_NUMBER + 1 === MAX_ALLOWED_CURRENT_NUMBER`
+    //   in IEEE 754 double precision), we represent the max as a number
+    //   incremented by two instead -- computed as a single `+ 2` rather
+    //   than two chained `+ 1`s, as the latter *also* rounds back to the
+    //   original value (each addition independently hits the same
+    //   unrepresentable `+ 1` and rounds down, so the two `+ 1`s don't
+    //   compose into a `+ 2`).
+    //   The getting of the current number is never returned to the user and
+    //   is only used in safe comparisons, so it is safe for us to represent
+    //   it in this manner
+    num += num === MAX_ALLOWED_CURRENT_NUMBER ? 2 : 1;
     return assignCurrentNumber(tx, store, num, successCb, failCb);
   }
 

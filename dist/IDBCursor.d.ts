@@ -47,6 +47,7 @@ export type IDBCursorFull = IDBCursor & {
 };
 export type IDBCursorWithValueFull = IDBCursorFull & {
     __request: import("./IDBRequest.js").IDBRequestFull;
+    value: import("./Key.js").Value;
 };
 export type KeySuccess = (k: import("./Key.js").Key, val: import("./Key.js").Value, primKey: import("./Key.js").Key) => void;
 export type FindError = (tx: SQLTransaction | Error | DOMException | SQLError, err?: SQLError) => void;
@@ -139,6 +140,7 @@ export type AnyValue = any;
 /**
  * @typedef {IDBCursorFull & {
  *   __request: import('./IDBRequest.js').IDBRequestFull,
+ *   value: import('./Key.js').Value,
  * }} IDBCursorWithValueFull
  */
 /**
@@ -338,5 +340,62 @@ export namespace IDBCursorWithValue {
      */
     function __createInstance(...args: any[]): IDBCursorWithValueFull;
 }
+/**
+ * `getAll`/`getAllKeys` accept either the legacy `(query, count)` signature
+ *   or, per the IndexedDB 3 draft's `getAllRecords` options shape, a single
+ *   `{query, count, direction}` options object. A plain object is never a
+ *   valid IndexedDB key (or key range), so the two forms can be told apart
+ *   unambiguously by the shape of the sole argument.
+ * @param {IArguments} args
+ * @throws {TypeError}
+ * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+ */
+export function parseGetAllArgs(args: IArguments): {
+    query: AnyValue;
+    count: Integer | undefined;
+    direction: string;
+};
+/**
+ * `getAllRecords` (IndexedDB 3.0) takes a single, optional `IDBGetAllOptions`
+ *   dictionary -- `{query, count, direction}` -- with no legacy positional
+ *   form to disambiguate against.
+ * @param {IArguments} args
+ * @throws {TypeError}
+ * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+ */
+export function parseGetAllRecordsArgs(args: IArguments): {
+    query: AnyValue;
+    count: Integer | undefined;
+    direction: string;
+};
+/**
+ * Shared implementation backing `getAll`/`getAllKeys`/`getAllRecords` on both
+ *   `IDBObjectStore` and `IDBIndex`. This walks a `find`/`decode` state
+ *   object using the exact same low-level primitives
+ *   (`__find`/`__findBasic`/`__findMultiEntry`/`__decode`) a real cursor's
+ *   `continue()` uses internally, so ordering and uniqueness semantics --
+ *   including `nextunique`/`prevunique` over `multiEntry` indexes -- always
+ *   match what iterating that same cursor manually would produce.
+ *
+ * Unlike a real cursor, none of the intermediate steps go through the
+ *   transaction's shared request queue (`__pushToQueue`): each step re-enters
+ *   the same queue slot's op function via a plain synchronous/callback chain
+ *   and only calls the queue's real `success` once, when every record has
+ *   been collected. This makes the whole operation occupy exactly one slot,
+ *   at its true issuance position, so its result event can't be reordered
+ *   relative to sibling requests queued around the same time -- which
+ *   driving this through the public, queue-based `openCursor()`/`continue()`
+ *   API (as this used to) cannot guarantee, since each subsequent `continue()`
+ *   step is appended to the end of the (by-then-longer) queue rather than
+ *   staying next to the steps before it.
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *   import('./IDBIndex.js').IDBIndexFull} source
+ * @param {import('./Key.js').Value} query
+ * @param {Integer|undefined} count
+ * @param {string} direction
+ * @param {"value"|"key"|"record"} mode
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
+ */
+export function collectAll(source: import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull, query: import("./Key.js").Value, count: Integer | undefined, direction: string, mode: "value" | "key" | "record"): import("./IDBRequest.js").IDBRequestFull;
 import { IDBRequest } from './IDBRequest.js';
 //# sourceMappingURL=IDBCursor.d.ts.map

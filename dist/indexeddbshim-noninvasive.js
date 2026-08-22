@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.0 - 8/21/2026 */
+/*! indexeddbshim - v17.3.0 - 8/22/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -4187,13 +4187,18 @@
    * @returns {void}
    */
   function setCurrentNumber(tx, store, num, successCb, failCb) {
-    num = 1 + (num === MAX_ALLOWED_CURRENT_NUMBER
-    // Since incrementing by one will have no effect in JavaScript on this
-    // unsafe max, we represent the max as a number incremented by two.
-    // The getting of the current number is never returned to the user and
-    // is only used in safe comparisons, so it is safe for us to represent
-    // it in this manner
-    ? num + 1 : num);
+    // Since incrementing by one has no effect in JavaScript on this unsafe
+    //   max (`MAX_ALLOWED_CURRENT_NUMBER + 1 === MAX_ALLOWED_CURRENT_NUMBER`
+    //   in IEEE 754 double precision), we represent the max as a number
+    //   incremented by two instead -- computed as a single `+ 2` rather
+    //   than two chained `+ 1`s, as the latter *also* rounds back to the
+    //   original value (each addition independently hits the same
+    //   unrepresentable `+ 1` and rounds down, so the two `+ 1`s don't
+    //   compose into a `+ 2`).
+    //   The getting of the current number is never returned to the user and
+    //   is only used in safe comparisons, so it is safe for us to represent
+    //   it in this manner
+    num += num === MAX_ALLOWED_CURRENT_NUMBER ? 2 : 1;
     return assignCurrentNumber(tx, store, num, successCb, failCb);
   }
 
@@ -4805,7 +4810,7 @@
 
   var uniqueID = 0;
   var listeners$1 = ['onabort', 'oncomplete', 'onerror'];
-  var readonlyProperties$3 = ['objectStoreNames', 'mode', 'db', 'error'];
+  var readonlyProperties$3 = ['objectStoreNames', 'mode', 'durability', 'db', 'error'];
 
   /**
    * @typedef {number} Integer
@@ -4822,6 +4827,7 @@
   /**
    * @typedef {EventTarget & {
    *   mode: "readonly"|"readwrite"|"versionchange",
+   *   durability: "default"|"strict"|"relaxed",
    *   db: import('./IDBDatabase.js').IDBDatabaseFull,
    *   on__abort: () => void,
    *   on__complete: () => void,
@@ -4834,11 +4840,14 @@
    *   __tx: SQLTransaction,
    *   __id: Integer,
    *   __active: boolean,
+   *   __handlerActive: boolean,
    *   __running: boolean,
    *   __errored: boolean,
+   *   __committed: boolean,
    *   __requests: RequestInfo[],
    *   __db: import('./IDBDatabase.js').IDBDatabaseFull,
    *   __mode: string,
+   *   __durability: string,
    *   __error: null|DOMException|Error,
    *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
    *   __storeHandles: {
@@ -4864,6 +4873,7 @@
    *     args?: ObjectArray
    *   ) => void,
    *   __assertActive: () => void,
+   *   commit: () => void,
    *   __addNonRequestToTransactionQueue: (
    *     callback: SQLCallback,
    *     args?: ObjectArray
@@ -4894,9 +4904,11 @@
    * @param {import('./IDBDatabase.js').IDBDatabaseFull} db
    * @param {import('./DOMStringList.js').DOMStringListFull} storeNames
    * @param {string} mode
+   * @param {string} [durability]
    * @returns {IDBTransactionFull}
    */
   IDBTransaction.__createInstance = function (db, storeNames, mode) {
+    var durability = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'default';
     /**
      * @class
      * @this {IDBTransactionFull}
@@ -4910,11 +4922,22 @@
       // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Debugging only
       me.__id = ++uniqueID; // for debugging simultaneous transactions
       me.__active = true;
+      // Tracks the spec's "active" flag for the purpose of validating new
+      //   requests/`commit()`: true only during the initial synchronous
+      //   script that created the transaction and during each dispatched
+      //   request's synchronous `success`/`error` handler. Deliberately
+      //   kept separate from `__active` above, which additionally (and
+      //   permanently, once false) signals that request-queue processing
+      //   has stopped -- `executeNextRequest` relies on that to know
+      //   whether it's still safe to finish the transaction normally.
+      me.__handlerActive = true;
       me.__running = false;
       me.__errored = false;
+      me.__committed = false;
       me.__requests = [];
       me.__objectStoreNames = storeNames;
       me.__mode = mode;
+      me.__durability = durability;
       me.__db = db;
       me.__error = null;
       // @ts-expect-error Part of `ShimEventTarget`
@@ -5008,6 +5031,15 @@
       }
       return;
     }
+
+    // The synchronous script that created this transaction (and
+    //   synchronously queued whatever requests it wanted to) has now
+    //   definitely returned control to the event loop -- this callback was
+    //   itself deferred via `setTimeout(..., 0)` for exactly that reason.
+    //   So the transaction's initial "active" window closes here, until the
+    //   first dispatched request's handler (see `success`/`error` below)
+    //   reopens it.
+    me.__handlerActive = false;
     me.__running = true;
     me.db.__db[me.mode === 'readonly' ? 'readTransaction' : 'transaction'](
     // `readTransaction` is optimized, at least in `node-websql`
@@ -5046,14 +5078,19 @@
         q.req.__result = result;
         q.req.__error = null;
         me.__active = true;
+        me.__handlerActive = true;
         var e = createEvent('success');
         q.req.dispatchEvent(e);
         // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+        me.__handlerActive = false;
         if (e.__legacyOutputDidListenersThrowError) {
           logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
-          // me.__active = false;
-          me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
-          return;
+          if (!me.__committed) {
+            // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
+            // me.__active = false;
+            me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
+            return;
+          }
         }
         runContinuationSafely(executeNextRequest);
       }
@@ -5098,15 +5135,22 @@
           me.__abortTransaction(q.req.__error);
         });
         me.__active = true;
+        me.__handlerActive = true;
         var e = createEvent('error', err, {
           bubbles: true,
           cancelable: true
         });
         q.req.dispatchEvent(e);
         // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+        me.__handlerActive = false;
         if (e.__legacyOutputDidListenersThrowError) {
           logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
           e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
+          if (me.__committed) {
+            // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
+            runContinuationSafely(executeNextRequest);
+            return;
+          }
           me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
         }
       }
@@ -5310,10 +5354,11 @@
 
   /**
    * @throws {DOMException}
+   * @this {IDBTransactionFull}
    * @returns {void}
    */
   IDBTransaction.prototype.__assertActive = function () {
-    if (!this.__active) {
+    if (!this.__active || !this.__handlerActive || this.__committed) {
       throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
   };
@@ -5530,7 +5575,29 @@
       console.log('The transaction was aborted', me);
     }
     IDBTransaction.__assertNotFinished(me);
+    if (me.__committed) {
+      throw createDOMException('InvalidStateError', 'The transaction has already been committed');
+    }
     me.__abortTransaction(null);
+  };
+
+  /**
+   * @see https://www.w3.org/TR/IndexedDB/#dom-idbtransaction-commit
+   * @this {IDBTransactionFull}
+   * @returns {void}
+   */
+  IDBTransaction.prototype.commit = function () {
+    var me = this;
+    if (!(me instanceof IDBTransaction)) {
+      throw new TypeError('Illegal invocation');
+    }
+    if (!me.__active || !me.__handlerActive || me.__committed) {
+      throw createDOMException('InvalidStateError', 'Failed to execute \'commit\' on \'IDBTransaction\': The transaction is not active.');
+    }
+    if (CFG.DEBUG) {
+      console.log('The transaction was explicitly committed', me);
+    }
+    me.__committed = true;
   };
   IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
@@ -5592,7 +5659,7 @@
    * @returns {void}
    */
   IDBTransaction.__assertActive = function (tx) {
-    if (!tx || !tx.__active) {
+    if (!tx || !tx.__active || tx.__committed) {
       throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
   };
@@ -7988,26 +8055,42 @@
    * @this {IDBIndexFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
    */
-  IDBIndex.prototype.getAll = function /* query, count */
+  IDBIndex.prototype.getAll = function /* queryOrOptions, count */
   () {
     // eslint-disable-next-line prefer-rest-params -- API
-    var _arguments3 = Array.prototype.slice.call(arguments),
-      query = _arguments3[0],
-      count = _arguments3[1];
-    return this.__fetchIndexData(query, 'value', false, count);
+    var _parseGetAllArgs = parseGetAllArgs(arguments),
+      query = _parseGetAllArgs.query,
+      count = _parseGetAllArgs.count,
+      direction = _parseGetAllArgs.direction;
+    return collectAll(this, query, count, direction, 'value');
   };
 
   /**
    * @this {IDBIndexFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
    */
-  IDBIndex.prototype.getAllKeys = function /* query, count */
+  IDBIndex.prototype.getAllKeys = function /* queryOrOptions, count */
   () {
     // eslint-disable-next-line prefer-rest-params -- API
-    var _arguments4 = Array.prototype.slice.call(arguments),
-      query = _arguments4[0],
-      count = _arguments4[1];
-    return this.__fetchIndexData(query, 'key', false, count);
+    var _parseGetAllArgs2 = parseGetAllArgs(arguments),
+      query = _parseGetAllArgs2.query,
+      count = _parseGetAllArgs2.count,
+      direction = _parseGetAllArgs2.direction;
+    return collectAll(this, query, count, direction, 'key');
+  };
+
+  /**
+   * @this {IDBIndexFull}
+   * @returns {import('./IDBRequest.js').IDBRequestFull}
+   */
+  IDBIndex.prototype.getAllRecords = function /* options */
+  () {
+    // eslint-disable-next-line prefer-rest-params -- API
+    var _parseGetAllRecordsAr = parseGetAllRecordsArgs(arguments),
+      query = _parseGetAllRecordsAr.query,
+      count = _parseGetAllRecordsAr.count,
+      direction = _parseGetAllRecordsAr.direction;
+    return collectAll(this, query, count, direction, 'record');
   };
 
   /**
@@ -9100,19 +9183,14 @@
    *
    * @param {import('./Key.js').Value} query
    * @param {boolean} [getKey]
-   * @param {boolean} [getAll]
-   * @param {Integer} [count]
    * @this {IDBObjectStoreFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
    */
-  IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
+  IDBObjectStore.prototype.__get = function (query, getKey) {
     var me = this;
-    if (count !== undefined) {
-      count = enforceRange(count, 'unsigned long');
-    }
     IDBObjectStore.__invalidStateIfDeleted(me);
     IDBTransaction.__assertActive(me.transaction);
-    var range = convertValueToKeyRange(query, !getAll);
+    var range = convertValueToKeyRange(query, true);
     var col = getKey ? 'key' : 'value';
     var sql = ['SELECT', sqlQuote(col), 'FROM', escapeStoreNameForSQL(me.__currentName)];
     /** @type {string[]} */
@@ -9121,15 +9199,7 @@
       sql.push('WHERE');
       setSQLForKeyRange(range, sqlQuote('key'), sql, sqlValues);
     }
-    if (!getAll) {
-      count = 1;
-    }
-    if (count) {
-      if (!Number.isFinite(count)) {
-        throw new TypeError('The count parameter must be a finite number');
-      }
-      sql.push('LIMIT', String(count));
-    }
+    sql.push('LIMIT', '1');
     var sqlStr = sql.join(' ');
     return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
       if (CFG.DEBUG) {
@@ -9143,27 +9213,10 @@
         try {
           // Opera can't deal with the try-catch here.
           if (data.rows.length === 0) {
-            if (getAll) {
-              success([]);
-            } else {
-              success();
-            }
+            success();
             return;
           }
-          ret = [];
-          if (getKey) {
-            for (var i = 0; i < data.rows.length; i++) {
-              // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
-              ret.push(_decode(unescapeSQLiteResponse(data.rows.item(i).key), false));
-            }
-          } else {
-            for (var _i = 0; _i < data.rows.length; _i++) {
-              ret.push(decode(unescapeSQLiteResponse(data.rows.item(_i).value)));
-            }
-          }
-          if (!getAll) {
-            ret = ret[0];
-          }
+          ret = getKey ? _decode(unescapeSQLiteResponse(data.rows.item(0).key), false) : decode(unescapeSQLiteResponse(data.rows.item(0).value));
         } catch (e) {
           // If no result is returned, or error occurs when parsing JSON
           if (CFG.DEBUG) {
@@ -9209,26 +9262,42 @@
    * @this {IDBObjectStoreFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
    */
-  IDBObjectStore.prototype.getAll = function /* query, count */
+  IDBObjectStore.prototype.getAll = function /* queryOrOptions, count */
   () {
     // eslint-disable-next-line prefer-rest-params -- API
-    var _arguments = Array.prototype.slice.call(arguments),
-      query = _arguments[0],
-      count = _arguments[1];
-    return this.__get(query, false, true, count);
+    var _parseGetAllArgs = parseGetAllArgs(arguments),
+      query = _parseGetAllArgs.query,
+      count = _parseGetAllArgs.count,
+      direction = _parseGetAllArgs.direction;
+    return collectAll(this, query, count, direction, 'value');
   };
 
   /**
    * @this {IDBObjectStoreFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
    */
-  IDBObjectStore.prototype.getAllKeys = function /* query, count */
+  IDBObjectStore.prototype.getAllKeys = function /* queryOrOptions, count */
   () {
     // eslint-disable-next-line prefer-rest-params -- API
-    var _arguments2 = Array.prototype.slice.call(arguments),
-      query = _arguments2[0],
-      count = _arguments2[1];
-    return this.__get(query, true, true, count);
+    var _parseGetAllArgs2 = parseGetAllArgs(arguments),
+      query = _parseGetAllArgs2.query,
+      count = _parseGetAllArgs2.count,
+      direction = _parseGetAllArgs2.direction;
+    return collectAll(this, query, count, direction, 'key');
+  };
+
+  /**
+   * @this {IDBObjectStoreFull}
+   * @returns {import('./IDBRequest.js').IDBRequestFull}
+   */
+  IDBObjectStore.prototype.getAllRecords = function /* options */
+  () {
+    // eslint-disable-next-line prefer-rest-params -- API
+    var _parseGetAllRecordsAr = parseGetAllRecordsArgs(arguments),
+      query = _parseGetAllRecordsAr.query,
+      count = _parseGetAllRecordsAr.count,
+      direction = _parseGetAllRecordsAr.direction;
+    return collectAll(this, query, count, direction, 'record');
   };
 
   /**
@@ -9331,9 +9400,9 @@
   () {
     var me = this;
     // eslint-disable-next-line prefer-rest-params -- API
-    var _arguments3 = Array.prototype.slice.call(arguments),
-      query = _arguments3[0],
-      direction = _arguments3[1];
+    var _arguments = Array.prototype.slice.call(arguments),
+      query = _arguments[0],
+      direction = _arguments[1];
     if (!(me instanceof IDBObjectStore)) {
       throw new TypeError('Illegal invocation');
     }
@@ -9355,9 +9424,9 @@
     }
     IDBObjectStore.__invalidStateIfDeleted(me);
     // eslint-disable-next-line prefer-rest-params -- API
-    var _arguments4 = Array.prototype.slice.call(arguments),
-      query = _arguments4[0],
-      direction = _arguments4[1];
+    var _arguments2 = Array.prototype.slice.call(arguments),
+      query = _arguments2[0],
+      direction = _arguments2[1];
     var cursor = IDBCursor.__createInstance(query, direction, me, me, 'key', 'key');
     me.__cursors.push(cursor);
     return cursor.__request;
@@ -9907,13 +9976,15 @@
    * @this {IDBDatabaseFull}
    * @returns {import('./IDBTransaction.js').IDBTransactionFull}
    */
-  IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
+  IDBDatabase.prototype.transaction = function (storeNames /* , mode, options */) {
     var _this2 = this;
     if (arguments.length === 0) {
       throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
     }
     // eslint-disable-next-line prefer-rest-params -- API
     var mode = arguments[1];
+    // eslint-disable-next-line prefer-rest-params -- API
+    var options = arguments[2];
     storeNames = isIterable(storeNames)
     // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
     ? _toConsumableArray(new Set(
@@ -9953,10 +10024,18 @@
       throw new TypeError('Invalid transaction mode: ' + mode);
     }
 
+    // Validated and reflected via `IDBTransaction.durability` for spec conformance only;
+    //   the SQLite/WebSQL backend has no equivalent flush/fsync knob to wire this to.
+    var durability = options && options.durability;
+    durability || (durability = 'default');
+    if (durability !== 'default' && durability !== 'strict' && durability !== 'relaxed') {
+      throw new TypeError('Invalid transaction durability: ' + durability);
+    }
+
     // Do not set transaction state to "inactive" yet (will be set after
     //   timeout on creating transaction instance):
     //   https://github.com/w3c/IndexedDB/issues/87
-    var trans = IDBTransaction.__createInstance(this, objectStoreNames, mode);
+    var trans = IDBTransaction.__createInstance(this, objectStoreNames, mode, durability);
     this.__transactions.push(trans);
     return trans;
   };
@@ -10613,7 +10692,12 @@
                 connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                 req.__done = true;
                 req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished /* , error */) {
+                  // Unlike ordinary requests, this dispatch doesn't go through
+                  //   `IDBTransaction`'s own `success`/`error` closures, so it must
+                  //   open/close the transaction's active-handler window itself.
+                  req.transaction.__handlerActive = true;
                   req.dispatchEvent(e);
+                  req.transaction.__handlerActive = false;
                   if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', /** @type {Error} */e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
@@ -11106,6 +11190,8 @@
 
   var shimIndexedDB = IDBFactory.__createInstance();
 
+  var cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
+
   /**
    * @typedef {number} Integer
    */
@@ -11187,6 +11273,7 @@
   /**
    * @typedef {IDBCursorFull & {
    *   __request: import('./IDBRequest.js').IDBRequestFull,
+   *   value: import('./Key.js').Value,
    * }} IDBCursorWithValueFull
    */
 
@@ -11226,7 +11313,7 @@
     }
     IDBTransaction.__assertActive(store.transaction);
     var range = convertValueToKeyRange(query);
-    if (direction !== undefined && !['next', 'prev', 'nextunique', 'prevunique'].includes(direction)) {
+    if (direction !== undefined && !cursorDirections.includes(direction)) {
       throw new TypeError(direction + 'is not a valid cursor direction');
     }
     Object.defineProperties(this, {
@@ -11777,7 +11864,20 @@
           if (me.__advanceCount && me.__advanceCount >= 2 && k !== undefined) {
             me.__advanceCount--;
             me.__key = k;
-            me.__continue(undefined, true);
+            me.__sourceOrEffectiveObjStoreDeleted();
+            // This is an internal continuation step within a single
+            //   `advance()` call, not a fresh user-facing dispatch --
+            //   it's already part of an in-flight, already-validated
+            //   operation, so briefly reopen the active-handler
+            //   window `__pushToQueue` (via `__continueFinish`)
+            //   checks, rather than routing back through the public
+            //   `__continue()` (which would apply that check as if
+            //   this were new activity from user code).
+            var transaction = (/** @type {{transaction: import('./IDBTransaction.js').IDBTransactionFull}} */
+            me.__store).transaction;
+            transaction.__handlerActive = true;
+            me.__continueFinish(undefined, undefined, true);
+            transaction.__handlerActive = false;
             // We don't call success yet but do need to advance the transaction queue
             runContinuationSafely(/** @type {() => void} */executeNextRequest);
             return;
@@ -11804,6 +11904,18 @@
               runContinuationSafely(function () {
                 return cursorContinue(tx, args, success, error);
               });
+            }
+            if (me.__multiEntryIndex && me.__unique && encKey === undefined) {
+              // `__decode` found this row's matching key already seen
+              //   (tracked via `__matchedKeys`) and signaled a skip by
+              //   omitting `encKey`; move on to the next prefetched
+              //   row instead of treating the missing key as the end
+              //   of the cursor.
+              // @ts-expect-error Todo: Our bug to fix
+              runContinuationSafely(function () {
+                return cursorContinue(tx, args, success, error);
+              });
+              return;
             }
             if (me.__unique && !me.__multiEntryIndex && encKey === _encode(me.key, me.__multiEntryIndex)) {
               // @ts-expect-error Todo: Our bug to fix
@@ -11942,6 +12054,7 @@
      */
     function addToQueue(clonedValue) {
       // We set the `invalidateCache` argument to `false` since the old value shouldn't be accessed
+      // @ts-ignore -- API (not erring in TS 6)
       IDBObjectStore.__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
@@ -12068,6 +12181,238 @@
   Object.defineProperty(IDBCursorWithValue, 'prototype', {
     writable: false
   });
+  /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
+  /**
+   * Validates `direction` and fills in defaults for the `{query, count,
+   *   direction}` shape shared by `getAll`/`getAllKeys`/`getAllRecords`.
+   * @param {AnyValue} options
+   * @throws {TypeError}
+   * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+   */
+  function normalizeGetAllOptions(options) {
+    var _ref = /** @type {AnyValue} */options !== null && options !== void 0 ? options : {},
+      query = _ref.query,
+      count = _ref.count,
+      _ref$direction = _ref.direction,
+      direction = _ref$direction === void 0 ? 'next' : _ref$direction;
+    if (!cursorDirections.includes(direction)) {
+      throw new TypeError('`' + direction + '` is not a valid direction');
+    }
+    return {
+      query: query,
+      count: count,
+      direction: direction
+    };
+  }
+
+  /**
+   * `getAll`/`getAllKeys` accept either the legacy `(query, count)` signature
+   *   or, per the IndexedDB 3 draft's `getAllRecords` options shape, a single
+   *   `{query, count, direction}` options object. A plain object is never a
+   *   valid IndexedDB key (or key range), so the two forms can be told apart
+   *   unambiguously by the shape of the sole argument.
+   * @param {IArguments} args
+   * @throws {TypeError}
+   * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+   */
+  function parseGetAllArgs(args) {
+    var arg0 = args[0];
+    if (args.length === 1 && isObj(arg0) && !Array.isArray(arg0) && !isDate(arg0) && !isBinary(arg0) && !('upper' in arg0 && 'lowerOpen' in arg0 && typeof arg0.lowerOpen === 'boolean') && (
+    // IDBKeyRange-like
+    // A plain object with none of these keys could still be an
+    //   (invalid) attempted key -- e.g. WPT's key-conversion-exceptions
+    //   tests pass `{}` expecting a `DataError`, not a filter-less
+    //   `getAll()` -- so only treat it as the options form if it
+    //   actually looks like one.
+    Object.hasOwn(arg0, 'query') || Object.hasOwn(arg0, 'count') || Object.hasOwn(arg0, 'direction'))) {
+      return normalizeGetAllOptions(arg0);
+    }
+    var _args = _slicedToArray(args, 2),
+      query = _args[0],
+      count = _args[1];
+    return normalizeGetAllOptions({
+      query: query,
+      count: count
+    });
+  }
+
+  /**
+   * `getAllRecords` (IndexedDB 3.0) takes a single, optional `IDBGetAllOptions`
+   *   dictionary -- `{query, count, direction}` -- with no legacy positional
+   *   form to disambiguate against.
+   * @param {IArguments} args
+   * @throws {TypeError}
+   * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+   */
+  function parseGetAllRecordsArgs(args) {
+    return normalizeGetAllOptions(args[0]);
+  }
+
+  /**
+   * Shared implementation backing `getAll`/`getAllKeys`/`getAllRecords` on both
+   *   `IDBObjectStore` and `IDBIndex`. This walks a `find`/`decode` state
+   *   object using the exact same low-level primitives
+   *   (`__find`/`__findBasic`/`__findMultiEntry`/`__decode`) a real cursor's
+   *   `continue()` uses internally, so ordering and uniqueness semantics --
+   *   including `nextunique`/`prevunique` over `multiEntry` indexes -- always
+   *   match what iterating that same cursor manually would produce.
+   *
+   * Unlike a real cursor, none of the intermediate steps go through the
+   *   transaction's shared request queue (`__pushToQueue`): each step re-enters
+   *   the same queue slot's op function via a plain synchronous/callback chain
+   *   and only calls the queue's real `success` once, when every record has
+   *   been collected. This makes the whole operation occupy exactly one slot,
+   *   at its true issuance position, so its result event can't be reordered
+   *   relative to sibling requests queued around the same time -- which
+   *   driving this through the public, queue-based `openCursor()`/`continue()`
+   *   API (as this used to) cannot guarantee, since each subsequent `continue()`
+   *   step is appended to the end of the (by-then-longer) queue rather than
+   *   staying next to the steps before it.
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
+   *   import('./IDBIndex.js').IDBIndexFull} source
+   * @param {import('./Key.js').Value} query
+   * @param {Integer|undefined} count
+   * @param {string} direction
+   * @param {"value"|"key"|"record"} mode
+   * @returns {import('./IDBRequest.js').IDBRequestFull}
+   */
+  function collectAll(source, query, count, direction, mode) {
+    if (count !== undefined) {
+      count = enforceRange(count, 'unsigned long');
+    }
+    var isIndexSource = instanceOf(source, IDBIndex);
+    var indexSource = /** @type {import('./IDBIndex.js').IDBIndexFull} */source;
+    var store = /** @type {import('./IDBObjectStore.js').IDBObjectStoreFull} */
+    isIndexSource ? indexSource.objectStore : source;
+    var tx = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */store.transaction;
+    IDBObjectStore.__invalidStateIfDeleted(store);
+    if (isIndexSource) {
+      IDBIndex.__invalidStateIfDeleted(indexSource);
+    }
+    IDBTransaction.__assertActive(tx);
+    var range = convertValueToKeyRange(query);
+    var multiEntryIndex = isIndexSource && Boolean(indexSource.multiEntry);
+    if (range !== undefined) {
+      // Encode the key range and cache the encoded values, matching what a
+      //   real cursor's constructor does, since `__findMultiEntry` reads
+      //   these cached values back off the range.
+      range.__lowerCached = range.lower !== undefined && _encode(range.lower, multiEntryIndex);
+      range.__upperCached = range.upper !== undefined && _encode(range.upper, multiEntryIndex);
+    }
+
+    // `getAllRecords` needs each record's value, so it (like `getAll`) must
+    //   decode the `value` column rather than the lighter-weight `key`-only
+    //   reads `getAllKeys` can get away with.
+    var needsValue = mode !== 'key';
+    var keyColumnName = isIndexSource ? escapeIndexNameForSQLKeyColumn(indexSource.name) : 'key';
+    var valueColumnName = needsValue ? 'value' : 'key';
+
+    // Inherits from `IDBCursor.prototype` (rather than being a plain object)
+    //   because `__find` dispatches to `this.__findBasic`/`this.__findMultiEntry`
+    //   as methods on `this`, not as functions looked up separately.
+    /** @type {IDBCursorFull} */
+    var state = /** @type {IDBCursorFull} */ /** @type {unknown} */Object.assign(Object.create(IDBCursor.prototype), {
+      __store: store,
+      __indexSource: isIndexSource,
+      __range: range,
+      __keyColumnName: keyColumnName,
+      __valueColumnName: valueColumnName,
+      __valueDecoder: valueColumnName === 'key' ? Key : Sca,
+      __count: false,
+      __prefetchedIndex: -1,
+      __prefetchedData: null,
+      __continuationKey: undefined,
+      __continuationPrimaryKey: undefined,
+      __multiEntryExhausted: false,
+      __multiEntryIndex: multiEntryIndex,
+      __unique: direction.includes('unique'),
+      __sqlDirection: ['prev', 'prevunique'].includes(direction) ? 'DESC' : 'ASC',
+      __key: undefined
+    });
+    // `direction` (unlike the `__`-prefixed internals above) is exposed as a
+    //   readonly getter on `IDBCursor.prototype` (via `defineReadonlyOuterInterface`)
+    //   that throws unless shadowed by an own property, exactly as a real
+    //   cursor's constructor shadows it -- a plain assignment would instead
+    //   hit that inherited accessor, which has no setter.
+    Object.defineProperty(state, 'direction', {
+      writable: false,
+      value: direction
+    });
+    return tx.__addToTransactionQueue(function collectAllOp(sqlTx, args, success, error) {
+      /** @type {AnyValue[]} */
+      var results = [];
+      var recordsToLoad = count || CFG.cursorPreloadPackSize || 100;
+
+      /**
+       * @param {import('./Key.js').Key} k
+       * @param {import('./Key.js').Value} val
+       * @param {import('./Key.js').Key} primKey
+       * @returns {void}
+       */
+      function acceptOrFinish(k, val, primKey) {
+        if (k === undefined) {
+          success(results);
+          return;
+        }
+        state.__key = k;
+        switch (mode) {
+          case 'key':
+            results.push(primKey);
+            break;
+          case 'record':
+            results.push({
+              key: k,
+              primaryKey: primKey,
+              value: val
+            });
+            break;
+          default:
+            results.push(val);
+        }
+        if (count && results.length >= count) {
+          success(results);
+          return;
+        }
+        runContinuationSafely(step);
+      }
+
+      /**
+       * @returns {void}
+       */
+      function step() {
+        if (state.__prefetchedData) {
+          state.__prefetchedIndex++;
+          if (state.__prefetchedIndex < state.__prefetchedData.length) {
+            IDBCursor.prototype.__decode.call(state, state.__prefetchedData.item(state.__prefetchedIndex),
+            /**
+             * @param {import('./Key.js').Key} k
+             * @param {import('./Key.js').Value} val
+             * @param {import('./Key.js').Key} primKey
+             * @param {string} [encKey]
+             * @returns {void}
+             */
+            function (k, val, primKey, encKey) {
+              if (state.__multiEntryIndex && state.__unique && encKey === undefined) {
+                // `__decode` already saw this matching key (tracked
+                //   via `__matchedKeys`) and signaled a skip.
+                runContinuationSafely(step);
+                return;
+              }
+              if (state.__unique && !state.__multiEntryIndex && encKey === _encode(state.__key, state.__multiEntryIndex)) {
+                runContinuationSafely(step);
+                return;
+              }
+              acceptOrFinish(k, val, primKey);
+            });
+            return;
+          }
+        }
+        IDBCursor.prototype.__find.call(state, undefined, undefined, sqlTx, acceptOrFinish, error, recordsToLoad);
+      }
+      step();
+    }, undefined, source);
+  }
 
   /**
    * @typedef {any} AnyValue
