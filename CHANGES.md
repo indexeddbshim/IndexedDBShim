@@ -1,5 +1,11 @@
 # CHANGES for indexeddbshim
 
+## 17.3.0
+
+- fix: use current spec-enjoined API for a `QuotaExceededError` rather than `DOMException`
+- chore: update typeson-registry, devDeps; lint
+- chore: adjust for TS 7 compatibility
+
 ## 17.2.2
 
 - fix EBUSY on Windows deleteDatabase: release cached SQLite handle before unlink; fixes #382
