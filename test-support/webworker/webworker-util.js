@@ -82,7 +82,15 @@ export class MsgStream extends EventEmitter {
             // `BSON.serialize` no longer accepts an array as the root
             //   document, so wrap it in an object; `deserialize` below
             //   unwraps it again.
-            s.send(BSON.serialize({m: ms}), {binary: true, mask: true});
+            //
+            // `mask` is deliberately left unset: this `send` runs on both
+            //   the client (worker) and server (master) side of the socket,
+            //   and per RFC 6455 only client-to-server frames may be
+            //   masked -- a server that masks its frames produces an
+            //   invalid frame the client-side receiver rejects. Leaving it
+            //   unset lets `ws` default it correctly per-socket
+            //   (`!this._isServer`).
+            s.send(BSON.serialize({m: ms}), {binary: true});
         };
 
         s.on('message', function (ms) {
