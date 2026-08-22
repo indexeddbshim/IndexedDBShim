@@ -2,7 +2,7 @@
 
 ## 17.3.0
 
-- feat: add `IDBTransaction.commit()`
+- feat: add `IDBTransaction.commit()`, including making a transaction correctly go inactive between request callbacks (rather than staying "active" for its whole lifetime) so `commit()`'s own inactive check works as spec'd; this also fixes transactions hanging/growing memory unboundedly under WPT's `keepAlive()`-style request-reissuing pattern, traced to SQL callbacks resolving via `queueMicrotask` (now `setTimeout`) and starving out real timers
 - feat: add `durability` transaction option and `IDBTransaction.durability` attribute (spec conformance only; no effect on the SQLite/WebSQL backend's actual flush behavior)
 - feat: add a `direction` option to `IDBObjectStore`/`IDBIndex` `getAll`/`getAllKeys`, via a single `{query, count, direction}` options object (in addition to the existing `(query, count)` form); results are collected by internally driving a cursor with that direction, so ordering and uniqueness (`nextunique`/`prevunique`), including over `multiEntry` indexes, match cursor iteration exactly
 - feat: add `IDBObjectStore`/`IDBIndex` `getAllRecords(options)` per the IndexedDB 3.0 draft, returning `{key, primaryKey, value}` records for a given `{query, count, direction}`
