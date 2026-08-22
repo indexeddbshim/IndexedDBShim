@@ -57,6 +57,7 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Co
 } else {
     tests = [
         'api-spec.js',
+        'DOMException-spec.js',
         'IDBCursor/delete-spec.js',
         'IDBCursor/update-spec.js',
         'IDBFactory/cmp-spec.js',

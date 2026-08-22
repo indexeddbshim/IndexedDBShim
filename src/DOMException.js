@@ -328,16 +328,19 @@ function findError (args) {
  * @param {SQLError} webSQLErr
  * @returns {(DOMException|Error) & {
  *   sqlError: SQLError
- * }}
+ * }|QuotaExceededError}
  */
 function webSQLErrback (webSQLErr) {
-    let name, message;
+    let name, message, useQuotaExceededError = false;
     switch (webSQLErr.code) {
     case 4: { // SQLError.QUOTA_ERR
         name = 'QuotaExceededError';
         message = 'The operation failed because there was not enough ' +
             'remaining storage space, or the storage quota was reached ' +
             'and the user declined to give more space to the database.';
+        if (typeof QuotaExceededError !== 'undefined') {
+            useQuotaExceededError = true;
+        }
         break;
     }
     /*
@@ -356,6 +359,11 @@ function webSQLErrback (webSQLErr) {
     }
     }
     message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
+
+    if (useQuotaExceededError) {
+        return new QuotaExceededError(message);
+    }
+
     const err =
         /**
          * @type {(Error | DOMException) & {
