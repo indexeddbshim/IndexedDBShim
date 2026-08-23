@@ -960,6 +960,7 @@ util.defineReadonlyOuterInterface(
     IDBCursor.prototype,
     ['source', 'direction', 'key', 'primaryKey', 'request']
 );
+util.setOperationNames(IDBCursor.prototype);
 Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
 });
@@ -1098,13 +1099,23 @@ function parseGetAllRecordsArgs (args) {
  * @param {Integer|undefined} count
  * @param {string} direction
  * @param {"value"|"key"|"record"} mode
+ * @throws {TypeError}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 function collectAll (source, query, count, direction, mode) {
+    const isIndexSource = util.instanceOf(source, IDBIndex);
+    if (!isIndexSource && !util.instanceOf(source, IDBObjectStore)) {
+        // Per Web IDL, an operation invoked on a `this` that isn't an
+        //   instance of the interface it's defined on must throw a
+        //   TypeError ("illegal invocation") -- checked here, rather than
+        //   left to fall through to `store.transaction`/`__assertActive`
+        //   below, since those instead throw `TransactionInactiveError`
+        //   for a `this` with no real `transaction` property.
+        throw new TypeError('Illegal invocation');
+    }
     if (count !== undefined) {
         count = util.enforceRange(count, 'unsigned long');
     }
-    const isIndexSource = util.instanceOf(source, IDBIndex);
     const indexSource = /** @type {import('./IDBIndex.js').IDBIndexFull} */ (source);
     const store = /** @type {import('./IDBObjectStore.js').IDBObjectStoreFull} */ (
         isIndexSource ? indexSource.objectStore : source

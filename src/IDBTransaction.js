@@ -956,6 +956,7 @@ IDBTransaction.prototype.__getParent = function () {
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineOuterInterface(IDBTransaction.prototype, listeners);
 util.defineReadonlyOuterInterface(IDBTransaction.prototype, readonlyProperties);
+util.setOperationNames(IDBTransaction.prototype);
 
 Object.defineProperty(IDBTransaction.prototype, 'constructor', {
     enumerable: false,

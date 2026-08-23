@@ -352,6 +352,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineOuterInterface(IDBDatabase.prototype, listeners);
 util.defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties);
+util.setOperationNames(IDBDatabase.prototype);
 
 Object.defineProperty(IDBDatabase.prototype, 'constructor', {
     enumerable: false,

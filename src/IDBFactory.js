@@ -1171,6 +1171,7 @@ IDBFactory.prototype.__setConnectionQueueOrigin = function (origin = getOrigin()
 IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactoryPrototype';
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
+util.setOperationNames(IDBFactory.prototype);
 Object.defineProperty(IDBFactory, 'prototype', {
     writable: false
 });

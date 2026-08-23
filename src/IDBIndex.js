@@ -798,6 +798,7 @@ Object.defineProperty(IDBIndex, Symbol.hasInstance, {
 
 util.defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties);
 util.defineOuterInterface(IDBIndex.prototype, ['name']);
+util.setOperationNames(IDBIndex.prototype);
 
 IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndexPrototype';
 

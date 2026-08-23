@@ -1145,6 +1145,7 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineReadonlyOuterInterface(IDBObjectStore.prototype, readonlyProperties);
 util.defineOuterInterface(IDBObjectStore.prototype, ['name']);
+util.setOperationNames(IDBObjectStore.prototype);
 
 IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStorePrototype';
 

@@ -141,6 +141,9 @@ IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
 IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRangePrototype';
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
+util.setOperationNames(IDBKeyRange.prototype);
+util.setOperationNames(IDBKeyRange);
+
 readonlyProperties.forEach((prop) => {
     Object.defineProperty(IDBKeyRange.prototype, '__' + prop, {
         enumerable: false,

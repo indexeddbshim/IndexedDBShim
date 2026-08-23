@@ -17,7 +17,6 @@ mostly relate to most of the same issues.)
 0. MISSING APIS
 
 - `IDBTransaction.prototype.commit` (newly added)
-    - `idlharness.any.js`
     - `idb-explicit-commit.any.js`
 - `durability` transaction option (newly added)
     - https://github.com/axemclion/IndexedDBShim/issues/351
@@ -521,6 +520,7 @@ const goodBad = {
         'idbtransaction_abort.js',
         'idbtransaction_objectStoreNames.js',
         'idbversionchangeevent.js',
+        'idlharness.any.js',
         'key-conversion-exceptions.js',
         'key_valid.js',
         'keygenerator-constrainterror.js',
@@ -584,7 +584,6 @@ const goodBad = {
         'idb-binary-key-detached.js',
         'idb-explicit-commit.any.js',
         'idbfactory-origin-isolation.js',
-        'idlharness.any.js',
         'key_invalid.js',
         'structured-clone-transaction-state.any.js',
         'structured-clone.any.js',

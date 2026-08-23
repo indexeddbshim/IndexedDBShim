@@ -434,6 +434,34 @@ function defineReadonlyProperties (obj, props, getter = null) {
 }
 
 /**
+ * `X.prototype.method = function (...) {}` (an assignment to a
+ * `MemberExpression`, as used throughout this codebase for IDB
+ * interface operations) does not get its `name` inferred by the
+ * engine the way object-literal method shorthand or a plain variable
+ * assignment would, so it is left as `''`. Per Web IDL, an operation's
+ * function object must have its `name` set to the operation's
+ * identifier, so call this once all of an interface's own-property
+ * operations have been assigned onto its prototype (or, for static
+ * operations, onto the constructor itself) to patch any still-empty
+ * names in place.
+ * @param {object} obj
+ * @returns {void}
+ */
+function setOperationNames (obj) {
+    Object.getOwnPropertyNames(obj).forEach((key) => {
+        if (key === 'constructor') {
+            return;
+        }
+        const desc = /** @type {PropertyDescriptor} */ (
+            Object.getOwnPropertyDescriptor(obj, key)
+        );
+        if (typeof desc.value === 'function' && desc.value.name === '') {
+            Object.defineProperty(desc.value, 'name', {value: key, configurable: true});
+        }
+    });
+}
+
+/**
  *
  * @param {string} item
  * @returns {boolean}
@@ -614,6 +642,7 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     isObj, isDate, isBlob, isRegExp, isFile, isBinary, isIterable,
     defineOuterInterface, defineReadonlyOuterInterface,
     defineListenerProperties, defineReadonlyProperties,
+    setOperationNames,
     isValidKeyPath, enforceRange,
     convertToDOMString, convertToSequenceDOMString,
     isNullish, runContinuationSafely};
