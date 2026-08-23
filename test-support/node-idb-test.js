@@ -86,6 +86,10 @@ const shimNS = {
 };
 let ct = 0;
 let excludedCount = 0;
+// Set only when running the entire default corpus (no argument/`all`); used
+//   to gate the "Files that can be removed from our listings" diagnostic,
+//   which is only meaningful when every known file was actually attempted.
+let isFullSuiteRun = false;
 
 /**
  * @returns {void}
@@ -182,19 +186,17 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                     }, '\n')
                 );
 
-                const runFiles = Object.keys(shimNS.files).flatMap((status) => {
-                    return shimNS.files[status];
-                });
-
-                const removeable = [];
-                knownFiles.forEach((priorReportedFile) => {
-                    if (!runFiles.includes(priorReportedFile)) {
-                        removeable.push(priorReportedFile);
-                    }
-                });
-
-                // Don't show for small executions
-                if (shimNS.files['Files with all tests passing'].length > 1) {
+                // Only meaningful when every known file was actually attempted
+                if (isFullSuiteRun) {
+                    const runFiles = Object.keys(shimNS.files).flatMap((status) => {
+                        return shimNS.files[status];
+                    });
+                    const removeable = [];
+                    knownFiles.forEach((priorReportedFile) => {
+                        if (!runFiles.includes(priorReportedFile)) {
+                            removeable.push(priorReportedFile);
+                        }
+                    });
                     console.log('\nFiles that can be removed from our listings', removeable, '\n');
                 }
 
@@ -745,6 +747,10 @@ try {
             console.error('Error 9', err);
             break;
         }
+        // A `fileIndex`/`endFileCount` range still narrows `files` down to a
+        //   slice inside `readAndEvaluateFiles`, so this is only the true
+        //   full suite when no such range was requested.
+        isFullSuiteRun = !fileIndex;
         await readAndEvaluateFiles(files);
         break;
     }
