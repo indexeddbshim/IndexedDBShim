@@ -557,12 +557,22 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
         return /** @type {{type: KeyType; value: Value}} */ (ret);
     } case 'string': {
         return /** @type {{type: KeyType; value: Value}} */ (ret);
-    } case 'binary': { // May throw (if detached)
+    } case 'binary': {
         // Get a copy of the bytes held by the buffer source
         // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
-        const octets = getCopyBytesHeldByBufferSource(
-            /** @type {BufferSource} */ (input)
-        );
+        // A detached buffer/view can't be read -- the engine itself throws
+        //   (e.g. "Cannot perform Construct on a detached ArrayBuffer")
+        //   rather than us being able to detect this up front, so treat any
+        //   such failure the same as any other invalid key rather than
+        //   letting that native error escape uncaught.
+        let octets;
+        try {
+            octets = getCopyBytesHeldByBufferSource(
+                /** @type {BufferSource} */ (input)
+            );
+        } catch {
+            return {type, invalid: true, message: 'Could not read the buffer source (it may be detached)'};
+        }
         return {type: 'binary', value: octets};
     } case 'array': { // May throw (from binary)
         const arr = /** @type {Array<any>} */ (input);

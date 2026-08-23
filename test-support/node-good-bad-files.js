@@ -91,20 +91,12 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
-6. NODE ISSUE-RELATED
-
-- `idb-binary-key-detached.any.js` - Requires `ArrayBuffer.transfer` but not available in Node; see https://github.com/jsdom/jsdom/issues/1838 and https://github.com/axemclion/IndexedDBShim/issues/283
-
-// Passing no argument to `node-idb-test.js` will test all of the IndexedDB
-//   tests including some worker tests, but only those within the
-//  `IndexedDB` directory
-
-7. BLOB
+6. BLOB
 
 - 'blob-contenttype.any.js' - Failing
 - 'blob-composite-blob-reads.any.js' - Failing
 
-8. PROXY
+7. PROXY
 
 - 'key_invalid.any.js'/'key_invalid.any.worker.js' - We can't detect proxies
     from JS, so a `Proxy`-wrapped array is indistinguishable from a real one
@@ -112,7 +104,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     live-removed at load time via `node-replacement-hacks.js` rather than
     left failing (see README's Known Issues)
 
-9. HTML in tests
+8. HTML in tests
 
 - `file_support.sub.js` - Looks for an Element though we are not creating HTML as
    in tests (could try polyfilling `document.getElementById()`)
@@ -120,7 +112,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - 'ready-state-destroyed-execution-context.js' - Failing (iframe)
 - 'idb-partitioned-basic.sub.js' - Timing out (iframe)
 
-10. UNKNOWN
+9. UNKNOWN
 
 - `request-abort-ordering.any.js` - This times out sometimes (when run with full tests); possibly due to what it is following?
 - 'idbobjectstore_getAllKeys.any.js' - Failing sometimes (when run full tests)
@@ -280,7 +272,6 @@ const goodBad = {
         'event-dispatch-active-flag.any.js',
         'file_support.sub.js',
         'get-databases.any.js',
-        'idb-binary-key-detached.any.js',
         'idb-partitioned-persistence.sub.js',
         'idb_binary_key_conversion.any.js',
         'idbcursor-continue.any.js',
@@ -300,7 +291,6 @@ const goodBad = {
         'idbobjectstore-cross-realm-methods.js',
         'idbobjectstore-put-unique-index-constraint-is-atomic.any.js',
         'idbobjectstore_getAll-options.any.js',
-        'idbobjectstore_getAll.any.js',
         'idbobjectstore_getAllKeys-options.any.js',
         'idbobjectstore_getAllKeys.any.js',
         'idbobjectstore_getAllRecords.any.js',
@@ -405,6 +395,7 @@ const goodBad = {
         'fire-upgradeneeded-event-exception.any.js',
         'globalscope-indexedDB-SameObject.any.js',
         'historical.any.js',
+        'idb-binary-key-detached.any.js',
         'idb-binary-key-roundtrip.any.js',
         'idb-explicit-commit-throw.any.js',
         'idb_webworkers.js',
@@ -489,6 +480,7 @@ const goodBad = {
         'idbobjectstore_delete.any.js',
         'idbobjectstore_deleteIndex.any.js',
         'idbobjectstore_get.any.js',
+        'idbobjectstore_getAll.any.js',
         'idbobjectstore_getKey.any.js',
         'idbobjectstore_index.any.js',
         'idbobjectstore_keyPath.any.js',
