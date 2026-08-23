@@ -188,6 +188,12 @@ export const WorkerLocation = function (url) {
         case 'gopher':
             return 70;
 
+        // `data:`/`blob:` (used by the SharedWorker interface-exposure
+        //   tests) have no network authority component at all, so having
+        //   no port is expected, not an error.
+        case 'data': case 'blob':
+            return undefined;
+
         default:
             console.error(
                 'Unknown protocol \'' + proto + '\'; returning undefined'

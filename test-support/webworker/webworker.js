@@ -37,7 +37,6 @@ import http from 'node:http';
 import path from 'node:path';
 import util from 'node:util';
 import os from 'node:os';
-import url from 'node:url';
 
 import {WebSocketServer} from 'ws';
 import * as wwutil from './webworker-util.js';
@@ -115,15 +114,16 @@ function WebWorker (workerConfig) {
         opts ||= {};
 
         let basePath;
-        // We don't use `new URL` as we need `url.parse` relative URL behavior; see
-        //   https://github.com/nodejs/node/issues/12682
-        const urlObj = url.parse(src); // eslint-disable-line n/no-deprecated-api -- No replacement
-        if (urlObj.host !== null) {
-            const {protocol} = urlObj;
+        // `url.parse` was only ever used here to classify `src` (absolute URL
+        //   with a scheme, absolute path, or relative path) -- `URL.canParse`
+        //   does that without deprecation and without needing a base for the
+        //   relative-path case, since that case never reaches `new URL` here.
+        if (URL.canParse(src)) {
+            const {protocol} = new URL(src);
             if (!(workerConfig.permittedProtocols || ['http', 'https']).map((p) => p + ':').includes(protocol)) {
                 throw new TypeError('This worker is not configured to support the protocol of the supplied Worker source argument (' + protocol + ').');
             }
-        } else if (urlObj.pathname && (/^[\\\/]/v).test(urlObj.pathname)) {
+        } else if ((/^[\\\/]/v).test(src)) {
             if (workerConfig.rootPath === false) {
                 throw new TypeError('Absolute paths are not allowed when `rootPath` is `false`');
             }
@@ -148,7 +148,6 @@ function WebWorker (workerConfig) {
             }
             basePath ||= wwutil.makeFileURL(workerConfig, process.cwd()) || 'http://127.0.0.1';
             src = new URL(src, basePath);
-            // const urlObj = url.parse(src);
         }
 
         // The timeout ID for killing off this worker if it is unresponsive to a
