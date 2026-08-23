@@ -375,12 +375,29 @@ IDBTransaction.prototype.__executeRequests = function () {
                 try {
                     q = me.__requests[i];
                     if (!q.req) {
+                        // Non-standard, non-`IDBRequest` queue entries (e.g.
+                        //   the internal `onupgradeneeded` dispatch op in
+                        //   `IDBFactory.js`) dispatch straight to user code
+                        //   without going through `success`/`error` below --
+                        //   unlike those, they never restore `__active`/
+                        //   `__handlerActive` to `true` before doing so, so
+                        //   they rely on the flags being left as they are
+                        //   (not reset here).
                         q.op(tx, q.args, () => util.runContinuationSafely(executeNextRequest), error);
                         return;
                     }
                     if (q.req.__done) { // Avoid continuing with aborted requests
                         return;
                     }
+                    // We're now handing off to (possibly async) work for
+                    //   this request, so the transaction is no longer active
+                    //   until its own `success`/`error` dispatch (below)
+                    //   sets these flags again -- a check that happens to
+                    //   run during this gap (e.g. `commit()` called from an
+                    //   unrelated `setTimeout`) must see the transaction as
+                    //   inactive, per spec.
+                    me.__active = false;
+                    me.__handlerActive = false;
                     q.op(tx, q.args, success, error, executeNextRequest);
                 } catch (e) {
                     error(/** @type {Error} */ (e));

@@ -704,8 +704,16 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
                     const {transaction} = /** @type {{transaction: import('./IDBTransaction.js').IDBTransactionFull}} */ (
                         me.__store
                     );
+                    // `runQueuedRequest` (in `IDBTransaction.js`) resets both
+                    //   `__active` and `__handlerActive` to `false` right
+                    //   before invoking this op, so both -- not just
+                    //   `__handlerActive` -- need reopening here for
+                    //   `__pushToQueue`'s `__assertActive()` check below to
+                    //   pass.
+                    transaction.__active = true;
                     transaction.__handlerActive = true;
                     me.__continueFinish(undefined, undefined, true);
+                    transaction.__active = false;
                     transaction.__handlerActive = false;
                     // We don't call success yet but do need to advance the transaction queue
                     util.runContinuationSafely(/** @type {() => void} */ (executeNextRequest));
