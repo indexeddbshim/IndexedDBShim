@@ -1045,24 +1045,24 @@ function normalizeGetAllOptions (options) {
 /**
  * `getAll`/`getAllKeys` accept either the legacy `(query, count)` signature
  *   or, per the IndexedDB 3 draft's `getAllRecords` options shape, a single
- *   `{query, count, direction}` options object. A plain object is never a
- *   valid IndexedDB key (or key range), so the two forms can be told apart
- *   unambiguously by the shape of the sole argument.
+ *   `{query, count, direction}` options object -- including an *empty*
+ *   `{}` (WPT's own tests call `getAll({})` expecting every record back,
+ *   the same as `getAll()`, not a `DataError` from treating `{}` as an
+ *   invalid key). A plain object is never a valid IndexedDB key (or key
+ *   range), so the two forms can be told apart unambiguously by the shape
+ *   of the first argument alone -- WPT's own `get_all_with_options_and_count_test`
+ *   deliberately calls `getAll(options, count)` (an extra, non-overload-matching
+ *   second argument, which JS simply ignores) to confirm the options-shaped
+ *   first argument wins regardless of how many arguments were actually passed.
  * @param {IArguments} args
  * @throws {TypeError}
  * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
  */
 function parseGetAllArgs (args) {
     const arg0 = args[0];
-    if (args.length === 1 && util.isObj(arg0) && !Array.isArray(arg0) && !util.isDate(arg0) &&
+    if (util.isObj(arg0) && !Array.isArray(arg0) && !util.isDate(arg0) &&
         !util.isBinary(arg0) &&
-        !('upper' in arg0 && 'lowerOpen' in arg0 && typeof arg0.lowerOpen === 'boolean') && // IDBKeyRange-like
-        // A plain object with none of these keys could still be an
-        //   (invalid) attempted key -- e.g. WPT's key-conversion-exceptions
-        //   tests pass `{}` expecting a `DataError`, not a filter-less
-        //   `getAll()` -- so only treat it as the options form if it
-        //   actually looks like one.
-        (Object.hasOwn(arg0, 'query') || Object.hasOwn(arg0, 'count') || Object.hasOwn(arg0, 'direction'))
+        !('upper' in arg0 && 'lowerOpen' in arg0 && typeof arg0.lowerOpen === 'boolean') // IDBKeyRange-like
     ) {
         return normalizeGetAllOptions(arg0);
     }
