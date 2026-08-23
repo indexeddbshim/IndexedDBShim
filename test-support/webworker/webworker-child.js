@@ -294,17 +294,41 @@ prom.then((scriptSource) => {
     workerCtx.postMessage = function (msg) {
         ms.send([wwutil.MSGTYPE_USER, msg]);
     };
-    workerCtx.WorkerGlobalScope = workerCtx;
+
+    // testharness.js's `create_test_environment` does
+    //   `'WorkerGlobalScope' in global_scope && global_scope instanceof WorkerGlobalScope`
+    //   (and the same for `DedicatedWorkerGlobalScope`/`SharedWorkerGlobalScope`) --
+    //   `instanceof`'s right-hand side must either be callable or define its own
+    //   `Symbol.hasInstance`, so assigning `workerCtx` itself (a plain object) as
+    //   these "marker" values throws `TypeError: Right-hand side of 'instanceof'
+    //   is not callable` and aborts test environment creation entirely. Use a
+    //   real (if empty) constructor with a `Symbol.hasInstance` that recognizes
+    //   this specific `workerCtx` instead.
+    /**
+     * @param {object} target
+     * @returns {Function}
+     */
+    function globalScopeBrand (target) {
+        /**
+         * @returns {void}
+         */
+        function GlobalScopeBrand () { /* Marker constructor only; never invoked */ }
+        Object.defineProperty(GlobalScopeBrand, Symbol.hasInstance, {
+            value: (obj) => obj === target,
+            configurable: true
+        });
+        return GlobalScopeBrand;
+    }
+
+    workerCtx.WorkerGlobalScope = globalScopeBrand(workerCtx);
 
     // Todo: In place of this, allow conditionally `ServiceWorkerGlobalScope`
     if (isSharedWorker) {
-        workerCtx.SharedWorkerGlobalScope = workerCtx;
+        workerCtx.SharedWorkerGlobalScope = globalScopeBrand(workerCtx);
         workerCtx.onconnect = null;
     } else {
-        workerCtx.DedicatedWorkerGlobalScope = workerCtx;
+        workerCtx.DedicatedWorkerGlobalScope = globalScopeBrand(workerCtx);
     }
-    // This was needed for testharness' `instanceof` check which requires it to be callable: `self instanceof DedicatedWorkerGlobalScope`
-    // workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return inst.WorkerGlobalScope && !inst.SharedWorkerGlobalScope && !inst.ServiceWorkerGlobalScope; };
 
     workerCtx.location = scriptLoc;
     workerCtx.closing = false;
