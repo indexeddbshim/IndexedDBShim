@@ -1,8 +1,7 @@
 /*
 
 This file indicates still failing tests for the full
-(current) W3C set of tests (web-platform-tests). For expected
-status for other tests in this repo, see CHANGES.md.
+(current) W3C set of tests (web-platform-tests).
 
 // Outstanding or known issues on tests (should give particular priority
 //   to 'Timeout' or 'Not Run' tests in case they are our own test environment
@@ -11,8 +10,8 @@ status for other tests in this repo, see CHANGES.md.
 KNOWN TESTING ISSUES
 
 (The following list remaining test failures/blockers for Node; the remaining browser
-failures are listed below but are not categorized. Nevertheless, they probably
-mostly relate to most of the same issues.)
+failures are listed below but are not categorized. Nevertheless, they may
+well relate to many of the same issues.)
 
 0. MISSING APIS
 
