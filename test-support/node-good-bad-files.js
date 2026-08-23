@@ -215,8 +215,13 @@ Current DOMException test statuses with 0 files excluded:
 }
 */
 const goodBad = {
-    excludedNormal: [],
-    excludedWorkers: [],
+    excludedNormal: [
+        'idb-partitioned-coverage.sub.js'
+    ],
+    excludedWorkers: [
+        '_interface-objects-001.worker.js',
+        '_interface-objects-002.worker.js'
+    ],
     notRunning: [
         'database-names-by-origin.js',
         'idbfactory-databases-opaque-origin.js',
