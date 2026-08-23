@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.0 - 8/22/2026 */
+/*! indexeddbshim - v17.3.0 - 8/23/2026 */
 
 'use strict';
 
@@ -1523,6 +1523,36 @@ function defineReadonlyProperties(obj, props, getter = null) {
 }
 
 /**
+ * `X.prototype.method = function (...) {}` (an assignment to a
+ * `MemberExpression`, as used throughout this codebase for IDB
+ * interface operations) does not get its `name` inferred by the
+ * engine the way object-literal method shorthand or a plain variable
+ * assignment would, so it is left as `''`. Per Web IDL, an operation's
+ * function object must have its `name` set to the operation's
+ * identifier, so call this once all of an interface's own-property
+ * operations have been assigned onto its prototype (or, for static
+ * operations, onto the constructor itself) to patch any still-empty
+ * names in place.
+ * @param {object} obj
+ * @returns {void}
+ */
+function setOperationNames(obj) {
+  Object.getOwnPropertyNames(obj).forEach(key => {
+    if (key === 'constructor') {
+      return;
+    }
+    const desc = /** @type {PropertyDescriptor} */
+    Object.getOwnPropertyDescriptor(obj, key);
+    if (typeof desc.value === 'function' && desc.value.name === '') {
+      Object.defineProperty(desc.value, 'name', {
+        value: key,
+        configurable: true
+      });
+    }
+  });
+}
+
+/**
  *
  * @param {string} item
  * @returns {boolean}
@@ -1734,7 +1764,7 @@ Object.defineProperty(ShimEvent, Symbol.hasInstance, {
   obj => isObj(obj) && 'target' in obj && 'bubbles' in obj && typeof obj.bubbles === 'boolean'
 });
 
-const readonlyProperties$6 = ['oldVersion', 'newVersion'];
+const readonlyProperties$7 = ['oldVersion', 'newVersion'];
 
 /**
  * @typedef {number} Integer
@@ -1771,7 +1801,7 @@ IDBVersionChangeEvent.prototype = Object.create(ShimEvent.prototype);
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
-readonlyProperties$6.forEach(prop => {
+readonlyProperties$7.forEach(prop => {
   // Ensure for proper interface testing that "get <name>" is the function name
   const o = {
     /**
@@ -2220,7 +2250,7 @@ function (name, message, error) {
 const ShimDOMException = useNativeDOMException ? DOMException : ShimNonNativeDOMException;
 
 const listeners$2 = ['onsuccess', 'onerror'];
-const readonlyProperties$5 = ['source', 'transaction', 'readyState'];
+const readonlyProperties$6 = ['source', 'transaction', 'readyState'];
 const doneFlagGetters = ['result', 'error'];
 
 /**
@@ -2284,7 +2314,7 @@ IDBRequest.__super = function IDBRequest() {
       }
     });
   });
-  defineReadonlyProperties(this, readonlyProperties$5, {
+  defineReadonlyProperties(this, readonlyProperties$6, {
     readyState: {
       /**
        * @returns {"done"|"pending"}
@@ -2329,7 +2359,7 @@ IDBRequest.prototype.__getParent = function () {
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 // Illegal invocations
-defineReadonlyOuterInterface(IDBRequest.prototype, readonlyProperties$5);
+defineReadonlyOuterInterface(IDBRequest.prototype, readonlyProperties$6);
 defineReadonlyOuterInterface(IDBRequest.prototype, doneFlagGetters);
 defineOuterInterface(IDBRequest.prototype, listeners$2);
 Object.defineProperty(IDBRequest.prototype, 'constructor', {
@@ -3901,7 +3931,7 @@ var Key = /*#__PURE__*/Object.freeze({
   roundTrip: roundTrip
 });
 
-const readonlyProperties$4 = /** @type {const} */['lower', 'upper', 'lowerOpen', 'upperOpen'];
+const readonlyProperties$5 = /** @type {const} */['lower', 'upper', 'lowerOpen', 'upperOpen'];
 
 /**
  * @typedef {globalThis.IDBKeyRange & {
@@ -4036,7 +4066,9 @@ IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
 IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRangePrototype';
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
-readonlyProperties$4.forEach(prop => {
+setOperationNames(IDBKeyRange.prototype);
+setOperationNames(IDBKeyRange);
+readonlyProperties$5.forEach(prop => {
   Object.defineProperty(IDBKeyRange.prototype, '__' + prop, {
     enumerable: false,
     configurable: false,
@@ -4415,7 +4447,7 @@ if (cleanInterface) {
 
 let uniqueID = 0;
 const listeners$1 = ['onabort', 'oncomplete', 'onerror'];
-const readonlyProperties$3 = ['objectStoreNames', 'mode', 'durability', 'db', 'error'];
+const readonlyProperties$4 = ['objectStoreNames', 'mode', 'durability', 'db', 'error'];
 
 /**
  * @typedef {number} Integer
@@ -4522,7 +4554,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode, durability = '
     const me = this;
     // @ts-expect-error It's ok
     me[Symbol.toStringTag] = 'IDBTransaction';
-    defineReadonlyProperties(me, readonlyProperties$3);
+    defineReadonlyProperties(me, readonlyProperties$4);
     // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Debugging only
     me.__id = ++uniqueID; // for debugging simultaneous transactions
     me.__active = true;
@@ -4548,7 +4580,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode, durability = '
     me.__setOptions({
       legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
-    readonlyProperties$3.forEach(readonlyProp => {
+    readonlyProperties$4.forEach(readonlyProp => {
       Object.defineProperty(this, readonlyProp, {
         configurable: true
       });
@@ -4788,6 +4820,14 @@ IDBTransaction.prototype.__executeRequests = function () {
       try {
         q = me.__requests[i];
         if (!q.req) {
+          // Non-standard, non-`IDBRequest` queue entries (e.g.
+          //   the internal `onupgradeneeded` dispatch op in
+          //   `IDBFactory.js`) dispatch straight to user code
+          //   without going through `success`/`error` below --
+          //   unlike those, they never restore `__active`/
+          //   `__handlerActive` to `true` before doing so, so
+          //   they rely on the flags being left as they are
+          //   (not reset here).
           q.op(tx, q.args, () => runContinuationSafely(executeNextRequest), error);
           return;
         }
@@ -4795,6 +4835,15 @@ IDBTransaction.prototype.__executeRequests = function () {
           // Avoid continuing with aborted requests
           return;
         }
+        // We're now handing off to (possibly async) work for
+        //   this request, so the transaction is no longer active
+        //   until its own `success`/`error` dispatch (below)
+        //   sets these flags again -- a check that happens to
+        //   run during this gap (e.g. `commit()` called from an
+        //   unrelated `setTimeout`) must see the transaction as
+        //   inactive, per spec.
+        me.__active = false;
+        me.__handlerActive = false;
         q.op(tx, q.args, success, error, executeNextRequest);
       } catch (e) {
         error(/** @type {Error} */e);
@@ -5370,7 +5419,8 @@ IDBTransaction.prototype.__getParent = function () {
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 defineOuterInterface(IDBTransaction.prototype, listeners$1);
-defineReadonlyOuterInterface(IDBTransaction.prototype, readonlyProperties$3);
+defineReadonlyOuterInterface(IDBTransaction.prototype, readonlyProperties$4);
+setOperationNames(IDBTransaction.prototype);
 Object.defineProperty(IDBTransaction.prototype, 'constructor', {
   enumerable: false,
   writable: true,
@@ -6613,7 +6663,7 @@ const N = {
     }
   },
   G = {};
-"function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create$1(e) {
+"function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : []), ...("function" == typeof Float16Array ? [Float16Array] : [])].forEach(e => function create$1(e) {
   const t = e.name;
   G[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
@@ -6622,7 +6672,7 @@ const N = {
   };
 }(e));
 const X = {};
-"function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create(e) {
+"function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : []), ...("function" == typeof Float16Array ? [Float16Array] : [])].forEach(e => function create(e) {
   const t = e.name;
   X[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
@@ -6881,7 +6931,7 @@ var Sca = /*#__PURE__*/Object.freeze({
   register: register
 });
 
-const readonlyProperties$2 = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
+const readonlyProperties$3 = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
 /**
  * @typedef {number} Integer
@@ -6973,7 +7023,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
     const me = this;
     // @ts-expect-error It's ok
     me[Symbol.toStringTag] = 'IDBIndex';
-    defineReadonlyProperties(me, readonlyProperties$2);
+    defineReadonlyProperties(me, readonlyProperties$3);
     me.__objectStore = store;
     me.__name = me.__originalName = indexProperties.columnName;
     me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
@@ -7613,8 +7663,9 @@ Object.defineProperty(IDBIndex, Symbol.hasInstance, {
    */
   value: obj => isObj(obj) && 'openCursor' in obj && typeof obj.openCursor === 'function' && 'multiEntry' in obj && typeof obj.multiEntry === 'boolean'
 });
-defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties$2);
+defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties$3);
 defineOuterInterface(IDBIndex.prototype, ['name']);
+setOperationNames(IDBIndex.prototype);
 IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndexPrototype';
 Object.defineProperty(IDBIndex, 'prototype', {
   writable: false
@@ -7783,7 +7834,7 @@ function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiCheck
   return [nullDisallowed, index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
-const readonlyProperties$1 = ['keyPath', 'indexNames', 'transaction', 'autoIncrement'];
+const readonlyProperties$2 = ['keyPath', 'indexNames', 'transaction', 'autoIncrement'];
 
 /**
  * @typedef {number} Integer
@@ -7881,7 +7932,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
     const me = this;
     // @ts-expect-error It's ok
     me[Symbol.toStringTag] = 'IDBObjectStore';
-    defineReadonlyProperties(this, readonlyProperties$1);
+    defineReadonlyProperties(this, readonlyProperties$2);
     me.__name = me.__originalName = storeProperties.name;
     me.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
     me.__transaction = transaction;
@@ -8875,15 +8926,16 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
 };
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
-defineReadonlyOuterInterface(IDBObjectStore.prototype, readonlyProperties$1);
+defineReadonlyOuterInterface(IDBObjectStore.prototype, readonlyProperties$2);
 defineOuterInterface(IDBObjectStore.prototype, ['name']);
+setOperationNames(IDBObjectStore.prototype);
 IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStorePrototype';
 Object.defineProperty(IDBObjectStore, 'prototype', {
   writable: false
 });
 
 const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
-const readonlyProperties = ['name', 'version', 'objectStoreNames'];
+const readonlyProperties$1 = ['name', 'version', 'objectStoreNames'];
 
 /**
  * @typedef {{
@@ -8960,7 +9012,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
   function IDBDatabase() {
     // @ts-expect-error It's ok
     this[Symbol.toStringTag] = 'IDBDatabase';
-    defineReadonlyProperties(this, readonlyProperties);
+    defineReadonlyProperties(this, readonlyProperties$1);
     this.__db = db;
     this.__closePending = false;
     /** @type {{check: () => void}[]} */
@@ -9221,7 +9273,8 @@ IDBDatabase.prototype.__forceClose = function (msg) {
 };
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 defineOuterInterface(IDBDatabase.prototype, listeners);
-defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties);
+defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties$1);
+setOperationNames(IDBDatabase.prototype);
 Object.defineProperty(IDBDatabase.prototype, 'constructor', {
   enumerable: false,
   writable: true,
@@ -10339,12 +10392,98 @@ IDBFactory.prototype.__setConnectionQueueOrigin = function (origin = getOrigin()
 IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactoryPrototype';
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
+setOperationNames(IDBFactory.prototype);
 Object.defineProperty(IDBFactory, 'prototype', {
   writable: false
 });
 /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 const shimIndexedDB = IDBFactory.__createInstance();
+
+const readonlyProperties = /** @type {const} */['key', 'primaryKey', 'value'];
+
+/**
+ * @typedef {{
+ *   [Symbol.toStringTag]: 'IDBRecord',
+ *   __key: import('./Key.js').Key,
+ *   __primaryKey: import('./Key.js').Key,
+ *   __value: import('./Key.js').Value,
+ *   key: import('./Key.js').Key,
+ *   primaryKey: import('./Key.js').Key,
+ *   value: import('./Key.js').Value
+ * }} IDBRecordFull
+ */
+
+/**
+ * The record type returned by `IDBObjectStore`/`IDBIndex#getAllRecords()`
+ *   (IndexedDB 3.0). Structured the same way as `IDBCursor` -- a public
+ *   constructor that always throws, with real instances only ever produced
+ *   internally via `__createInstance` -- so a record can't be directly
+ *   instantiated by script.
+ * @see https://w3c.github.io/IndexedDB/#record-interface
+ * @throws {TypeError}
+ * @class
+ */
+function IDBRecord() {
+  throw new TypeError('Illegal constructor');
+}
+const IDBRecordAlias = IDBRecord;
+
+/**
+ * @param {import('./Key.js').Key} key
+ * @param {import('./Key.js').Key} primaryKey
+ * @param {import('./Key.js').Value} value
+ * @returns {IDBRecordFull}
+ */
+IDBRecord.__createInstance = function (key, primaryKey, value) {
+  /**
+   * @class
+   * @this {IDBRecordFull}
+   */
+  function IDBRecord() {
+    // @ts-expect-error Should be ok
+    this[Symbol.toStringTag] = 'IDBRecord';
+    this.__key = key;
+    this.__primaryKey = primaryKey;
+    this.__value = value;
+  }
+  IDBRecord.prototype = IDBRecordAlias.prototype;
+
+  // @ts-expect-error Properties added below on the shared prototype
+  return new IDBRecord();
+};
+IDBRecord.prototype[Symbol.toStringTag] = 'IDBRecordPrototype';
+
+/* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
+setOperationNames(IDBRecord.prototype);
+setOperationNames(IDBRecord);
+
+// Defined once on the shared prototype (rather than per-instance, as
+//   `util.defineReadonlyProperties` would) since WPT's `assert_idl_attribute`
+//   specifically requires these to be inherited, not own, properties.
+readonlyProperties.forEach(prop => {
+  Object.defineProperty(IDBRecord.prototype, '__' + prop, {
+    enumerable: false,
+    configurable: false,
+    writable: true
+  });
+  // We must resort to this to get "get <name>" as the function `name` for
+  //   proper IDL.
+  const o = {
+    /**
+     * @returns {import('./Key.js').Key|import('./Key.js').Value}
+     */
+    get [prop]() {
+      return this['__' + prop];
+    }
+  };
+  const desc = /** @type {PropertyDescriptor} */
+  Object.getOwnPropertyDescriptor(o, prop);
+  Object.defineProperty(IDBRecord.prototype, prop, desc);
+});
+Object.defineProperty(IDBRecord, 'prototype', {
+  writable: false
+});
 
 const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
 
@@ -11018,8 +11157,16 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
             transaction
           } = /** @type {{transaction: import('./IDBTransaction.js').IDBTransactionFull}} */
           me.__store;
+          // `runQueuedRequest` (in `IDBTransaction.js`) resets both
+          //   `__active` and `__handlerActive` to `false` right
+          //   before invoking this op, so both -- not just
+          //   `__handlerActive` -- need reopening here for
+          //   `__pushToQueue`'s `__assertActive()` check below to
+          //   pass.
+          transaction.__active = true;
           transaction.__handlerActive = true;
           me.__continueFinish(undefined, undefined, true);
+          transaction.__active = false;
           transaction.__handlerActive = false;
           // We don't call success yet but do need to advance the transaction queue
           runContinuationSafely(/** @type {() => void} */executeNextRequest);
@@ -11248,6 +11395,7 @@ IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 defineReadonlyOuterInterface(IDBCursor.prototype, ['source', 'direction', 'key', 'primaryKey', 'request']);
+setOperationNames(IDBCursor.prototype);
 Object.defineProperty(IDBCursor, 'prototype', {
   writable: false
 });
@@ -11394,13 +11542,23 @@ function parseGetAllRecordsArgs(args) {
  * @param {Integer|undefined} count
  * @param {string} direction
  * @param {"value"|"key"|"record"} mode
+ * @throws {TypeError}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 function collectAll(source, query, count, direction, mode) {
+  const isIndexSource = instanceOf(source, IDBIndex);
+  if (!isIndexSource && !instanceOf(source, IDBObjectStore)) {
+    // Per Web IDL, an operation invoked on a `this` that isn't an
+    //   instance of the interface it's defined on must throw a
+    //   TypeError ("illegal invocation") -- checked here, rather than
+    //   left to fall through to `store.transaction`/`__assertActive`
+    //   below, since those instead throw `TransactionInactiveError`
+    //   for a `this` with no real `transaction` property.
+    throw new TypeError('Illegal invocation');
+  }
   if (count !== undefined) {
     count = enforceRange(count, 'unsigned long');
   }
-  const isIndexSource = instanceOf(source, IDBIndex);
   const indexSource = /** @type {import('./IDBIndex.js').IDBIndexFull} */source;
   const store = /** @type {import('./IDBObjectStore.js').IDBObjectStoreFull} */
   isIndexSource ? indexSource.objectStore : source;
@@ -11480,11 +11638,7 @@ function collectAll(source, query, count, direction, mode) {
           results.push(primKey);
           break;
         case 'record':
-          results.push({
-            key: k,
-            primaryKey: primKey,
-            value: val
-          });
+          results.push(IDBRecord.__createInstance(k, primKey, val));
           break;
         default:
           results.push(val);
@@ -11748,7 +11902,7 @@ function setGlobalVars(idb, initialConfig) {
           }
         });
         /** @type {[string, any][]} */
-        [['IDBFactory', shimIDBFactory], ['IDBDatabase', IDBDatabase], ['IDBObjectStore', IDBObjectStore], ['IDBIndex', IDBIndex], ['IDBTransaction', IDBTransaction], ['IDBCursor', IDBCursor], ['IDBCursorWithValue', IDBCursorWithValue], ['IDBKeyRange', IDBKeyRange], ['IDBRequest', IDBRequest], ['IDBOpenDBRequest', IDBOpenDBRequest], ['IDBVersionChangeEvent', IDBVersionChangeEvent]].forEach(([prop, obj]) => {
+        [['IDBFactory', shimIDBFactory], ['IDBDatabase', IDBDatabase], ['IDBObjectStore', IDBObjectStore], ['IDBIndex', IDBIndex], ['IDBTransaction', IDBTransaction], ['IDBCursor', IDBCursor], ['IDBCursorWithValue', IDBCursorWithValue], ['IDBRecord', IDBRecord], ['IDBKeyRange', IDBKeyRange], ['IDBRequest', IDBRequest], ['IDBOpenDBRequest', IDBOpenDBRequest], ['IDBVersionChangeEvent', IDBVersionChangeEvent]].forEach(([prop, obj]) => {
           shim(prop, obj, {
             enumerable: false,
             configurable: true

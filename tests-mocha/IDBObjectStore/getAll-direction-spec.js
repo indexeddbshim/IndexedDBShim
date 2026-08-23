@@ -157,7 +157,13 @@ describe('IDBObjectStore.getAll/getAllKeys direction', function () {
                 }
                 const req = store.getAllRecords({direction: 'prev'});
                 req.onsuccess = function () {
-                    expect(req.result).to.deep.equal(expectedKeys.map(function (key, i) {
+                    // `req.result` holds real `IDBRecord` instances (whose
+                    //   `key`/`primaryKey`/`value` are inherited accessors,
+                    //   per spec), not plain objects, so compare their
+                    //   values rather than the instances themselves.
+                    expect(req.result.map(function (record) {
+                        return {key: record.key, primaryKey: record.primaryKey, value: record.value};
+                    })).to.deep.equal(expectedKeys.map(function (key, i) {
                         return {key, primaryKey: key, value: expectedValues[i]};
                     }));
                     db.close();

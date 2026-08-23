@@ -9,6 +9,7 @@ import * as Key from './Key.js';
 import * as Sca from './Sca.js';
 import {IDBIndex} from './IDBIndex.js';
 import CFG from './CFG.js';
+import IDBRecord from './IDBRecord.js';
 
 const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
 
@@ -1203,7 +1204,7 @@ function collectAll (source, query, count, direction, mode) {
                 results.push(primKey);
                 break;
             case 'record':
-                results.push({key: k, primaryKey: primKey, value: val});
+                results.push(IDBRecord.__createInstance(k, primKey, val));
                 break;
             default:
                 results.push(val);

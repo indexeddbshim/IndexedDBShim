@@ -1,6 +1,7 @@
 import {setPrototypeOfCustomEvent} from 'eventtargeter';
 import shimIDBVersionChangeEvent from './IDBVersionChangeEvent.js';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor.js';
+import shimIDBRecord from './IDBRecord.js';
 import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest.js';
 import {createDOMException, ShimDOMException} from './DOMException.js';
 import {shimIndexedDB, IDBFactory, setFS} from './IDBFactory.js';
@@ -249,6 +250,7 @@ function setGlobalVars (idb, initialConfig) {
                     ['IDBTransaction', shimIDBTransaction],
                     ['IDBCursor', shimIDBCursor],
                     ['IDBCursorWithValue', shimIDBCursorWithValue],
+                    ['IDBRecord', shimIDBRecord],
                     ['IDBKeyRange', shimIDBKeyRange],
                     ['IDBRequest', shimIDBRequest],
                     ['IDBOpenDBRequest', shimIDBOpenDBRequest],

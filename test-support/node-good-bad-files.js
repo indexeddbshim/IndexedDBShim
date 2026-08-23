@@ -239,9 +239,7 @@ const goodBad = {
     excludedNormal: [
         'idb-partitioned-coverage.sub.js'
     ],
-    excludedWorkers: [
-        'keypath-special-identifiers.any.worker.js'
-    ],
+    excludedWorkers: [],
     notRunning: [
         'database-names-by-origin.js',
         'idbfactory-databases-opaque-origin.js',
@@ -366,6 +364,7 @@ const goodBad = {
         'idbtransaction_abort.any.worker.js',
         'idlharness.any.worker.js',
         'key_invalid.any.worker.js',
+        'keypath-special-identifiers.any.worker.js',
         'nested-cloning-basic.any.worker.js',
         'nested-cloning-large-multiple.any.worker.js',
         'nested-cloning-large.any.worker.js',
