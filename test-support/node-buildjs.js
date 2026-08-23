@@ -62,14 +62,6 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
     outputFile: path.join(builtJSPath, 'domstringlist.js')
 }, {
     /* eslint-disable unicorn/prefer-https -- Local */
-    inputFile: 'http://web-platform.test:8000/workers/semantics/interface-objects/003.any.html',
-    outputFile: path.join(builtJSPath, '_interface-objects-003.js'),
-    web: true
-}, {
-    inputFile: 'http://web-platform.test:8000/workers/semantics/interface-objects/004.any.html',
-    outputFile: path.join(builtJSPath, '_interface-objects-004.js'),
-    web: true
-}, {
     inputFile: 'web-platform-tests/service-workers/service-worker/indexeddb.https.html',
     outputFile: path.join(builtJSPath, '_service-worker-indexeddb.https.js')
 }, ...anyFiles.map((anyFile) => {
@@ -206,4 +198,115 @@ await Promise.all(scripts.map(async ({inputFile, outputFile}, i) => {
         console.log(err);
     }
 }));
+
+// `workers/semantics/interface-objects/003.any.js` and `004.any.js` are
+//   restricted via `// META: global=sharedworker`, so WPT's own tooling
+//   never generates meaningful content for the window-context (`.any.html`)
+//   variant of either -- fetching that URL, as this build script used to,
+//   only ever produced an empty stub. Instead, extract each file's
+//   `expected`/`unexpected` interface-name array directly from its real WPT
+//   source and wrap it in a small SharedWorker-based test that checks every
+//   name from inside that worker's actual global scope, then reports the
+//   combined result back to this window-context test. This deliberately
+//   does not use `fetch_tests_from_worker`: that relies on testharness.js's
+//   own worker-side result-relaying protocol, which has a separate,
+//   pre-existing bug in this harness unrelated to SharedWorker support.
+/**
+ * @param {string} sourceFile
+ * @param {string} varName
+ * @returns {Promise<string[]>}
+ */
+async function extractInterfaceArray (sourceFile, varName) {
+    const source = await readFile(sourceFile, 'utf8');
+    const startMarker = 'var ' + varName + ' = [';
+    const start = source.indexOf(startMarker);
+    if (start === -1) {
+        throw new Error(
+            'Could not find `' + startMarker + '` in ' + sourceFile +
+            ' -- has this WPT test been restructured upstream? The ' +
+            '_interface-objects-003.js/004.js generation in this script ' +
+            'assumes a plain `var ' + varName + ' = [...]` array followed ' +
+            'by a simple `name in self` check loop, and will need updating ' +
+            'to match whatever changed.'
+        );
+    }
+    const arrayStart = start + startMarker.length - 1;
+    const end = source.indexOf('];', arrayStart) + 1;
+    const arrayLiteral = source.slice(arrayStart, end)
+        // The source has `//`-prefixed comment lines grouping entries by
+        //   spec, and a trailing comma before `]` -- neither of which plain
+        //   `JSON.parse` accepts.
+        .replaceAll(/^\s*\/\/.*$/gmv, '')
+        .replace(/,(\s*\])/v, '$1');
+    const list = JSON.parse(arrayLiteral);
+    if (list.length === 0) {
+        throw new Error('Extracted an empty interface list from ' + sourceFile + ' -- something is wrong with the extraction above.');
+    }
+    return list;
+}
+
+/**
+ * @param {{
+ *   sourceFile: string,
+ *   outputFile: string,
+ *   varName: string,
+ *   wantPresent: boolean,
+ *   title: string,
+ *   describeWord: string
+ * }} opts
+ * @returns {Promise<void>}
+ */
+async function buildInterfaceObjectsFile ({sourceFile, outputFile, varName, wantPresent, title, describeWord}) {
+    const list = await extractInterfaceArray(sourceFile, varName);
+    const workerScript = 'var ' + varName + ' = ' + JSON.stringify(list) + ';\n' +
+        'self.addEventListener("connect", function (e) {\n' +
+        '  var port = e.ports[0];\n' +
+        '  var results = ' + varName + '.map(function (name) {\n' +
+        '    return {name: name, present: name in self};\n' +
+        '  });\n' +
+        '  port.postMessage(results);\n' +
+        '});';
+    const content = harnessContent +
+        'document.title = ' + JSON.stringify(title) + ';\n' +
+        'const worker_script = ' + JSON.stringify(workerScript) + ';\n' +
+        'promise_test(async t => {\n' +
+        '  const worker = new SharedWorker("data:," + encodeURIComponent(worker_script));\n' +
+        '  const results = await new Promise((resolve) => {\n' +
+        '    worker.port.onmessage = (e) => resolve(e.data);\n' +
+        '  });\n' +
+        '  const mismatched = results\n' +
+        '    .filter((result) => result.present !== ' + wantPresent + ')\n' +
+        '    .map((result) => result.name);\n' +
+        '  assert_array_equals(\n' +
+        '    mismatched, [],\n' +
+        '    "These interface objects should ' + (wantPresent ? '' : 'not ') +
+            'have been exposed on SharedWorkerGlobalScope: " + mismatched.join(", ")\n' +
+        '  );\n' +
+        '}, ' + JSON.stringify(describeWord) + ');\n';
+    try {
+        await writeFile(outputFile, content);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+await Promise.all([
+    buildInterfaceObjectsFile({
+        sourceFile: 'web-platform-tests/workers/semantics/interface-objects/003.any.js',
+        outputFile: path.join(builtJSPath, '_interface-objects-003.js'),
+        varName: 'expected',
+        wantPresent: true,
+        title: 'Interface exposure on SharedWorkerGlobalScope (present)',
+        describeWord: 'The expected interface objects should be exposed on SharedWorkerGlobalScope'
+    }),
+    buildInterfaceObjectsFile({
+        sourceFile: 'web-platform-tests/workers/semantics/interface-objects/004.any.js',
+        outputFile: path.join(builtJSPath, '_interface-objects-004.js'),
+        varName: 'unexpected',
+        wantPresent: false,
+        title: 'Interface exposure on SharedWorkerGlobalScope (absent)',
+        describeWord: 'The unexpected interface objects should not be exposed on SharedWorkerGlobalScope'
+    })
+]);
+
 console.log('All files have been saved!');
