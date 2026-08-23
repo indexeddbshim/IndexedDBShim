@@ -242,6 +242,8 @@ const goodBad = {
         'transaction-scheduling-within-database.any.js'
     ],
     badFiles: [
+        '../non-indexedDB/DOMException-constructor.js',
+        '../non-indexedDB/constructor-object.js',
         '_service-worker-indexeddb.https.js',
         'bindings-inject-keys-bypass.any.js',
         'bindings-inject-values-bypass.any.js',
@@ -291,6 +293,7 @@ const goodBad = {
         '../non-indexedDB/exceptions.js'
     ],
     goodFiles: [
+        '../non-indexedDB/DOMException-constants.js',
         '_interface-objects-003.js',
         '_interface-objects-004.js',
         'abort-in-initial-upgradeneeded.any.js',
