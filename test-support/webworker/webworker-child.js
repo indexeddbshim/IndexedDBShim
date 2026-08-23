@@ -295,39 +295,9 @@ prom.then((scriptSource) => {
         ms.send([wwutil.MSGTYPE_USER, msg]);
     };
 
-    // testharness.js's `create_test_environment` does
-    //   `'WorkerGlobalScope' in global_scope && global_scope instanceof WorkerGlobalScope`
-    //   (and the same for `DedicatedWorkerGlobalScope`/`SharedWorkerGlobalScope`) --
-    //   `instanceof`'s right-hand side must either be callable or define its own
-    //   `Symbol.hasInstance`, so assigning `workerCtx` itself (a plain object) as
-    //   these "marker" values throws `TypeError: Right-hand side of 'instanceof'
-    //   is not callable` and aborts test environment creation entirely. Use a
-    //   real (if empty) constructor with a `Symbol.hasInstance` that recognizes
-    //   this specific `workerCtx` instead.
-    /**
-     * @param {object} target
-     * @returns {Function}
-     */
-    function globalScopeBrand (target) {
-        /**
-         * @returns {void}
-         */
-        function GlobalScopeBrand () { /* Marker constructor only; never invoked */ }
-        Object.defineProperty(GlobalScopeBrand, Symbol.hasInstance, {
-            value: (obj) => obj === target,
-            configurable: true
-        });
-        return GlobalScopeBrand;
-    }
-
-    workerCtx.WorkerGlobalScope = globalScopeBrand(workerCtx);
-
     // Todo: In place of this, allow conditionally `ServiceWorkerGlobalScope`
     if (isSharedWorker) {
-        workerCtx.SharedWorkerGlobalScope = globalScopeBrand(workerCtx);
         workerCtx.onconnect = null;
-    } else {
-        workerCtx.DedicatedWorkerGlobalScope = globalScopeBrand(workerCtx);
     }
 
     workerCtx.location = scriptLoc;
@@ -467,6 +437,45 @@ prom.then((scriptSource) => {
 
     // Context object for vm script api
     workerCtxObj = vm.createContext(workerCtx);
+
+    // testharness.js's `create_test_environment` does
+    //   `'WorkerGlobalScope' in global_scope && global_scope instanceof WorkerGlobalScope`
+    //   (and the same for `DedicatedWorkerGlobalScope`/`SharedWorkerGlobalScope`) --
+    //   `instanceof`'s right-hand side must either be callable or define its own
+    //   `Symbol.hasInstance`, so assigning `workerCtx` itself (a plain object) as
+    //   these "marker" values throws `TypeError: Right-hand side of 'instanceof'
+    //   is not callable` and aborts test environment creation entirely. A real
+    //   (if empty) constructor with a `Symbol.hasInstance` fixes the "callable"
+    //   part -- but the check inside also needs the *correct* object identity:
+    //   `vm.createContext(workerCtx)` does not make `workerCtx` itself become
+    //   `globalThis`/`self` as seen from code running inside the context (verified
+    //   directly: `workerCtx !== vm.runInContext('globalThis', workerCtxObj)`) --
+    //   it's a separate, property-mirrored global object. `global_scope`/`self`
+    //   inside testharness.js is that inner `globalThis`, so the brand must
+    //   compare against that, not against `workerCtx`.
+    const workerGlobalThis = vm.runInContext('globalThis', workerCtxObj);
+    /**
+     * @returns {Function}
+     */
+    function globalScopeBrand () {
+        /**
+         * @returns {void}
+         */
+        function GlobalScopeBrand () { /* Marker constructor only; never invoked */ }
+        Object.defineProperty(GlobalScopeBrand, Symbol.hasInstance, {
+            value: (obj) => obj === workerGlobalThis,
+            configurable: true
+        });
+        return GlobalScopeBrand;
+    }
+
+    workerCtx.WorkerGlobalScope = globalScopeBrand();
+    if (isSharedWorker) {
+        workerCtx.SharedWorkerGlobalScope = globalScopeBrand();
+    } else {
+        workerCtx.DedicatedWorkerGlobalScope = globalScopeBrand();
+    }
+
     return undefined;
 }).catch((err) => {
     throw err;

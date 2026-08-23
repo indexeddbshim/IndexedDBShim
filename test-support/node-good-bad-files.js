@@ -218,10 +218,7 @@ const goodBad = {
     excludedNormal: [
         'idb-partitioned-coverage.sub.js'
     ],
-    excludedWorkers: [
-        '_interface-objects-001.worker.js',
-        '_interface-objects-002.worker.js'
-    ],
+    excludedWorkers: [],
     notRunning: [
         'database-names-by-origin.js',
         'idbfactory-databases-opaque-origin.js',
