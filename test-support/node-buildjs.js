@@ -26,7 +26,6 @@ const supportScripts = [
     'resources/interleaved-cursors-common.js',
     'resources/reading-autoincrement-common.js',
     'http://127.0.0.1:9999/dist/indexeddbshim-noninvasive.js',
-    'http://127.0.0.1:9999/node_modules/core-js-bundle/minified.js',
     '/common/get-host-info.sub.js' // 'web-platform-tests/IndexedDB/idbfactory-origin-isolation.html'
 ];
 const webIDLScripts = [

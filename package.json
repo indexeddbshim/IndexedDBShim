@@ -50,7 +50,7 @@
     "clean-w3c": "rimraf D_^D^B2* D_db* D_test* D_about* D_^I^D^B* D_blank* D_database_name* D_idbtransaction* D_x D_x.sqlite D_y D_y.sqlite D_webworker* D_http*",
     "clean-w3cOld": "rimraf D_db.sqlite* D_test* D_database_name* D_idbtransaction*",
     "clean-w3c-built": "rimraf test-support/js",
-    "copy": "copyup node_modules/core-js-bundle/minified.js node_modules/source-map-support/browser-source-map-support.js node_modules/mocha/mocha.css node_modules/mocha/mocha.js node_modules/chai/chai.js node_modules/sinon/pkg/sinon-no-sourcemaps.js test-support",
+    "copy": "copyup node_modules/source-map-support/browser-source-map-support.js node_modules/mocha/mocha.css node_modules/mocha/mocha.js node_modules/chai/chai.js node_modules/sinon/pkg/sinon-no-sourcemaps.js test-support",
     "fix-permissions": "chmod +x node_modules/npm-run-all/bin/*/index.js",
     "lint": "eslint .",
     "eslint": "npm run lint",
@@ -194,7 +194,6 @@
     "chokidar-cli": "^3.0.0",
     "colors": "1.4.0",
     "copyfiles": "^2.4.1",
-    "core-js-bundle": "^3.50.0",
     "coveradge": "^0.8.2",
     "cyclonejs": "1.1.4",
     "delay-cli": "^3.0.0",
@@ -228,7 +227,6 @@
     "canvas@3.2.3": true,
     "unrs-resolver@1.12.2": true,
     "better-sqlite3@13.0.3": true,
-    "core-js-bundle@3.50.0": true,
     "is-hidden-file@1.1.2": true
   }
 }

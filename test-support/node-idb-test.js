@@ -52,7 +52,6 @@ const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-obje
 
 // String replacements on code due, e.g., for lagging ES support in Node
 const nodeReplacementHacks = {
-    'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/v, '$1'] // https://github.com/web-platform-tests/wpt/issues/4817
 };
 const jsonResults = true;
 const shimNS = {
@@ -370,7 +369,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         if (
             // Added this to suppress errors; may get through if wrapping
             [
-                'http://127.0.0.1:9999/node_modules/core-js-bundle/minified.js',
                 'http://127.0.0.1:9999/dist/indexeddbshim-noninvasive.js'
             ].includes(src)
         ) {

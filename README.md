@@ -85,7 +85,6 @@ yarn add indexeddbshim
 Add the following scripts to your page:
 
 ```html
-<script src="./node_modules/core-js-bundle/minified.js"></script>
 <script src="./node_modules/indexeddbshim/dist/indexeddbshim.min.js"></script>
 ```
 
@@ -94,7 +93,6 @@ non-alphanumeric identifiers in store and index names),
 use the following instead:
 
 ```html
-<script src="./node_modules/core-js-bundle/minified.js"></script>
 <script src="./node_modules/indexeddbshim/dist/indexeddbshim-UnicodeIdentifiers.min.js"></script>
 ```
 

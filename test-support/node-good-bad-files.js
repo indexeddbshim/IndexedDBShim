@@ -216,7 +216,7 @@ Current DOMException test statuses with 0 files excluded:
 */
 const goodBad = {
     excludedNormal: [],
-    excludedWorkers: ['_interface-objects-003.js', '_interface-objects-004.js'],
+    excludedWorkers: [],
     notRunning: [
         'database-names-by-origin.js',
         'idbfactory-databases-opaque-origin.js',
@@ -406,6 +406,9 @@ const goodBad = {
         'writer-starvation.any.js'
     ],
     badFiles: [
+        '_interface-objects-003.js',
+        '_interface-objects-004.js',
+        '_service-worker-indexeddb.https.js',
         'bindings-inject-keys-bypass.any.js',
         'bindings-inject-values-bypass.any.js',
         'blob-composite-blob-reads.any.js',

@@ -1,6 +1,5 @@
 {
   "bundledRootPackages": [
-    "core-js-bundle",
     "mocha", "chai", "sinon", "source-map-support",
     "web-platform-tests"
   ],
