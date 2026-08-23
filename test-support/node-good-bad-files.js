@@ -285,12 +285,14 @@ const goodBad = {
         'transaction-lifetime.any.js',
         'upgrade-transaction-deactivation-timing.any.js',
         'value.any.js',
-        '../non-indexedDB/interface-objects.js',
         '../non-indexedDB/__event-interface.js',
         '../non-indexedDB/exceptions.js'
     ],
     goodFiles: [
         '../non-indexedDB/DOMException-constants.js',
+        '../non-indexedDB/interface-objects.js',
+        '_interface-objects-001.worker.js',
+        '_interface-objects-002.worker.js',
         '_interface-objects-003.js',
         '_interface-objects-004.js',
         'abort-in-initial-upgradeneeded.any.js',
