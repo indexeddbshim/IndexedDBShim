@@ -19,7 +19,7 @@ mostly relate to most of the same issues.)
 - `IDBTransaction.prototype.commit` (newly added)
     - `idlharness.any.js`
     - `idb-explicit-commit.any.js`
-- `durability` transaction option
+- `durability` transaction option (newly added)
     - https://github.com/axemclion/IndexedDBShim/issues/351
     - 'idbcursor_update_index9.any.js' - Failing
 - `batchGetAll`?

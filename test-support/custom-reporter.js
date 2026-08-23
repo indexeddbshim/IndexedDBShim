@@ -83,7 +83,7 @@
         const color = colors[Object.keys(theme)[status]];
         let msg = color(statusText);
         shimNS.statuses[statusText] += 1;
-        msg += shimNS.statuses[statusText];
+        msg += ' ' + shimNS.statuses[statusText];
         shimNS.write(msg);
     }
 
