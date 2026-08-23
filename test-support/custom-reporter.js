@@ -49,11 +49,32 @@
     //   our IDB object is injected rather than inline
     // jsdom doesn't make them available as `window` properties
     Object.defineProperty(Array, Symbol.hasInstance, {
-        value: (obj) => Array.isArray(obj)
+        value: (obj) => Array.isArray(obj),
+        configurable: true
     });
 
     Object.defineProperty(Date, Symbol.hasInstance, {
-        value: (obj) => shimNS.isDateObject(obj)
+        value: (obj) => shimNS.isDateObject(obj),
+        configurable: true
+    });
+
+    // testharness.js's own `show_results()` (building its native HTML
+    //   results table) walks its `["tag", attrs, ...children]` template
+    //   arrays and checks `children[i] instanceof Object` to decide whether
+    //   a child is a nested template (array) or plain text -- since these
+    //   arrays are cross-realm relative to whatever realm `Object` is
+    //   evaluated from here, that check can spuriously come back `false`,
+    //   causing nested templates to be stringified as text (e.g. the results
+    //   table's own child elements) instead of rendered, and (worse) causing
+    //   a later `getElementById("rerun")` lookup on the now-malformed markup
+    //   to return `null` and throw -- aborting the shared `all_done_callbacks`
+    //   loop before our own `add_completion_callback` handler below ever
+    //   gets to run. Same fix as `Array`/`Date` above, generalized: match
+    //   real `instanceof Object` semantics (true for any non-null object or
+    //   function) regardless of which realm the value came from.
+    Object.defineProperty(Object, Symbol.hasInstance, {
+        value: (obj) => obj !== null && (typeof obj === 'object' || typeof obj === 'function'),
+        configurable: true
     });
 
     const {colors} = shimNS;

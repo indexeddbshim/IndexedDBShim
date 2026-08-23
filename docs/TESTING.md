@@ -32,7 +32,7 @@ working via patches as per
 <https://github.com/axemclion/IndexedDBShim/issues/249>,
 allowing tests to be run from the runner without
 obtrusive changes to the repository is not yet refined (see also
-<https://github.com/w3c/web-platform-tests/issues/5133#issuecomment-293465747>).
+<https://github.com/web-platform-tests/wpt/issues/5133#issuecomment-293465747>).
 
 The now [recommended way](https://github.com/web-platform-tests/wpt/issues/6565)
 for installing [`web-platform-tests`](https://github.com/web-platform-tests/wpt/)
@@ -68,7 +68,7 @@ in these ways.
     does not modify files. To do this you must run a `start` task
     or another such test that starts a server at port 9999 and also follow
     the instructions to install and run the server at
-    <https://github.com/w3c/web-platform-tests>. If you run
+    <https://github.com/web-platform-tests/wpt>. If you run
     `npm run w3c-add-wrap` (or `npm run w3c-remove-wrap` to undo), you
     will be able to add ".any.html" to an IndexedDB file, e.g.,
     <http://web-platform.test:8000/IndexedDB/historical.html>

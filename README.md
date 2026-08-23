@@ -592,8 +592,8 @@ degrade performance particularly on a server (and in the browser,
 the WebSQL API on which we are relying did not apparently
 gain support in browsers for the synchronous API).
 
-[This test](https://github.com/w3c/web-platform-tests/blob/master/IndexedDB/transaction-deactivation-timing.html) and
-[this one](https://github.com/w3c/web-platform-tests/blob/master/IndexedDB/upgrade-transaction-deactivation-timing.html)
+[This test](https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/transaction-deactivation-timing.html) and
+[this one](https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/upgrade-transaction-deactivation-timing.html)
 demonstrate the *expected* timeout behavior with regard to `setTimeout`
 or promises and transaction expiration.
 

@@ -52,7 +52,7 @@ const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-obje
 
 // String replacements on code due, e.g., for lagging ES support in Node
 const nodeReplacementHacks = {
-    'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/v, '$1'] // https://github.com/w3c/web-platform-tests/issues/4817
+    'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/v, '$1'] // https://github.com/web-platform-tests/wpt/issues/4817
 };
 const jsonResults = true;
 const shimNS = {
@@ -348,6 +348,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     const indexedDBSupported = [
         'resources/support.js',
         'resources/support-promises.js',
+        'resources/support-get-all.js',
+        'resources/request-event-ordering-common.js',
         'resources/nested-cloning-common.js',
         'resources/interleaved-cursors-common.js',
         'resources/reading-autoincrement-common.js'
@@ -374,10 +376,15 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         ) {
             return;
         }
-        if (supported.includes(src) || supported.includes(src.replace(/^\//v, '')) ||
+        // Some newer WPT test files reference shared resources with a
+        //   relative `../` prefix (e.g. `../common/get-host-info.sub.js`
+        //   from `database-names-by-origin.html`) rather than the
+        //   root-relative `/common/get-host-info.sub.js` form already
+        //   handled below, so strip either before comparing/resolving.
+        if (supported.includes(src) || supported.includes(src.replace(/^(\.\.\/|\/)/v, '')) ||
             (src.startsWith('/IndexedDB') && src.endsWith('.any.js'))
         ) {
-            src = src.replace(/^\//v, '');
+            src = src.replace(/^(\.\.\/|\/)/v, '');
             scripts.push(path.join(
                 idbTestPath,
                 // Since our build script is now copying it, we actually don't need this now,
@@ -430,7 +437,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     // Todo: We should get this working with our test server; should work with `XMLHttpRequest` base
     // Leverage the W3C server for interfaces test, assuming it is running;
     //   as we are overriding `XMLHttpRequest` below, we are not really using this at the moment,
-    //   but to set up, see https://github.com/w3c/web-platform-tests
+    //   but to set up, see https://github.com/web-platform-tests/wpt
     // const url = 'http://127.0.0.1:9999/web-platform-tests/IndexedDB/idlharness.any.html',
     // const url = 'file://' + basePath;
 
@@ -689,6 +696,24 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             displayErrors: true,
             timeout: vmTimeout
         });
+        // jsdom's real `load` event on `window` fires shortly after
+        //   `JSDOM.fromURL` resolves above -- well before `allContent`
+        //   (which is what registers testharness.js's own `load` listener,
+        //   used to flip `test_environment.all_loaded`) has even been
+        //   evaluated here, so that listener always misses the real event.
+        //   Without `all_loaded` ever becoming `true`,
+        //   `Tests.prototype.all_done` can never return `true` via the
+        //   normal completion path, so every test file instead falls
+        //   through to testharness.js's own internal timeout-based
+        //   force-completion, which our environment doesn't tolerate as
+        //   well (it throws looking up a `#rerun` button we never render).
+        //   Dispatch a second, synthetic `load` now that the listener is
+        //   actually registered -- `Tests.prototype.complete` is itself
+        //   idempotent, so this is safe even if the real one was somehow
+        //   also caught.
+        const loadEvt = window.document.createEvent('Event');
+        loadEvt.initEvent('load', false, false);
+        window.dispatchEvent(loadEvt);
     } catch (err) {
         console.error('Error 4', err);
         // If there is an issue, save the last erring test along with our
