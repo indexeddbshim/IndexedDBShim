@@ -409,6 +409,7 @@ prom.then((scriptSource) => {
     workerCtx.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
     workerCtx.Blob = Blob;
+    workerCtx.File = File; // Node has a native global `File` (unlike `Blob`, which needs the `w3c-blob` polyfill)
     workerCtx.fetch = function (...args) {
         if (args[0].startsWith('/')) {
             // eslint-disable-next-line unicorn/prefer-https -- Local
@@ -430,7 +431,7 @@ prom.then((scriptSource) => {
         'Path2D', 'PromiseRejectionEvent', 'EventSource',
         'WebSocket', 'CloseEvent', 'BroadcastChannel',
         'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload',
-        'ProgressEvent', 'FormData', 'File', 'FileList', 'FileReader',
+        'ProgressEvent', 'FormData', 'FileList', 'FileReader',
         'FileReaderSync', 'ErrorEvent', 'ReadableStream', 'WritableStream',
         'ByteLengthQueuingStrategy', 'CountQueuingStrategy',
         'CanvasGradient', 'CanvasPattern', 'TextMetrics'
