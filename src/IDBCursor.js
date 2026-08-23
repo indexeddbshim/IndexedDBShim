@@ -17,6 +17,10 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
  * @typedef {IDBCursor & {
  *   primaryKey: import('./Key.js').Key,
  *   key:  import('./Key.js').Key,
@@ -57,7 +61,7 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  *   __findBasic: (
  *     key: import('./Key.js').Key|undefined,
  *     primaryKey: import('./Key.js').Key|undefined,
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     success: KeySuccess,
  *     error: FindError,
  *     recordsToLoad: Integer|undefined
@@ -65,7 +69,7 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  *   __findMultiEntry: (
  *     key: import('./Key.js').Key|undefined,
  *     primaryKey: import('./Key.js').Key|undefined,
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     success: KeySuccess,
  *     error: FindError,
  *     recordsToLoad?: Integer
@@ -213,14 +217,14 @@ IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recor
  */
 
 /**
- * @typedef {(tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void} FindError
+ * @typedef {(tx: WebSQLTransaction|Error|DOMException|(Error & {code?: number}), err?: (Error & {code?: number})) => void} FindError
  */
 
 /**
  *
  * @param {undefined|import('./Key.js').Key} key
  * @param {undefined|import('./Key.js').Key} primaryKey
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {KeySuccess} success
  * @param {FindError} error
  * @param {Integer|undefined} recordsToLoad
@@ -291,9 +295,9 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
             me.__prefetchedIndex = 0;
             me.__prefetchedData = data.rows;
             if (CFG.DEBUG) { console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor'); }
-            me.__decode(data.rows.item(0), success);
+            me.__decode(/** @type {RowItemNonNull} */ (data.rows.item(0)), success);
         } else if (data.rows.length === 1) {
-            me.__decode(data.rows.item(0), success);
+            me.__decode(/** @type {RowItemNonNull} */ (data.rows.item(0)), success);
         } else {
             if (CFG.DEBUG) { console.log('Reached end of cursors'); }
             success(undefined, undefined, undefined);
@@ -311,7 +315,7 @@ const leftBracketRegex = /\[/gu;
  *
  * @param {undefined|import('./Key.js').Key} key
  * @param {undefined|import('./Key.js').Key} primaryKey
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {KeySuccess} success
  * @param {FindError} error
  * @param {Integer} [recordsToLoad]
@@ -418,7 +422,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
             if (me.__count) { // Avoid caching and other processing below
                 let ct = 0;
                 for (let i = 0; i < data.rows.length; i++) {
-                    const rowItem = data.rows.item(i);
+                    const rowItem = /** @type {RowItemNonNull} */ (data.rows.item(i));
                     const rowKey = Key.decode(rowItem[me.__keyColumnName], true);
                     const matches = Key.findMultiEntryMatches(rowKey, me.__range);
                     ct += matches.length;
@@ -430,7 +434,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
             // Track how far we've physically scanned, regardless of whether
             // this batch produced any matches, so the next batch (if any)
             // resumes after this one instead of re-scanning or stopping early.
-            const lastRawRow = data.rows.item(data.rows.length - 1);
+            const lastRawRow = /** @type {RowItemNonNull} */ (data.rows.item(data.rows.length - 1));
             me.__continuationKey = Key.decode(lastRawRow[me.__keyColumnName], true);
             me.__continuationPrimaryKey = Key.decode(lastRawRow.key);
             if (data.rows.length < recordsToLoad) {
@@ -439,7 +443,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 
             const rows = [];
             for (let i = 0; i < data.rows.length; i++) {
-                const rowItem = data.rows.item(i);
+                const rowItem = /** @type {RowItemNonNull} */ (data.rows.item(i));
                 const rowKey = Key.decode(rowItem[me.__keyColumnName], true);
                 const matches = Key.findMultiEntryMatches(rowKey, me.__range);
 

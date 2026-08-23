@@ -1,5 +1,6 @@
 export default IDBObjectStore;
 export type Integer = number;
+export type WebSQLTransaction = import("websql-configurable/lib/websql/WebSQLTransaction.js").default;
 export type IDBObjectStoreFull = IDBObjectStore & {
     name: string;
     keyPath: import("./Key.js").KeyPath;
@@ -27,14 +28,19 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     __cursors: (import("./IDBCursor.js").IDBCursorFull | import("./IDBCursor.js").IDBCursorWithValueFull)[];
     __idbdb: import("./IDBDatabase.js").IDBDatabaseFull;
     __validateKeyAndValueAndCloneValue: (value: import("./Key.js").Value, key: import("./Key.js").Key, cursorUpdate: boolean) => KeyValueArray;
-    __deriveKey: (tx: SQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback) => void;
-    __insertData: (tx: SQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void) => SyncPromise;
-    __overwrite: (tx: SQLTransaction, key: import("./Key.js").Key, cb: (tx: SQLTransaction) => void, error: (err: SQLError) => void) => void;
+    __deriveKey: (tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback) => void;
+    __insertData: (tx: WebSQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void) => SyncPromise;
+    __overwrite: (tx: WebSQLTransaction, key: import("./Key.js").Key, cb: (tx: WebSQLTransaction) => void, error: (err: (Error & {
+        code?: number;
+    })) => void) => void;
     __get: (query: import("./Key.js").Value, getKey?: boolean, getAll?: boolean, count?: Integer) => import("./IDBRequest.js").IDBRequestFull;
 };
 export type KeyValueArray = [import("./Key.js").Key, import("./Key.js").Value];
 /**
  * @typedef {number} Integer
+ */
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
  */
 /**
  * IndexedDB Object Store.
@@ -63,7 +69,7 @@ declare class IDBObjectStore {
      *   the object store
      * If the table has auto increment, get the current number (unless it has
      *   a keyPath leading to a valid but non-numeric or < 1 key).
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @param {import('./Key.js').Value} value
      * @param {import('./Key.js').Key} key
      * @param {(key: import('./Key.js').Key, cn?: Integer) => void} success
@@ -71,10 +77,10 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {void}
      */
-    __deriveKey(this: IDBObjectStoreFull, tx: SQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback): void;
+    __deriveKey(this: IDBObjectStoreFull, tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback): void;
     /**
      *
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @param {string} encoded
      * @param {import('./Key.js').Value} value
      * @param {import('./Key.js').Key|Integer} clonedKeyOrCurrentNumber
@@ -86,7 +92,7 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {SyncPromise}
      */
-    __insertData(this: IDBObjectStoreFull, tx: SQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void): SyncPromise;
+    __insertData(this: IDBObjectStoreFull, tx: WebSQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void): SyncPromise;
     /**
      *
      * @param {import('./Key.js').Value} value
@@ -104,14 +110,16 @@ declare class IDBObjectStore {
     put(this: IDBObjectStoreFull, value: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @param {import('./Key.js').Key} key
-     * @param {(tx: SQLTransaction) => void} cb
-     * @param {(err: SQLError) => void} error
+     * @param {(tx: WebSQLTransaction) => void} cb
+     * @param {(err: (Error & {code?: number})) => void} error
      * @this {IDBObjectStoreFull}
      * @returns {void}
      */
-    __overwrite(this: IDBObjectStoreFull, tx: SQLTransaction, key: import("./Key.js").Key, cb: (tx: SQLTransaction) => void, error: (err: SQLError) => void): void;
+    __overwrite(this: IDBObjectStoreFull, tx: WebSQLTransaction, key: import("./Key.js").Key, cb: (tx: WebSQLTransaction) => void, error: (err: (Error & {
+        code?: number;
+    })) => void): void;
     /**
      *
      * @param {import('./Key.js').Value} query
@@ -234,14 +242,14 @@ declare namespace IDBObjectStore {
      *     cursorUpdate: boolean
      *   ) => KeyValueArray,
      *   __deriveKey: (
-     *     tx: SQLTransaction,
+     *     tx: WebSQLTransaction,
      *     value: import('./Key.js').Value,
      *     key: import('./Key.js').Key,
      *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
      *     failCb: import('./Key.js').SQLFailureCallback
      *   ) => void,
      *   __insertData: (
-     *     tx: SQLTransaction,
+     *     tx: WebSQLTransaction,
      *     encoded: string,
      *     value: import('./Key.js').Value,
      *     clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer,
@@ -250,10 +258,10 @@ declare namespace IDBObjectStore {
      *     error: (err: Error|DOMException) => void
      *   ) => SyncPromise,
      *   __overwrite: (
-     *     tx: SQLTransaction,
+     *     tx: WebSQLTransaction,
      *     key: import('./Key.js').Key,
-     *     cb: (tx: SQLTransaction) => void,
-     *     error: (err: SQLError) => void
+     *     cb: (tx: WebSQLTransaction) => void,
+     *     error: (err: (Error & {code?: number})) => void
      *   ) => void,
      *   __get: (
      *     query: import('./Key.js').Value,

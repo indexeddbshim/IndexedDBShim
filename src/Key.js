@@ -16,6 +16,10 @@ import CFG from './CFG.js';
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
  * @typedef {any} Value
  */
 
@@ -992,7 +996,7 @@ const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `N
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {CurrentNumberCallback} func
  * @param {SQLFailureCallback} sqlFailCb
@@ -1005,7 +1009,7 @@ function getCurrentNumber (tx, store, func, sqlFailCb) {
         if (data.rows.length !== 1) {
             func(1);
         } else {
-            func(data.rows.item(0).currNum);
+            func(/** @type {{currNum: number}} */ (data.rows.item(0)).currNum);
         }
     }, function (tx, error) {
         sqlFailCb(createDOMException(
@@ -1019,7 +1023,7 @@ function getCurrentNumber (tx, store, func, sqlFailCb) {
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
@@ -1042,7 +1046,7 @@ function assignCurrentNumber (tx, store, num, successCb, failCb) {
  * Bump up the auto-inc counter if the key path-resolved value is valid
  *   (greater than old value and >=1) OR if a manually passed in key is
  *   valid (numeric and >= 1) and >= any primaryKey.
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
@@ -1075,7 +1079,7 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {KeyForStoreCallback} cb
  * @param {SQLFailureCallback} sqlFailCb
@@ -1105,7 +1109,7 @@ function generateKeyForStore (tx, store, cb, sqlFailCb) {
 //     so we do not return a key
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Key} key
  * @param {(num?: Integer) => void} successCb

@@ -36,7 +36,7 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'durability', 'db', 'err
  *   on__preabort: () => void,
  *   __abortTransaction: (err: Error|DOMException|null) => void,
  *   __executeRequests: () => void,
- *   __tx: SQLTransaction,
+ *   __tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
  *   __id: Integer,
  *   __active: boolean,
  *   __handlerActive: boolean,
@@ -314,7 +314,10 @@ IDBTransaction.prototype.__executeRequests = function () {
             }
 
             /**
-             * @param {[tx: SQLTransaction|DOMException|Error|SQLError, err?: SQLError]} args
+             * @param {[
+             *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|DOMException|Error,
+             *   err?: Error & {code?: number}
+             * ]} args
              * @returns {void}
              */
             function error (...args /* tx, err */) {
@@ -452,7 +455,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             if (webSQLErr === true) { // Not a genuine SQL error
                 return;
             }
-            const err = webSQLErrback(/** @type {SQLError} */ (webSQLErr));
+            const err = webSQLErrback(/** @type {Error & {code?: number}} */ (webSQLErr));
             me.__abortTransaction(err);
         },
         function () {
@@ -578,10 +581,13 @@ IDBTransaction.prototype.__createRequest = function (source) {
 
 /**
  * @typedef {(
- *   tx: SQLTransaction,
+ *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
  *   args: ObjectArray,
  *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
- *   error: (tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void,
+ *   error: (
+ *     tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|Error|DOMException,
+ *     err?: Error & {code?: number}
+ *   ) => void,
  *   executeNextRequest?: () => void
  * ) => void} SQLCallback
  */
@@ -752,8 +758,8 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     }
 
     /**
-     * @param {SQLTransaction|null} [tx]
-     * @param {SQLResultSet|SQLError|{code: 0}} [errOrResult]
+     * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default|null} [tx]
+     * @param {import('websql-configurable/lib/websql/WebSQLResultSet.js').default|(Error & {code?: number})|{code: 0}} [errOrResult]
      * @returns {void}
      */
     function abort (tx, errOrResult) {
@@ -826,7 +832,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                     'ROLLBACK',
                     [],
                     abort,
-                    /** @type {SQLStatementErrorCallback} */ (abort)
+                    /** @type {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} */ (abort)
                 ); // Not working in some circumstances, even in Node
             } catch (err) {
                 // Browser errs when transaction has ended and since it most likely already erred here,

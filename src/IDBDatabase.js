@@ -73,7 +73,7 @@ const IDBDatabaseAlias = IDBDatabase;
  * @param {string} name
  * @param {Integer} oldVersion
  * @param {Integer} version
- * @param {SQLResultSet} storeProperties
+ * @param {import('websql-configurable/lib/websql/WebSQLResultSet.js').default} storeProperties
  * @returns {IDBDatabaseFull}
  */
 IDBDatabase.__createInstance = function (db, name, oldVersion, version, storeProperties) {
@@ -108,7 +108,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
 
         const itemCopy = /** @type {IDBObjectStoreProperties} */ ({});
         for (let i = 0; i < storeProperties.rows.length; i++) {
-            const item = storeProperties.rows.item(i);
+            const item = /** @type {{name: string, keyPath: string, autoInc: string, indexList: string}} */ (storeProperties.rows.item(i));
             // Safari implements `item` getter return object's properties
             //  as readonly, so we copy all its properties (except our
             //  custom `currNum` which we don't need) onto a new object

@@ -1,5 +1,8 @@
 export type CreateSysDBSuccessCallback = () => void;
 export type Integer = number;
+export type WebSQLTransaction = import("websql-configurable/lib/websql/WebSQLTransaction.js").default;
+export type SqlErrorCallback = import("websql-configurable/lib/websql/WebSQLTransaction.js").SqlErrorCallback;
+export type WebSQLResultSet = import("websql-configurable/lib/websql/WebSQLResultSet.js").default;
 export type DatabaseDeleted = () => void;
 export type DatabaseFull = import("websql-configurable/lib/websql/WebSQLDatabase.js").default & {
     _db: {

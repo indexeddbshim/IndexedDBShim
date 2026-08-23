@@ -31,7 +31,7 @@
   "scripts": {
     "tsc": "tsc",
     "tsc-prod": "tsc -p tsconfig-prod.json",
-    "tsc:ts7": "npx -y typescript@^7 tsc",
+    "tsc:ts7": "npx -y -p typescript@^7 -c \"tsc\"",
     "tsc-prod:ts7": "npx -y typescript@^7 tsc -p tsconfig-prod.json",
     "build": "rm -R dist && npm run tsc-prod && npm run rollup",
     "prepublishOnly": "npm run license-badges && npm run build",
@@ -169,7 +169,7 @@
     "sync-promise-expanded": "^2.0.0",
     "typeson": "10.2.0",
     "typeson-registry": "14.0.0",
-    "websql-configurable": "^3.0.3"
+    "websql-configurable": "^3.0.5"
   },
   "devDependencies": {
     "@babel/core": "^8.0.1",

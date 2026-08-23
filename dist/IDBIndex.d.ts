@@ -1,4 +1,6 @@
 export type Integer = number;
+export type WebSQLTransaction = import("websql-configurable/lib/websql/WebSQLTransaction.js").default;
+export type SqlErrorCallback = import("websql-configurable/lib/websql/WebSQLTransaction.js").SqlErrorCallback;
 export type IDBIndexProperties = {
     columnName: string;
     keyPath: import("./Key.js").KeyPath;
@@ -29,7 +31,7 @@ export type IDBIndexFull = IDBIndex & {
     __keyPath: import("./Key.js").KeyPath;
     __recreated?: boolean;
     __fetchIndexData: (range: any, opType: "value" | "key" | "count", nullDisallowed: boolean, count?: number) => import("./IDBRequest.js").IDBRequestFull;
-    __renameIndex: (store: import("./IDBObjectStore.js").IDBObjectStoreFull, oldName: string, newName: string, colInfoToPreserveArr?: string[][], cb?: null | ((tx: SQLTransaction, success: ((store: IDBObjectStore) => void)) => void)) => void;
+    __renameIndex: (store: import("./IDBObjectStore.js").IDBObjectStoreFull, oldName: string, newName: string, colInfoToPreserveArr?: string[][], cb?: null | ((tx: WebSQLTransaction, success: ((store: IDBObjectStore) => void)) => void)) => void;
 };
 export type IndexList = {
     [key: string]: IDBIndexProperties;
@@ -64,15 +66,23 @@ export function buildFetchIndexDataSQL(nullDisallowed: boolean, index: IDBIndexF
  * @param {boolean} multiChecks
  * @param {string[]} sql
  * @param {string[]} sqlValues
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {null|undefined} args
  * @param {(result: number|undefined|[]|AnyValue|AnyValue[]) => void} success
- * @param {(tx: SQLTransaction, err: SQLError) => void} error
+ * @param {(tx: WebSQLTransaction, err: (Error & {code?: number})) => void} error
  * @returns {void}
  */
-export function executeFetchIndexData(count: number | null, unboundedDisallowed: boolean, index: IDBIndexFull, hasKey: boolean, range: import("./Key.js").Value | import("./Key.js").Key, opType: "value" | "key" | "count", multiChecks: boolean, sql: string[], sqlValues: string[], tx: SQLTransaction, args: null | undefined, success: (result: number | undefined | [] | AnyValue | AnyValue[]) => void, error: (tx: SQLTransaction, err: SQLError) => void): void;
+export function executeFetchIndexData(count: number | null, unboundedDisallowed: boolean, index: IDBIndexFull, hasKey: boolean, range: import("./Key.js").Value | import("./Key.js").Key, opType: "value" | "key" | "count", multiChecks: boolean, sql: string[], sqlValues: string[], tx: WebSQLTransaction, args: null | undefined, success: (result: number | undefined | [] | AnyValue | AnyValue[]) => void, error: (tx: WebSQLTransaction, err: (Error & {
+    code?: number;
+})) => void): void;
 /**
  * @typedef {number} Integer
+ */
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} SqlErrorCallback
  */
 /**
  * @typedef {{
@@ -163,13 +173,13 @@ export class IDBIndex {
      * @param {string} newName
      * @param {string[][]} colInfoToPreserveArr
      * @param {null|((
-     *   tx: SQLTransaction,
+     *   tx: WebSQLTransaction,
      *   success: ((store: IDBObjectStore) => void)
      * ) => void)} cb
      * @this {IDBIndexFull}
      * @returns {void}
      */
-    __renameIndex(this: IDBIndexFull, store: import("./IDBObjectStore.js").IDBObjectStoreFull, oldName: string, newName: string, colInfoToPreserveArr?: string[][], cb?: null | ((tx: SQLTransaction, success: ((store: IDBObjectStore) => void)) => void)): void;
+    __renameIndex(this: IDBIndexFull, store: import("./IDBObjectStore.js").IDBObjectStoreFull, oldName: string, newName: string, colInfoToPreserveArr?: string[][], cb?: null | ((tx: WebSQLTransaction, success: ((store: IDBObjectStore) => void)) => void)): void;
 }
 export namespace IDBIndex {
     /**
@@ -203,7 +213,7 @@ export namespace IDBIndex {
      *     newName: string,
      *     colInfoToPreserveArr?: string[][],
      *     cb?: null|((
-     *       tx: SQLTransaction,
+     *       tx: WebSQLTransaction,
      *       success: ((store: IDBObjectStore) => void)
      *     ) => void)
      *   ) => void
@@ -251,15 +261,12 @@ export namespace IDBIndex {
     /**
      * Updates index list for the given object store.
      * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @param {(store: IDBObjectStore) => void} success
-     * @param {(
-     *   tx: SQLTransaction,
-     *   err: SQLError
-     * ) => boolean} [failure]
+     * @param {SqlErrorCallback} [failure]
      * @returns {void}
      */
-    function __updateIndexList(store: import("./IDBObjectStore.js").IDBObjectStoreFull, tx: SQLTransaction, success: (store: IDBObjectStore) => void, failure?: (tx: SQLTransaction, err: SQLError) => boolean): void;
+    function __updateIndexList(store: import("./IDBObjectStore.js").IDBObjectStoreFull, tx: WebSQLTransaction, success: (store: IDBObjectStore) => void, failure?: SqlErrorCallback): void;
 }
 import IDBObjectStore from './IDBObjectStore.js';
 import { IDBKeyRange } from './IDBKeyRange.js';

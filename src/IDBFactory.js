@@ -19,6 +19,18 @@ import CFG from './CFG.js';
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} SqlErrorCallback
+ */
+
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLResultSet.js').default} WebSQLResultSet
+ */
+
+/**
  * @callback DatabaseDeleted
  * @returns {void}
  */
@@ -284,7 +296,7 @@ function closeCachedWebSQLConnections (name, cb) {
  * @param {string} name
  * @param {string} escapedDatabaseName
  * @param {DatabaseDeleted} databaseDeleted
- * @param {(tx: SQLTransaction|Error|SQLError, err?: SQLError) => boolean} dbError
+ * @param {(tx: WebSQLTransaction|Error|(Error & {code?: number}), err?: (Error & {code?: number})) => boolean} dbError
  * @returns {void}
  */
 function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
@@ -320,10 +332,11 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
         closeCachedWebSQLConnections(name, () => {
             fs.unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), (err) => {
                 if (err && err.code !== 'ENOENT') { // Ignore if file is already deleted
-                    dbError({
-                        code: 0,
-                        message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err
-                    });
+                    const removalError = /** @type {Error & {code?: number}} */ (
+                        new Error('Error removing database file: ' + escapedDatabaseName + ' ' + err)
+                    );
+                    removalError.code = 0;
+                    dbError(removalError);
                     return;
                 }
                 databaseDeleted();
@@ -351,7 +364,7 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
                     // Delete all tables in this database, maintained in the sys table
                     tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(
                         util.unescapeSQLiteResponse( // Avoid double-escaping
-                            tables.item(i).name
+                            /** @type {{name: string}} */ (tables.item(i)).name
                         )
                     ), [], function () {
                         deleteTables(i + 1);
@@ -378,18 +391,18 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
  * Creates the sysDB to keep track of version numbers for databases.
  * @param {OpenDatabase} __openDatabase
  * @param {CreateSysDBSuccessCallback} success
- * @param {(tx: SQLTransaction|SQLError|Error, err?: SQLError) => void} failure
+ * @param {(tx: WebSQLTransaction|(Error & {code?: number})|Error, err?: (Error & {code?: number})) => void} failure
  * @returns {void}
  */
 function createSysDB (__openDatabase, success, failure) {
     /**
      *
-     * @param {boolean|SQLTransaction|SQLError} tx
-     * @param {SQLError} [err]
+     * @param {boolean|WebSQLTransaction|(Error & {code?: number})} tx
+     * @param {(Error & {code?: number})} [err]
      * @returns {void}
      */
     function sysDbCreateError (tx, err) {
-        const er = webSQLErrback(/** @type {SQLError} */ (err) || tx);
+        const er = webSQLErrback(/** @type {(Error & {code?: number})} */ (err) || tx);
         if (CFG.DEBUG) { console.log('Error in sysdb transaction - when creating dbVersions', err); }
         failure(er);
     }
@@ -421,9 +434,9 @@ function createSysDB (__openDatabase, success, failure) {
                     'CREATE INDEX IF NOT EXISTS dbvname ON dbVersions(name)',
                     [],
                     success,
-                    /** @type {SQLStatementErrorCallback} */ (sysDbCreateError)
+                    /** @type {SqlErrorCallback} */ (sysDbCreateError)
                 );
-            }, /** @type {SQLStatementErrorCallback} */ (sysDbCreateError));
+            }, /** @type {SqlErrorCallback} */ (sysDbCreateError));
         }, sysDbCreateError);
     }
 }
@@ -528,8 +541,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
     /**
      *
-     * @param {SQLTransaction|Error|SQLError} tx
-     * @param {SQLError} [err]
+     * @param {WebSQLTransaction|Error|(Error & {code?: number})} tx
+     * @param {(Error & {code?: number})} [err]
      * @returns {boolean}
      */
     function dbCreateError (tx, err) {
@@ -549,7 +562,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
     /**
      *
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @param {DatabaseFull} db
      * @param {Integer} oldVersion
      * @returns {void}
@@ -575,9 +588,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
                     // DB Upgrade in progress
                     /**
                      *
-                     * @param {SQLTransaction} systx
-                     * @param {boolean|SQLError|DOMException|Error} err
-                     * @param {(tx?: SQLTransaction|SQLError, err?: SQLError|SQLResultSet) => boolean} cb
+                     * @param {WebSQLTransaction} systx
+                     * @param {boolean|(Error & {code?: number})|DOMException|Error} err
+                     * @param {(tx?: WebSQLTransaction|(Error & {code?: number}), err?: (Error & {code?: number})|WebSQLResultSet) => boolean} cb
                      * @returns {void}
                      */
                     let sysdbFinishedCb = function (systx, err, cb) {
@@ -798,12 +811,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if ((useMemoryDatabase || useDatabaseCache) && Object.hasOwn(websqlDBCache, name) && Object.hasOwn(websqlDBCache[name], version)) {
             db = websqlDBCache[name][version];
         } else {
-            db = me.__openDatabase(
+            db = /** @type {DatabaseFull} */ (me.__openDatabase(
                 useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName),
                 '1',
                 name,
                 CFG.DEFAULT_DB_SIZE
-            );
+            ));
             if (useDatabaseCache) {
                 if (!(Object.hasOwn(websqlDBCache, name))) {
                     websqlDBCache[name] = {};
@@ -837,7 +850,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                     return;
                 }
                 tx.executeSql('CREATE INDEX IF NOT EXISTS sysname ON __sys__(name)', [], setup, dbCreateError);
-            }, /** @type {SQLStatementErrorCallback} */ (dbCreateError));
+            }, /** @type {SqlErrorCallback} */ (dbCreateError));
         }, dbCreateError);
     }
 
@@ -859,7 +872,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             // Database with this name does not exist
                             openDB(0);
                         } else {
-                            openDB(data.rows.item(0).version);
+                            openDB(/** @type {{version: Integer}} */ (data.rows.item(0)).version);
                         }
                     }, dbCreateError);
                 }, dbCreateError);
@@ -923,8 +936,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     //  `UnknownError` as we may require upon a SQL deletion error
     /**
      *
-     * @param {SQLTransaction|SQLError|Error} tx
-     * @param {SQLError|boolean} [err]
+     * @param {WebSQLTransaction|(Error & {code?: number})|Error} tx
+     * @param {(Error & {code?: number})|boolean} [err]
      * @returns {boolean}
      */
     function dbError (tx, err) {
@@ -939,7 +952,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         //  transaction, corrupting that connection's task queue (see issue with unrelated `open()` calls
         //  failing/crashing after a `deleteDatabase` file-removal error).
         calledDBError = true;
-        const er = webSQLErrback(/** @type {SQLError} */ (err || tx));
+        const er = webSQLErrback(/** @type {(Error & {code?: number})} */ (err || tx));
         sysdbFinishedCbDelete(true, function () {
             req.__done = true;
             req.__error = er;
@@ -986,7 +999,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                         completeDatabaseDelete();
                         return undefined;
                     }
-                    ({version} = data.rows.item(0));
+                    ({version} = /** @type {{version: Integer}} */ (data.rows.item(0)));
 
                     const openConnections = me.__connections[name] || [];
                     triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () {
@@ -1070,15 +1083,15 @@ IDBFactory.prototype.databases = function () {
         }
         /**
          *
-         * @param {true|SQLTransaction|SQLError|DOMException|Error} tx
-         * @param {SQLError|DOMException|Error} [err]
+         * @param {true|WebSQLTransaction|(Error & {code?: number})|DOMException|Error} tx
+         * @param {(Error & {code?: number})|DOMException|Error} [err]
          * @returns {boolean}
          */
         function dbGetDatabaseNamesError (tx, err) {
             if (calledDbCreateError) {
                 return false;
             }
-            const er = err ? webSQLErrback(/** @type {SQLError} */ (err)) : tx;
+            const er = err ? webSQLErrback(/** @type {(Error & {code?: number})} */ (err)) : tx;
             calledDbCreateError = true;
             reject(er);
             return false;
@@ -1088,7 +1101,7 @@ IDBFactory.prototype.databases = function () {
                 sysReadTx.executeSql('SELECT "name", "version" FROM dbVersions', [], function (sysReadTx, data) {
                     const dbNames = [];
                     for (let i = 0; i < data.rows.length; i++) {
-                        const {name, version} = data.rows.item(i);
+                        const {name, version} = /** @type {{name: string, version: Integer}} */ (data.rows.item(i));
                         dbNames.push({
                             name: util.unescapeSQLiteResponse(name),
                             version

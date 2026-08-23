@@ -324,10 +324,15 @@ function findError (args) {
 }
 
 /**
- *
- * @param {SQLError} webSQLErr
+ * The `websql-configurable` driver never constructs a real, spec-conformant
+ *   `SQLError` (with a required numeric `.code`) -- errors it reports are
+ *   always plain `Error`s from the underlying SQL driver, so `.code` is
+ *   optional here and, in practice, always `undefined` today (the `case 4`/
+ *   `case 7` branches below are effectively unreachable pending upstream
+ *   support for surfacing a real error code).
+ * @param {Error & {code?: number}} webSQLErr
  * @returns {(DOMException|Error) & {
- *   sqlError: SQLError
+ *   sqlError: Error & {code?: number}
  * }|QuotaExceededError}
  */
 function webSQLErrback (webSQLErr) {
@@ -367,7 +372,7 @@ function webSQLErrback (webSQLErr) {
     const err =
         /**
          * @type {(Error | DOMException) & {
-         *   sqlError: SQLError
+         *   sqlError: Error & {code?: number}
          * }}
          */
         (createDOMException(name, message));

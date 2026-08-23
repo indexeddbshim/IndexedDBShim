@@ -64,13 +64,22 @@ export const ShimDOMException: {
 };
 export const createDOMException: ((name: string, message: string, error?: ErrorLike) => DOMException) | ((name: string, message: string, error?: ErrorLike) => Error);
 /**
- *
- * @param {SQLError} webSQLErr
+ * The `websql-configurable` driver never constructs a real, spec-conformant
+ *   `SQLError` (with a required numeric `.code`) -- errors it reports are
+ *   always plain `Error`s from the underlying SQL driver, so `.code` is
+ *   optional here and, in practice, always `undefined` today (the `case 4`/
+ *   `case 7` branches below are effectively unreachable pending upstream
+ *   support for surfacing a real error code).
+ * @param {Error & {code?: number}} webSQLErr
  * @returns {(DOMException|Error) & {
- *   sqlError: SQLError
+ *   sqlError: Error & {code?: number}
  * }|QuotaExceededError}
  */
-export function webSQLErrback(webSQLErr: SQLError): ((DOMException | Error) & {
-    sqlError: SQLError;
+export function webSQLErrback(webSQLErr: Error & {
+    code?: number;
+}): ((DOMException | Error) & {
+    sqlError: Error & {
+        code?: number;
+    };
 }) | QuotaExceededError;
 //# sourceMappingURL=DOMException.d.ts.map

@@ -10,6 +10,18 @@ import CFG from './CFG.js';
  */
 
 /**
+ * `websql-configurable`'s `customOpenDatabase` always calls this via `new`
+ *   (see its `custom.js`: `new SQLiteDatabase(dbName, sqliteOpts)`), so this
+ *   is typed with a construct signature even though `wrappedSQLiteDatabase`
+ *   below is written as a plain function -- that's a deliberate, working JS
+ *   idiom (a plain function invoked with `new` that explicitly `return`s an
+ *   object yields that object as the `new` expression's result, overriding
+ *   the default "return `this`" behavior), not something TypeScript can
+ *   verify structurally.
+ * @typedef {new (name: string, opts?: any) => SQLiteDatabaseInstance} SQLiteDatabaseConstructor
+ */
+
+/**
  * @param {string} name
  * @returns {SQLiteDatabaseInstance}
  */
@@ -28,5 +40,5 @@ function wrappedSQLiteDatabase (name) {
     return db;
 }
 
-const nodeWebSQL = customOpenDatabase(wrappedSQLiteDatabase, {});
+const nodeWebSQL = customOpenDatabase(/** @type {SQLiteDatabaseConstructor} */ (/** @type {unknown} */ (wrappedSQLiteDatabase)), {});
 export default nodeWebSQL;

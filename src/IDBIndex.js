@@ -16,6 +16,14 @@ const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} SqlErrorCallback
+ */
+
+/**
  * @typedef {{
  *   columnName: string,
  *   keyPath: import('./Key.js').KeyPath,
@@ -71,7 +79,7 @@ const IDBIndexAlias = IDBIndex;
  *     newName: string,
  *     colInfoToPreserveArr?: string[][],
  *     cb?: null|((
- *       tx: SQLTransaction,
+ *       tx: WebSQLTransaction,
  *       success: ((store: IDBObjectStore) => void)
  *     ) => void)
  *   ) => void
@@ -268,8 +276,8 @@ IDBIndex.__createIndex = function (store, index) {
         let indexValues = {};
 
         /**
-         * @param {SQLTransaction} tx
-         * @param {SQLError} err
+         * @param {WebSQLTransaction} tx
+         * @param {(Error & {code?: number})} err
          * @returns {void}
          */
         function error (tx, err) {
@@ -277,7 +285,7 @@ IDBIndex.__createIndex = function (store, index) {
         }
 
         /**
-         * @param {SQLTransaction} tx
+         * @param {WebSQLTransaction} tx
          * @returns {void}
          */
         function applyIndex (tx) {
@@ -295,7 +303,8 @@ IDBIndex.__createIndex = function (store, index) {
                     function addIndexEntry (i) {
                         if (i < data.rows.length) {
                             try {
-                                const value = Sca.decode(util.unescapeSQLiteResponse(data.rows.item(i).value));
+                                const row = /** @type {{key: string, value: string}} */ (data.rows.item(i));
+                                const value = Sca.decode(util.unescapeSQLiteResponse(row.value));
                                 const indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Todo: Do we need this stricter error checking?
                                 if (
                                     ('invalid' in indexKey && indexKey.invalid) ||
@@ -321,11 +330,11 @@ IDBIndex.__createIndex = function (store, index) {
                                 tx.executeSql(
                                     'UPDATE ' + util.escapeStoreNameForSQL(storeName) + ' SET ' +
                                         util.escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?',
-                                    [util.escapeSQLiteStatement(indexKeyStr), data.rows.item(i).key],
+                                    [util.escapeSQLiteStatement(indexKeyStr), row.key],
                                     function () {
                                         addIndexEntry(i + 1);
                                     },
-                                    /** @type {SQLStatementErrorCallback} */ (error)
+                                    /** @type {SqlErrorCallback} */ (error)
                                 );
                             } catch (err) {
                                 // Not a valid value to insert into index, so just continue
@@ -344,15 +353,15 @@ IDBIndex.__createIndex = function (store, index) {
                             success(store);
                         }
                     }
-                }, /** @type {SQLStatementErrorCallback} */ (error));
-            }, /** @type {SQLStatementErrorCallback} */ (error));
+                }, /** @type {SqlErrorCallback} */ (error));
+            }, /** @type {SqlErrorCallback} */ (error));
         }
 
         const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
         const escapedIndexNameSQL = util.escapeIndexNameForSQL(index.name);
 
         /**
-         * @param {SQLTransaction} tx
+         * @param {WebSQLTransaction} tx
          * @returns {void}
          */
         function addIndexSQL (tx) {
@@ -370,7 +379,7 @@ IDBIndex.__createIndex = function (store, index) {
                     '" ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')',
                 [],
                 applyIndex,
-                /** @type {SQLStatementErrorCallback} */ (error)
+                /** @type {SqlErrorCallback} */ (error)
             );
         }
 
@@ -383,7 +392,7 @@ IDBIndex.__createIndex = function (store, index) {
             const sql = ['ALTER TABLE', escapedStoreNameSQL, 'ADD', escapedIndexNameSQL, 'BLOB'].join(' ');
             if (CFG.DEBUG) { console.log(sql); }
             tx.executeSql(
-                sql, [], addIndexSQL, /** @type {SQLStatementErrorCallback} */ (error)
+                sql, [], addIndexSQL, /** @type {SqlErrorCallback} */ (error)
             );
         }
     });
@@ -411,8 +420,8 @@ IDBIndex.__deleteIndex = function (store, index) {
         transaction
     ).__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
         /**
-         * @param {SQLTransaction} tx
-         * @param {SQLError} err
+         * @param {WebSQLTransaction} tx
+         * @param {(Error & {code?: number})} err
          * @returns {void}
          */
         function error (tx, err) {
@@ -433,7 +442,7 @@ IDBIndex.__deleteIndex = function (store, index) {
                     delete indexHandle.__pendingDelete;
                 }
                 success(store);
-            }, /** @type {SQLStatementErrorCallback} */ (error));
+            }, /** @type {SqlErrorCallback} */ (error));
         }
 
         if (!CFG.useSQLiteIndexes) {
@@ -448,7 +457,7 @@ IDBIndex.__deleteIndex = function (store, index) {
                 ),
             [],
             finishDeleteIndex,
-            /** @type {SQLStatementErrorCallback} */ (error)
+            /** @type {SqlErrorCallback} */ (error)
         );
     });
 };
@@ -460,12 +469,9 @@ IDBIndex.__deleteIndex = function (store, index) {
 /**
  * Updates index list for the given object store.
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {(store: IDBObjectStore) => void} success
- * @param {(
- *   tx: SQLTransaction,
- *   err: SQLError
- * ) => boolean} [failure]
+ * @param {SqlErrorCallback} [failure]
  * @returns {void}
  */
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
@@ -487,7 +493,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     if (CFG.DEBUG) { console.log('Updating the index list for ' + store.__currentName, indexList); }
     tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.__currentName)], function () {
         success(store);
-    }, /** @type {SQLStatementErrorCallback} */ (failure));
+    }, /** @type {SqlErrorCallback} */ (failure));
 };
 
 /**
@@ -646,7 +652,7 @@ IDBIndex.prototype.count = function (/* query */) {
  * @param {string} newName
  * @param {string[][]} colInfoToPreserveArr
  * @param {null|((
- *   tx: SQLTransaction,
+ *   tx: WebSQLTransaction,
  *   success: ((store: IDBObjectStore) => void)
  * ) => void)} cb
  * @this {IDBIndexFull}
@@ -669,8 +675,8 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
         store.transaction
     ).__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
         /**
-         * @param {SQLTransaction} tx
-         * @param {SQLError} err
+         * @param {WebSQLTransaction} tx
+         * @param {(Error & {code?: number})} err
          * @returns {void}
          */
         function sqlError (tx, err) {
@@ -724,7 +730,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                     sql,
                                     [],
                                     resolve,
-                                    /** @type {SQLStatementErrorCallback} */
+                                    /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
                                         reject(err);
                                     })
@@ -746,13 +752,13 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                         if (CFG.DEBUG) { console.log(sql); }
                                         tx.executeSql(
                                             sql, [], resolve,
-                                            /** @type {SQLStatementErrorCallback} */
+                                            /** @type {SqlErrorCallback} */
                                             (function (tx, err) {
                                                 reject(err);
                                             })
                                         );
                                     },
-                                    /** @type {SQLStatementErrorCallback} */
+                                    /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
                                         reject(err);
                                     })
@@ -766,10 +772,10 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                             console.log('Index rename error');
                             throw err;
                         });
-                    }, /** @type {SQLStatementErrorCallback} */ (sqlError));
-                }, /** @type {SQLStatementErrorCallback} */ (sqlError));
-            }, /** @type {SQLStatementErrorCallback} */ (sqlError));
-        }, /** @type {SQLStatementErrorCallback} */ (sqlError));
+                    }, /** @type {SqlErrorCallback} */ (sqlError));
+                }, /** @type {SqlErrorCallback} */ (sqlError));
+            }, /** @type {SqlErrorCallback} */ (sqlError));
+        }, /** @type {SqlErrorCallback} */ (sqlError));
     });
 };
 
@@ -810,10 +816,10 @@ Object.defineProperty(IDBIndex, 'prototype', {
  * @param {boolean} multiChecks
  * @param {string[]} sql
  * @param {string[]} sqlValues
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {null|undefined} args
  * @param {(result: number|undefined|[]|AnyValue|AnyValue[]) => void} success
- * @param {(tx: SQLTransaction, err: SQLError) => void} error
+ * @param {(tx: WebSQLTransaction, err: (Error & {code?: number})) => void} error
  * @returns {void}
  */
 function executeFetchIndexData (
@@ -861,7 +867,7 @@ function executeFetchIndexData (
             const escapedIndexNameForKeyCol = util.escapeIndexNameForSQLKeyColumn(index.name);
             const encodedKey = Key.encode(range, index.multiEntry);
             for (let i = 0; i < data.rows.length; i++) {
-                const row = data.rows.item(i);
+                const row = /** @type {{key: string, value: string, [k: string]: string}} */ (data.rows.item(i));
                 const rowKey = /** @type {import('./Key.js').ValueTypeArray} */ (
                     Key.decode(row[escapedIndexNameForKeyCol])
                 );
@@ -899,7 +905,7 @@ function executeFetchIndexData (
             }
         } else {
             for (let i = 0; i < data.rows.length; i++) {
-                const record = data.rows.item(i);
+                const record = /** @type {{key: string, value: string}} */ (data.rows.item(i));
                 if (record) {
                     records.push(decode(record));
                 }
@@ -913,7 +919,7 @@ function executeFetchIndexData (
         } else {
             success(unboundedDisallowed ? records[0] : records);
         }
-    }, /** @type {SQLStatementErrorCallback} */ (error));
+    }, /** @type {SqlErrorCallback} */ (error));
 }
 
 /**

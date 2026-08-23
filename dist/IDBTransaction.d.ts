@@ -17,7 +17,7 @@ export type IDBTransactionFull = EventTarget & {
     on__preabort: () => void;
     __abortTransaction: (err: Error | DOMException | null) => void;
     __executeRequests: () => void;
-    __tx: SQLTransaction;
+    __tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default;
     __id: Integer;
     __active: boolean;
     __handlerActive: boolean;
@@ -39,6 +39,7 @@ export type IDBTransactionFull = EventTarget & {
     __transactionEndCallback: () => void;
     __transactionFinished: boolean;
     __completed: boolean;
+    __transFinishedCbFired: boolean;
     __internal: boolean;
     __abortFinished: boolean;
     __createRequest: (source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
@@ -49,7 +50,9 @@ export type IDBTransactionFull = EventTarget & {
     __addToTransactionQueue: (callback: SQLCallback, args: ObjectArray | undefined, source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
     __assertWritable: () => void;
 };
-export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (result?: any, req?: import("./IDBRequest.js").IDBRequestFull) => void, error: (tx: SQLTransaction | Error | DOMException | SQLError, err?: SQLError) => void, executeNextRequest?: () => void) => void;
+export type SQLCallback = (tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default, args: ObjectArray, success: (result?: any, req?: import("./IDBRequest.js").IDBRequestFull) => void, error: (tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default | Error | DOMException, err?: Error & {
+    code?: number;
+}) => void, executeNextRequest?: () => void) => void;
 /**
  * @typedef {number} Integer
  */
@@ -73,7 +76,7 @@ export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (resu
  *   on__preabort: () => void,
  *   __abortTransaction: (err: Error|DOMException|null) => void,
  *   __executeRequests: () => void,
- *   __tx: SQLTransaction,
+ *   __tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
  *   __id: Integer,
  *   __active: boolean,
  *   __handlerActive: boolean,
@@ -95,6 +98,7 @@ export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (resu
  *   __transactionEndCallback: () => void,
  *   __transactionFinished: boolean,
  *   __completed: boolean,
+ *   __transFinishedCbFired: boolean,
  *   __internal: boolean,
  *   __abortFinished: boolean,
  *   __createRequest: (
@@ -159,6 +163,7 @@ declare class IDBTransaction {
      * @returns {void}
      */
     __callTransFinishedCb(this: IDBTransactionFull, err: boolean, cb: (bool?: boolean) => void): void;
+    __transFinishedCbFired: boolean | undefined;
     /**
      * @this {IDBTransactionFull}
      * @returns {void}
@@ -176,10 +181,13 @@ declare class IDBTransaction {
     __createRequest(this: IDBTransactionFull, source: import("./IDBDatabase.js").IDBDatabaseFull): IDBRequest;
     /**
      * @typedef {(
-     *   tx: SQLTransaction,
+     *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
      *   args: ObjectArray,
      *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
-     *   error: (tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void,
+     *   error: (
+     *     tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|Error|DOMException,
+     *     err?: Error & {code?: number}
+     *   ) => void,
      *   executeNextRequest?: () => void
      * ) => void} SQLCallback
      */

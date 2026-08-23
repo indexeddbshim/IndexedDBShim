@@ -18,6 +18,7 @@ export type KeyForStoreCallback = (arg1: "failure" | null, arg2?: number | undef
 export type ArrayBufferView = NodeJS.TypedArray | DataView;
 export type BufferSource = ArrayBufferView | ArrayBuffer;
 export type KeyType = "number" | "date" | "string" | "binary" | "array";
+export type WebSQLTransaction = import("websql-configurable/lib/websql/WebSQLTransaction.js").default;
 export type Value = any;
 export type Key = any;
 export type KeyPathArray = KeyPath[];
@@ -177,14 +178,14 @@ export function isKeyInRange(key: Key, range: import("./IDBKeyRange.js").IDBKeyR
 export function findMultiEntryMatches(keyEntry: Key, range: import("./IDBKeyRange.js").IDBKeyRangeFull | undefined): Key[];
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
  * @param {SQLFailureCallback} failCb
  * @returns {void}
  */
-export function assignCurrentNumber(tx: SQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, num: Integer, successCb: CurrentNumberCallback, failCb: SQLFailureCallback): void;
+export function assignCurrentNumber(tx: WebSQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, num: Integer, successCb: CurrentNumberCallback, failCb: SQLFailureCallback): void;
 /**
  * @callback KeyForStoreCallback
  * @param {"failure"|null} arg1
@@ -194,21 +195,21 @@ export function assignCurrentNumber(tx: SQLTransaction, store: import("./IDBObje
  */
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {KeyForStoreCallback} cb
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}
  */
-export function generateKeyForStore(tx: SQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, cb: KeyForStoreCallback, sqlFailCb: SQLFailureCallback): void;
+export function generateKeyForStore(tx: WebSQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, cb: KeyForStoreCallback, sqlFailCb: SQLFailureCallback): void;
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Key} key
  * @param {(num?: Integer) => void} successCb
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}
  */
-export function possiblyUpdateKeyGenerator(tx: SQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, key: Key, successCb: (num?: Integer) => void, sqlFailCb: SQLFailureCallback): void;
+export function possiblyUpdateKeyGenerator(tx: WebSQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, key: Key, successCb: (num?: Integer) => void, sqlFailCb: SQLFailureCallback): void;
 //# sourceMappingURL=Key.d.ts.map

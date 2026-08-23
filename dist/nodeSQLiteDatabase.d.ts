@@ -2,20 +2,15 @@ export default SQLiteDatabase;
 export type SQLProfileCallback = (sql: string, duration: number) => void;
 export type SQLTraceCallback = ((sql: string) => void) | undefined;
 /**
- * @typedef {(sql: string, duration: number) => void} SQLProfileCallback
- */
-/**
- * @typedef {((sql: string) => void)|undefined} SQLTraceCallback
- */
-/**
  * @class
  * @param {string} name
  * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
- * @this {{_db: any}}
+ * @this {{_db: any, _qFilePath: string}}
  * @returns {void}
  */
 declare function SQLiteDatabase(this: {
     _db: any;
+    _qFilePath: string;
 }, name: string, opts?: {
     busyTimeout?: number;
     trace?: (sql: string) => void;
@@ -23,25 +18,21 @@ declare function SQLiteDatabase(this: {
 }): void;
 declare class SQLiteDatabase {
     /**
-     * @typedef {(sql: string, duration: number) => void} SQLProfileCallback
-     */
-    /**
-     * @typedef {((sql: string) => void)|undefined} SQLTraceCallback
-     */
-    /**
      * @class
      * @param {string} name
      * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
-     * @this {{_db: any}}
+     * @this {{_db: any, _qFilePath: string}}
      * @returns {void}
      */
     constructor(this: {
         _db: any;
+        _qFilePath: string;
     }, name: string, opts?: {
         busyTimeout?: number;
         trace?: (sql: string) => void;
         profile?: SQLProfileCallback;
     });
+    _qFilePath: string;
     _db: any;
     /**
      * @param {{sql: string, args: unknown[]}[]} queries

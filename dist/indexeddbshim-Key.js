@@ -810,6 +810,10 @@
    */
 
   /**
+   * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+   */
+
+  /**
    * @typedef {any} Value
    */
 
@@ -1855,7 +1859,7 @@
 
   /**
    *
-   * @param {SQLTransaction} tx
+   * @param {WebSQLTransaction} tx
    * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {CurrentNumberCallback} func
    * @param {SQLFailureCallback} sqlFailCb
@@ -1866,7 +1870,7 @@
       if (data.rows.length !== 1) {
         func(1);
       } else {
-        func(data.rows.item(0).currNum);
+        func(/** @type {{currNum: number}} */data.rows.item(0).currNum);
       }
     }, function (tx, error) {
       sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
@@ -1876,7 +1880,7 @@
 
   /**
    *
-   * @param {SQLTransaction} tx
+   * @param {WebSQLTransaction} tx
    * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {Integer} num
    * @param {CurrentNumberCallback} successCb
@@ -1901,7 +1905,7 @@
    * Bump up the auto-inc counter if the key path-resolved value is valid
    *   (greater than old value and >=1) OR if a manually passed in key is
    *   valid (numeric and >= 1) and >= any primaryKey.
-   * @param {SQLTransaction} tx
+   * @param {WebSQLTransaction} tx
    * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {Integer} num
    * @param {CurrentNumberCallback} successCb
@@ -1934,7 +1938,7 @@
 
   /**
    *
-   * @param {SQLTransaction} tx
+   * @param {WebSQLTransaction} tx
    * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {KeyForStoreCallback} cb
    * @param {SQLFailureCallback} sqlFailCb
@@ -1961,7 +1965,7 @@
   //     so we do not return a key
   /**
    *
-   * @param {SQLTransaction} tx
+   * @param {WebSQLTransaction} tx
    * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {Key} key
    * @param {(num?: Integer) => void} successCb

@@ -17,6 +17,10 @@ const readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncreme
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
  * IndexedDB Object Store.
  * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
  * @class
@@ -59,14 +63,14 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     cursorUpdate: boolean
  *   ) => KeyValueArray,
  *   __deriveKey: (
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     value: import('./Key.js').Value,
  *     key: import('./Key.js').Key,
  *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
  *     failCb: import('./Key.js').SQLFailureCallback
  *   ) => void,
  *   __insertData: (
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     encoded: string,
  *     value: import('./Key.js').Value,
  *     clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer,
@@ -75,10 +79,10 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     error: (err: Error|DOMException) => void
  *   ) => SyncPromise,
  *   __overwrite: (
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     key: import('./Key.js').Key,
- *     cb: (tx: SQLTransaction) => void,
- *     error: (err: SQLError) => void
+ *     cb: (tx: WebSQLTransaction) => void,
+ *     error: (err: (Error & {code?: number})) => void
  *   ) => void,
  *   __get: (
  *     query: import('./Key.js').Value,
@@ -287,8 +291,8 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 
     transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
         /**
-         * @param {SQLTransaction} tx
-         * @param {SQLError} [err]
+         * @param {WebSQLTransaction} tx
+         * @param {(Error & {code?: number})} [err]
          * @returns {boolean}
          */
         function error (tx, err) {
@@ -360,8 +364,8 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from WebSQL
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
         /**
-         * @param {SQLTransaction} tx
-         * @param {SQLError} [err]
+         * @param {WebSQLTransaction} tx
+         * @param {(Error & {code?: number})} [err]
          * @returns {boolean}
          */
         function error (tx, err) {
@@ -459,7 +463,7 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
  *   the object store
  * If the table has auto increment, get the current number (unless it has
  *   a keyPath leading to a valid but non-numeric or < 1 key).
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./Key.js').Value} value
  * @param {import('./Key.js').Key} key
  * @param {(key: import('./Key.js').Key, cn?: Integer) => void} success
@@ -510,7 +514,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {string} encoded
  * @param {import('./Key.js').Value} value
  * @param {import('./Key.js').Key|Integer} clonedKeyOrCurrentNumber
@@ -730,10 +734,10 @@ IDBObjectStore.prototype.put = function (value /* , key */) {
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./Key.js').Key} key
- * @param {(tx: SQLTransaction) => void} cb
- * @param {(err: SQLError) => void} error
+ * @param {(tx: WebSQLTransaction) => void} cb
+ * @param {(err: (Error & {code?: number})) => void} error
  * @this {IDBObjectStoreFull}
  * @returns {void}
  */
@@ -770,7 +774,7 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
         store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
             Sca.encode(value, function (encoded) {
                 /**
-                 * @param {SQLTransaction} tx
+                 * @param {WebSQLTransaction} tx
                  * @returns {void}
                  */
                 function insert (tx) {
@@ -831,8 +835,8 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
                     return;
                 }
                 ret = getKey
-                    ? Key.decode(util.unescapeSQLiteResponse(data.rows.item(0).key), false)
-                    : Sca.decode(util.unescapeSQLiteResponse(data.rows.item(0).value));
+                    ? Key.decode(util.unescapeSQLiteResponse(/** @type {{key: string}} */ (data.rows.item(0)).key), false)
+                    : Sca.decode(util.unescapeSQLiteResponse(/** @type {{value: string}} */ (data.rows.item(0)).value));
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
                 if (CFG.DEBUG) { console.log(e); }

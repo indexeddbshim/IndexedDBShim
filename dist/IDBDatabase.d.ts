@@ -143,10 +143,10 @@ declare namespace IDBDatabase {
      * @param {string} name
      * @param {Integer} oldVersion
      * @param {Integer} version
-     * @param {SQLResultSet} storeProperties
+     * @param {import('websql-configurable/lib/websql/WebSQLResultSet.js').default} storeProperties
      * @returns {IDBDatabaseFull}
      */
-    function __createInstance(db: import("websql-configurable/lib/websql/WebSQLDatabase.js").default, name: string, oldVersion: Integer, version: Integer, storeProperties: SQLResultSet): IDBDatabaseFull;
+    function __createInstance(db: import("websql-configurable/lib/websql/WebSQLDatabase.js").default, name: string, oldVersion: Integer, version: Integer, storeProperties: import("websql-configurable/lib/websql/WebSQLResultSet.js").default): IDBDatabaseFull;
 }
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';

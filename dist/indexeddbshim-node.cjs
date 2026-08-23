@@ -2125,10 +2125,15 @@ function findError(args) {
 }
 
 /**
- *
- * @param {SQLError} webSQLErr
+ * The `websql-configurable` driver never constructs a real, spec-conformant
+ *   `SQLError` (with a required numeric `.code`) -- errors it reports are
+ *   always plain `Error`s from the underlying SQL driver, so `.code` is
+ *   optional here and, in practice, always `undefined` today (the `case 4`/
+ *   `case 7` branches below are effectively unreachable pending upstream
+ *   support for surfacing a real error code).
+ * @param {Error & {code?: number}} webSQLErr
  * @returns {(DOMException|Error) & {
- *   sqlError: SQLError
+ *   sqlError: Error & {code?: number}
  * }|QuotaExceededError}
  */
 function webSQLErrback(webSQLErr) {
@@ -2169,7 +2174,7 @@ function webSQLErrback(webSQLErr) {
   const err =
   /**
    * @type {(Error | DOMException) & {
-   *   sqlError: SQLError
+   *   sqlError: Error & {code?: number}
    * }}
    */
   createDOMException(name, message);
@@ -2731,6 +2736,10 @@ function cmp(first, second) {
 
 /**
  * @typedef {"number"|"date"|"string"|"binary"|"array"} KeyType
+ */
+
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
  */
 
 /**
@@ -3726,7 +3735,7 @@ const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `N
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {CurrentNumberCallback} func
  * @param {SQLFailureCallback} sqlFailCb
@@ -3737,7 +3746,7 @@ function getCurrentNumber(tx, store, func, sqlFailCb) {
     if (data.rows.length !== 1) {
       func(1);
     } else {
-      func(data.rows.item(0).currNum);
+      func(/** @type {{currNum: number}} */data.rows.item(0).currNum);
     }
   }, function (tx, error) {
     sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
@@ -3747,7 +3756,7 @@ function getCurrentNumber(tx, store, func, sqlFailCb) {
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
@@ -3772,7 +3781,7 @@ function assignCurrentNumber(tx, store, num, successCb, failCb) {
  * Bump up the auto-inc counter if the key path-resolved value is valid
  *   (greater than old value and >=1) OR if a manually passed in key is
  *   valid (numeric and >= 1) and >= any primaryKey.
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
@@ -3805,7 +3814,7 @@ function setCurrentNumber(tx, store, num, successCb, failCb) {
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {KeyForStoreCallback} cb
  * @param {SQLFailureCallback} sqlFailCb
@@ -3832,7 +3841,7 @@ function generateKeyForStore(tx, store, cb, sqlFailCb) {
 //     so we do not return a key
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Key} key
  * @param {(num?: Integer) => void} successCb
@@ -4433,7 +4442,7 @@ const readonlyProperties$3 = ['objectStoreNames', 'mode', 'durability', 'db', 'e
  *   on__preabort: () => void,
  *   __abortTransaction: (err: Error|DOMException|null) => void,
  *   __executeRequests: () => void,
- *   __tx: SQLTransaction,
+ *   __tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
  *   __id: Integer,
  *   __active: boolean,
  *   __handlerActive: boolean,
@@ -4455,6 +4464,7 @@ const readonlyProperties$3 = ['objectStoreNames', 'mode', 'durability', 'db', 'e
  *   __transactionEndCallback: () => void,
  *   __transactionFinished: boolean,
  *   __completed: boolean,
+ *   __transFinishedCbFired: boolean,
  *   __internal: boolean,
  *   __abortFinished: boolean,
  *   __createRequest: (
@@ -4594,6 +4604,19 @@ IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
  */
 IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
   const me = this;
+  if (me.__completed || me.__transFinishedCbFired) {
+    // Either this transaction's `nonstandardTransCb` installation (see
+    //   `__executeRequests`) already found `__transactionEndCallback` set
+    //   and fired `__transFinishedCb` itself in the meantime -- a race with
+    //   this call's own (possibly `setTimeout`-deferred) retry below -- or
+    //   this same call already fired it on an earlier retry. Either way,
+    //   don't fire a second commit/rollback for the same transaction.
+    //   `__transFinishedCbFired` is checked in addition to `__completed`
+    //   because `__completed` isn't set until the resulting SQL commit/
+    //   rollback round trip actually finishes, which is too late to stop
+    //   the other side from *also* firing while that's still in flight.
+    return;
+  }
   if (me.__transFinishedCb === IDBTransaction.prototype.__transFinishedCb) {
     // Standard (3-argument) `transaction()` implementations (browser WebSQL,
     //  `cordova-plugin-sqlite-2`, etc.) never invoke the non-standard 4th
@@ -4603,6 +4626,7 @@ IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
     const dbConn = me.db && me.db.__db;
     const supportsNonstandardTransCb = Boolean(dbConn && typeof dbConn.transaction === 'function' && dbConn.transaction.length >= 4);
     if (!supportsNonstandardTransCb) {
+      me.__transFinishedCbFired = true;
       me.__transFinishedCb(err, cb);
       return;
     }
@@ -4611,6 +4635,7 @@ IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
     }, 0);
     return;
   }
+  me.__transFinishedCbFired = true;
   me.__transFinishedCb(err, cb);
 };
 /**
@@ -4675,8 +4700,15 @@ IDBTransaction.prototype.__executeRequests = function () {
       me.__handlerActive = true;
       const e = createEvent('success');
       q.req.dispatchEvent(e);
-      // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-      me.__handlerActive = false;
+      // Do not set __active or __handlerActive flags to false yet:
+      //   https://github.com/w3c/IndexedDB/issues/87 -- a follow-up
+      //   request queued from an `await`-based continuation of this
+      //   one (a microtask, not a further synchronous call within
+      //   this handler) must still pass `__assertActive`'s check of
+      //   both flags. `checkQueueEntry` (see `executeNextRequest`)
+      //   is what actually resets `__handlerActive`, once it's
+      //   confirmed (across its own bounded microtask wait) that no
+      //   such continuation queued anything.
       if (e.__legacyOutputDidListenersThrowError) {
         logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
         if (!me.__committed) {
@@ -4690,7 +4722,10 @@ IDBTransaction.prototype.__executeRequests = function () {
     }
 
     /**
-     * @param {[tx: SQLTransaction|DOMException|Error|SQLError, err?: SQLError]} args
+     * @param {[
+     *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|DOMException|Error,
+     *   err?: Error & {code?: number}
+     * ]} args
      * @returns {void}
      */
     function error(...args /* tx, err */) {
@@ -4732,8 +4767,8 @@ IDBTransaction.prototype.__executeRequests = function () {
         cancelable: true
       });
       q.req.dispatchEvent(e);
-      // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-      me.__handlerActive = false;
+      // Do not set __active or __handlerActive flags to false yet --
+      //   see the matching comment in `success`, above.
       if (e.__legacyOutputDidListenersThrowError) {
         logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
         e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
@@ -4749,6 +4784,71 @@ IDBTransaction.prototype.__executeRequests = function () {
     /**
      * @returns {void}
      */
+    function runQueuedRequest() {
+      try {
+        q = me.__requests[i];
+        if (!q.req) {
+          q.op(tx, q.args, () => runContinuationSafely(executeNextRequest), error);
+          return;
+        }
+        if (q.req.__done) {
+          // Avoid continuing with aborted requests
+          return;
+        }
+        q.op(tx, q.args, success, error, executeNextRequest);
+      } catch (e) {
+        error(/** @type {Error} */e);
+      }
+    }
+
+    /**
+     * A request's `success`/`error` event fires (and any `await`-based
+     *   continuation watching it resolves) before this check runs, since
+     *   that dispatch happens synchronously above, one call frame up.
+     *   If such a continuation queues a follow-up request, it does so
+     *   from a microtask -- so if the JS-level queue is merely found
+     *   empty here, that doesn't yet mean no more work is coming, only
+     *   that none has been queued *yet*. Re-check across a small, bounded
+     *   number of further microtask turns (letting a typical `await`
+     *   chain like `await store.put(...); await store.get(...)` catch
+     *   up) before finally concluding the transaction is genuinely done.
+     *   Applies to `readonly` transactions too, not just `readwrite`/
+     *   `versionchange`: a `readonly` transaction's `complete` event
+     *   can otherwise fire synchronously, immediately after its last
+     *   request's `success` handler returns -- before an `await`-based
+     *   consumer of that same handler (e.g. one that resolves a
+     *   promise from within `onsuccess` and only attaches `oncomplete`
+     *   afterward) ever gets a turn to run, so it can miss `complete`
+     *   entirely. `readonly` requests don't hold a real SQL
+     *   transaction open, though, so there's no file-lock/connection
+     *   collision risk in waiting the same bounded amount here.
+     * @param {number} attemptsLeft
+     * @returns {void}
+     */
+    function checkQueueEntry(attemptsLeft) {
+      if (me.__errored || me.__requestsFinished) {
+        return;
+      }
+      if (i < me.__requests.length) {
+        runQueuedRequest();
+        return;
+      }
+      if (attemptsLeft <= 0) {
+        // All requests in the transaction are done
+        me.__requests = [];
+        if (me.__active) {
+          requestsFinished();
+        }
+        return;
+      }
+      queueMicrotask(() => {
+        checkQueueEntry(attemptsLeft - 1);
+      });
+    }
+
+    /**
+     * @returns {void}
+     */
     function executeNextRequest() {
       if (me.__errored || me.__requestsFinished) {
         // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
@@ -4756,26 +4856,9 @@ IDBTransaction.prototype.__executeRequests = function () {
       }
       i++;
       if (i >= me.__requests.length) {
-        // All requests in the transaction are done
-        me.__requests = [];
-        if (me.__active) {
-          requestsFinished();
-        }
+        checkQueueEntry(10);
       } else {
-        try {
-          q = me.__requests[i];
-          if (!q.req) {
-            q.op(tx, q.args, () => runContinuationSafely(executeNextRequest), error);
-            return;
-          }
-          if (q.req.__done) {
-            // Avoid continuing with aborted requests
-            return;
-          }
-          q.op(tx, q.args, success, error, executeNextRequest);
-        } catch (e) {
-          error(/** @type {Error} */e);
-        }
+        runQueuedRequest();
       }
     }
     executeNextRequest();
@@ -4785,7 +4868,7 @@ IDBTransaction.prototype.__executeRequests = function () {
       // Not a genuine SQL error
       return;
     }
-    const err = webSQLErrback(/** @type {SQLError} */webSQLErr);
+    const err = webSQLErrback(/** @type {Error & {code?: number}} */webSQLErr);
     me.__abortTransaction(err);
   }, function () {
     // For Node, we don't need to try running here as we can keep
@@ -4799,7 +4882,8 @@ IDBTransaction.prototype.__executeRequests = function () {
       me.__transactionFinished = true;
       return;
     }
-    if (me.__transactionEndCallback && !me.__completed) {
+    if (me.__transactionEndCallback && !me.__completed && !me.__transFinishedCbFired) {
+      me.__transFinishedCbFired = true;
       me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
     }
   }, function (currentTask, err, done, rollback, commit) {
@@ -4813,7 +4897,16 @@ IDBTransaction.prototype.__executeRequests = function () {
         commit(cb);
       }
     };
-    if (me.__transactionEndCallback && !me.__completed) {
+    // Guarded by `__transFinishedCbFired`, not just `__completed`: this
+    //   installation can race `IDBTransaction.prototype.__callTransFinishedCb`'s
+    //   own `setTimeout` retry (see there) -- both watch for
+    //   `__transFinishedCb` to become installed and `__transactionEndCallback`
+    //   to become set, and either could observe both conditions first.
+    //   `__completed` alone isn't set until the resulting SQL commit/rollback
+    //   round trip actually finishes, which is too late to prevent the other
+    //   side from *also* firing in the meantime.
+    if (me.__transactionEndCallback && !me.__completed && !me.__transFinishedCbFired) {
+      me.__transFinishedCbFired = true;
       me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
     }
     return false;
@@ -4824,6 +4917,7 @@ IDBTransaction.prototype.__executeRequests = function () {
    */
   function requestsFinished() {
     me.__active = false;
+    me.__handlerActive = false;
     me.__requestsFinished = true;
 
     /**
@@ -4858,6 +4952,17 @@ IDBTransaction.prototype.__executeRequests = function () {
         return;
       }
       me.__transactionEndCallback = complete;
+      // The underlying SQL driver's own "queue empty" check
+      //   (`nonstandardTransCb`, above) typically already ran and
+      //   installed the real `__transFinishedCb` *before* this point --
+      //   it fires synchronously once the last SQL batch's results are
+      //   processed, whereas `requestsFinished` can now be reached only
+      //   after `checkQueueEntry`'s bounded microtask wait, i.e. later.
+      //   When that happens, its check for `me.__transactionEndCallback`
+      //   (not yet set at that earlier time) finds nothing to do and
+      //   just returns, so nothing else will ever re-trigger the actual
+      //   commit unless this explicitly does so now.
+      me.__callTransFinishedCb(me.__errored, complete);
       return;
     }
     if (me.mode === 'readonly') {
@@ -4888,10 +4993,13 @@ IDBTransaction.prototype.__createRequest = function (source) {
 
 /**
  * @typedef {(
- *   tx: SQLTransaction,
+ *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
  *   args: ObjectArray,
  *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
- *   error: (tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void,
+ *   error: (
+ *     tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|Error|DOMException,
+ *     err?: Error & {code?: number}
+ *   ) => void,
  *   executeNextRequest?: () => void
  * ) => void} SQLCallback
  */
@@ -5054,8 +5162,8 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
   }
 
   /**
-   * @param {SQLTransaction|null} [tx]
-   * @param {SQLResultSet|SQLError|{code: 0}} [errOrResult]
+   * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default|null} [tx]
+   * @param {import('websql-configurable/lib/websql/WebSQLResultSet.js').default|(Error & {code?: number})|{code: 0}} [errOrResult]
    * @returns {void}
    */
   function abort(tx, errOrResult) {
@@ -5135,7 +5243,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         return;
       }
       try {
-        me.__tx.executeSql('ROLLBACK', [], abort, /** @type {SQLStatementErrorCallback} */abort); // Not working in some circumstances, even in Node
+        me.__tx.executeSql('ROLLBACK', [], abort, /** @type {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} */abort); // Not working in some circumstances, even in Node
       } catch (err) {
         // Browser errs when transaction has ended and since it most likely already erred here,
         //   we call to abort
@@ -6780,6 +6888,14 @@ const readonlyProperties$2 = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} SqlErrorCallback
+ */
+
+/**
  * @typedef {{
  *   columnName: string,
  *   keyPath: import('./Key.js').KeyPath,
@@ -6835,7 +6951,7 @@ const IDBIndexAlias = IDBIndex;
  *     newName: string,
  *     colInfoToPreserveArr?: string[][],
  *     cb?: null|((
- *       tx: SQLTransaction,
+ *       tx: WebSQLTransaction,
  *       success: ((store: IDBObjectStore) => void)
  *     ) => void)
  *   ) => void
@@ -7007,8 +7123,8 @@ IDBIndex.__createIndex = function (store, index) {
     let indexValues = {};
 
     /**
-     * @param {SQLTransaction} tx
-     * @param {SQLError} err
+     * @param {WebSQLTransaction} tx
+     * @param {(Error & {code?: number})} err
      * @returns {void}
      */
     function error(tx, err) {
@@ -7016,7 +7132,7 @@ IDBIndex.__createIndex = function (store, index) {
     }
 
     /**
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @returns {void}
      */
     function applyIndex(tx) {
@@ -7036,7 +7152,8 @@ IDBIndex.__createIndex = function (store, index) {
           function addIndexEntry(i) {
             if (i < data.rows.length) {
               try {
-                const value = decode(unescapeSQLiteResponse(data.rows.item(i).value));
+                const row = /** @type {{key: string, value: string}} */data.rows.item(i);
+                const value = decode(unescapeSQLiteResponse(row.value));
                 const indexKey = extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Todo: Do we need this stricter error checking?
                 if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
                   // Todo: Do we need invalid checks and should we instead treat these as being duplicates?
@@ -7052,9 +7169,9 @@ IDBIndex.__createIndex = function (store, index) {
                   }
                   indexValues[indexKeyStr] = true;
                 }
-                tx.executeSql('UPDATE ' + escapeStoreNameForSQL(storeName) + ' SET ' + escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?', [escapeSQLiteStatement(indexKeyStr), data.rows.item(i).key], function () {
+                tx.executeSql('UPDATE ' + escapeStoreNameForSQL(storeName) + ' SET ' + escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?', [escapeSQLiteStatement(indexKeyStr), row.key], function () {
                   addIndexEntry(i + 1);
-                }, /** @type {SQLStatementErrorCallback} */error);
+                }, /** @type {SqlErrorCallback} */error);
               } catch (err) {
                 // Not a valid value to insert into index, so just continue
                 addIndexEntry(i + 1);
@@ -7072,14 +7189,14 @@ IDBIndex.__createIndex = function (store, index) {
               success(store);
             }
           }
-        }, /** @type {SQLStatementErrorCallback} */error);
-      }, /** @type {SQLStatementErrorCallback} */error);
+        }, /** @type {SqlErrorCallback} */error);
+      }, /** @type {SqlErrorCallback} */error);
     }
     const escapedStoreNameSQL = escapeStoreNameForSQL(storeName);
     const escapedIndexNameSQL = escapeIndexNameForSQL(index.name);
 
     /**
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @returns {void}
      */
     function addIndexSQL(tx) {
@@ -7092,7 +7209,7 @@ IDBIndex.__createIndex = function (store, index) {
       //    so we prefix with store name; as prefixed, will also not conflict with
       //    index on `key`
       // Avoid quotes and separate with special escape sequence
-      escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1) + '" ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')', [], applyIndex, /** @type {SQLStatementErrorCallback} */error);
+      escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1) + '" ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')', [], applyIndex, /** @type {SqlErrorCallback} */error);
     }
     if (columnExists) {
       // For a previously existing index, just update the index entries in the existing column;
@@ -7104,7 +7221,7 @@ IDBIndex.__createIndex = function (store, index) {
       if (CFG.DEBUG) {
         console.log(sql);
       }
-      tx.executeSql(sql, [], addIndexSQL, /** @type {SQLStatementErrorCallback} */error);
+      tx.executeSql(sql, [], addIndexSQL, /** @type {SqlErrorCallback} */error);
     }
   });
 };
@@ -7131,8 +7248,8 @@ IDBIndex.__deleteIndex = function (store, index) {
   /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   transaction.__addNonRequestToTransactionQueue(function deleteIndex(tx, args, success, failure) {
     /**
-     * @param {SQLTransaction} tx
-     * @param {SQLError} err
+     * @param {WebSQLTransaction} tx
+     * @param {(Error & {code?: number})} err
      * @returns {void}
      */
     function error(tx, err) {
@@ -7153,13 +7270,13 @@ IDBIndex.__deleteIndex = function (store, index) {
           delete indexHandle.__pendingDelete;
         }
         success(store);
-      }, /** @type {SQLStatementErrorCallback} */error);
+      }, /** @type {SqlErrorCallback} */error);
     }
     if (!CFG.useSQLiteIndexes) {
       finishDeleteIndex();
       return;
     }
-    tx.executeSql('DROP INDEX IF EXISTS ' + sqlQuote(escapeStoreNameForSQL(store.name).slice(1, -1) + '^5' + escapeIndexNameForSQL(index.name).slice(1, -1)), [], finishDeleteIndex, /** @type {SQLStatementErrorCallback} */error);
+    tx.executeSql('DROP INDEX IF EXISTS ' + sqlQuote(escapeStoreNameForSQL(store.name).slice(1, -1) + '^5' + escapeIndexNameForSQL(index.name).slice(1, -1)), [], finishDeleteIndex, /** @type {SqlErrorCallback} */error);
   });
 };
 
@@ -7170,12 +7287,9 @@ IDBIndex.__deleteIndex = function (store, index) {
 /**
  * Updates index list for the given object store.
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {(store: IDBObjectStore) => void} success
- * @param {(
- *   tx: SQLTransaction,
- *   err: SQLError
- * ) => boolean} [failure]
+ * @param {SqlErrorCallback} [failure]
  * @returns {void}
  */
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
@@ -7198,7 +7312,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
   }
   tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), escapeSQLiteStatement(store.__currentName)], function () {
     success(store);
-  }, /** @type {SQLStatementErrorCallback} */failure);
+  }, /** @type {SqlErrorCallback} */failure);
 };
 
 /**
@@ -7370,7 +7484,7 @@ IDBIndex.prototype.count = function /* query */
  * @param {string} newName
  * @param {string[][]} colInfoToPreserveArr
  * @param {null|((
- *   tx: SQLTransaction,
+ *   tx: WebSQLTransaction,
  *   success: ((store: IDBObjectStore) => void)
  * ) => void)} cb
  * @this {IDBIndexFull}
@@ -7392,8 +7506,8 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
   /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
     /**
-     * @param {SQLTransaction} tx
-     * @param {SQLError} err
+     * @param {WebSQLTransaction} tx
+     * @param {(Error & {code?: number})} err
      * @returns {void}
      */
     function sqlError(tx, err) {
@@ -7446,7 +7560,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               if (CFG.DEBUG) {
                 console.log(sql);
               }
-              tx.executeSql(sql, [], resolve, /** @type {SQLStatementErrorCallback} */
+              tx.executeSql(sql, [], resolve, /** @type {SqlErrorCallback} */
               function (tx, err) {
                 reject(err);
               });
@@ -7466,11 +7580,11 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                 if (CFG.DEBUG) {
                   console.log(sql);
                 }
-                tx.executeSql(sql, [], resolve, /** @type {SQLStatementErrorCallback} */
+                tx.executeSql(sql, [], resolve, /** @type {SqlErrorCallback} */
                 function (tx, err) {
                   reject(err);
                 });
-              }, /** @type {SQLStatementErrorCallback} */
+              }, /** @type {SqlErrorCallback} */
               function (tx, err) {
                 reject(err);
               });
@@ -7480,10 +7594,10 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               console.log('Index rename error');
               throw err;
             });
-          }, /** @type {SQLStatementErrorCallback} */sqlError);
-        }, /** @type {SQLStatementErrorCallback} */sqlError);
-      }, /** @type {SQLStatementErrorCallback} */sqlError);
-    }, /** @type {SQLStatementErrorCallback} */sqlError);
+          }, /** @type {SqlErrorCallback} */sqlError);
+        }, /** @type {SqlErrorCallback} */sqlError);
+      }, /** @type {SqlErrorCallback} */sqlError);
+    }, /** @type {SqlErrorCallback} */sqlError);
   });
 };
 
@@ -7517,10 +7631,10 @@ Object.defineProperty(IDBIndex, 'prototype', {
  * @param {boolean} multiChecks
  * @param {string[]} sql
  * @param {string[]} sqlValues
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {null|undefined} args
  * @param {(result: number|undefined|[]|AnyValue|AnyValue[]) => void} success
- * @param {(tx: SQLTransaction, err: SQLError) => void} error
+ * @param {(tx: WebSQLTransaction, err: (Error & {code?: number})) => void} error
  * @returns {void}
  */
 function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
@@ -7566,7 +7680,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
       const escapedIndexNameForKeyCol = escapeIndexNameForSQLKeyColumn(index.name);
       const encodedKey = encode$1(range, index.multiEntry);
       for (let i = 0; i < data.rows.length; i++) {
-        const row = data.rows.item(i);
+        const row = /** @type {{key: string, value: string, [k: string]: string}} */data.rows.item(i);
         const rowKey = /** @type {import('./Key.js').ValueTypeArray} */
         decode$1(row[escapedIndexNameForKeyCol]);
         let record;
@@ -7599,7 +7713,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
       }
     } else {
       for (let i = 0; i < data.rows.length; i++) {
-        const record = data.rows.item(i);
+        const record = /** @type {{key: string, value: string}} */data.rows.item(i);
         if (record) {
           records.push(decode$2(record));
         }
@@ -7613,7 +7727,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
     } else {
       success(unboundedDisallowed ? records[0] : records);
     }
-  }, /** @type {SQLStatementErrorCallback} */error);
+  }, /** @type {SqlErrorCallback} */error);
 }
 
 /**
@@ -7676,6 +7790,10 @@ const readonlyProperties$1 = ['keyPath', 'indexNames', 'transaction', 'autoIncre
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
  * IndexedDB Object Store.
  * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
  * @class
@@ -7718,14 +7836,14 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     cursorUpdate: boolean
  *   ) => KeyValueArray,
  *   __deriveKey: (
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     value: import('./Key.js').Value,
  *     key: import('./Key.js').Key,
  *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
  *     failCb: import('./Key.js').SQLFailureCallback
  *   ) => void,
  *   __insertData: (
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     encoded: string,
  *     value: import('./Key.js').Value,
  *     clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer,
@@ -7734,10 +7852,10 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     error: (err: Error|DOMException) => void
  *   ) => SyncPromise,
  *   __overwrite: (
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     key: import('./Key.js').Key,
- *     cb: (tx: SQLTransaction) => void,
- *     error: (err: SQLError) => void
+ *     cb: (tx: WebSQLTransaction) => void,
+ *     error: (err: (Error & {code?: number})) => void
  *   ) => void,
  *   __get: (
  *     query: import('./Key.js').Value,
@@ -7931,8 +8049,8 @@ IDBObjectStore.__createObjectStore = function (db, store) {
   }
   transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
     /**
-     * @param {SQLTransaction} tx
-     * @param {SQLError} [err]
+     * @param {WebSQLTransaction} tx
+     * @param {(Error & {code?: number})} [err]
      * @returns {boolean}
      */
     function error(tx, err) {
@@ -7997,8 +8115,8 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
   // Remove the object store from WebSQL
   transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
     /**
-     * @param {SQLTransaction} tx
-     * @param {SQLError} [err]
+     * @param {WebSQLTransaction} tx
+     * @param {(Error & {code?: number})} [err]
      * @returns {boolean}
      */
     function error(tx, err) {
@@ -8097,7 +8215,7 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
  *   the object store
  * If the table has auto increment, get the current number (unless it has
  *   a keyPath leading to a valid but non-numeric or < 1 key).
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./Key.js').Value} value
  * @param {import('./Key.js').Key} key
  * @param {(key: import('./Key.js').Key, cn?: Integer) => void} success
@@ -8146,7 +8264,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {string} encoded
  * @param {import('./Key.js').Value} value
  * @param {import('./Key.js').Key|Integer} clonedKeyOrCurrentNumber
@@ -8341,10 +8459,10 @@ IDBObjectStore.prototype.put = function (value /* , key */) {
 
 /**
  *
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {import('./Key.js').Key} key
- * @param {(tx: SQLTransaction) => void} cb
- * @param {(err: SQLError) => void} error
+ * @param {(tx: WebSQLTransaction) => void} cb
+ * @param {(err: (Error & {code?: number})) => void} error
  * @this {IDBObjectStoreFull}
  * @returns {void}
  */
@@ -8382,7 +8500,7 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
     store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
       encode(value, function (encoded) {
         /**
-         * @param {SQLTransaction} tx
+         * @param {WebSQLTransaction} tx
          * @returns {void}
          */
         function insert(tx) {
@@ -8442,7 +8560,7 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
           success();
           return;
         }
-        ret = getKey ? decode$1(unescapeSQLiteResponse(data.rows.item(0).key), false) : decode(unescapeSQLiteResponse(data.rows.item(0).value));
+        ret = getKey ? decode$1(unescapeSQLiteResponse(/** @type {{key: string}} */data.rows.item(0).key), false) : decode(unescapeSQLiteResponse(/** @type {{value: string}} */data.rows.item(0).value));
       } catch (e) {
         // If no result is returned, or error occurs when parsing JSON
         if (CFG.DEBUG) {
@@ -8831,7 +8949,7 @@ const IDBDatabaseAlias = IDBDatabase;
  * @param {string} name
  * @param {Integer} oldVersion
  * @param {Integer} version
- * @param {SQLResultSet} storeProperties
+ * @param {import('websql-configurable/lib/websql/WebSQLResultSet.js').default} storeProperties
  * @returns {IDBDatabaseFull}
  */
 IDBDatabase.__createInstance = function (db, name, oldVersion, version, storeProperties) {
@@ -8865,7 +8983,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
     this.__objectStoreNames = DOMStringList.__createInstance();
     const itemCopy = /** @type {IDBObjectStoreProperties} */{};
     for (let i = 0; i < storeProperties.rows.length; i++) {
-      const item = storeProperties.rows.item(i);
+      const item = /** @type {{name: string, keyPath: string, autoInc: string, indexList: string}} */storeProperties.rows.item(i);
       // Safari implements `item` getter return object's properties
       //  as readonly, so we copy all its properties (except our
       //  custom `currNum` which we don't need) onto a new object
@@ -9122,6 +9240,18 @@ Object.defineProperty(IDBDatabase, 'prototype', {
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} SqlErrorCallback
+ */
+
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLResultSet.js').default} WebSQLResultSet
+ */
+
+/**
  * @callback DatabaseDeleted
  * @returns {void}
  */
@@ -9192,11 +9322,6 @@ function processNextInConnectionQueue(name, origin = getOrigin()) {
   //   https://w3c.github.io/IndexedDB/#request-connection-queue.
   req.addEventListener('success', removeFromQueue);
   req.addEventListener('error', removeFromQueue);
-  setTimeout(() => {
-    if (queueItems[0] && queueItems[0].req === req) {
-      console.error('QDIAG STUCK name=' + name + ' origin=' + origin + ' queueLen=' + queueItems.length + ' reqDone=' + req.__done); // eslint-disable-line no-console -- temp diag
-    }
-  }, 1500);
   cb(req);
 }
 
@@ -9398,7 +9523,7 @@ function closeCachedWebSQLConnections(name, cb) {
  * @param {string} name
  * @param {string} escapedDatabaseName
  * @param {DatabaseDeleted} databaseDeleted
- * @param {(tx: SQLTransaction|Error|SQLError, err?: SQLError) => boolean} dbError
+ * @param {(tx: WebSQLTransaction|Error|(Error & {code?: number}), err?: (Error & {code?: number})) => boolean} dbError
  * @returns {void}
  */
 function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
@@ -9434,10 +9559,10 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
       fs.unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), err => {
         if (err && err.code !== 'ENOENT') {
           // Ignore if file is already deleted
-          dbError({
-            code: 0,
-            message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err
-          });
+          const removalError = /** @type {Error & {code?: number}} */
+          new Error('Error removing database file: ' + escapedDatabaseName + ' ' + err);
+          removalError.code = 0;
+          dbError(removalError);
           return;
         }
         databaseDeleted();
@@ -9459,6 +9584,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
           // Delete all tables in this database, maintained in the sys table
           tx.executeSql('DROP TABLE ' + escapeStoreNameForSQL(unescapeSQLiteResponse(
           // Avoid double-escaping
+          /** @type {{name: string}} */
           tables.item(i).name)), [], function () {
             deleteTables(i + 1);
           }, function () {
@@ -9484,18 +9610,18 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
  * Creates the sysDB to keep track of version numbers for databases.
  * @param {OpenDatabase} __openDatabase
  * @param {CreateSysDBSuccessCallback} success
- * @param {(tx: SQLTransaction|SQLError|Error, err?: SQLError) => void} failure
+ * @param {(tx: WebSQLTransaction|(Error & {code?: number})|Error, err?: (Error & {code?: number})) => void} failure
  * @returns {void}
  */
 function createSysDB(__openDatabase, success, failure) {
   /**
    *
-   * @param {boolean|SQLTransaction|SQLError} tx
-   * @param {SQLError} [err]
+   * @param {boolean|WebSQLTransaction|(Error & {code?: number})} tx
+   * @param {(Error & {code?: number})} [err]
    * @returns {void}
    */
   function sysDbCreateError(tx, err) {
-    const er = webSQLErrback(/** @type {SQLError} */err || tx);
+    const er = webSQLErrback(/** @type {(Error & {code?: number})} */err || tx);
     if (CFG.DEBUG) {
       console.log('Error in sysdb transaction - when creating dbVersions', err);
     }
@@ -9512,8 +9638,8 @@ function createSysDB(__openDatabase, success, failure) {
           success();
           return;
         }
-        systx.executeSql('CREATE INDEX IF NOT EXISTS dbvname ON dbVersions(name)', [], success, /** @type {SQLStatementErrorCallback} */sysDbCreateError);
-      }, /** @type {SQLStatementErrorCallback} */sysDbCreateError);
+        systx.executeSql('CREATE INDEX IF NOT EXISTS dbvname ON dbVersions(name)', [], success, /** @type {SqlErrorCallback} */sysDbCreateError);
+      }, /** @type {SqlErrorCallback} */sysDbCreateError);
     }, sysDbCreateError);
   }
 }
@@ -9614,8 +9740,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
   /**
    *
-   * @param {SQLTransaction|Error|SQLError} tx
-   * @param {SQLError} [err]
+   * @param {WebSQLTransaction|Error|(Error & {code?: number})} tx
+   * @param {(Error & {code?: number})} [err]
    * @returns {boolean}
    */
   function dbCreateError(tx, err) {
@@ -9638,7 +9764,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
   /**
    *
-   * @param {SQLTransaction} tx
+   * @param {WebSQLTransaction} tx
    * @param {DatabaseFull} db
    * @param {Integer} oldVersion
    * @returns {void}
@@ -9663,9 +9789,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
           // DB Upgrade in progress
           /**
            *
-           * @param {SQLTransaction} systx
-           * @param {boolean|SQLError|DOMException|Error} err
-           * @param {(tx?: SQLTransaction|SQLError, err?: SQLError|SQLResultSet) => boolean} cb
+           * @param {WebSQLTransaction} systx
+           * @param {boolean|(Error & {code?: number})|DOMException|Error} err
+           * @param {(tx?: WebSQLTransaction|(Error & {code?: number}), err?: (Error & {code?: number})|WebSQLResultSet) => boolean} cb
            * @returns {void}
            */
           let sysdbFinishedCb = function (systx, err, cb) {
@@ -9862,7 +9988,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     if ((useMemoryDatabase || useDatabaseCache) && Object.hasOwn(websqlDBCache, name) && Object.hasOwn(websqlDBCache[name], version)) {
       db = websqlDBCache[name][version];
     } else {
-      db = me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
+      db = /** @type {DatabaseFull} */me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
       if (useDatabaseCache) {
         if (!Object.hasOwn(websqlDBCache, name)) {
           websqlDBCache[name] = {};
@@ -9894,7 +10020,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
           return;
         }
         tx.executeSql('CREATE INDEX IF NOT EXISTS sysname ON __sys__(name)', [], setup, dbCreateError);
-      }, /** @type {SQLStatementErrorCallback} */dbCreateError);
+      }, /** @type {SqlErrorCallback} */dbCreateError);
     }, dbCreateError);
   }
   addRequestToConnectionQueue(req, name, /* origin */undefined, function () {
@@ -9915,7 +10041,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
               // Database with this name does not exist
               openDB(0);
             } else {
-              openDB(data.rows.item(0).version);
+              openDB(/** @type {{version: Integer}} */data.rows.item(0).version);
             }
           }, dbCreateError);
         }, dbCreateError);
@@ -9975,8 +10101,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
   //  `UnknownError` as we may require upon a SQL deletion error
   /**
    *
-   * @param {SQLTransaction|SQLError|Error} tx
-   * @param {SQLError|boolean} [err]
+   * @param {WebSQLTransaction|(Error & {code?: number})|Error} tx
+   * @param {(Error & {code?: number})|boolean} [err]
    * @returns {boolean}
    */
   function dbError(tx, err) {
@@ -9991,7 +10117,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     //  transaction, corrupting that connection's task queue (see issue with unrelated `open()` calls
     //  failing/crashing after a `deleteDatabase` file-removal error).
     calledDBError = true;
-    const er = webSQLErrback(/** @type {SQLError} */err || tx);
+    const er = webSQLErrback(/** @type {(Error & {code?: number})} */err || tx);
     sysdbFinishedCbDelete(true, function () {
       req.__done = true;
       req.__error = er;
@@ -10043,7 +10169,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
           }
           ({
             version
-          } = data.rows.item(0));
+          } = /** @type {{version: Integer}} */data.rows.item(0));
           const openConnections = me.__connections[name] || [];
           triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () {
             // Since we need two databases which can't be in a single transaction, we
@@ -10126,15 +10252,15 @@ IDBFactory.prototype.databases = function () {
     }
     /**
      *
-     * @param {true|SQLTransaction|SQLError|DOMException|Error} tx
-     * @param {SQLError|DOMException|Error} [err]
+     * @param {true|WebSQLTransaction|(Error & {code?: number})|DOMException|Error} tx
+     * @param {(Error & {code?: number})|DOMException|Error} [err]
      * @returns {boolean}
      */
     function dbGetDatabaseNamesError(tx, err) {
       if (calledDbCreateError) {
         return false;
       }
-      const er = err ? webSQLErrback(/** @type {SQLError} */err) : tx;
+      const er = err ? webSQLErrback(/** @type {(Error & {code?: number})} */err) : tx;
       calledDbCreateError = true;
       reject(er);
       return false;
@@ -10147,7 +10273,7 @@ IDBFactory.prototype.databases = function () {
             const {
               name,
               version
-            } = data.rows.item(i);
+            } = /** @type {{name: string, version: Integer}} */data.rows.item(i);
             dbNames.push({
               name: unescapeSQLiteResponse(name),
               version
@@ -10227,6 +10353,10 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  */
 
 /**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
+ */
+
+/**
  * @typedef {IDBCursor & {
  *   primaryKey: import('./Key.js').Key,
  *   key:  import('./Key.js').Key,
@@ -10267,7 +10397,7 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  *   __findBasic: (
  *     key: import('./Key.js').Key|undefined,
  *     primaryKey: import('./Key.js').Key|undefined,
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     success: KeySuccess,
  *     error: FindError,
  *     recordsToLoad: Integer|undefined
@@ -10275,7 +10405,7 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  *   __findMultiEntry: (
  *     key: import('./Key.js').Key|undefined,
  *     primaryKey: import('./Key.js').Key|undefined,
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     success: KeySuccess,
  *     error: FindError,
  *     recordsToLoad?: Integer
@@ -10422,14 +10552,14 @@ IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recor
  */
 
 /**
- * @typedef {(tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void} FindError
+ * @typedef {(tx: WebSQLTransaction|Error|DOMException|(Error & {code?: number}), err?: (Error & {code?: number})) => void} FindError
  */
 
 /**
  *
  * @param {undefined|import('./Key.js').Key} key
  * @param {undefined|import('./Key.js').Key} primaryKey
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {KeySuccess} success
  * @param {FindError} error
  * @param {Integer|undefined} recordsToLoad
@@ -10499,9 +10629,9 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
       if (CFG.DEBUG) {
         console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
       }
-      me.__decode(data.rows.item(0), success);
+      me.__decode(/** @type {RowItemNonNull} */data.rows.item(0), success);
     } else if (data.rows.length === 1) {
-      me.__decode(data.rows.item(0), success);
+      me.__decode(/** @type {RowItemNonNull} */data.rows.item(0), success);
     } else {
       if (CFG.DEBUG) {
         console.log('Reached end of cursors');
@@ -10522,7 +10652,7 @@ const leftBracketRegex = /\[/gu;
  *
  * @param {undefined|import('./Key.js').Key} key
  * @param {undefined|import('./Key.js').Key} primaryKey
- * @param {SQLTransaction} tx
+ * @param {WebSQLTransaction} tx
  * @param {KeySuccess} success
  * @param {FindError} error
  * @param {Integer} [recordsToLoad]
@@ -10619,7 +10749,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         // Avoid caching and other processing below
         let ct = 0;
         for (let i = 0; i < data.rows.length; i++) {
-          const rowItem = data.rows.item(i);
+          const rowItem = /** @type {RowItemNonNull} */data.rows.item(i);
           const rowKey = decode$1(rowItem[me.__keyColumnName], true);
           const matches = findMultiEntryMatches(rowKey, me.__range);
           ct += matches.length;
@@ -10631,7 +10761,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
       // Track how far we've physically scanned, regardless of whether
       // this batch produced any matches, so the next batch (if any)
       // resumes after this one instead of re-scanning or stopping early.
-      const lastRawRow = data.rows.item(data.rows.length - 1);
+      const lastRawRow = /** @type {RowItemNonNull} */data.rows.item(data.rows.length - 1);
       me.__continuationKey = decode$1(lastRawRow[me.__keyColumnName], true);
       me.__continuationPrimaryKey = decode$1(lastRawRow.key);
       if (data.rows.length < recordsToLoad) {
@@ -10639,7 +10769,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
       }
       const rows = [];
       for (let i = 0; i < data.rows.length; i++) {
-        const rowItem = data.rows.item(i);
+        const rowItem = /** @type {RowItemNonNull} */data.rows.item(i);
         const rowKey = decode$1(rowItem[me.__keyColumnName], true);
         const matches = findMultiEntryMatches(rowKey, me.__range);
         for (const matchingKey of matches) {
@@ -11762,21 +11892,21 @@ function requireNextTick() {
   return nextTick;
 }
 
-var queueMicrotask = {};
+var queueMicrotask$1 = {};
 
 var hasRequiredQueueMicrotask;
 function requireQueueMicrotask() {
-  if (hasRequiredQueueMicrotask) return queueMicrotask;
+  if (hasRequiredQueueMicrotask) return queueMicrotask$1;
   hasRequiredQueueMicrotask = 1;
-  queueMicrotask.test = function () {
+  queueMicrotask$1.test = function () {
     return typeof commonjsGlobal.queueMicrotask === 'function';
   };
-  queueMicrotask.install = function (func) {
+  queueMicrotask$1.install = function (func) {
     return function () {
       commonjsGlobal.queueMicrotask(func);
     };
   };
-  return queueMicrotask;
+  return queueMicrotask$1;
 }
 
 var mutation = {};
@@ -12040,19 +12170,58 @@ function requireNoopFn() {
 var noopFnExports = requireNoopFn();
 var noop = /*@__PURE__*/getDefaultExportFromCjs(noopFnExports);
 
-function WebSQLRows(array) {
-  this._array = array;
-  this.length = array.length;
-}
-WebSQLRows.prototype.item = function (i) {
-  return this._array[i];
-};
-function WebSQLResultSet(insertId, rowsAffected, rows) {
-  this.insertId = insertId;
-  this.rowsAffected = rowsAffected;
-  this.rows = new WebSQLRows(rows);
+/**
+ *
+ */
+class WebSQLRows {
+  /**
+   * @param {unknown[]} array
+   */
+  constructor(array) {
+    this._array = array;
+    this.length = array.length;
+  }
+
+  /**
+   * @param {number} i
+   */
+  item(i) {
+    return this._array[i];
+  }
 }
 
+/**
+ *
+ */
+class WebSQLResultSet {
+  /**
+   * @param {number} [insertId]
+   * @param {number} [rowsAffected]
+   * @param {unknown[]} [rows]
+   */
+  constructor(insertId, rowsAffected, rows) {
+    this.insertId = insertId;
+    this.rowsAffected = rowsAffected;
+    this.rows = new WebSQLRows(rows || []);
+  }
+}
+
+/**
+ * These deliberately don't reuse the WebSQL spec's global
+ * `SQLStatementCallback`/`SQLStatementErrorCallback`/`SQLError` types:
+ * this library never constructs a real `SQLError` (errors here are
+ * always plain `Error`s coming from the underlying SQL driver), and
+ * `WebSQLResultSet#insertId`/`rowsAffected` are genuinely `number |
+ * undefined` (see `massageSQLResult` below), which the spec's
+ * `SQLResultSet` doesn't allow. Typing against the spec here would just
+ * paper over that mismatch with unsound casts.
+ * @typedef {(transaction: WebSQLTransaction, resultSet: WebSQLResultSet) => void} SqlCallback
+ * @typedef {(transaction: WebSQLTransaction, error: Error) => boolean | void} SqlErrorCallback
+ */
+
+/**
+ *
+ */
 function errorUnhandled() {
   return true; // a non-truthy return indicates error was handled
 }
@@ -12062,58 +12231,89 @@ function errorUnhandled() {
 // sniff the SQL message to try to massage the returned insertId/rowsAffected.
 // This helps us pass the tests, although it's error-prone and should
 // probably be revised.
+/**
+ * @param {string} sql
+ * @param {number} [insertId]
+ * @param {number} [rowsAffected]
+ * @param {unknown[]} [rows]
+ */
 function massageSQLResult(sql, insertId, rowsAffected, rows) {
-  if (/^\s*UPDATE\b/i.test(sql)) {
+  if (/^\s*UPDATE\b/iu.test(sql)) {
     // insertId is always undefined for "UPDATE" statements
-    insertId = void 0;
-  } else if (/^\s*CREATE\s+TABLE\b/i.test(sql)) {
+    insertId = undefined;
+  } else if (/^\s*CREATE\s+TABLE\b/iu.test(sql)) {
     // WebSQL always returns an insertId of 0 for "CREATE TABLE" statements
     insertId = 0;
     rowsAffected = 0;
-  } else if (/^\s*DROP\s+TABLE\b/i.test(sql)) {
+  } else if (/^\s*DROP\s+TABLE\b/iu.test(sql)) {
     // WebSQL always returns insertId=undefined and rowsAffected=0
     // for "DROP TABLE" statements. Go figure.
-    insertId = void 0;
+    insertId = undefined;
     rowsAffected = 0;
-  } else if (!/^\s*INSERT\b/i.test(sql)) {
+  } else if (!/^\s*INSERT\b/iu.test(sql)) {
     // for all non-inserts (deletes, etc.) insertId is always undefined
     // ¯\_(ツ)_/¯
-    insertId = void 0;
+    insertId = undefined;
   }
   return new WebSQLResultSet(insertId, rowsAffected, rows);
 }
-function SQLTask(sql, args, sqlCallback, sqlErrorCallback) {
-  this.sql = sql;
-  this.args = args;
-  this.sqlCallback = sqlCallback;
-  this.sqlErrorCallback = sqlErrorCallback;
+
+/**
+ *
+ */
+class SQLTask {
+  /**
+   * @param {string} sql
+   * @param {unknown[]} args
+   * @param {SqlCallback} sqlCallback
+   * @param {SqlErrorCallback} sqlErrorCallback
+   */
+  constructor(sql, args, sqlCallback, sqlErrorCallback) {
+    this.sql = sql;
+    this.args = args;
+    this.sqlCallback = sqlCallback;
+    this.sqlErrorCallback = sqlErrorCallback;
+  }
 }
+
+/**
+ * @param {WebSQLTransaction} self
+ * @param {SQLTask[]} batch
+ */
 function runBatch(self, batch) {
+  /**
+   *
+   */
   function onDone() {
     self._running = false;
     runAllSql(self);
   }
-  var readOnly = self._websqlDatabase._currentTask.readOnly;
+  const currentTask = /** @type {import('./WebSQLDatabase.js').TransactionTask} */
+  self._websqlDatabase._currentTask;
+  const {
+    readOnly
+  } = currentTask;
   self._websqlDatabase._db.exec(batch, readOnly, function (err, results) {
-    /* istanbul ignore next */
-    if (err) {
-      self._error = err;
-      return onDone();
+    /* c8 ignore next */
+    if (err || !results) {
+      self._error = err || new Error('exec() did not return results');
+      onDone();
+      return;
     }
-    for (var i = 0; i < results.length; i++) {
-      var res = results[i];
-      var batchTask = batch[i];
+    for (const [i, res] of results.entries()) {
+      const batchTask = batch[i];
       if (res.error) {
         if (batchTask.sqlErrorCallback(self, res.error)) {
           // user didn't handle the error
           self._error = res.error;
-          return onDone();
+          onDone();
+          return;
         }
       } else {
         try {
           batchTask.sqlCallback(self, massageSQLResult(batch[i].sql, res.insertId, res.rowsAffected, res.rows));
         } catch (err) {
-          self._error = err;
+          self._error = /** @type {Error} */err;
           runAllSql(self);
         }
       }
@@ -12121,22 +12321,47 @@ function runBatch(self, batch) {
     onDone();
   });
 }
+
+/**
+ * @param {WebSQLTransaction} self
+ */
 function runAllSql(self) {
   if (self._running || self._complete) {
     return;
   }
-  if (self._error || !self._sqlQueue.length) {
+  if (self._error) {
     self._complete = true;
-    return self._websqlDatabase._onTransactionComplete(self._error);
+    self._websqlDatabase._onTransactionComplete(self._error, self);
+    return;
+  }
+  if (!self._sqlQueue.length) {
+    // Do not mark `_complete` here: the caller (via `nonstandardTransCb`,
+    // see `WebSQLDatabase#_onTransactionComplete`) may choose to defer the
+    // actual commit/rollback decision, in which case more SQL might still
+    // be queued via `executeSql()` later and must still be able to run.
+    // `_complete` is only set once that decision is actually final (see
+    // `_onTransactionComplete`'s `done`).
+    self._websqlDatabase._onTransactionComplete(self._error, self);
+    return;
   }
   self._running = true;
-  var batch = [];
-  var task;
+  /** @type {SQLTask[]} */
+  const batch = [];
+  let task;
   while (task = self._sqlQueue.shift()) {
     batch.push(task);
   }
   runBatch(self, batch);
 }
+
+/**
+ * @param {WebSQLTransaction} self
+ * @param {string} sql
+ * @param {unknown[]} args
+ * @param {SqlCallback} sqlCallback
+ * @param {SqlErrorCallback} sqlErrorCallback
+ * @param {import('../types.js').Delay} executeDelay
+ */
 function executeSql(self, sql, args, sqlCallback, sqlErrorCallback, executeDelay) {
   self._sqlQueue.push(new SQLTask(sql, args, sqlCallback, sqlErrorCallback));
   if (self._runningTimeout) {
@@ -12148,185 +12373,294 @@ function executeSql(self, sql, args, sqlCallback, sqlErrorCallback, executeDelay
     runAllSql(self);
   });
 }
-function WebSQLTransaction(websqlDatabase, executeDelay) {
-  this._websqlDatabase = websqlDatabase;
-  this._error = null;
-  this._complete = false;
-  this._runningTimeout = false;
-  this._executeDelay = executeDelay || immediate;
-  this._sqlQueue = new Queue();
-  if (!websqlDatabase._currentTask.readOnly) {
-    // Since we serialize all access to the database, there is no need to
-    // run read-only tasks in a transaction. This is a perf boost.
-    this._sqlQueue.push(new SQLTask('BEGIN;', [], noop, noop));
+
+/**
+ *
+ */
+class WebSQLTransaction {
+  /**
+   * @param {import('./WebSQLDatabase.js').default} websqlDatabase
+   * @param {import('../types.js').Delay} [executeDelay]
+   */
+  constructor(websqlDatabase, executeDelay) {
+    this._websqlDatabase = websqlDatabase;
+    /** @type {Error | null} */
+    this._error = null;
+    this._complete = false;
+    this._running = false;
+    this._runningTimeout = false;
+    this._executeDelay = executeDelay || immediate;
+    /** @type {import('tiny-queue').default<SQLTask>} */
+    this._sqlQueue = new Queue();
+    const currentTask = /** @type {import('./WebSQLDatabase.js').TransactionTask} */
+    websqlDatabase._currentTask;
+    if (!currentTask.readOnly) {
+      // Since we serialize all access to the database, there is no need to
+      // run read-only tasks in a transaction. This is a perf boost.
+      this._sqlQueue.push(new SQLTask('BEGIN;', [], noop, noop));
+    }
+  }
+
+  /**
+   * @param {string} sql
+   * @param {unknown[]} [args]
+   * @param {SqlCallback} [sqlCallback]
+   * @param {SqlErrorCallback} [sqlErrorCallback]
+   */
+  executeSql(sql, args, sqlCallback, sqlErrorCallback) {
+    args = Array.isArray(args) ? args : [];
+    sqlCallback = typeof sqlCallback === 'function' ? sqlCallback : noop;
+    sqlErrorCallback = typeof sqlErrorCallback === 'function' ? sqlErrorCallback : errorUnhandled;
+    executeSql(this, sql, args, sqlCallback, sqlErrorCallback, this._executeDelay);
+  }
+
+  /**
+   * Not a true `#private` method: `WebSQLDatabase` calls this right after
+   * handing a freshly-created transaction to the caller's `txnCallback`.
+   */
+  // eslint-disable-next-line unicorn/prefer-private-class-fields -- see above
+  _checkDone() {
+    runAllSql(this);
   }
 }
 
 /**
- * @param {string} sql
- * @param {ObjectArray} args
- * @param {SQLStatementCallback} sqlCallback
- * @param {SQLStatementErrorCallback} sqlErrorCallback
+ * @typedef {(
+ *   currentTask: TransactionTask,
+ *   err: Error | null,
+ *   done: () => void,
+ *   rollback: (err: Error | boolean, cb: () => void) => void,
+ *   commit: (cb: () => void) => void
+ * ) => boolean} NonstandardTransCb
  */
-WebSQLTransaction.prototype.executeSql = function (sql, args, sqlCallback, sqlErrorCallback) {
-  args = Array.isArray(args) ? args : [];
-  sqlCallback = typeof sqlCallback === 'function' ? sqlCallback : noop;
-  sqlErrorCallback = typeof sqlErrorCallback === 'function' ? sqlErrorCallback : errorUnhandled;
-  executeSql(this, sql, args, sqlCallback, sqlErrorCallback, this._executeDelay);
-};
-WebSQLTransaction.prototype._checkDone = function () {
-  runAllSql(this);
-};
 
-var ROLLBACK = [{
+const ROLLBACK = [{
   sql: 'ROLLBACK;',
   args: []
 }];
-var COMMIT = [{
+const COMMIT = [{
   sql: 'END;',
   args: []
 }];
 
-// v8 likes predictable objects
-function TransactionTask(readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb) {
-  this.readOnly = readOnly;
-  this.txnCallback = txnCallback;
-  this.errorCallback = errorCallback;
-  this.successCallback = successCallback;
-  this.nonstandardTransCb = nonstandardTransCb;
-}
-function WebSQLDatabase(dbVersion, db, webSQLOverrides) {
-  this.version = dbVersion;
-  this._db = db;
-  this._txnQueue = new Queue();
-  this._running = false;
-  this._currentTask = null;
-  this._transactionDelay = webSQLOverrides.transactionDelay || immediate;
-  this._executeDelay = webSQLOverrides.executeDelay;
-}
-WebSQLDatabase.prototype._onTransactionComplete = function (err) {
-  var self = this;
-  function done(er) {
-    if (er) {
-      self._currentTask && self._currentTask.errorCallback(er);
-    } else {
-      self._currentTask && self._currentTask.successCallback();
-    }
-    self._running = false;
-    self._currentTask = null;
-    self._runNextTransaction();
+/**
+ * V8 likes predictable objects.
+ */
+class TransactionTask {
+  /**
+   * @param {boolean} readOnly
+   * @param {(trans: WebSQLTransaction) => void} txnCallback
+   * @param {(err: Error) => void} errorCallback
+   * @param {() => void} successCallback
+   * @param {NonstandardTransCb} [nonstandardTransCb]
+   */
+  constructor(readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb) {
+    this.readOnly = readOnly;
+    this.txnCallback = txnCallback;
+    this.errorCallback = errorCallback;
+    this.successCallback = successCallback;
+    this.nonstandardTransCb = nonstandardTransCb;
   }
-  function rollback(er, cb) {
-    self._db.exec(ROLLBACK, false, function () {
-      done(er);
-      if (cb) {
-        cb();
-      }
+}
+
+/**
+ * The WebSQL `Database` object.
+ */
+class WebSQLDatabase {
+  /**
+   * @param {string} dbVersion
+   * @param {import('../types.js').SqlDriver} db
+   * @param {import('../types.js').WebSQLOverrides} webSQLOverrides
+   */
+  constructor(dbVersion, db, webSQLOverrides) {
+    this.version = dbVersion;
+    this._db = db;
+    /** @type {import('tiny-queue').default<TransactionTask>} */
+    this._txnQueue = new Queue();
+    this._running = false;
+    /** @type {TransactionTask | null} */
+    this._currentTask = null;
+    this._transactionDelay = webSQLOverrides.transactionDelay || immediate;
+    this._executeDelay = webSQLOverrides.executeDelay || immediate;
+  }
+
+  /**
+   *
+   */
+  #runTransaction() {
+    const txn = new WebSQLTransaction(this, this._executeDelay);
+    this._transactionDelay(() => {
+      const currentTask = /** @type {TransactionTask} */this._currentTask;
+      currentTask.txnCallback(txn);
+      txn._checkDone();
     });
   }
-  function commit(cb) {
-    self._db.exec(COMMIT, false, function () {
-      done();
-      if (cb) {
-        cb();
-      }
-    });
-  }
-  if (self._currentTask && self._currentTask.nonstandardTransCb) {
-    var cont = self._currentTask.nonstandardTransCb.call(this, self._currentTask, err, done, rollback, commit);
-    if (!cont) {
+
+  /**
+   *
+   */
+  #runNextTransaction() {
+    if (this._running) {
       return;
     }
+    const task = this._txnQueue.shift();
+    if (!task) {
+      return;
+    }
+    this._currentTask = task;
+    this._running = true;
+    this.#runTransaction();
   }
-  if (self._currentTask && self._currentTask.readOnly) {
-    done(err); // read-only doesn't require a transaction
-  } else if (err) {
-    rollback(err);
-  } else {
-    commit();
+
+  /**
+   * @param {boolean} readOnly
+   * @param {(trans: WebSQLTransaction) => void} txnCallback
+   * @param {(err: Error) => void} [errorCallback]
+   * @param {() => void} [successCallback]
+   * @param {NonstandardTransCb} [nonstandardTransCb]
+   */
+  #createTransaction(readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb) {
+    errorCallback ||= noop;
+    successCallback ||= noop;
+    if (typeof txnCallback !== 'function') {
+      throw new TypeError('The callback provided as parameter 1 is not a function.');
+    }
+    this._txnQueue.push(new TransactionTask(readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb));
+    this.#runNextTransaction();
   }
-};
-WebSQLDatabase.prototype._runTransaction = function () {
-  var self = this;
-  var txn = new WebSQLTransaction(self, this._executeDelay);
-  this._transactionDelay(function () {
-    self._currentTask.txnCallback(txn);
-    txn._checkDone();
-  });
-};
-WebSQLDatabase.prototype._runNextTransaction = function () {
-  if (this._running) {
-    return;
+
+  /**
+   * Not a true `#private` method: `WebSQLTransaction` calls this on its
+   * owning `WebSQLDatabase` once it's finished running its SQL queue.
+   * @param {Error | null} err
+   * @param {WebSQLTransaction} transaction
+   */
+  // eslint-disable-next-line unicorn/prefer-private-class-fields -- see above
+  _onTransactionComplete(err, transaction) {
+    /**
+     * @param {Error | boolean | null} [er]
+     */
+    const done = er => {
+      if (transaction) {
+        // Only now -- once the transaction has genuinely committed, rolled
+        // back, or been confirmed read-only-complete -- is it truly done.
+        // Marking this any earlier (e.g. as soon as its SQL queue merely
+        // looked empty) would permanently stop it from accepting further
+        // `executeSql()` calls even when `nonstandardTransCb` (below) chose
+        // to defer the commit/rollback decision instead of finalizing here.
+        transaction._complete = true;
+      }
+      if (er) {
+        if (this._currentTask) {
+          this._currentTask.errorCallback(/** @type {Error} */er);
+        }
+      } else if (this._currentTask) {
+        this._currentTask.successCallback();
+      }
+      this._running = false;
+      this._currentTask = null;
+      this.#runNextTransaction();
+    };
+    /**
+     * @param {Error | boolean} er
+     * @param {() => void} [cb]
+     */
+    const rollback = (er, cb) => {
+      this._db.exec(ROLLBACK, false, () => {
+        done(er);
+        if (cb) {
+          cb();
+        }
+      });
+    };
+    /**
+     * @param {() => void} [cb]
+     */
+    const commit = cb => {
+      this._db.exec(COMMIT, false, () => {
+        done();
+        if (cb) {
+          cb();
+        }
+      });
+    };
+    if (this._currentTask && this._currentTask.nonstandardTransCb) {
+      const cont = this._currentTask.nonstandardTransCb.call(this, this._currentTask, err, done, rollback, commit);
+      if (!cont) {
+        return;
+      }
+    }
+    if (this._currentTask && this._currentTask.readOnly) {
+      done(err); // read-only doesn't require a transaction
+    } else if (err) {
+      rollback(err);
+    } else {
+      commit();
+    }
   }
-  var task = this._txnQueue.shift();
-  if (!task) {
-    return;
+
+  /**
+   * @param {(trans: WebSQLTransaction) => void} txnCallback
+   * @param {(err: Error) => void} [errorCallback]
+   * @param {() => void} [successCallback]
+   * @param {NonstandardTransCb} [nonstandardTransCb]
+   */
+  transaction(txnCallback, errorCallback, successCallback, nonstandardTransCb) {
+    this.#createTransaction(false, txnCallback, errorCallback, successCallback, nonstandardTransCb);
   }
-  this._currentTask = task;
-  this._running = true;
-  this._runTransaction();
-};
-WebSQLDatabase.prototype._createTransaction = function (readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb) {
-  errorCallback = errorCallback || noop;
-  successCallback = successCallback || noop;
-  if (typeof txnCallback !== 'function') {
-    throw new Error('The callback provided as parameter 1 is not a function.');
+
+  /**
+   * @param {(trans: WebSQLTransaction) => void} txnCallback
+   * @param {(err: Error) => void} [errorCallback]
+   * @param {() => void} [successCallback]
+   */
+  readTransaction(txnCallback, errorCallback, successCallback) {
+    this.#createTransaction(true, txnCallback, errorCallback, successCallback);
   }
-  this._txnQueue.push(new TransactionTask(readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb));
-  this._runNextTransaction();
-};
+}
 
 /**
- * @param {(trans: import('./WebSQLTransaction.js').default) => void} txnCallback
- * @param {(err: SQLError) => void} [errorCallback]
- * @param {() => void} [successCallback]
- * @param {(
- *   currentTask: TransactionTask,
- *   err: Error,
- *   done: () => void,
- *   rollback: (err: boolean|Error|SQLError, cb: () => void) => void,
- *   commit: (cb: () => void) => void
- * ) => boolean} [nonstandardTransCb]
+ * @template Opts
+ * @param {import('./types.js').SqlDriverConstructor<Opts>} SQLiteDatabase
+ * @param {{ sqlite?: Opts, websql?: import('./types.js').WebSQLOverrides }} [opts]
  */
-WebSQLDatabase.prototype.transaction = function (txnCallback, errorCallback, successCallback, nonstandardTransCb) {
-  this._createTransaction(false, txnCallback, errorCallback, successCallback, nonstandardTransCb);
-};
-
-/**
- * @param {(trans: import('./WebSQLTransaction.js').default) => void} txnCallback
- * @param {(err: Error) => void} [errorCallback]
- * @param {() => void} [successCallback]
- */
-WebSQLDatabase.prototype.readTransaction = function (txnCallback, errorCallback, successCallback) {
-  this._createTransaction(true, txnCallback, errorCallback, successCallback);
-};
-
 function customOpenDatabase(SQLiteDatabase, opts) {
-  opts = opts || {};
-  var sqliteOpts = opts.sqlite;
-  var webSQLOverrides = opts.websql || {};
-  var openDelay = webSQLOverrides.openDelay || immediate;
+  opts ||= {};
+  const sqliteOpts = opts.sqlite;
+  const webSQLOverrides = opts.websql || {};
+  const openDelay = webSQLOverrides.openDelay || immediate;
+
+  /**
+   * @param {string} dbName
+   * @param {string} dbVersion
+   */
   function createDb(dbName, dbVersion) {
-    var sqliteDatabase = new SQLiteDatabase(dbName, sqliteOpts);
+    const sqliteDatabase = new SQLiteDatabase(dbName, sqliteOpts);
     return new WebSQLDatabase(dbVersion, sqliteDatabase, webSQLOverrides);
   }
+
+  /**
+   * @param {unknown[]} args
+   * @throws {Error} If fewer than 4 arguments are given.
+   */
   function openDatabase(args) {
     if (args.length < 4) {
       throw new Error('Failed to execute \'openDatabase\': ' + '4 arguments required, but only ' + args.length + ' present');
     }
-    var dbName = args[0];
-    var dbVersion = args[1];
+    const dbName = /** @type {string} */args[0];
+    const dbVersion = /** @type {string} */args[1];
     // db description and size are ignored
-    var callback = args[4];
-    var db = createDb(dbName, dbVersion);
+    const callback = /** @type {((db: WebSQLDatabase) => void) | undefined} */args[4];
+    const db = createDb(dbName, dbVersion);
     if (typeof callback === 'function') {
+      const onOpen = callback;
       openDelay(function () {
-        callback(db);
+        onOpen(db);
       });
     }
     return db;
   }
-  return (...args) => openDatabase(args);
+  return (/** @type {unknown[]} */...args) => openDatabase(args);
 }
 
 var lib = {exports: {}};
@@ -13207,14 +13541,34 @@ const READ_ONLY_ERROR = new Error('could not prepare statement (23 not authorize
  * @typedef {((sql: string) => void)|undefined} SQLTraceCallback
  */
 
+// Two separate `better-sqlite3` connections (i.e., two separate
+//   `SQLiteDatabase` instances) can legitimately point at the same
+//   underlying file at once -- e.g. an old, about-to-close IndexedDB
+//   connection and a newly-opened one during an upgrade. `PRAGMA
+//   busy_timeout` can't safely arbitrate between them here: it blocks the
+//   single JS thread synchronously while it retries, but the lock holder's
+//   own release is itself scheduled via `setTimeout` below, which can never
+//   fire while that retry loop is blocking the same thread -- so instead of
+//   waiting, the second connection's write just fails with "database is
+//   locked". Serialize writes per file path instead, so a second
+//   connection's `BEGIN` waits for the first connection's transaction to
+//   actually finish rather than colliding with it.
+/** @type {Map<string, {_db: any, _qFilePath: string}>} */
+const fileLockOwners = new Map();
+/** @type {Map<string, (() => void)[]>} */
+const fileLockWaiters = new Map();
+const beginRe = /^\s*BEGIN\b/iu;
+const endRe = /^\s*(END|COMMIT|ROLLBACK)\b/iu;
+
 /**
  * @class
  * @param {string} name
  * @param {{busyTimeout?: number, trace?: (sql: string) => void, profile?: SQLProfileCallback}} [opts]
- * @this {{_db: any}}
+ * @this {{_db: any, _qFilePath: string}}
  * @returns {void}
  */
 function SQLiteDatabase(name, opts = {}) {
+  this._qFilePath = name;
   /** @type {import('better-sqlite3').Database} */
   const db = new Database(name);
 
@@ -13308,6 +13662,21 @@ function runNonSelect(db, sql, args) {
  * @returns {void}
  */
 SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
+  // `:memory:` (SQLite/`better-sqlite3`'s own sentinel for an isolated,
+  //   non-shared in-memory database) can never actually collide with a
+  //   different connection -- each `new Database(':memory:')` call is
+  //   already fully independent -- so there is nothing to serialize.
+  const filePath = this._qFilePath === ':memory:' ? null : this._qFilePath;
+  if (filePath && queries[0] && beginRe.test(queries[0].sql)) {
+    const owner = fileLockOwners.get(filePath);
+    if (owner && owner !== this) {
+      const waiters = fileLockWaiters.get(filePath) || [];
+      waiters.push(() => this.exec(queries, readOnly, callback));
+      fileLockWaiters.set(filePath, waiters);
+      return;
+    }
+    fileLockOwners.set(filePath, this);
+  }
   const db = this._db._db;
   const len = queries.length;
   const results = Array.from({
@@ -13355,6 +13724,27 @@ SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
   //   `setTimeout`-based code (including IndexedDB's own internal request
   //   scheduling) that never gets a turn to run.
   setTimeout(() => {
+    // Release the file lock (if held) and hand it to the next waiting
+    //   connection, if any, only once this transaction has genuinely
+    //   finished -- and only here, on its own turn, so a resumed
+    //   waiter's own `exec` call can't run reentrantly inside this one.
+    // Checked across the whole batch, not just `queries[0]`: when a
+    //   transaction's `BEGIN` and its later `ROLLBACK`/`COMMIT` are both
+    //   queued synchronously before `websql-configurable`'s async flush
+    //   gets a turn to run (e.g. an immediate `transaction.abort()`
+    //   inside `onupgradeneeded`), they arrive coalesced into a single
+    //   batch/`exec()` call, with the terminal statement anywhere but
+    //   first -- so only checking `queries[0]` would acquire the lock
+    //   and never see the matching release, deadlocking every later
+    //   connection to the same file.
+    if (filePath && queries.some(q => endRe.test(q.sql))) {
+      fileLockOwners.delete(filePath);
+      const waiters = fileLockWaiters.get(filePath);
+      const nextWaitingExec = waiters && waiters.shift();
+      if (nextWaitingExec) {
+        nextWaitingExec();
+      }
+    }
     callback(null, results);
   }, 0);
 };
@@ -13364,6 +13754,18 @@ SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
  *   _db: any,
  *   exec: typeof SQLiteDatabase['prototype']['exec']
  * }} SQLiteDatabaseInstance
+ */
+
+/**
+ * `websql-configurable`'s `customOpenDatabase` always calls this via `new`
+ *   (see its `custom.js`: `new SQLiteDatabase(dbName, sqliteOpts)`), so this
+ *   is typed with a construct signature even though `wrappedSQLiteDatabase`
+ *   below is written as a plain function -- that's a deliberate, working JS
+ *   idiom (a plain function invoked with `new` that explicitly `return`s an
+ *   object yields that object as the `new` expression's result, overriding
+ *   the default "return `this`" behavior), not something TypeScript can
+ *   verify structurally.
+ * @typedef {new (name: string, opts?: any) => SQLiteDatabaseInstance} SQLiteDatabaseConstructor
  */
 
 /**
@@ -13384,7 +13786,7 @@ function wrappedSQLiteDatabase(name) {
   }
   return db;
 }
-const nodeWebSQL = customOpenDatabase(wrappedSQLiteDatabase, {});
+const nodeWebSQL = customOpenDatabase(/** @type {SQLiteDatabaseConstructor} */ /** @type {unknown} */wrappedSQLiteDatabase, {});
 
 CFG.win = {
   openDatabase: nodeWebSQL

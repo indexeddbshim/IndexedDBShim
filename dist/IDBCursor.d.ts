@@ -1,4 +1,5 @@
 export type Integer = number;
+export type WebSQLTransaction = import("websql-configurable/lib/websql/WebSQLTransaction.js").default;
 export type IDBCursorFull = IDBCursor & {
     primaryKey: import("./Key.js").Key;
     key: import("./Key.js").Key;
@@ -37,8 +38,8 @@ export type IDBCursorFull = IDBCursor & {
     __invalidateCache: () => void;
     __gotValue: boolean;
     __find: (...args: any[]) => void;
-    __findBasic: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad: Integer | undefined) => void;
-    __findMultiEntry: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad?: Integer) => void;
+    __findBasic: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: WebSQLTransaction, success: KeySuccess, error: FindError, recordsToLoad: Integer | undefined) => void;
+    __findMultiEntry: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: WebSQLTransaction, success: KeySuccess, error: FindError, recordsToLoad?: Integer) => void;
     __onsuccess: (success: SuccessArg) => SuccessCallback;
     __decode: (rowItem: RowItemNonNull, callback: (key: import("./Key.js").Key, val: import("./Key.js").Value, primaryKey: import("./Key.js").Key, encKey?: string) => void) => void;
     __sourceOrEffectiveObjStoreDeleted: () => void;
@@ -50,7 +51,11 @@ export type IDBCursorWithValueFull = IDBCursorFull & {
     value: import("./Key.js").Value;
 };
 export type KeySuccess = (k: import("./Key.js").Key, val: import("./Key.js").Value, primKey: import("./Key.js").Key) => void;
-export type FindError = (tx: SQLTransaction | Error | DOMException | SQLError, err?: SQLError) => void;
+export type FindError = (tx: WebSQLTransaction | Error | DOMException | (Error & {
+    code?: number;
+}), err?: (Error & {
+    code?: number;
+})) => void;
 export type StructuredCloneValue = any;
 export type IndexedDBKey = any;
 export type SuccessArg = (value: StructuredCloneValue, req: import("./IDBRequest.js").IDBRequestFull) => void;
@@ -63,6 +68,9 @@ export type RowItemNonNull = {
 export type AnyValue = any;
 /**
  * @typedef {number} Integer
+ */
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} WebSQLTransaction
  */
 /**
  * @typedef {IDBCursor & {
@@ -105,7 +113,7 @@ export type AnyValue = any;
  *   __findBasic: (
  *     key: import('./Key.js').Key|undefined,
  *     primaryKey: import('./Key.js').Key|undefined,
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     success: KeySuccess,
  *     error: FindError,
  *     recordsToLoad: Integer|undefined
@@ -113,7 +121,7 @@ export type AnyValue = any;
  *   __findMultiEntry: (
  *     key: import('./Key.js').Key|undefined,
  *     primaryKey: import('./Key.js').Key|undefined,
- *     tx: SQLTransaction,
+ *     tx: WebSQLTransaction,
  *     success: KeySuccess,
  *     error: FindError,
  *     recordsToLoad?: Integer
@@ -164,32 +172,32 @@ export class IDBCursor {
      * ) => void} KeySuccess
      */
     /**
-     * @typedef {(tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void} FindError
+     * @typedef {(tx: WebSQLTransaction|Error|DOMException|(Error & {code?: number}), err?: (Error & {code?: number})) => void} FindError
      */
     /**
      *
      * @param {undefined|import('./Key.js').Key} key
      * @param {undefined|import('./Key.js').Key} primaryKey
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @param {KeySuccess} success
      * @param {FindError} error
      * @param {Integer|undefined} recordsToLoad
      * @this {IDBCursorFull}
      * @returns {void}
      */
-    __findBasic(this: IDBCursorFull, key: undefined | import("./Key.js").Key, primaryKey: undefined | import("./Key.js").Key, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad: Integer | undefined): void;
+    __findBasic(this: IDBCursorFull, key: undefined | import("./Key.js").Key, primaryKey: undefined | import("./Key.js").Key, tx: WebSQLTransaction, success: KeySuccess, error: FindError, recordsToLoad: Integer | undefined): void;
     /**
      *
      * @param {undefined|import('./Key.js').Key} key
      * @param {undefined|import('./Key.js').Key} primaryKey
-     * @param {SQLTransaction} tx
+     * @param {WebSQLTransaction} tx
      * @param {KeySuccess} success
      * @param {FindError} error
      * @param {Integer} [recordsToLoad]
      * @this {IDBCursorFull}
      * @returns {void}
      */
-    __findMultiEntry(this: IDBCursorFull, key: undefined | import("./Key.js").Key, primaryKey: undefined | import("./Key.js").Key, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad?: Integer): void;
+    __findMultiEntry(this: IDBCursorFull, key: undefined | import("./Key.js").Key, primaryKey: undefined | import("./Key.js").Key, tx: WebSQLTransaction, success: KeySuccess, error: FindError, recordsToLoad?: Integer): void;
     /**
      * @typedef {any} StructuredCloneValue
      */
