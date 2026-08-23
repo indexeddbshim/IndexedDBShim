@@ -21,7 +21,7 @@ mostly relate to most of the same issues.)
 - `durability` transaction option (newly added)
     - https://github.com/axemclion/IndexedDBShim/issues/351
     - 'idbcursor_update_index9.any.js' - Failing
-- `batchGetAll`?
+- `batchGetAll` (don't implement as now replaced)
     - 'idbindex_batchGetAll.tentative.any.js' - Failing
     - 'idbobjectstore_batchGetAll.tentative.any.js' - Failing
     - 'idbobjectstore_batchGetAll_largeValue.tentative.any.js' - Failing
@@ -78,7 +78,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 5. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS; if so, add to known issues)
     Uncaught exceptions have required their complete exclusion for now:
-    - `bindings-inject-key.js` - Breaks tests
     - `bindings-inject-keys-bypass-setters.js` - Breaks tests
     - `bindings-inject-values-bypass-setters.js` - Failing
     - `structured-clone.any.js` - Failing many tests; (not breaking other tests anymore, however)
@@ -139,8 +138,7 @@ IndexedDB Test counts:
     374 normal files (including 1 domstringlist file):
         348 are all good, 16 have some that are bad,
         11 have some that time out and 5 have some that do not run
-    4 excluded files with 11 tests (uncaught exceptions during testing):
-        `bindings-inject-key.js` (3 tests),
+    3 excluded files with 8 tests (uncaught exceptions during testing):
         'bindings-inject-keys-bypass-setters.js' (1 test,
         'event-dispatch-active-flag.js' (4 tests),
         'upgrade-transaction-deactivation-timing.js' (3 tests)
