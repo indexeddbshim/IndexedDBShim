@@ -1,10 +1,9 @@
 import {readdir} from 'node:fs/promises';
-import {join, dirname} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {join} from 'node:path';
 
 import goodBad from './node-good-bad-files.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 
 let alreadyListedFiles = [];
 Object.values(goodBad).forEach((arr) => {

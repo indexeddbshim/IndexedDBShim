@@ -1,10 +1,9 @@
 /* eslint-disable n/no-sync -- CLI */
 import fs from 'node:fs';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
 import fetch from 'isomorphic-fetch';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 
 const indexedDBDir = path.join(__dirname, '../web-platform-tests/IndexedDB/');
 const loaderFile = '_indexeddbshim-loader.html';
