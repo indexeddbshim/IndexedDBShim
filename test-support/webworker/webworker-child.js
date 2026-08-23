@@ -27,6 +27,7 @@ import * as wwutil from './webworker-util.js';
 // import indexeddbshim from 'indexeddbshim';
 import indexeddbshim from '../../src/node-UnicodeIdentifiers.js';
 import worker from './webworker.js';
+import nodeReplacementHacks from '../node-replacement-hacks.js';
 // import isDateObject from 'is-date-object'; // Not needed in worker tests as in main thread tests
 /*
 const permittedProtocols;
@@ -346,13 +347,19 @@ prom.then((scriptSource) => {
             ));
             */
             try {
-                vm.runInContext(
-                    fs.readFileSync(
-                        path.join(
-                            currentPath,
-                            arg
-                        )
+                let scriptSource = fs.readFileSync(
+                    path.join(
+                        currentPath,
+                        arg
                     ),
+                    'utf8'
+                );
+                const scriptBasename = path.basename(arg);
+                if (Object.hasOwn(nodeReplacementHacks, scriptBasename)) {
+                    scriptSource = scriptSource.replace(...nodeReplacementHacks[scriptBasename]);
+                }
+                vm.runInContext(
+                    scriptSource,
                     workerCtxObj
                 );
             } catch (err) {

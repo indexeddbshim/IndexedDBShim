@@ -21,6 +21,7 @@ import indexeddbshim from '../src/node-UnicodeIdentifiers.js';
 import worker, {WebSharedWorker as sharedWorker} from './webworker/webworker.js'; // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 import transformV8Stack from './transformV8Stack.js';
 import goodBad from './node-good-bad-files.js';
+import nodeReplacementHacks from './node-replacement-hacks.js';
 
 // sourceMapSupport.install({
 //     // Needed along with sourcemap transform
@@ -56,9 +57,6 @@ const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-obje
 //   last count) would otherwise roughly double the default run's duration.
 const anyWorkerFileRegex = /\.any\.worker\.js$/v;
 
-// String replacements on code due, e.g., for lagging ES support in Node
-const nodeReplacementHacks = {
-};
 const shimNS = {
     colors,
     fileName: '',
@@ -300,10 +298,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         return;
     }
 
-    if (Object.hasOwn(nodeReplacementHacks, shimNS.fileName)) {
-        content = content.replace(...nodeReplacementHacks[shimNS.fileName]);
-    }
-
     const scripts = [];
     const indexedDBSupported = [
         'resources/support.js',
@@ -379,7 +373,15 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 
     const harnessContent = await readAndJoinFiles(scripts);
     // early envt't, harness, reporting env't, specific test
-    const allContent = initial + '\n' + harnessContent + '\n' + ending + '\n' + content;
+    let allContent = initial + '\n' + harnessContent + '\n' + ending + '\n' + content;
+
+    // Applied to the fully-joined content (rather than just the thin,
+    //   built `content` wrapper read above) since the string to be
+    //   replaced typically lives in the real WPT source pulled in via
+    //   `harnessContent`, not in our own generated glue.
+    if (Object.hasOwn(nodeReplacementHacks, shimNS.fileName)) {
+        allContent = allContent.replace(...nodeReplacementHacks[shimNS.fileName]);
+    }
 
     // Build the window each time for test safety
     const rootPath = path.join(__dirname, '../web-platform-tests');

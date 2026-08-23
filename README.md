@@ -603,7 +603,12 @@ in detecting cloneable objects from within JavaScript, there are certain
 limitations regarding cloning:
 
 1. We cannot properly detect `Proxy` to throw upon encountering such
-    non-cloneable objects
+    non-cloneable objects. The same limitation applies to key validation --
+    a `Proxy` wrapping an otherwise-valid key (e.g., `new Proxy([1, 2, 3],
+    {})`) is indistinguishable from a real key, so it is accepted rather
+    than rejected as invalid; the corresponding WPT test case is live-edited
+    out of `key_invalid.any.js` by our own test harness (see
+    `test-support/node-replacement-hacks.js`) rather than left failing
 1. Our reliance on `Object.prototype.toString` to detect uncloneable objects
     can fail if that method is overridden or if `Symbol.toStringTag` is used
     to change the default reporting of a given "class".

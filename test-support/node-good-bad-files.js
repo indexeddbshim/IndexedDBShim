@@ -106,7 +106,11 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 8. PROXY
 
-- 'key_invalid.any.js' - Proxy of an Array failing (we can't detect proxies from JS)
+- 'key_invalid.any.js'/'key_invalid.any.worker.js' - We can't detect proxies
+    from JS, so a `Proxy`-wrapped array is indistinguishable from a real one
+    and can't be rejected as an invalid key; that one WPT test case is
+    live-removed at load time via `node-replacement-hacks.js` rather than
+    left failing (see README's Known Issues)
 
 9. HTML in tests
 
@@ -302,7 +306,6 @@ const goodBad = {
         'idbobjectstore_getAllRecords.any.js',
         'idlharness.any.js',
         'key-conversion-exceptions.any.js',
-        'key_invalid.any.js',
         'ready-state-destroyed-execution-context.js',
         'serialize-sharedarraybuffer-throws.https.js',
         'storage-buckets.https.any.js',
@@ -363,7 +366,6 @@ const goodBad = {
         'idbobjectstore_getAllRecords.any.worker.js',
         'idbtransaction_abort.any.worker.js',
         'idlharness.any.worker.js',
-        'key_invalid.any.worker.js',
         'keypath-special-identifiers.any.worker.js',
         'nested-cloning-basic.any.worker.js',
         'nested-cloning-large-multiple.any.worker.js',
@@ -508,6 +510,7 @@ const goodBad = {
         'index_sort_order.any.js',
         'interleaved-cursors-large.any.js',
         'interleaved-cursors-small.any.js',
+        'key_invalid.any.js',
         'key_valid.any.js',
         'keygenerator.any.js',
         'keyorder.any.js',
@@ -651,6 +654,7 @@ const goodBad = {
         'interleaved-cursors-large.any.worker.js',
         'interleaved-cursors-small.any.worker.js',
         'key-conversion-exceptions.any.worker.js',
+        'key_invalid.any.worker.js',
         'key_valid.any.worker.js',
         'keygenerator.any.worker.js',
         'keyorder.any.worker.js',
