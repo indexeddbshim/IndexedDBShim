@@ -16,15 +16,11 @@ mostly relate to most of the same issues.)
 
 0. MISSING APIS
 
-- `IDBTransaction.prototype.commit` not yet added
+- `IDBTransaction.prototype.commit` (newly added)
     - `idlharness.any.js`
-    - `idb-explicit-commit-throw.any.js`
-    - `idb-explicit-commit-throw.any2.js`
     - `idb-explicit-commit.any.js`
-    - `idb-explicit-commit.any2.js`
 - `durability` transaction option
     - https://github.com/axemclion/IndexedDBShim/issues/351
-    - `transaction-relaxed-durability.tentative.any.js`
     - 'idbcursor_update_index9.any.js' - Failing
 - `batchGetAll`?
     - 'idbindex_batchGetAll.tentative.any.js' - Failing
@@ -241,6 +237,7 @@ const goodBad = {
         'globalscope-indexedDB-SameObject.js',
         'historical.js',
         'idb-binary-key-roundtrip.js',
+        'idb-explicit-commit-throw.any.js',
         'idb_binary_key_conversion.js',
         'idb_webworkers.js',
         'idbcursor-advance-continue-async.js',
@@ -584,16 +581,13 @@ const goodBad = {
         'file_support.sub.js',
         'get-databases.any.js',
         'idb-binary-key-detached.js',
-        'idb-explicit-commit-throw.any.js',
         'idb-explicit-commit.any.js',
-        'idb-explicit-commit.any2.js',
         'idbfactory-origin-isolation.js',
         'idlharness.any.js',
         'key_invalid.js',
         'structured-clone-transaction-state.any.js',
         'structured-clone.any.js',
         'transaction-deactivation-timing.js',
-        'transaction-relaxed-durability.tentative.any.js',
         'idbfactory-open-opaque-origin.js',
         'idbindex-cross-realm-methods.js',
         'idbobjectstore-cross-realm-methods.js',
