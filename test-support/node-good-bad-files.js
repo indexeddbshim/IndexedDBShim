@@ -80,10 +80,9 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 5. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS; if so, add to known issues)
     Uncaught exceptions have required their complete exclusion for now:
     - `bindings-inject-key.js` - Breaks tests
-    - `keypath-exceptions.js` - Breaks tests
     - `bindings-inject-keys-bypass-setters.js` - Breaks tests
     - `bindings-inject-values-bypass-setters.js` - Failing
-    - `structured-clone.any.js` - Failing many tests;
+    - `structured-clone.any.js` - Failing many tests; (not breaking other tests anymore, however)
         note that we mock the following with no-op functions:
             `MessageChannel`, `DOMMatrix`, `DOMMatrixReadOnly`,
             `DOMPoint`, `DOMPointReadOnly`, `DOMRect`,
@@ -141,10 +140,9 @@ IndexedDB Test counts:
     374 normal files (including 1 domstringlist file):
         348 are all good, 16 have some that are bad,
         11 have some that time out and 5 have some that do not run
-    5 excluded files with 17 tests (uncaught exceptions during testing):
+    4 excluded files with 11 tests (uncaught exceptions during testing):
         `bindings-inject-key.js` (3 tests),
         'bindings-inject-keys-bypass-setters.js' (1 test,
-        `keypath-exceptions.js` (6 tests),
         'event-dispatch-active-flag.js' (4 tests),
         'upgrade-transaction-deactivation-timing.js' (3 tests)
 
@@ -214,11 +212,12 @@ Current DOMException test statuses with 0 files excluded:
 }
 */
 const goodBad = {
-    excludedNormal: ['event-dispatch-active-flag.js', 'keypath-exceptions.js', 'bindings-inject-keys-bypass-setters.js', 'upgrade-transaction-deactivation-timing.js'],
+    excludedNormal: [],
     excludedWorkers: ['_interface-objects-003.js', '_interface-objects-004.js'],
-    notRunning: ['idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js', 'structured-clone.any.js'],
-    timeout: ['idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js', 'structured-clone.any.js', 'transaction-scheduling-within-database.any.js', 'idb-partitioned-basic.tentative.sub.js'],
+    notRunning: ['idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'],
+    timeout: ['upgrade-transaction-deactivation-timing.js', 'idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js', 'transaction-scheduling-within-database.any.js', 'idb-partitioned-basic.tentative.sub.js'],
     goodFiles: [
+        'keypath-exceptions.js',
         'abort-in-initial-upgradeneeded.js',
         'bigint_value.js',
         'bindings-inject-values-bypass-chain.js',
@@ -575,6 +574,8 @@ const goodBad = {
         'request-abort-ordering.js'
     ],
     badFiles: [
+        'bindings-inject-keys-bypass-setters.js',
+        'event-dispatch-active-flag.js',
         'bindings-inject-values-bypass-setters.js',
         'blob-contenttype.any.js',
         'blob-composite-blob-reads.any.js',
