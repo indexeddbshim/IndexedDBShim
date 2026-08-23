@@ -43,8 +43,6 @@
             this[prop] = shimNS.window[prop].bind(shimNS.window);
         }
     });
-    // shimIndexedDB.__debug(true);
-
     // We need to overcome the `value.js` test's `instanceof` checks as
     //   our IDB object is injected rather than inline
     // jsdom doesn't make them available as `window` properties
@@ -86,15 +84,6 @@
     };
     colors.setTheme(theme);
 
-    /*
-    function unescapeHTML (s) {
-        return s
-            .replace(/&#39;/g, "'")
-            .replace(/&quot;/g, '"')
-            .replace(/&lt;/g, '<')
-            .replace(/&amp;/g, '&');
-    }
-    */
     /**
      * @param {string} statusText
      * @param {string} status
@@ -124,12 +113,6 @@
         //      `id=metadata_cache` if we add one (and `id=metadata_cache`?)
         // Insert our own reporting to be ready once tests evaluate
         const trs = [...document.querySelectorAll('table#results > tbody > tr')];
-        const jsonOutput = {
-            test: '/indexeddb/' + fileName.replace(/\.js$/v, '.htm'),
-            subtests: [],
-            status: 'OK', // When does the status at this level change?
-            message: null // When does the message at this level change?
-        };
         trs.forEach((tr, i) => {
             const test = tests[i];
             // Only the direct-child `<td>`s of this `<tr>` (`tr.cells`, not
@@ -151,18 +134,6 @@
                 : undefined;
             write(statusText, test.status);
             if (!shimNS.files[statusText].includes(fileName)) { shimNS.files[statusText].push(fileName); }
-            if (shimNS.fileMap) {
-                if (!shimNS.fileMap.has(fileName)) { shimNS.fileMap.set(fileName, [0, 0]); }
-                const [pass, total] = shimNS.fileMap.get(fileName);
-                shimNS.fileMap.set(fileName, [pass + (test.status === 0), total + 1]);
-            }
-            if (shimNS.jsonOutput) {
-                jsonOutput.subtests.push({
-                    name: test.name,
-                    status: statusText.toUpperCase(),
-                    message: test.message || null
-                });
-            }
             shimNS.writeln(' (' + fileName + '): ' + test.name);
             if (assertions) { shimNS.writeln(assertions); }
             // testharness.js captures `.message`/`.stack` for every assertion
@@ -175,7 +146,6 @@
                 shimNS.writeStack(test.message || ' ', test.stack);
             }
         });
-        if (shimNS.jsonOutput) { shimNS.jsonOutput.results.push(jsonOutput); }
         shimNS.finished();
     }
     add_completion_callback((...args) => {

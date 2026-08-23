@@ -22,6 +22,8 @@ const supportScripts = [
     '/common/subset-tests.js',
     'resources/support.js',
     'resources/support-promises.js',
+    'resources/support-get-all.js',
+    'resources/request-event-ordering-common.js',
     'resources/nested-cloning-common.js',
     'resources/interleaved-cursors-common.js',
     'resources/reading-autoincrement-common.js',
@@ -82,7 +84,6 @@ await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
                 let rawData = '';
                 res.on('data', (chunk) => { rawData += chunk; });
                 res.on('end', () => {
-                    // console.log('got HTML file', rawData);
                     resolve(rawData);
                 });
             }).on('error', (e) => {
@@ -148,7 +149,6 @@ await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
     } catch (err) {
         console.log(err);
     }
-    // console.log("The file " + outputFile + " was saved!");
 }));
 const reducer = (s, src) => s + '/*beginscript::' + src + '::endscript*/\n';
 /* eslint-disable unicorn/no-array-callback-reference -- Convenient */

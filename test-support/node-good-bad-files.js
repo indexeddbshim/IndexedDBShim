@@ -452,7 +452,35 @@ const goodBad = {
         'transaction-deactivation-timing.any.js',
         'transaction-lifetime.any.js',
         'upgrade-transaction-deactivation-timing.any.js',
-        'value.any.js'
+        'value.any.js',
+        '../non-indexedDB/interface-objects.js',
+        '../non-indexedDB/__event-interface.js',
+        '../non-indexedDB/exceptions.js'
+    ],
+    // Files needing `checkOrigin: true` (rather than the default `false`) and
+    //   the `createElement` iframe-`onload`-deferral patch in `node-idb-test.js`,
+    //   for opaque-origin testing.
+    checkOriginFiles: [
+        'idbfactory-open-opaque-origin.js',
+        'idbfactory-deleteDatabase-opaque-origin.js',
+        'idbfactory-databases-opaque-origin.js'
+    ],
+    // Files needing `fullIDLSupport: true` and `window.$$isHarnessTest = true`
+    //   in `node-idb-test.js`.
+    fullIDLSupportFiles: [
+        'idlharness.any.js',
+        '../non-indexedDB/exceptions.js',
+        '../non-indexedDB/__event-interface.js'
+    ],
+    // Files needing the `getElementById('file_input')` patch in `node-idb-test.js`.
+    fileInputElementFiles: [
+        'file_support.sub.js'
+    ],
+    // Files needing the `appendChild`/`DOMException` hierarchy-request-error
+    //   patches in `node-idb-test.js`.
+    domExceptionPatchFiles: [
+        '../non-indexedDB/exceptions.js',
+        '../non-indexedDB/constructor-object.js'
     ]
 };
 

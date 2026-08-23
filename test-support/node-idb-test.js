@@ -29,7 +29,8 @@ import goodBad from './node-good-bad-files.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const {
-    goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal
+    goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal,
+    checkOriginFiles, fullIDLSupportFiles, fileInputElementFiles, domExceptionPatchFiles
 } = goodBad;
 
 const {JSDOM} = jsdom;
@@ -48,12 +49,10 @@ const idbTestPath = 'web-platform-tests';
 
 const {createDOMException} = indexeddbshim;
 const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/v;
-// import indexeddbshimNonUnicode from '../dist/indexeddbshim-node';
 
 // String replacements on code due, e.g., for lagging ES support in Node
 const nodeReplacementHacks = {
 };
-const jsonResults = true;
 const shimNS = {
     colors,
     fileName: '',
@@ -78,8 +77,6 @@ const shimNS = {
         Timeout: 0,
         'Not Run': 0
     },
-    // fileMap: new Map(), // Todo: Could add a flag to set
-    // jsonOutput: {results: []},
     files: {
         Pass: [],
         Fail: [],
@@ -89,17 +86,6 @@ const shimNS = {
 };
 let ct = 0;
 let excludedCount = 0;
-
-/*
-// Todo: Might use in place of excluded array, but would need to increment, etc.
-process.on('uncaughtException', function (err) {
-    // handle the error safely
-    console.log('idbshim uncaught error:' + err);
-});
-process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
-});
-*/
 
 /**
  * @returns {void}
@@ -237,13 +223,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 
                 console.log('Unexpected failures:');
                 const failedFiles = shimNS.files.Fail.filter(
-                    (f) => ![...badFiles, ...excludedWorkers, ...excludedNormal].includes(f) &&
-                    ![
-                        '../non-indexedDB/interface-objects.js',
-                        '../non-indexedDB/__event-interface.js',
-                        '../non-indexedDB/exceptions.js'
-                    ].includes(f) &&
-                    (!workers || !['_service-worker-indexeddb.https.js'].includes(f))
+                    (f) => ![...badFiles, ...excludedWorkers, ...excludedNormal].includes(f)
                 );
                 if (failedFiles.length) {
                     console.log(
@@ -251,17 +231,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                     );
                 } else { console.log('(None)'); }
 
-                if (shimNS.fileMap) {
-                    console.log(
-                        [...shimNS.fileMap].reduce(
-                            (str, [fileName, [passing, total]]) => {
-                                return str + fileName + ': ' + passing + '/' + total + '\n';
-                            },
-                            ''
-                        )
-                    );
-                    shimNS.fileMap.clear(); // Release memory
-                }
                 if (excluded.length) {
                     console.log(
                         'Please note that the following tests ' + excluded.length +
@@ -271,12 +240,10 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                         'other tests to complete: ' + cleanJSONOutput(excluded)
                     );
                 }
-                if (jsonResults) {
+                {
                     const jsonOutputPath = path.join(
                         'test-support', 'results',
-                        'file-w3c' +
-                            // new Date().getTime() +
-                            '.json'
+                        'file-w3c.json'
                     );
                     try {
                         await writeFile(jsonOutputPath, JSON.stringify(
@@ -295,19 +262,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                         return;
                     }
                     console.log('Saved to ' + jsonOutputPath);
-                } else if (shimNS.jsonOutput) {
-                    const jsonOutputPath = path.join(
-                        'test-support', 'json-output' +
-                        // new Date().getTime() +
-                        '.json'
-                    );
-                    try {
-                        await writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2));
-                    } catch (err) {
-                        console.error('Error 2', err);
-                        return;
-                    }
-                    console.log('Saved to ' + jsonOutputPath);
                 }
                 exit();
             }, 1000);
@@ -316,7 +270,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     };
 
     // Exclude those currently breaking the tests
-    // Todo: Replace with `uncaughtException` handlers above?
     let excluded = [];
     if (jsFiles.length > 1) {
         excluded = workers
@@ -458,21 +411,12 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             useSQLiteIndexes: true,
             DEBUG
         };
-        if ([
-            'idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js',
-            'idbfactory-databases-opaque-origin.js'
-        ].includes(
-            shimNS.fileName
-        )) {
+        if (checkOriginFiles.includes(shimNS.fileName)) {
             baseCfg.checkOrigin = true;
         }
         global.location = window.location; // Needed by IDB for origin checks; also needed by `createObjectURL` polyfill
 
-        // Todo: We might switch based on file to normally try non-Unicode version or otherwise exclude properties as
-        //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
-        //   though it could also make the tests more fragile to changes
-        // indexeddbshimNonUnicode(window);
-        if (['idlharness.any.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/__event-interface.js'].includes(shimNS.fileName)) {
+        if (fullIDLSupportFiles.includes(shimNS.fileName)) {
             indexeddbshim(window, Object.assign(baseCfg, {fullIDLSupport: true}));
             // https://github.com/w3c/webidl2.js/issues/426
             window.$$isHarnessTest = true;
@@ -481,9 +425,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             // We will otherwise miss these tests (though not sure this is the best solution):
             //   see test_primary_interface_of in idlharness.js
             window.Object = Object;
-            // window.Object[Symbol.hasInstance] = function (inst) {
-            //     return inst && typeof inst === 'object';
-            // };
         }
 
         // See <https://github.com/axemclion/IndexedDBShim/issues/280>
@@ -510,7 +451,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         });
         Object.setPrototypeOf(window.CustomEvent, window.Event);
 
-        if (shimNS.fileName === 'file_support.sub.js') {
+        if (fileInputElementFiles.includes(shimNS.fileName)) {
             const _getById = window.document.getElementById;
             // Getting `Error: element in different document or shadow tree`
             //  with this use
@@ -525,7 +466,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             };
         }
 
-        if (['../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js'].includes(shimNS.fileName)) {
+        if (domExceptionPatchFiles.includes(shimNS.fileName)) {
             // These changes are for exceptions tests
             const _appendChild = window.document.documentElement.appendChild.bind(window.document.documentElement);
             window.document.documentElement.appendChild = function (...args) {
@@ -554,10 +495,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 return _bodyAppendChild(...args);
             };
             window.Error = Error; // For comparison of DOMException by constructor-object.js test
-        } else if ([
-            'idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js',
-            'idbfactory-databases-opaque-origin.js'
-        ].includes(shimNS.fileName)) {
+        } else if (checkOriginFiles.includes(shimNS.fileName)) {
             const _createElement = window.document.createElement.bind(window.document);
             window.document.createElement = function (...args) {
                 const elName = args[0];
@@ -613,8 +551,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             };
 
         // Polyfill enough for our tests
-        // const require = createRequire(import.meta.url);
-        // const cou = require('typeson-registry/polyfills');
         const cou = await import('typeson-registry/polyfills');
 
         global.XMLHttpRequest = window.XMLHttpRequest;
@@ -626,14 +562,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             polyfillDataURLs: true
         });
 
-        // delete require.cache[
-        //     Object.keys(require.cache).find((path) => path.includes('createObjectURL'))
-        // ];
-
         window.Promise = Promise;
-        // window.Promise[Symbol.hasInstance] = function (inst) {
-        //     return inst && typeof inst === 'object' && typeof inst.then === 'function';
-        // };
 
         window.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
@@ -672,12 +601,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             rootPath,
             permittedProtocols: ['http', 'https', 'blob', 'data']
         });
-        // window.Blob.prototype[Symbol.toStringTag] = 'Blob';
-        // window.File.prototype[Symbol.toStringTag] = 'File';
-        // window.FileList.prototype[Symbol.toStringTag] = 'FileList';
-
-        // Needed by typeson-registry to revive clones
-        // window.BigInt = global.BigInt;
         global.Blob = window.Blob;
         global.File = window.File;
         // keypath-special-identifiers.htm still relies on this property
@@ -757,13 +680,6 @@ async function readAndEvaluateFiles (jsFiles, workers, recursing) {
         console.error('Error 6', err);
         return;
     }
-
-    // console.log(JSON.stringify(jsFiles)); // See what files we've got
-
-    // Hard-coding problematic files for testing
-    // jsFiles = ['idbcursor-continuePrimaryKey-exception-order.js'];
-    // jsFiles = ['idlharness.any.js'];
-    // jsFiles = ['transaction-lifetime-empty.js'];
 
     let ending;
     try {
