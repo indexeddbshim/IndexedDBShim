@@ -1,5 +1,6 @@
 /* eslint-disable n/no-sync -- Convenient */
-// Todo: SharedWorker/ServiceWorker/MessageChannel polyfills
+// Todo: ServiceWorker polyfill (SharedWorker has a minimal one -- see
+//   `WebSharedWorker` below)
 // WebWorkers implementation.
 //
 // The master and workers communite over a UNIX domain socket at

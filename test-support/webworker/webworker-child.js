@@ -17,6 +17,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import util from 'node:util';
 import http from 'node:http';
+import {MessageChannel} from 'node:worker_threads';
 import {WebSocket} from 'ws';
 import xmlHttpRequest from 'local-xmlhttprequest';
 import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
@@ -430,6 +431,7 @@ prom.then((scriptSource) => {
 
     workerCtx.Blob = Blob;
     workerCtx.File = File; // Node has a native global `File` (unlike `Blob`, which needs the `w3c-blob` polyfill)
+    workerCtx.MessageChannel = MessageChannel; // `node:worker_threads`'s real transferable-object semantics (needed by WPT's `createDetachedArrayBuffer()` helper)
     workerCtx.fetch = function (...args) {
         if (args[0].startsWith('/')) {
             // eslint-disable-next-line unicorn/prefer-https -- Local
@@ -447,7 +449,7 @@ prom.then((scriptSource) => {
     //   (dedicated or shared) at all.
     [
         'MessagePort', 'MessageEvent', 'WorkerNavigator',
-        'MessageChannel', 'WorkerLocation', 'ImageData', 'ImageBitmap',
+        'WorkerLocation', 'ImageData', 'ImageBitmap',
         'Path2D', 'PromiseRejectionEvent', 'EventSource',
         'WebSocket', 'CloseEvent', 'BroadcastChannel',
         'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload',
