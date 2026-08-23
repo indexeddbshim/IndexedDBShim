@@ -19,7 +19,7 @@ well relate to many of the same issues.)
     - `idb-explicit-commit.any.js`
 - `durability` transaction option (newly added)
     - https://github.com/axemclion/IndexedDBShim/issues/351
-    - 'idbcursor_update_index9.any.js' - Failing
+    - 'idbcursor_update_index.any.js' - Failing
 - `batchGetAll` (don't implement as now replaced)
     - 'idbindex_batchGetAll.tentative.any.js' - Failing
     - 'idbobjectstore_batchGetAll.tentative.any.js' - Failing
@@ -40,18 +40,18 @@ increase the timeout to ensure the transaction has expired in our implementation
 of what is the actual expected behavior, see also
 https://github.com/web-platform-tests/wpt/commit/57aa2ac737eec9526ad6c4ace61e590730ec3b9e
 
-- `idbcursor-advance-exception-order.js`
-- `idbindex-query-exception-order.js`
-- `idbobjectstore-add-put-exception-order.js`
-- `idbobjectstore-clear-exception-order.js`
-- `idbobjectstore-delete-exception-order.js`
-- `idbobjectstore-deleteIndex-exception-order.js`
-- `idbobjectstore-query-exception-order.js`
+- `idbcursor-advance-exception-order.any.js`
+- `idbindex-query-exception-order.any.js`
+- `idbobjectstore-add-put-exception-order.any.js`
+- `idbobjectstore-clear-exception-order.any.js`
+- `idbobjectstore-delete-exception-order.any.js`
+- `idbobjectstore-deleteIndex-exception-order.any.js`
+- `idbobjectstore-query-exception-order.any.js`
 
 These are still failing regardless:
-- `transaction-deactivation-timing.js`: ?
-- `upgrade-transaction-deactivation-timing.js`: ?
-- `event-dispatch-active-flag.js`
+- `transaction-deactivation-timing.any.js`: ?
+- `upgrade-transaction-deactivation-timing.any.js`: ?
+- `event-dispatch-active-flag.any.js`
 - `get-databases.any.js` (not sure if it is transaction timing)
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
@@ -77,8 +77,8 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 5. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS; if so, add to known issues)
     Uncaught exceptions have required their complete exclusion for now:
-    - `bindings-inject-keys-bypass-setters.js` - Breaks tests
-    - `bindings-inject-values-bypass-setters.js` - Failing
+    - `bindings-inject-keys-bypass.any.js` - Failing
+    - `bindings-inject-values-bypass.any.js` - Failing
     - `structured-clone.any.js` - Failing many tests; (not breaking other tests anymore, however)
         note that we mock the following with no-op functions:
             `MessageChannel`, `DOMMatrix`, `DOMMatrixReadOnly`,
@@ -93,7 +93,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 6. NODE ISSUE-RELATED
 
-- `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node; see https://github.com/jsdom/jsdom/issues/1838 and https://github.com/axemclion/IndexedDBShim/issues/283
+- `idb-binary-key-detached.any.js` - Requires `ArrayBuffer.transfer` but not available in Node; see https://github.com/jsdom/jsdom/issues/1838 and https://github.com/axemclion/IndexedDBShim/issues/283
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the
@@ -106,30 +106,30 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 8. PROXY
 
-- 'key_invalid.js' - Proxy of an Array failing (we can't detect proxies from JS)
+- 'key_invalid.any.js' - Proxy of an Array failing (we can't detect proxies from JS)
 
 9. HTML in tests
 
 - `file_support.sub.js` - Looks for an Element though we are not creating HTML as
    in tests (could try polyfilling `document.getElementById()`)
-- 'idb-partitioned-persistence.tentative.sub.js' - Failing (iframe)
+- 'idb-partitioned-persistence.sub.js' - Failing (iframe)
 - 'ready-state-destroyed-execution-context.js' - Failing (iframe)
 - 'idb-partitioned-basic.sub.js' - Timing out (iframe)
 
 10. UNKNOWN
 
-- `request-abort-ordering.js` - This times out sometimes (when run with full tests); possibly due to what it is following?
+- `request-abort-ordering.any.js` - This times out sometimes (when run with full tests); possibly due to what it is following?
 - 'idbobjectstore_getAllKeys.any.js' - Failing sometimes (when run full tests)
-- `index_sort_order.js' - Failing sometimes (when run full tests)
+- `index_sort_order.any.js' - Failing sometimes (when run full tests)
 - `transaction-scheduling-ro-waits-for-rw.any.js` - Failing sometimes
 - `transaction-scheduling-across-connections.any.js` - Failing sometimes
 
 - 'structured-clone-transaction-state.any.js' - Failing (cloning or transaction?)
 
-- 'reading-autoincrement-indexes-cursors.any.js' - Failing
-- 'reading-autoincrement-indexes.any.js' - Failing
-- 'reading-autoincrement-store-cursors.any.js' - Failing
-- 'reading-autoincrement-store.any.js' - Failing
+- 'reading-autoincrement-indexes-cursors.any.js' - Timing out
+- 'reading-autoincrement-indexes.any.js' - Timing out
+- 'reading-autoincrement-store-cursors.any.js' - Timing out
+- 'reading-autoincrement-store.any.js' - Timing out
 
 - 'serialize-sharedarraybuffer-throws.https.js' - Failing (bug in test?)
 
