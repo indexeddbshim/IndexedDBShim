@@ -12,6 +12,18 @@ const anyFilesPaths = anyFiles.map((dir) => {
     return `/IndexedDB/${dir}`;
 });
 
+// WPT's own tooling additionally generates a dedicated-worker-context
+//   `<name>.any.worker.html`/`.any.worker.js` pair (served the same way as
+//   the window-context `.any.html` variant already fetched below) for any
+//   `.any.js` file declaring a worker-compatible global via its `META`
+//   comment, e.g. `// META: global=window,worker`. Detect those here so a
+//   companion `htmlFiles` entry can be added for each.
+const workerMetaRegex = /^\/\/ META: global=.*worker/miv;
+const anyWorkerFiles = (await Promise.all(anyFiles.map(async (anyFile) => {
+    const content = await readFile(path.join(dirPath, anyFile), 'utf8');
+    return workerMetaRegex.test(content) ? anyFile : null;
+}))).filter(Boolean);
+
 // Known scripts
 const testHarnessScripts = [
     '/resources/testharness.js', '/resources/testharnessreport.js'
@@ -70,6 +82,12 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
         inputFile: `http://web-platform.test:8000/IndexedDB/${anyFile.replace(/\.js$/v, '.html')}`,
         /* eslint-enable unicorn/prefer-https -- Local */
         outputFile: path.join(builtJSPath, anyFile),
+        web: true
+    };
+}), ...anyWorkerFiles.map((anyFile) => {
+    return {
+        inputFile: `http://web-platform.test:8000/IndexedDB/${anyFile.replace(/\.js$/v, '.worker.html')}`,
+        outputFile: path.join(builtJSPath, anyFile.replace(/\.js$/v, '.worker.js')),
         web: true
     };
 }));

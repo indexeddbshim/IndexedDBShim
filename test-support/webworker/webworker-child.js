@@ -128,9 +128,15 @@ case 'data': {
 }
 
 case 'file':
-    if ([/interfaces\.any\.js$/v, /interfaces\.any\.worker\.js$/v].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
+    // `makeFileURL` appends a trailing `/` to every `file://` URL it builds
+    //   (see `webworker-util.js`), so allow for one here.
+    if ((/\.any\.worker\.js\/?$/v).test(workerURL)) {
+        // WPT's `wptserve` generates `<name>.any.worker.js` on the fly from
+        //   `<name>.any.js` (resolving its `importScripts`/support-file
+        //   references) -- it is never a real file on disk, so it has to be
+        //   fetched from the live server rather than read locally.
         // eslint-disable-next-line unicorn/prefer-https -- Local
-        workerURL = workerURL.replace(/.*web-platform-tests/v, 'http://web-platform.test:8000');
+        workerURL = workerURL.replace(/.*web-platform-tests/v, 'http://web-platform.test:8000').replace(/\/$/v, '');
         prom = new Promise((resolve) => { // eslint-disable-line promise/avoid-new -- No API
             http.get(workerURL, (res) => {
                 res.setEncoding('utf8');

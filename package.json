@@ -105,7 +105,9 @@
     "w3c-good": "run-s w3c-build w3c-good-only clean-w3c",
     "w3c-bad": "run-s w3c-build w3c-bad-only clean-w3c",
     "w3c-good-test": "run-s w3c-good-only clean-w3c",
-    "w3c-bad-test": "run-s w3c-bad-only clean-w3c"
+    "w3c-bad-test": "run-s w3c-bad-only clean-w3c",
+    "w3c-any-workers-only": "NODE_OPTIONS=--max_old_space_size=16384 node test-support/node-idb-test.js any-workers",
+    "w3c-non-workers-only": "NODE_OPTIONS=--max_old_space_size=16384 node --trace-warnings test-support/node-idb-test.js"
   },
   "repository": {
     "type": "git",
