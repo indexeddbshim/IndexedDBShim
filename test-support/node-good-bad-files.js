@@ -136,7 +136,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - `transaction-scheduling-ro-waits-for-rw.any.js` - Failing sometimes
 - `transaction-scheduling-across-connections.any.js` - Failing sometimes
 
-- 'idbindex_reverse_cursor.any.js' - Not running / timing out
 - 'structured-clone-transaction-state.any.js' - Failing (cloning or transaction?)
 
 - 'reading-autoincrement-indexes-cursors.any.js' - Failing
