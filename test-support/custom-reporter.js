@@ -111,14 +111,23 @@
         };
         trs.forEach((tr, i) => {
             const test = tests[i];
-            const tds = [...tr.querySelectorAll('td')].map((td) => td.textContent);
+            // Only the direct-child `<td>`s of this `<tr>` (`tr.cells`, not
+            //   `tr.querySelectorAll('td')`): testharness.js nests its own
+            //   per-assertion "Asserts run" `<details><table>...</table></details>`
+            //   inside the message `<td>` of every row, pass or fail, and
+            //   `querySelectorAll('td')` matches those nested `<td>`s too,
+            //   throwing off which index holds which real column.
+            const tds = [...tr.cells].map((td) => td.textContent);
             const [statusText] = tds; // 2nd is testName
-            // eslint-disable-next-line prefer-const -- Convenient
-            let [,, assertions, messageWithAnyStack] = tds;
-            if (messageWithAnyStack === undefined) {
-                // messageWithAnyStack = assertions;
-                assertions = undefined;
-            }
+            // `test.properties.assert` (WPT's optional, rarely-used metadata
+            //   listing which named assertions a test covers) is the only
+            //   thing here not already available directly on `test` --
+            //   message/stack come straight from `test` below instead of
+            //   being scraped from the DOM, since that DOM text also
+            //   includes the "Asserts run" block noted above.
+            const assertions = test.properties && Object.hasOwn(test.properties, 'assert')
+                ? (Array.isArray(test.properties.assert) ? test.properties.assert.join(' ') : test.properties.assert)
+                : undefined;
             write(statusText, test.status);
             if (!shimNS.files[statusText].includes(fileName)) { shimNS.files[statusText].push(fileName); }
             if (shimNS.fileMap) {
@@ -135,7 +144,13 @@
             }
             shimNS.writeln(' (' + fileName + '): ' + test.name);
             if (assertions) { shimNS.writeln(assertions); }
-            if (test.message && test.stack) {
+            // testharness.js captures `.message`/`.stack` for every assertion
+            //   call, pass or fail, purely as internal bookkeeping -- only
+            //   print it for a genuine failure/timeout/not-run, where it's
+            //   actually diagnostic; echoing it for `status === 0` (pass) just
+            //   prints a message-less "Error" stack trace after every single
+            //   passing assertion.
+            if (test.status !== 0 && test.message && test.stack) {
                 shimNS.writeStack(test.message || ' ', test.stack);
             }
         });

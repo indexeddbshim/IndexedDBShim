@@ -65,6 +65,7 @@ const workerConfig = {
     // Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
     origin: process.argv[10]
 };
+const isSharedWorker = process.argv[11] === 'true';
 
 // Catch exceptions
 //
@@ -109,6 +110,23 @@ const workerConfig = {
 
 // Construct the Script object to host the worker's code
 switch (scriptLoc.protocol) {
+case 'data': {
+    // Decode directly from the original `data:[<mediatype>][;base64],<data>`
+    //   string rather than `scriptLoc.pathname`: `WorkerLocation` runs
+    //   `path.normalize` on the pathname for every protocol, which would
+    //   corrupt a base64 payload containing `/`-delimited sequences that
+    //   happen to look like path segments to normalize away.
+    const commaIndex = workerURL.indexOf(',');
+    const meta = workerURL.slice('data:'.length, commaIndex);
+    const payload = workerURL.slice(commaIndex + 1);
+    prom = Promise.resolve(
+        meta.endsWith(';base64')
+            ? Buffer.from(payload, 'base64').toString('utf8')
+            : decodeURIComponent(payload)
+    );
+    break;
+}
+
 case 'file':
     if ([/interfaces\.any\.js$/v, /interfaces\.any\.worker\.js$/v].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
         // eslint-disable-next-line unicorn/prefer-https -- Local
@@ -199,7 +217,8 @@ prom.then((scriptSource) => {
             // Todo: I have no idea what the event object here should really look
             //      like. I do know that it needs a 'data' elements, though.
             if (workerCtx.onmessage || workerCtx.eventHandlers.message.length > 0) {
-                const e = {data: msg[1]};
+                // See the matching comment in `webworker.js`'s `handleMessage`.
+                const e = {data: msg[1], source: null};
 
                 if (fd) {
                     e.fd = fd;
@@ -232,6 +251,28 @@ prom.then((scriptSource) => {
 
         // Execute the worker
         vm.runInContext(scriptSource, workerCtxObj);
+
+        // Minimal `SharedWorker` support: dispatch a single synthetic
+        //   `connect` event, now that the worker script (run synchronously
+        //   above) has had a chance to register its listeners. There is no
+        //   real MessagePort here -- `port.postMessage` just reuses the same
+        //   IPC channel `self.postMessage` already sends over, since this
+        //   shim only supports a single, immediately-connected client (see
+        //   `WebSharedWorker` in `webworker.js`).
+        if (isSharedWorker) {
+            const port = {
+                postMessage: workerCtx.postMessage,
+                addEventListener () { /* No-op: this shim never emits port-level events */ },
+                removeEventListener () { /* No-op */ },
+                start () { /* No-op */ },
+                close () { /* No-op */ }
+            };
+            const connectEvent = {ports: [port], source: port};
+            if (workerCtx.onconnect) {
+                workerCtx.onconnect(connectEvent);
+            }
+            workerCtx.eventHandlers.connect.forEach((handler) => handler(connectEvent));
+        }
     });
     // Context elements required for node.js
     //
@@ -255,8 +296,13 @@ prom.then((scriptSource) => {
     };
     workerCtx.WorkerGlobalScope = workerCtx;
 
-    // Todo: In place of this, allow conditionally `SharedWorkerGlobalScope`, or `ServiceWorkerGlobalScope`
-    workerCtx.DedicatedWorkerGlobalScope = workerCtx;
+    // Todo: In place of this, allow conditionally `ServiceWorkerGlobalScope`
+    if (isSharedWorker) {
+        workerCtx.SharedWorkerGlobalScope = workerCtx;
+        workerCtx.onconnect = null;
+    } else {
+        workerCtx.DedicatedWorkerGlobalScope = workerCtx;
+    }
     // This was needed for testharness' `instanceof` check which requires it to be callable: `self instanceof DedicatedWorkerGlobalScope`
     // workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return inst.WorkerGlobalScope && !inst.SharedWorkerGlobalScope && !inst.ServiceWorkerGlobalScope; };
 
@@ -266,7 +312,7 @@ prom.then((scriptSource) => {
         // eslint-disable-next-line unicorn/no-process-exit -- Needed
         process.exit(0);
     };
-    workerCtx.eventHandlers = {message: []};
+    workerCtx.eventHandlers = {message: [], connect: []};
     workerCtx.addEventListener = function (event, handler) {
         if (Object.hasOwn(workerCtx.eventHandlers, event)) {
             workerCtx.eventHandlers[event].push(handler);

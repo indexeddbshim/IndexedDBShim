@@ -240,7 +240,8 @@ function WebWorker (workerConfig) {
                     workerConfig.relativePathType,
                     workerConfig.basePath,
                     workerConfig.rootPath,
-                    workerConfig.origin
+                    workerConfig.origin,
+                    opts.sharedWorker ? 'true' : 'false'
                 ];
                 if (workerConfig.args) {
                     if (Array.isArray(workerConfig.args)) {
@@ -350,7 +351,12 @@ function WebWorker (workerConfig) {
 
             case wwutil.MSGTYPE_USER:
                 if (self.onmessage || eventHandlers.message.length > 0) {
-                    const e = {data: msg[1]};
+                    // `source` is always `null` for a genuine Worker/
+                    //   MessagePort `message` event (it's only ever non-null
+                    //   for cross-window `postMessage`) -- tests that check
+                    //   `e.source === null` (a common WPT idiom, e.g.
+                    //   `wait_for_message(worker, null)`) need this present.
+                    const e = {data: msg[1], source: null};
 
                     if (fd) {
                         e.fd = fd;
@@ -475,7 +481,56 @@ function WebWorker (workerConfig) {
     return Worker;
 }
 
+/**
+ * Minimal `SharedWorker` support: enough for a single client to construct a
+ *   `SharedWorker`, receive a `connect` event with a port on the worker
+ *   side, and exchange messages over that port -- not a spec-complete
+ *   implementation (there is no real "same URL + name reuses the same
+ *   instance" sharing across separate `new SharedWorker(...)` calls; each
+ *   call spawns its own child process, same as a plain `Worker`).
+ * @param {WorkerConfig} workerConfig
+ * @returns {SharedWorker}
+ */
+function WebSharedWorker (workerConfig) {
+    const Worker = WebWorker(workerConfig); // eslint-disable-line new-cap -- `WebWorker` is a factory, not itself a constructor
+    /**
+     * @param {string} src
+     * @param {string} [name]
+     * @returns {void}
+     */
+    const SharedWorker = function (src, name) { // eslint-disable-line no-unused-vars -- Part of the constructor's public signature
+        const self = this; // eslint-disable-line consistent-this -- Clear
+        const worker = new Worker(src, {type: 'classic', sharedWorker: true});
+        const port = {
+            postMessage (msg, xfers) {
+                worker.postMessage(msg, xfers);
+            },
+            addEventListener (event, handler) {
+                worker.addEventListener(event, handler);
+            },
+            removeEventListener (event, handler) {
+                worker.removeEventListener(event, handler);
+            },
+            start () { /* No-op: messages are never explicitly queued pending `start()` here */ },
+            close () { worker.terminate(); }
+        };
+        Object.defineProperty(port, 'onmessage', {
+            enumerable: true,
+            get () { return worker.onmessage; },
+            set (fn) { worker.onmessage = fn; }
+        });
+        self.port = port;
+        Object.defineProperty(self, 'onerror', {
+            enumerable: true,
+            get () { return worker.onerror; },
+            set (fn) { worker.onerror = fn; }
+        });
+    };
+    return SharedWorker;
+}
+
 export default WebWorker;
+export {WebSharedWorker};
 
 // Perform any one-time initialization
 try {

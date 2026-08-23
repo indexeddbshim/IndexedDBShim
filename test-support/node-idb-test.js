@@ -18,7 +18,7 @@ import isDateObject from 'is-date-object';
 import fetch from 'isomorphic-fetch';
 
 import indexeddbshim from '../src/node-UnicodeIdentifiers.js';
-import worker from './webworker/webworker.js'; // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
+import worker, {WebSharedWorker as sharedWorker} from './webworker/webworker.js'; // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 import transformV8Stack from './transformV8Stack.js';
 import goodBad from './node-good-bad-files.js';
 
@@ -453,7 +453,10 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             useSQLiteIndexes: true,
             DEBUG
         };
-        if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(
+        if ([
+            'idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js',
+            'idbfactory-databases-opaque-origin.js'
+        ].includes(
             shimNS.fileName
         )) {
             baseCfg.checkOrigin = true;
@@ -546,7 +549,10 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 return _bodyAppendChild(...args);
             };
             window.Error = Error; // For comparison of DOMException by constructor-object.js test
-        } else if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(shimNS.fileName)) {
+        } else if ([
+            'idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js',
+            'idbfactory-databases-opaque-origin.js'
+        ].includes(shimNS.fileName)) {
             const _createElement = window.document.createElement.bind(window.document);
             window.document.createElement = function (...args) {
                 const elName = args[0];
@@ -653,7 +659,13 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             basePath, // Todo: We need to change this to our server's base URL when implemented
             // basePath: path.join(__dirname, 'js')
             rootPath,
-            permittedProtocols: ['http', 'https', 'blob']
+            permittedProtocols: ['http', 'https', 'blob', 'data']
+        });
+        window.SharedWorker = sharedWorker({
+            relativePathType: 'file',
+            basePath,
+            rootPath,
+            permittedProtocols: ['http', 'https', 'blob', 'data']
         });
         // window.Blob.prototype[Symbol.toStringTag] = 'Blob';
         // window.File.prototype[Symbol.toStringTag] = 'File';
