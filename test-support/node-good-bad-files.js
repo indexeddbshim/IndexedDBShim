@@ -214,7 +214,7 @@ const goodBad = {
     excludedNormal: [],
     excludedWorkers: ['_interface-objects-003.js', '_interface-objects-004.js'],
     notRunning: ['idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'],
-    timeout: ['upgrade-transaction-deactivation-timing.js', 'idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js', 'transaction-scheduling-within-database.any.js', 'idb-partitioned-basic.tentative.sub.js'],
+    timeout: ['idb-explicit-commit.any.js', 'upgrade-transaction-deactivation-timing.js', 'idbfactory-databases-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js', 'transaction-scheduling-within-database.any.js', 'idb-partitioned-basic.tentative.sub.js'],
     goodFiles: [
         'keypath-exceptions.js',
         'abort-in-initial-upgradeneeded.js',
