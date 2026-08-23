@@ -411,7 +411,23 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         // Should only pass in safe objects
         const sandboxObj = {
             console,
-            shimNS
+            shimNS,
+            // The `IDBObjectStore`/`IDBIndex`/`IDBCursor`/`IDBKeyRange` etc.
+            //   seen from inside this vm sandbox (copied onto its global in
+            //   `environment.js`, from the real jsdom `window` `indexeddbshim`
+            //   was installed on by outer, non-sandboxed code above) throw
+            //   `DOMException`s constructed by THIS process's own
+            //   `src/DOMException.js` module copy -- which resolves a bare
+            //   `DOMException` via normal Node module scope, i.e. this
+            //   process's native global `DOMException`. Passing that same
+            //   object in here (rather than leaving the sandbox to pick up
+            //   jsdom's own, different `DOMException` class) keeps
+            //   `e.constructor` identity checks (like testharness.js's
+            //   `assert_throws_dom`) working correctly from the very first
+            //   line evaluated in this sandbox -- including for synchronous
+            //   tests whose assertions run before `ending`/`content` below
+            //   are even reached.
+            DOMException
         };
 
         const baseCfg = {

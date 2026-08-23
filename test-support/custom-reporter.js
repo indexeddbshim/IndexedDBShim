@@ -18,7 +18,24 @@
     Object, Function
     */
     const nonEnumerables = [
-        'Blob', 'File', 'DOMException', 'Event', 'CustomEvent', 'EventTarget', 'DOMStringList', 'URL',
+        // `DOMException` is deliberately NOT copied from `shimNS.window` here:
+        //   the shim's own `IDBObjectStore`/`IDBIndex`/`IDBCursor`/`IDBKeyRange`
+        //   etc. seen from inside this vm sandbox are the SAME instances
+        //   `indexeddbshim(window, ...)` installed on the real jsdom `window`
+        //   from outer, non-sandboxed Node code (copied onto this sandbox's
+        //   global early, in `environment.js`) -- so any `DOMException` they
+        //   throw is constructed by that outer code's own `src/DOMException.js`
+        //   module copy, which resolves a bare `DOMException` via normal Node
+        //   module scope, i.e. Node's native global `DOMException`, not
+        //   jsdom's. `node-idb-test.js` passes that same native `DOMException`
+        //   into this sandbox directly (as a `vm.runInNewContext` sandbox
+        //   property) so it's in place from the very first line evaluated
+        //   here -- copying jsdom's own `DOMException` over it here would
+        //   overwrite it with the wrong one, breaking `assert_throws_dom`'s
+        //   final `e.constructor === self.DOMException` check for any
+        //   synchronous test whose assertions run before this file (`ending`)
+        //   is reached, e.g. `idbkeyrange-includes.any.js`'s very first test.
+        'Blob', 'File', 'Event', 'CustomEvent', 'EventTarget', 'DOMStringList', 'URL',
         'Window', 'Node', 'Document', 'DOMImplementation', 'DocumentFragment', 'ProcessingInstruction', 'DocumentType', 'Element', 'Attr', 'CharacterData', 'Text', 'Comment', 'NodeIterator', 'TreeWalker', 'NodeFilter', 'NodeList', 'HTMLCollection', 'DOMTokenList'
     ]; // These are needed by IndexedDB tests
     nonEnumerables.concat(Object.keys(shimNS.window)).forEach((prop) => {
@@ -30,7 +47,19 @@
                 // Let's allow us to override the jsdom console with that in the main script
                 'console',
                 // Not in Chrome (and at least log should not become a global as used in test scripts)
-                'scrollTop', 'scrollLeft', 'createPopup', 'log'
+                'scrollTop', 'scrollLeft', 'createPopup', 'log',
+                // Self-referential browsing-context globals: `shimNS.window` has
+                //   these as its own enumerable properties (unlike most WHATWG
+                //   globals, which live on the prototype), so this loop would
+                //   otherwise silently overwrite the vm sandbox's own `self`
+                //   (set correctly in `environment.js`) with a reference to
+                //   `shimNS.window` itself, which is never correct.
+                'self', 'window', 'parent', 'top', 'frameElement', 'frames',
+                // See the `nonEnumerables` comment above on why `DOMException`
+                //   must stay the one `node-idb-test.js` passes into this
+                //   sandbox directly, not jsdom's -- excluded here too in case
+                //   it's ever an own-enumerable property of `shimNS.window`.
+                'DOMException'
             ].includes(prop)) {
             return;
         }

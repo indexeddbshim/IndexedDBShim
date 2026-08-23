@@ -297,6 +297,19 @@ prom.then((scriptSource) => {
         workerCtx[prop] = global[prop];
     });
 
+    // `indexeddbshim(workerCtx, ...)` below installs `IDBKeyRange`/
+    //   `IDBObjectStore`/etc. using THIS process's own `src/DOMException.js`/
+    //   `Key.js` module copies, which resolve bare `TypeError`/`DOMException`
+    //   via normal Node module scope -- i.e. this process's native globals.
+    //   Once `workerCtx` is contextified below, code evaluated inside that
+    //   context gets its OWN, different native `TypeError`/`DOMException`,
+    //   so an assertion like `assert_throws_js(TypeError, ...)` comparing
+    //   against that inner one would never match what the shim actually
+    //   throws. Assigning these here (mirroring the identical fix in
+    //   `node-idb-test.js`'s `sandboxObj`) keeps the two aligned.
+    workerCtx.TypeError = TypeError;
+    workerCtx.DOMException = DOMException;
+
     // Context elements required by the WebWorkers API spec
     workerCtx.postMessage = function (msg) {
         ms.send([wwutil.MSGTYPE_USER, msg]);
