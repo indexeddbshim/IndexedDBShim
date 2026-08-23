@@ -420,11 +420,14 @@ prom.then((scriptSource) => {
     // Todo: A good Worker polyfill would implement these as possible and
     //   if exposing we should do so; for W3C IndexedDB or IndexedDB-related tests,
     //   however, they do not currently require a working implementation except to
-    //   check that they exist
+    //   check that they exist. `SharedWorker`/`CanvasPath` are deliberately excluded
+    //   from this stub list: per `workers/semantics/interface-objects/002.worker.js`
+    //   and `004.any.js`, neither should be exposed in *any* worker global scope
+    //   (dedicated or shared) at all.
     [
-        'SharedWorker', 'MessagePort', 'MessageEvent', 'WorkerNavigator',
+        'MessagePort', 'MessageEvent', 'WorkerNavigator',
         'MessageChannel', 'WorkerLocation', 'ImageData', 'ImageBitmap',
-        'CanvasPath', 'Path2D', 'PromiseRejectionEvent', 'EventSource',
+        'Path2D', 'PromiseRejectionEvent', 'EventSource',
         'WebSocket', 'CloseEvent', 'BroadcastChannel',
         'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload',
         'ProgressEvent', 'FormData', 'File', 'FileList', 'FileReader',

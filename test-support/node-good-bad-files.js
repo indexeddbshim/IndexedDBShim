@@ -237,6 +237,7 @@ const goodBad = {
         'transaction-scheduling-within-database.any.js'
     ],
     goodFiles: [
+        '_interface-objects-004.js',
         'abort-in-initial-upgradeneeded.any.js',
         'blob-delete-objectstore-db.any.js',
         'blob-valid-after-abort.any.js',
@@ -407,7 +408,6 @@ const goodBad = {
     ],
     badFiles: [
         '_interface-objects-003.js',
-        '_interface-objects-004.js',
         '_service-worker-indexeddb.https.js',
         'bindings-inject-keys-bypass.any.js',
         'bindings-inject-values-bypass.any.js',
