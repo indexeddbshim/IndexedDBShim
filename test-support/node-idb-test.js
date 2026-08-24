@@ -36,6 +36,35 @@ const {
 
 const {JSDOM} = jsdom;
 
+// In a real browser, an unhandled promise rejection fires a genuine
+//   `unhandledrejection` event on the global -- testharness.js relies on
+//   this (`addEventListener('unhandledrejection', ...)`) to fail just the
+//   *current* test (e.g. for a bare, non-`t.step_func`-wrapped `.then()`
+//   callback, as in `abort-in-initial-upgradeneeded.any.js`). Our vm
+//   sandbox never dispatches one on its own, so without this bridge, such
+//   a rejection instead surfaces as a NODE-level `unhandledRejection` --
+//   and if nothing is listening for that either, Node's default behavior
+//   is to crash the entire process, silently aborting a full-suite run at
+//   whichever file happens to hit this first.
+process.on('unhandledRejection', (reason) => {
+    // A rejection can arrive after this file already completed (normally,
+    //   or via testharness.js's own forced timeout) -- dispatching into an
+    //   already-`close()`d window at that point re-triggers completion
+    //   against a torn-down `document`, so skip it; the file's result is
+    //   already recorded.
+    if (!shimNS.window || shimNS.fileDone) {
+        return;
+    }
+    try {
+        const evt = shimNS.window.document.createEvent('Event');
+        evt.initEvent('unhandledrejection', false, true);
+        evt.reason = reason;
+        shimNS.window.dispatchEvent(evt);
+    } catch (err) {
+        console.error('Error dispatching unhandledrejection for', shimNS.fileName, err);
+    }
+});
+
 // CONFIG
 const DEBUG = false;
 const vmTimeout = 90000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
@@ -116,7 +145,14 @@ function exit () {
  */
 async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
     shimNS.fileName = jsFiles[item];
+    // Tracks whether this file has already completed (normally, or via a
+    //   forced timeout) -- an `unhandledRejection` bridged in from outside
+    //   the sandbox (see below) can otherwise arrive late, after this
+    //   file's own `window.close()` already ran, and dispatching into an
+    //   already-closed window throws trying to re-run completion.
+    shimNS.fileDone = false;
     shimNS.finished = async () => {
+        shimNS.fileDone = true;
         // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Testing
         ct += 1;
         // jsdom retains a `Window`'s internal resources until `close()` is
