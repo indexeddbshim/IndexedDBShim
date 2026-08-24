@@ -134,18 +134,18 @@ following have been. Re-investigating each of the 44 `badFiles`/12 `timeout`
 entries' current root cause is a separate, follow-up effort.
 
 IndexedDB Test counts (default `node-idb-test.js` run, no arguments):
-    224 files processed:
-        167 fully passing, 44 have some that are bad,
-        12 have some that time out, 3 do not run to completion
-    0 excluded files (no files currently need excluding to avoid a crash
+    223 files processed:
+        190 fully passing, 19 have some that are bad,
+        12 have some that time out, 10 do not run to completion
+    1 excluded files (to avoid a crash
         when run together with the rest of the suite)
 
 Current IndexedDB (and domstringlist) test statuses (vmTimeout = 90000):
-  'Pass': 1145,
-  'Fail': 201,
-  'Timeout': 12,
-  'Not Run': 24,
-  'Total tests': 1382
+  'Pass': 1434,
+  'Fail': 113,
+  'Timeout': 14,
+  'Not Run': 26,
+  'Total tests': 1587
 
 // Passing the "workers" argument to `node-idb-test.js` will run the worker
 //   tests with relevance for IndexedDB (e.g., checking that the IndexedDB
