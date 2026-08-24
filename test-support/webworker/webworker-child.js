@@ -29,7 +29,7 @@ import * as wwutil from './webworker-util.js';
 import indexeddbshim from '../../src/node-UnicodeIdentifiers.js';
 import worker from './webworker.js';
 import nodeReplacementHacks from '../node-replacement-hacks.js';
-// import isDateObject from 'is-date-object'; // Not needed in worker tests as in main thread tests
+import isDateObject from 'is-date-object';
 /*
 const permittedProtocols;
 try {
@@ -324,7 +324,6 @@ prom.then((scriptSource) => {
     workerCtx.location = scriptLoc;
     workerCtx.closing = false;
     workerCtx.close = function () {
-        // eslint-disable-next-line unicorn/no-process-exit -- Needed
         process.exit(0);
     };
     workerCtx.eventHandlers = {message: [], connect: []};
@@ -483,6 +482,34 @@ prom.then((scriptSource) => {
     //   inside testharness.js is that inner `globalThis`, so the brand must
     //   compare against that, not against `workerCtx`.
     const workerGlobalThis = vm.runInContext('globalThis', workerCtxObj);
+
+    // `IDBObjectStore`/etc. reconstruct cloned values (`Sca.js`) using this
+    //   process's own `Array`/`Date`, not this new context's -- so an
+    //   `instanceof` check made from inside the context (like WPT's
+    //   `value.any.worker.js`) against ITS `Array`/`Date` would otherwise
+    //   fail even for a genuine array/date. Same fix as `custom-reporter.js`
+    //   applies for the window-context tests, mirrored here for the
+    //   context's own globals.
+    Object.defineProperty(vm.runInContext('Array', workerCtxObj), Symbol.hasInstance, {
+        value: (obj) => Array.isArray(obj),
+        configurable: true
+    });
+    Object.defineProperty(vm.runInContext('Date', workerCtxObj), Symbol.hasInstance, {
+        value: (obj) => isDateObject(obj),
+        configurable: true
+    });
+    // Same idea for boxed `BigInt` objects: `workerCtx.Object = Object;`
+    //   below overwrites the context's own `Object` with this process's, so
+    //   `Object(1n)` boxes using this process's own `%BigInt.prototype%`,
+    //   not the context's -- `Object.prototype.toString` tagging a boxed
+    //   BigInt is a realm-independent, spec-guaranteed way to detect this
+    //   regardless of which realm did the boxing.
+    Object.defineProperty(vm.runInContext('BigInt', workerCtxObj), Symbol.hasInstance, {
+        value: (obj) => typeof obj === 'bigint' ||
+            (typeof obj === 'object' && obj !== null && Object.prototype.toString.call(obj) === '[object BigInt]'),
+        configurable: true
+    });
+
     /**
      * @returns {Function}
      */

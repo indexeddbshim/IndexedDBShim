@@ -2,6 +2,7 @@ import * as util from './util.js';
 
 const readonlyProperties = /** @type {const} */ (['key', 'primaryKey', 'value']);
 
+/* eslint-disable jsdoc/valid-types -- pratt parser bug */
 /**
  * @typedef {{
  *   [Symbol.toStringTag]: 'IDBRecord',
@@ -13,6 +14,7 @@ const readonlyProperties = /** @type {const} */ (['key', 'primaryKey', 'value'])
  *   value: import('./Key.js').Value
  * }} IDBRecordFull
  */
+/* eslint-enable jsdoc/valid-types -- pratt parser bug */
 
 /**
  * The record type returned by `IDBObjectStore`/`IDBIndex#getAllRecords()`
@@ -41,7 +43,7 @@ IDBRecord.__createInstance = function (key, primaryKey, value) {
      * @this {IDBRecordFull}
      */
     function IDBRecord () {
-        // @ts-expect-error Should be ok
+        // @ts-ignore Should be ok
         this[Symbol.toStringTag] = 'IDBRecord';
         this.__key = key;
         this.__primaryKey = primaryKey;
@@ -89,4 +91,6 @@ Object.defineProperty(IDBRecord, 'prototype', {
 });
 /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
-export {IDBRecord, IDBRecord as default};
+export {IDBRecord};
+
+export default IDBRecord;

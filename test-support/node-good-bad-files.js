@@ -7,6 +7,16 @@ This file indicates still failing tests for the full
 //   to 'Timeout' or 'Not Run' tests in case they are our own test environment
 //   problems)
 
+KNOWN ISSUES (RESOLVED)
+
+1. PROXY
+
+- 'key_invalid.any.js'/'key_invalid.any.worker.js' - We can't detect proxies
+    from JS, so a `Proxy`-wrapped array is indistinguishable from a real one
+    and can't be rejected as an invalid key; that one WPT test case is
+    live-removed at load time via `node-replacement-hacks.js` rather than
+    left failing (see README's Known Issues)
+
 KNOWN TESTING ISSUES
 
 (The following list remaining test failures/blockers for Node; the remaining browser
@@ -20,10 +30,6 @@ well relate to many of the same issues.)
 - `durability` transaction option (newly added)
     - https://github.com/axemclion/IndexedDBShim/issues/351
     - 'idbcursor_update_index.any.js' - Failing
-- `batchGetAll` (don't implement as now replaced)
-    - 'idbindex_batchGetAll.tentative.any.js' - Failing
-    - 'idbobjectstore_batchGetAll.tentative.any.js' - Failing
-    - 'idbobjectstore_batchGetAll_largeValue.tentative.any.js' - Failing
 - `navigator.storageBuckets` (`open` and `delete`)
     - 'storage-buckets.https.any.js' - Failing
 
@@ -56,7 +62,7 @@ These are still failing regardless:
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
 
-2. SHARED AND SERVICE WORKERS
+2. SERVICE WORKERS
 
 - Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run.
 
@@ -96,15 +102,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - 'blob-contenttype.any.js' - Failing
 - 'blob-composite-blob-reads.any.js' - Failing
 
-7. PROXY
-
-- 'key_invalid.any.js'/'key_invalid.any.worker.js' - We can't detect proxies
-    from JS, so a `Proxy`-wrapped array is indistinguishable from a real one
-    and can't be rejected as an invalid key; that one WPT test case is
-    live-removed at load time via `node-replacement-hacks.js` rather than
-    left failing (see README's Known Issues)
-
-8. HTML in tests
+7. HTML in tests
 
 - `file_support.sub.js` - Looks for an Element though we are not creating HTML as
    in tests (could try polyfilling `document.getElementById()`)
@@ -112,7 +110,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - 'ready-state-destroyed-execution-context.js' - Failing (iframe)
 - 'idb-partitioned-basic.sub.js' - Timing out (iframe)
 
-9. UNKNOWN
+8. UNKNOWN
 
 - `request-abort-ordering.any.js` - This times out sometimes (when run with full tests); possibly due to what it is following?
 - 'idbobjectstore_getAllKeys.any.js' - Failing sometimes (when run full tests)
@@ -172,10 +170,10 @@ Current IndexedDB (and domstringlist) test statuses (vmTimeout = 90000):
 Worker Test counts: 5 files (2 good, 1 bad, 2 shared workers tests excluded
     as not executing at all given failure at lack of support)
 Current worker test statuses with 2 files excluded:
-  'Pass': 98
+  'Pass': 95
   'Fail': 1,
   'Not Run': 0,
-  'Total tests': 99
+  'Total tests': 96
 
 // Passing the "any-workers" argument to `node-idb-test.js` runs the
 //   dedicated-worker-context (`.any.worker.js`) variant of every
@@ -335,8 +333,7 @@ const goodBad = {
         'transaction-lifetime.any.worker.js',
         'upgrade-transaction-deactivation-timing.any.worker.js',
         'upgrade-transaction-lifecycle-backend-aborted.any.worker.js',
-        'upgrade-transaction-lifecycle-user-aborted.any.worker.js',
-        'value.any.worker.js'
+        'upgrade-transaction-lifecycle-user-aborted.any.worker.js'
     ],
     goodFiles: [
         '../non-indexedDB/DOMException-constants.js',
@@ -675,6 +672,7 @@ const goodBad = {
         'transaction-requestqueue.any.worker.js',
         'transaction_bubble-and-capture.any.worker.js',
         'upgrade-transaction-lifecycle-committed.any.worker.js',
+        'value.any.worker.js',
         'value_recursive.any.worker.js',
         'writer-starvation.any.worker.js'
     ],

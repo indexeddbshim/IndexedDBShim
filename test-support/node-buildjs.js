@@ -86,6 +86,7 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
     };
 }), ...anyWorkerFiles.map((anyFile) => {
     return {
+        // eslint-disable-next-line unicorn/prefer-https -- Local
         inputFile: `http://web-platform.test:8000/IndexedDB/${anyFile.replace(/\.js$/v, '.worker.html')}`,
         outputFile: path.join(builtJSPath, anyFile.replace(/\.js$/v, '.worker.js')),
         web: true
