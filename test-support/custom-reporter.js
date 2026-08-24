@@ -36,6 +36,13 @@
         //   synchronous test whose assertions run before this file (`ending`)
         //   is reached, e.g. `idbkeyrange-includes.any.js`'s very first test.
         'Blob', 'File', 'Event', 'CustomEvent', 'EventTarget', 'DOMStringList', 'URL',
+        // Non-enumerable on jsdom's `window` (like the above), so a plain
+        //   `window.XMLHttpRequest = ...` assignment (see `node-idb-test.js`)
+        //   keeps that non-enumerable descriptor -- without listing it here,
+        //   this loop's `Object.keys(shimNS.window)` pass never sees it, and
+        //   test scripts referencing the bare `XMLHttpRequest` global (e.g.
+        //   `blob-contenttype.any.js`) get a `ReferenceError`.
+        'XMLHttpRequest',
         'Window', 'Node', 'Document', 'DOMImplementation', 'DocumentFragment', 'ProcessingInstruction', 'DocumentType', 'Element', 'Attr', 'CharacterData', 'Text', 'Comment', 'NodeIterator', 'TreeWalker', 'NodeFilter', 'NodeList', 'HTMLCollection', 'DOMTokenList'
     ]; // These are needed by IndexedDB tests
     nonEnumerables.concat(Object.keys(shimNS.window)).forEach((prop) => {

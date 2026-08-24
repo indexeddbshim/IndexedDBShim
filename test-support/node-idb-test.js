@@ -564,17 +564,66 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         }
 
         // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://127.0.0.1:8000/IndexedDB/'}); // Todo: We should support this too
-        window.XMLHttpRequest = xmlHttpRequestConstr({basePath});
+        window.XMLHttpRequest = xmlHttpRequestConstr({
+            basePath,
+            // Relative URLs default to a local filesystem read (fast, no
+            //   server needed) but that can't serve a non-GET request
+            //   (e.g. POSTing to a WPT resource like
+            //   `xhr/resources/content.py`, which needs the real Python
+            //   server to execute it) -- `baseURL` lets `local-xmlhttprequest`
+            //   resolve those against the actual WPT server origin instead.
+            baseURL: 'http://127.0.0.1:8000/IndexedDB/',
+            // `cou` (see below) is assigned later in this same scope but
+            //   before any test code can actually issue a `blob:` XHR
+            //   request, so this closure sees it populated by call time.
+            resolveBlobURL: (url) => cou.resolveObjectURL(url),
+            // Lets `xhr.send(blob)` (POSTing a `Blob`/`File` body directly,
+            //   e.g. `blob-contenttype.any.js`) read its bytes synchronously.
+            readBlobSync (data) {
+                if (!data || typeof data !== 'object' ||
+                    typeof data.type !== 'string' || typeof data.size !== 'number') {
+                    return undefined;
+                }
+                // eslint-disable-next-line n/no-sync -- Want sync naming (matches `typeson-registry/polyfills`)
+                const bytes = cou.getBlobBytesSync(data);
+                return bytes ? {type: data.type, bytes} : undefined;
+            }
+        });
         window.XMLHttpRequest.prototype.overrideMimeType = function () { /* */ };
         window.fetch = function (...args) {
-            if (args[0].startsWith('/')) {
-                args[0] = 'http://127.0.0.1:8000' + args[0];
+            const [urlArg] = args;
+            // Browsers read `blob:` URLs (from `URL.createObjectURL`)
+            //   without going over the network; `node-fetch` (behind
+            //   `isomorphic-fetch`) has no concept of that scheme, so
+            //   serve it ourselves the same way `resolveBlobURL` does for
+            //   `XMLHttpRequest` above.
+            if (typeof urlArg === 'string' && urlArg.startsWith('blob:')) {
+                const resolved = cou.resolveObjectURL(urlArg);
+                if (!resolved) {
+                    return Promise.reject(new TypeError('Failed to fetch ' + urlArg));
+                }
+                return Promise.resolve(new global.Response(resolved.bytes, {
+                    status: 200,
+                    headers: {'Content-Type': resolved.type || ''}
+                }));
+            }
+            if (urlArg.startsWith('/')) {
+                args[0] = 'http://127.0.0.1:8000' + urlArg;
             }
             return fetch(...args);
         };
 
         // serialize-sharedarraybuffer-throws.https.js
         window.crossOriginIsolated = true;
+
+        // jsdom doesn't implement this (no real layout/scrolling); the WPT
+        //   harness's own reporting UI calls it when logging a new failing
+        //   test, so without a no-op stub, ANY failing assertion throws a
+        //   second, unrelated `scrollIntoView is not a function` error that
+        //   masks the real one.
+        window.Element.prototype.scrollIntoView = function () {
+            // Testing
+        };
 
         global.ImageData = window.ImageData = ImageData;
         window.DOMPoint = DOMPoint;
@@ -593,6 +642,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         delete window.URL.createObjectURL;
         global.URL = window.URL;
         global.URL.createObjectURL = cou.createObjectURL;
+        global.URL.revokeObjectURL = cou.revokeObjectURL;
         global.XMLHttpRequest.prototype.overrideMimeType = cou.xmlHttpRequestOverrideMimeType({
             polyfillDataURLs: true
         });

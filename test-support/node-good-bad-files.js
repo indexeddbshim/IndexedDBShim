@@ -97,12 +97,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
-6. BLOB
-
-- 'blob-contenttype.any.js' - Failing
-- 'blob-composite-blob-reads.any.js' - Failing
-
-7. HTML in tests
+6. HTML in tests
 
 - `file_support.sub.js` - Looks for an Element though we are not creating HTML as
    in tests (could try polyfilling `document.getElementById()`)
@@ -110,7 +105,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - 'ready-state-destroyed-execution-context.js' - Failing (iframe)
 - 'idb-partitioned-basic.sub.js' - Timing out (iframe)
 
-8. UNKNOWN
+7. UNKNOWN
 
 - `request-abort-ordering.any.js` - This times out sometimes (when run with full tests); possibly due to what it is following?
 - 'idbobjectstore_getAllKeys.any.js' - Failing sometimes (when run full tests)
@@ -182,13 +177,7 @@ Current worker test statuses with 2 files excluded:
 //   window-context `.any.html`/`.any.js` variant). These are deliberately
 //   excluded from the default corpus (184 files would roughly double its
 //   duration) and only run via this separate mode.
-Any-workers test counts (184 files): 125 good, 54 bad, 6 time out, 1
-    excluded (`keypath-special-identifiers.any.worker.js` crashes the
-    worker outright on `new File(...)`, not implemented in the worker
-    polyfill, so it produces no WPT-reported test statuses at all and would
-    otherwise be misreported as an unexplained gap every run). One of the
-    bad files (`blob-valid-after-abort.any.worker.js`) is also listed under
-    `timeout`, having been observed to both fail and time out across runs.
+Any-workers test counts (184 files): 125 good, 54 bad, 6 time out.
 Current any-workers test statuses with 1 file excluded:
   'Pass': 941,
   'Fail': 175,
@@ -252,8 +241,6 @@ const goodBad = {
         'reading-autoincrement-store-cursors.any.js',
         'reading-autoincrement-store.any.js',
         'transaction-scheduling-within-database.any.js',
-        'blob-valid-after-abort.any.worker.js',
-        'idbtransaction_abort.any.worker.js',
         'reading-autoincrement-indexes-cursors.any.worker.js',
         'reading-autoincrement-indexes.any.worker.js',
         'reading-autoincrement-store-cursors.any.worker.js',
@@ -265,8 +252,6 @@ const goodBad = {
         '_service-worker-indexeddb.https.js',
         'bindings-inject-keys-bypass.any.js',
         'bindings-inject-values-bypass.any.js',
-        'blob-composite-blob-reads.any.js',
-        'blob-contenttype.any.js',
         'event-dispatch-active-flag.any.js',
         'file_support.sub.js',
         'get-databases.any.js',
@@ -298,18 +283,10 @@ const goodBad = {
         'bindings-inject-values-bypass.any.worker.js',
         // Flaky: also seen timing out (see `timeout` above) depending on
         //   worker child-process scheduling overhead.
-        'blob-valid-after-abort.any.worker.js',
-        'clone-before-keypath-eval.any.worker.js',
         'event-dispatch-active-flag.any.worker.js',
         'idbcursor_update_index.any.worker.js',
         'idbobjectstore-put-unique-index-constraint-is-atomic.any.worker.js',
-        'idbtransaction_abort.any.worker.js',
         'idlharness.any.worker.js',
-        'keypath-special-identifiers.any.worker.js',
-        'nested-cloning-basic.any.worker.js',
-        'nested-cloning-large-multiple.any.worker.js',
-        'nested-cloning-large.any.worker.js',
-        'nested-cloning-small.any.worker.js',
         'storage-buckets.https.any.worker.js',
         'transaction-abort-index-metadata-revert.any.worker.js',
         'transaction-abort-multiple-metadata-revert.any.worker.js',
@@ -327,11 +304,15 @@ const goodBad = {
         '_interface-objects-003.js',
         '_interface-objects-004.js',
         'abort-in-initial-upgradeneeded.any.js',
+        'blob-composite-blob-reads.any.js',
+        'blob-contenttype.any.js',
         'blob-delete-objectstore-db.any.js',
         'blob-valid-after-abort.any.js',
+        'blob-valid-after-abort.any.worker.js',
         'blob-valid-after-deletion.any.js',
         'blob-valid-before-commit.any.js',
         'clone-before-keypath-eval.any.js',
+        'clone-before-keypath-eval.any.worker.js',
         'close-in-upgradeneeded.any.js',
         'cursor-overloads.any.js',
         'delete-range.any.js',
@@ -484,6 +465,7 @@ const goodBad = {
         'idbtransaction-oncomplete.any.js',
         'idbtransaction.any.js',
         'idbtransaction_abort.any.js',
+        'idbtransaction_abort.any.worker.js',
         'idbtransaction_objectStoreNames.any.js',
         'idbversionchangeevent.any.js',
         'index_sort_order.any.js',
@@ -493,6 +475,7 @@ const goodBad = {
         'key_invalid.any.js',
         'key_valid.any.js',
         'keygenerator.any.js',
+        'keypath-special-identifiers.any.worker.js',
         'keyorder.any.js',
         'keypath-exceptions.any.js',
         'keypath-special-identifiers.any.js',
@@ -503,9 +486,13 @@ const goodBad = {
         'list_ordering.any.js',
         'name-scopes.any.js',
         'nested-cloning-basic.any.js',
+        'nested-cloning-basic.any.worker.js',
         'nested-cloning-large-multiple.any.js',
+        'nested-cloning-large-multiple.any.worker.js',
         'nested-cloning-large.any.js',
+        'nested-cloning-large.any.worker.js',
         'nested-cloning-small.any.js',
+        'nested-cloning-small.any.worker.js',
         'objectstore_keyorder.any.js',
         'open-request-queue.any.js',
         'parallel-cursors-upgrade.any.js',

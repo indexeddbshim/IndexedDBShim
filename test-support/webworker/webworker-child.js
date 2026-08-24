@@ -20,7 +20,6 @@ import http from 'node:http';
 import {MessageChannel} from 'node:worker_threads';
 import {WebSocket} from 'ws';
 import xmlHttpRequest from 'local-xmlhttprequest';
-import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
 import fetch from 'isomorphic-fetch';
 import * as wwutil from './webworker-util.js';
 // Had problems with npm and the following when requiring `webworkers`
@@ -164,7 +163,7 @@ default:
     );
 }
 
-prom.then((scriptSource) => {
+prom.then(async (scriptSource) => {
     const ws = new WebSocket('ws+unix://' + sockPath);
     const ms = new wwutil.MsgStream(ws);
 
@@ -333,6 +332,17 @@ prom.then((scriptSource) => {
     }
 
     workerCtx.location = scriptLoc;
+    // `IDBFactory.js`'s connection-queue origin caching (`getOrigin()`) is
+    //   read once, synchronously, as part of `indexeddbshim(workerCtx, ...)`
+    //   below and must stay consistent for every later call in this
+    //   process's lifetime -- so this needs to be set before that call, not
+    //   later next to the `createObjectURL` polyfill setup that also reads
+    //   it (setting it there second overwrote it with a different value,
+    //   breaking every subsequent `IDBFactory.open`/`deleteDatabase`, since
+    //   `getOrigin()` had already cached the pre-this-line value as an
+    //   object key). Also matches `node-idb-test.js`'s `global.location =
+    //   window.location` ordering (also before `indexeddbshim(window, ...)`).
+    global.location = workerCtx.location;
     workerCtx.closing = false;
     workerCtx.close = function () {
         process.exit(0);
@@ -439,9 +449,46 @@ prom.then((scriptSource) => {
 
     workerCtx.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
-    workerCtx.Blob = Blob;
-    workerCtx.File = File; // Node has a native global `File` (unlike `Blob`, which needs the `w3c-blob` polyfill)
     workerCtx.MessageChannel = MessageChannel; // `node:worker_threads`'s real transferable-object semantics (needed by WPT's `createDetachedArrayBuffer()` helper)
+
+    // `typeson-registry`'s `File`/`Blob` clone specs read the value's bytes
+    //   by creating a URL via `URL.createObjectURL(file)` and fetching it
+    //   synchronously through `XMLHttpRequest` -- neither Node's `URL` nor
+    //   `local-xmlhttprequest` (`workerCtx.XMLHttpRequest` above) support
+    //   that natively, so without this polyfill pair (mirroring
+    //   `node-idb-test.js`'s identical window-context setup) cloning a
+    //   `File`/`Blob` value throws `DataCloneError` instead of working.
+    // `SyncBlob`/`SyncFile` (also from `typeson-registry/polyfills`) replace
+    //   the native `File`/the `w3c-blob` polyfill's `Blob`: neither Node's
+    //   own `Blob`/`File` nor `w3c-blob` expose their bytes synchronously
+    //   (the latter doesn't store bytes at all), which the XHR-based read
+    //   above needs; `SyncBlob`/`SyncFile` capture that copy at construction
+    //   time instead, since there's no jsdom `window` in a worker context to
+    //   supply it the way `node-idb-test.js`'s window context can.
+    const cou = await import('typeson-registry/polyfills');
+    workerCtx.Blob = cou.SyncBlob;
+    workerCtx.File = cou.SyncFile;
+    // `typeson-registry`'s `blob`/`file` clone specs' `revive()` construct
+    //   a plain `new Blob(...)`/`new File(...)` using this process's own
+    //   ambient global (not `workerCtx`'s) -- structured-cloning a value
+    //   (`Sca.clone()`, used to extract a keyPath-derived key from a fresh
+    //   clone per spec) revives it that way too. Without also pointing this
+    //   process's own `Blob`/`File` at `SyncBlob`/`SyncFile`, a *revived*
+    //   Blob/File loses synchronous byte access and a subsequent re-encode
+    //   (e.g. the one that actually persists the cloned value) throws.
+    global.Blob = cou.SyncBlob;
+    global.File = cou.SyncFile;
+    workerCtx.URL.createObjectURL = cou.createObjectURL;
+    workerCtx.URL.revokeObjectURL = cou.revokeObjectURL;
+    // `xmlHttpRequestOverrideMimeType`'s own implementation patches a bare,
+    //   ambient `XMLHttpRequest.prototype.open` (not the constructor passed
+    //   in above, which only lives on `workerCtx`) -- this process's own
+    //   global needs to be set to the same constructor first, exactly as
+    //   `node-idb-test.js` does with `global.XMLHttpRequest = window.XMLHttpRequest`.
+    global.XMLHttpRequest = workerCtx.XMLHttpRequest;
+    global.XMLHttpRequest.prototype.overrideMimeType = cou.xmlHttpRequestOverrideMimeType({
+        polyfillDataURLs: true
+    });
     workerCtx.fetch = function (...args) {
         if (args[0].startsWith('/')) {
             // eslint-disable-next-line unicorn/prefer-https -- Local
@@ -449,6 +496,118 @@ prom.then((scriptSource) => {
         }
         return fetch(...args);
     };
+
+    // A minimal, real `FileReader` (unlike the throw-on-use stubs below):
+    //   worker-context tests that clone a `Blob`/`File` through IndexedDB
+    //   commonly read the result back via `FileReader` to verify content
+    //   (e.g. `nested-cloning-basic.any.worker.js`). `SyncBlob`/`SyncFile`
+    //   (see above) already keep a synchronously-readable copy of their
+    //   bytes, via `cou.getBlobBytesSync`, which this reads from; the
+    //   actual read is still dispatched asynchronously (`setTimeout`) to
+    //   match real `FileReader` timing, in case anything depends on it.
+    /**
+     * A minimal, real `FileReader`, backed by `cou.getBlobBytesSync`.
+     */
+    class WorkerFileReader {
+        /**
+         *
+         */
+        constructor () {
+            this.readyState = WorkerFileReader.EMPTY;
+            this.result = null;
+            this.error = null;
+            this.onloadstart = null;
+            this.onprogress = null;
+            this.onload = null;
+            this.onabort = null;
+            this.onerror = null;
+            this.onloadend = null;
+        }
+
+        /**
+         * @param {"loadstart"|"progress"|"load"|"error"|"loadend"} type
+         * @returns {void}
+         */
+        #dispatch (type) {
+            const cb = this['on' + type];
+            if (typeof cb === 'function') {
+                cb.call(this, {type, target: this});
+            }
+        }
+
+        /**
+         * @param {Blob} blob
+         * @param {"arraybuffer"|"text"|"dataurl"} mode
+         * @returns {void}
+         */
+        #read (blob, mode) {
+            if (this.readyState === WorkerFileReader.LOADING) {
+                throw new Error('InvalidStateError: FileReader is already reading');
+            }
+            this.readyState = WorkerFileReader.LOADING;
+            this.#dispatch('loadstart');
+            setTimeout(() => {
+                const bytes = cou.getBlobBytesSync(blob);
+                if (!bytes) {
+                    this.error = new Error('Could not read the Blob/File (it may be detached)');
+                    this.readyState = WorkerFileReader.DONE;
+                    this.#dispatch('error');
+                    this.#dispatch('loadend');
+                    return;
+                }
+                if (mode === 'arraybuffer') {
+                    this.result = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+                } else if (mode === 'text') {
+                    this.result = bytes.toString('utf8');
+                } else {
+                    this.result = 'data:' + (blob.type || '') + ';base64,' + bytes.toString('base64');
+                }
+                this.readyState = WorkerFileReader.DONE;
+                this.#dispatch('progress');
+                this.#dispatch('load');
+                this.#dispatch('loadend');
+            }, 0);
+        }
+
+        /**
+         * @param {Blob} blob
+         * @returns {void}
+         */
+        readAsArrayBuffer (blob) {
+            this.#read(blob, 'arraybuffer');
+        }
+
+        /**
+         * @param {Blob} blob
+         * @returns {void}
+         */
+        readAsText (blob) {
+            this.#read(blob, 'text');
+        }
+
+        /**
+         * @param {Blob} blob
+         * @returns {void}
+         */
+        readAsDataURL (blob) {
+            this.#read(blob, 'dataurl');
+        }
+
+        // `abort` is a required part of the `FileReader` interface, but
+        //   with a read this synchronous there's nothing meaningful to
+        //   interrupt -- a genuine no-op, not a stand-in for missing logic.
+        /**
+         * @returns {void}
+         */
+        // eslint-disable-next-line class-methods-use-this -- Interface conformance
+        abort () {
+            // Testing
+        }
+    }
+    WorkerFileReader.EMPTY = 0;
+    WorkerFileReader.LOADING = 1;
+    WorkerFileReader.DONE = 2;
+    workerCtx.FileReader = WorkerFileReader;
 
     // Todo: A good Worker polyfill would implement these as possible and
     //   if exposing we should do so; for W3C IndexedDB or IndexedDB-related tests,
@@ -463,7 +622,7 @@ prom.then((scriptSource) => {
         'Path2D', 'PromiseRejectionEvent', 'EventSource',
         'WebSocket', 'CloseEvent', 'BroadcastChannel',
         'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload',
-        'ProgressEvent', 'FormData', 'FileList', 'FileReader',
+        'ProgressEvent', 'FormData', 'FileList',
         'FileReaderSync', 'ErrorEvent', 'ReadableStream', 'WritableStream',
         'ByteLengthQueuingStrategy', 'CountQueuingStrategy',
         'CanvasGradient', 'CanvasPattern', 'TextMetrics'
