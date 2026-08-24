@@ -207,20 +207,12 @@ Current worker test statuses with 2 files excluded:
 //   added as a real operation, `returnValue` added (get/set), `composed`
 //   exposed on the prototype, and `initEvent`/`initCustomEvent` given
 //   default parameter values so `.length` reflects only their required
-//   argument. The 2 still-failing assertions ("prototype of Event.prototype
-//   is not Object.prototype", same for `EventTarget.prototype`) are a test
-//   *environment* artifact, not an `eventtargeter` bug: `Event`/`EventTarget`
-//   are copied onto this vm sandbox from the outer, non-sandboxed realm
-//   (see `environment.js`), so their `.prototype`'s own prototype is the
-//   *outer* realm's `Object.prototype`, not this sandbox's -- the same
-//   cross-realm-identity class of issue `environment.js` already works
-//   around for `Array`/`Date`/`ArrayBuffer`, just not yet extended to cover
-//   this specific `Object.prototype` comparison.
+//   argument.
 // Todo: We ought to really run all of the web-platform-tests/dom/events tests
-Event Test counts: 2 files (1 good, 1 bad - '../non-indexedDB/__event-interface.js')
+Event Test counts: 2 files (2 good)
 Current Event test statuses with 0 files excluded:
-  'Pass': 71,
-  'Fail': 2,
+  'Pass': 73,
+  'Fail': 0,
   'Timeout': 0,
   'Not Run': 0,
   'Total tests': 73
@@ -291,7 +283,6 @@ const goodBad = {
         'transaction-deactivation-timing.any.js',
         'transaction-lifetime.any.js',
         'upgrade-transaction-deactivation-timing.any.js',
-        '../non-indexedDB/__event-interface.js',
         '../non-indexedDB/exceptions.js',
         // `.any.worker.js` dedicated-worker-context variants (run via the
         //   `any-workers` mode, not the default corpus); many mirror their
@@ -318,6 +309,7 @@ const goodBad = {
         'upgrade-transaction-lifecycle-user-aborted.any.worker.js'
     ],
     goodFiles: [
+        '../non-indexedDB/__event-interface.js',
         '../non-indexedDB/DOMException-constants.js',
         '../non-indexedDB/interface-objects.js',
         '_interface-objects-001.worker.js',

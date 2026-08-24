@@ -74,4 +74,28 @@ self.parent = self;
         value: (obj) => obj !== null && (typeof obj === 'object' || typeof obj === 'function'),
         configurable: true
     });
+
+    // `Event`/`EventTarget` (from `eventtargeter`) are real singleton
+    //   objects, constructed once in the OUTER, non-sandboxed Node process
+    //   -- so their `.prototype`'s own `[[Prototype]]` is the *outer*
+    //   realm's `Object.prototype`, set by V8 when `eventtargeter`'s module
+    //   code first ran there. idlharness.js's own "existence and properties
+    //   of interface prototype object" check compares that against *this*
+    //   sandbox's `Object.prototype` (a bare `Object` reference resolved
+    //   here, inside the sandbox) -- two different objects, so the check
+    //   fails despite there being no real conformance gap. Re-pointing
+    //   these onto this sandbox's own `Object.prototype` (fresh for every
+    //   file's own fresh sandbox, same as the `Symbol.hasInstance` patches
+    //   above) fixes the comparison without needing these classes to be
+    //   re-declared per sandbox.
+    // `CustomEvent` is deliberately excluded here: its prototype is
+    //   already correctly chained to `Event.prototype` (not directly to
+    //   `Object.prototype`) via eventtargeter's own `setPrototypeOfCustomEvent`,
+    //   called elsewhere -- re-pointing it here would overwrite that link.
+    ['Event', 'EventTarget'].forEach((name) => {
+        const ctor = shimNS.window[name];
+        if (ctor && ctor.prototype) {
+            Object.setPrototypeOf(ctor.prototype, Object.prototype);
+        }
+    });
 }());
