@@ -838,10 +838,12 @@ try {
         break;
     case 'exceptions': case 'exception': case 'domexception':
         await readAndEvaluateFiles([
-            '../non-indexedDB/DOMException-constructor.js',
+            '../non-indexedDB/DOMException-constructor-and-prototype.js',
+            '../non-indexedDB/DOMException-constructor-behavior.js',
             '../non-indexedDB/DOMException-constants.js',
-            '../non-indexedDB/exceptions.js',
-            '../non-indexedDB/constructor-object.js'
+            '../non-indexedDB/DOMException-is-error.js',
+            '../non-indexedDB/DOMException-custom-bindings.js',
+            '../non-indexedDB/DOMException-stack-accessor.js'
         ]);
         break;
     case 'workers': case 'worker': {

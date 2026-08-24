@@ -1,7 +1,9 @@
-// From web-platform-tests/WebIDL/ecmascript-binding/es-exceptions
+// From web-platform-tests/webidl/ecmascript-binding/es-exceptions
 
 /*beginscript::/resources/testharness.js::endscript*/
 /*beginscript::/resources/testharnessreport.js::endscript*/
+
+'use strict';
 
 test(function() {
   var ex = new DOMException();
@@ -17,7 +19,7 @@ test(function() {
                "The name property should be inherited");
   assert_false(ex.hasOwnProperty("message"),
                "The message property should be inherited");
-}, 'new DOMException(): own-ness');
+}, 'new DOMException(): inherited-ness');
 
 test(function() {
   var ex = new DOMException(null);
@@ -41,7 +43,7 @@ test(function() {
                "The name property should be inherited");
   assert_false(ex.hasOwnProperty("message"),
                "The message property should be inherited");
-}, 'new DOMException(undefined): own-ness');
+}, 'new DOMException(undefined): inherited-ness');
 
 test(function() {
   var ex = new DOMException("foo");
@@ -54,9 +56,9 @@ test(function() {
   var ex = new DOMException("foo");
   assert_false(ex.hasOwnProperty("name"),
                "The name property should be inherited");
-  assert_true(ex.hasOwnProperty("message"),
-              "The message property should be own");
-}, 'new DOMException("foo"): own-ness');
+  assert_false(ex.hasOwnProperty("message"),
+              "The message property should be inherited");
+}, 'new DOMException("foo"): inherited-ness');
 
 test(function() {
   var ex = new DOMException("bar", undefined);
@@ -75,11 +77,11 @@ test(function() {
 
 test(function() {
   var ex = new DOMException("bar", "NotSupportedError");
-  assert_true(ex.hasOwnProperty("name"),
-              "The name property should be own");
-  assert_true(ex.hasOwnProperty("message"),
-              "The message property should be own");
-}, 'new DOMException("bar", "NotSupportedError"): own-ness');
+  assert_false(ex.hasOwnProperty("name"),
+              "The name property should be inherited");
+  assert_false(ex.hasOwnProperty("message"),
+              "The message property should be inherited");
+}, 'new DOMException("bar", "NotSupportedError"): inherited-ness');
 
 test(function() {
   var ex = new DOMException("bar", "foo");
@@ -103,6 +105,7 @@ test(function() {
   {name: "InvalidModificationError", code: 13},
   {name: "NamespaceError", code: 14},
   {name: "InvalidAccessError", code: 15},
+  {name: "TypeMismatchError", code: 17},
   {name: "SecurityError", code: 18},
   {name: "NetworkError", code: 19},
   {name: "AbortError", code: 20},
@@ -110,7 +113,25 @@ test(function() {
   {name: "QuotaExceededError", code: 22},
   {name: "TimeoutError", code: 23},
   {name: "InvalidNodeTypeError", code: 24},
-  {name: "DataCloneError", code: 25}
+  {name: "DataCloneError", code: 25},
+
+  // These were removed from the error names table.
+  // See https://github.com/heycam/webidl/pull/946.
+  {name: "DOMStringSizeError", code: 0},
+  {name: "NoDataAllowedError", code: 0},
+  {name: "ValidationError", code: 0},
+
+  // The error names which don't have legacy code values.
+  {name: "EncodingError", code: 0},
+  {name: "NotReadableError", code: 0},
+  {name: "UnknownError", code: 0},
+  {name: "ConstraintError", code: 0},
+  {name: "DataError", code: 0},
+  {name: "TransactionInactiveError", code: 0},
+  {name: "ReadOnlyError", code: 0},
+  {name: "VersionError", code: 0},
+  {name: "OperationError", code: 0},
+  {name: "NotAllowedError", code: 0}
 ].forEach(function(test_case) {
   test(function() {
     var ex = new DOMException("msg", test_case.name);
@@ -122,11 +143,3 @@ test(function() {
                   "Should have matching legacy code from error names table");
   },'new DOMexception("msg", "' + test_case.name + '")');
 });
-
-test(function() {
-  var ex = new DOMException("bar", "UnknownError");
-  assert_equals(ex.name, "UnknownError", "Should be using the passed-in name");
-  assert_equals(ex.message, "bar", "Should still be using passed-in message");
-  assert_equals(ex.code, 0,
-                "Should have 0 for code for a name in the exception names table with no legacy code");
-}, 'new DOMException("bar", "UnknownError")');

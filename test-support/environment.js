@@ -98,4 +98,23 @@ self.parent = self;
             Object.setPrototypeOf(ctor.prototype, Object.prototype);
         }
     });
+
+    // `DOMException` is passed directly into this sandbox via `sandboxObj`
+    //   (see `node-idb-test.js`), rather than copied from `shimNS.window`
+    //   -- deliberately, so IndexedDBShim's own thrown `DOMException`s
+    //   (built with this same, OUTER-realm native class) satisfy
+    //   `instanceof` checks here. That directness means two things about
+    //   it don't yet match a real browser: it's still enumerable on this
+    //   sandbox's global (an artifact of `sandboxObj` being passed as a
+    //   plain object literal, which `vm` exposes as-is), and its
+    //   `.prototype`'s own `[[Prototype]]` is the *outer* realm's
+    //   `Error.prototype`, not this sandbox's -- the same cross-realm
+    //   mismatch as `Event`/`EventTarget` above. Fixed here, fresh per file.
+    Object.defineProperty(this, 'DOMException', {
+        value: DOMException,
+        writable: true,
+        enumerable: false,
+        configurable: true
+    });
+    Object.setPrototypeOf(DOMException.prototype, Error.prototype);
 }());

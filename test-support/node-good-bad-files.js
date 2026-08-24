@@ -7,7 +7,7 @@ This file indicates still failing tests for the full
 //   to 'Timeout' or 'Not Run' tests in case they are our own test environment
 //   problems)
 
-KNOWN ISSUES (RESOLVED)
+KNOWN ISSUES (INHERENT LIMITATIONS)
 
 1. PROXY
 
@@ -218,17 +218,47 @@ Current Event test statuses with 0 files excluded:
   'Total tests': 73
 
 // Passing the "exception" (or "domexception") argument to `node-idb-test.js`
-//   will run the `DOMException` tests (from web-platform-tests/WebIDL/ecmascript-binding/es-exceptions)
-// As with "events", these tests are also hard-coded
-// The failing test is apparently due to https://github.com/jsdom/jsdom/issues/1720#issuecomment-279665105
-DOMException Test counts: 4 files (3 good, 1 bad)
+//   will run the `DOMException` tests (from
+//   web-platform-tests/webidl/ecmascript-binding/es-exceptions). As with
+//   "events", these are hard-coded, static copies (not live-fetched from the
+//   WPT submodule), and had gone stale the same way: the old 4 files (`Out
+//   of web-platform-tests/WebIDL/ecmascript-binding/es-exceptions` --
+//   case-insensitively the same directory on this filesystem, but upstream
+//   fully restructured its contents into 6 new `.any.js` files reflecting a
+//   real spec change: `DOMException` moved from "each instance owns
+//   `name`/`message`" to a prototype-level-getter model) have been replaced
+//   with ported copies of the 6 current upstream files: `DOMException-constructor-and-prototype.js`,
+//   `DOMException-constructor-behavior.js`, `DOMException-constants.js`,
+//   `DOMException-is-error.js`, `DOMException-custom-bindings.js`,
+//   `DOMException-stack-accessor.js`.
+// Porting surfaced 2 real fixes (in `environment.js`, same cross-realm
+//   pattern already applied there for `Event`/`EventTarget`): `DOMException`
+//   is passed directly into the sandbox via `sandboxObj` rather than copied
+//   from `shimNS.window`, which left it enumerable there (a `vm` artifact of
+//   passing a plain object literal) and its `.prototype`'s own `[[Prototype]]`
+//   pointing at the *outer* realm's `Error.prototype` instead of the
+//   sandbox's own -- both fixed.
+// The 6 remaining failures are all in `DOMException-stack-accessor.js` and
+//   are not fixable here: 5 test the `Error.prototype.stack`-as-a-shared-
+//   accessor TC39 proposal (https://tc39.es/proposal-error-stack-accessor/),
+//   which isn't implemented yet even by Node's own native `Error`/
+//   `DOMException` (confirmed directly: `new Error().hasOwnProperty('stack')`
+//   is `true` and `Error.prototype` has no `stack` descriptor at all) --
+//   these would fail in a real, current, unmodified Node too. The 6th
+//   ("thrown DOMException from DOM API...") depends on jsdom's own
+//   *internal* `DOMException` class (used when jsdom itself throws, e.g.
+//   `document.createElement("")`) being `instanceof` our shim's
+//   `DOMException` -- a separate, deep jsdom-internals mismatch (jsdom
+//   throws with its own WebIDL-generated exception class, not the native
+//   one we pass into the sandbox) not worth chasing for one edge case.
+DOMException Test counts: 6 files (5 good, 1 bad - 'DOMException-stack-accessor.js')
 Current DOMException test statuses with 0 files excluded:
 {
-  'Pass': 93,
-  'Fail': 13,
+  'Pass': 119,
+  'Fail': 6,
   'Timeout': 0,
   'Not Run': 0,
-  'Total tests': 106
+  'Total tests': 125
 }
 */
 const goodBad = {
@@ -260,8 +290,7 @@ const goodBad = {
         'reading-autoincrement-store.any.worker.js'
     ],
     badFiles: [
-        '../non-indexedDB/DOMException-constructor.js',
-        '../non-indexedDB/constructor-object.js',
+        '../non-indexedDB/DOMException-stack-accessor.js',
         '_service-worker-indexeddb.https.js',
         'bindings-inject-keys-bypass.any.js',
         'bindings-inject-values-bypass.any.js',
@@ -283,7 +312,6 @@ const goodBad = {
         'transaction-deactivation-timing.any.js',
         'transaction-lifetime.any.js',
         'upgrade-transaction-deactivation-timing.any.js',
-        '../non-indexedDB/exceptions.js',
         // `.any.worker.js` dedicated-worker-context variants (run via the
         //   `any-workers` mode, not the default corpus); many mirror their
         //   window-context `.any.js` counterpart's status above, but some
@@ -310,7 +338,10 @@ const goodBad = {
     ],
     goodFiles: [
         '../non-indexedDB/__event-interface.js',
-        '../non-indexedDB/DOMException-constants.js',
+        '../non-indexedDB/DOMException-constructor-and-prototype.js',
+        '../non-indexedDB/DOMException-constructor-behavior.js',
+        '../non-indexedDB/DOMException-is-error.js',
+        '../non-indexedDB/DOMException-custom-bindings.js',
         '../non-indexedDB/interface-objects.js',
         '_interface-objects-001.worker.js',
         '_interface-objects-002.worker.js',

@@ -1,7 +1,9 @@
-// From web-platform-tests/WebIDL/ecmascript-binding/es-exceptions
+// From web-platform-tests/webidl/ecmascript-binding/es-exceptions
 
 /*beginscript::/resources/testharness.js::endscript*/
 /*beginscript::/resources/testharnessreport.js::endscript*/
+
+'use strict';
 
 test(function() {
   // https://www.w3.org/Bugs/Public/show_bug.cgi?id=27732
@@ -43,11 +45,11 @@ test(function() {
         assert_equals(object[name], i + 1, name)
         assert_own_property(object, name)
         var pd = Object.getOwnPropertyDescriptor(object, name)
-        assert_false("get" in pd, "property has getter")
-        assert_false("set" in pd, "property has setter")
-        assert_false(pd.writable, "not writable")
+        assert_false("get" in pd, "get")
+        assert_false("set" in pd, "set")
+        assert_false(pd.writable, "writable")
         assert_true(pd.enumerable, "enumerable")
-        assert_false(pd.configurable, "not configurable")
+        assert_false(pd.configurable, "configurable")
       }, "Constant " + name + " on " + description)
     })
   })
