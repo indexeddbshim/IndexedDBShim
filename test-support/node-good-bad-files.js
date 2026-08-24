@@ -199,21 +199,28 @@ Current worker test statuses with 2 files excluded:
 //   spec (it had been using pre-modern `[Constructor(...)]`/`void`-return
 //   syntax); the vendored `idlharness.js`/`WebIDLParser.js` it runs against
 //   are the live, submodule-synced copies under `web-platform-tests/resources/`,
-//   so this is now an accurate conformance check, not a stale fixture. All
-//   21 remaining failures trace to `eventtargeter` (the `ShimEvent`/
-//   `ShimEventTarget`/`ShimCustomEvent` source), not IndexedDBShim itself:
-//   2 prototype-chain gaps, 9 getter `.name` mismatches and 6 method
-//   `.name` mismatches (accessors/methods defined as anonymous functions
-//   rather than ES6 shorthand, so they lack the spec'd "get propName"/
-//   method-name auto-naming), 3 genuinely missing members (`composedPath()`,
-//   `returnValue`, `composed`), and 2 `initEvent`/`initCustomEvent`
-//   `.length` mismatches (their optional parameters aren't declared with
-//   default values, so they count as required).
+//   so this is now an accurate conformance check, not a stale fixture.
+//   The 19 real gaps this then surfaced in `eventtargeter` (the `ShimEvent`/
+//   `ShimEventTarget`/`ShimCustomEvent` source, not IndexedDBShim itself)
+//   have been fixed there: named getter/method functions so `.name` matches
+//   the spec'd "get propName"/method-name auto-naming, `composedPath()`
+//   added as a real operation, `returnValue` added (get/set), `composed`
+//   exposed on the prototype, and `initEvent`/`initCustomEvent` given
+//   default parameter values so `.length` reflects only their required
+//   argument. The 2 still-failing assertions ("prototype of Event.prototype
+//   is not Object.prototype", same for `EventTarget.prototype`) are a test
+//   *environment* artifact, not an `eventtargeter` bug: `Event`/`EventTarget`
+//   are copied onto this vm sandbox from the outer, non-sandboxed realm
+//   (see `environment.js`), so their `.prototype`'s own prototype is the
+//   *outer* realm's `Object.prototype`, not this sandbox's -- the same
+//   cross-realm-identity class of issue `environment.js` already works
+//   around for `Array`/`Date`/`ArrayBuffer`, just not yet extended to cover
+//   this specific `Object.prototype` comparison.
 // Todo: We ought to really run all of the web-platform-tests/dom/events tests
 Event Test counts: 2 files (1 good, 1 bad - '../non-indexedDB/__event-interface.js')
 Current Event test statuses with 0 files excluded:
-  'Pass': 52,
-  'Fail': 21,
+  'Pass': 71,
+  'Fail': 2,
   'Timeout': 0,
   'Not Run': 0,
   'Total tests': 73

@@ -9,6 +9,7 @@
 - fix: `IDBCursor` `nextunique`/`prevunique` iteration over a `multiEntry` index no longer stops early the first time it encounters a duplicate key within a prefetched batch
 - fix: an `IDBOpenDBRequest`/`deleteDatabase` request that ends up "blocked" waiting on another still-open connection no longer hangs forever; `IDBDatabase.close()` used to notify only the most recently registered waiter (via a single, overwritable `__unblocking` reference), so when more than one request was concurrently waiting on the same connection to close, earlier waiters' promises were silently overwritten and never resolved. Fixing this also surfaced a related connection-queue ordering bug: the queue advanced to the next `open`/`deleteDatabase` request as soon as the current one went "blocked" rather than waiting for it to actually finish, letting requests for the same database run concurrently instead of the strict FIFO order the spec requires
 - fix: use current spec-enjoined API for a `QuotaExceededError` rather than `DOMException`
+- fix: bring Event/CustomEvent/EventTarget up to current WebIDL conformance
 - test: restore and update the W3C/WPT Node test harness (`npm run w3c-test-only` and friends), which crashed on startup due to a dangling import of the no-longer-installable `sourcemap-transformer` package left over from its removal
 - chore: update typeson-registry, devDeps; lint
 - chore: adjust for TS 7 compatibility
