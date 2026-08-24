@@ -7,12 +7,14 @@
 document.title = 'Event IDL tests';
 "use strict";
 const idls = `
-[Constructor(DOMString type, optional EventInit eventInitDict)/*,
- Exposed=(Window,Worker)*/]
+/*[Exposed=*]*/
 interface Event {
+  constructor(DOMString type, optional EventInit eventInitDict = {});
+
   readonly attribute DOMString type;
   readonly attribute EventTarget? target;
   readonly attribute EventTarget? currentTarget;
+  sequence<EventTarget> composedPath();
 
   const unsigned short NONE = 0;
   const unsigned short CAPTURING_PHASE = 1;
@@ -20,46 +22,61 @@ interface Event {
   const unsigned short BUBBLING_PHASE = 3;
   readonly attribute unsigned short eventPhase;
 
-  void stopPropagation();
-  void stopImmediatePropagation();
+  undefined stopPropagation();
+  undefined stopImmediatePropagation();
 
   readonly attribute boolean bubbles;
   readonly attribute boolean cancelable;
-  void preventDefault();
+  attribute boolean returnValue;
+  undefined preventDefault();
   readonly attribute boolean defaultPrevented;
+  readonly attribute boolean composed;
 
-  [Unforgeable] readonly attribute boolean isTrusted;
-  readonly attribute DOMTimeStamp timeStamp;
+  [LegacyUnforgeable] readonly attribute boolean isTrusted;
+  readonly attribute DOMHighResTimeStamp timeStamp;
 
-  void initEvent(DOMString type, boolean bubbles, boolean cancelable);
+  undefined initEvent(DOMString type, optional boolean bubbles = false, optional boolean cancelable = false);
 };
 
 dictionary EventInit {
   boolean bubbles = false;
   boolean cancelable = false;
+  boolean composed = false;
 };
 
-[Constructor(DOMString type, optional CustomEventInit eventInitDict)/*,
- Exposed=(Window,Worker)*/]
+/*[Exposed=*]*/
 interface CustomEvent : Event {
+  constructor(DOMString type, optional CustomEventInit eventInitDict = {});
+
   readonly attribute any detail;
 
-  void initCustomEvent(DOMString type, boolean bubbles, boolean cancelable, any detail);
+  undefined initCustomEvent(DOMString type, optional boolean bubbles = false, optional boolean cancelable = false, optional any detail = null);
 };
 
 dictionary CustomEventInit : EventInit {
   any detail = null;
 };
 
-//[Exposed=(Window,Worker)]
+/*[Exposed=*]*/
 interface EventTarget {
-  void addEventListener(DOMString type, EventListener? callback, optional boolean capture = false);
-  void removeEventListener(DOMString type, EventListener? callback, optional boolean capture = false);
+  constructor();
+
+  undefined addEventListener(DOMString type, EventListener? callback, optional (AddEventListenerOptions or boolean) options = {});
+  undefined removeEventListener(DOMString type, EventListener? callback, optional (EventListenerOptions or boolean) options = {});
   boolean dispatchEvent(Event event);
 };
 
+dictionary EventListenerOptions {
+  boolean capture = false;
+};
+
+dictionary AddEventListenerOptions : EventListenerOptions {
+  boolean passive = false;
+  boolean once = false;
+};
+
 callback interface EventListener {
-  void handleEvent(Event event);
+  undefined handleEvent(Event event);
 };
 `;
 
