@@ -211,14 +211,17 @@ IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
         return;
     }
     if (me.__transFinishedCb === IDBTransaction.prototype.__transFinishedCb) {
-        // Standard (3-argument) `transaction()` implementations (browser WebSQL,
-        //  `cordova-plugin-sqlite-2`, etc.) never invoke the non-standard 4th
-        //  callback that installs the real `__transFinishedCb`, so waiting for
-        //  it here would defer forever. Detect that via arity and, if it's not
-        //  supported, just call the default (the driver auto-commits on its own).
+        // Standard (3-argument) `transaction()`/`readTransaction()` implementations
+        //  (browser WebSQL, `cordova-plugin-sqlite-2`, etc.) never invoke the
+        //  non-standard 4th callback that installs the real `__transFinishedCb`,
+        //  so waiting for it here would defer forever. Detect that via arity
+        //  (checking whichever of the two methods this transaction's own mode
+        //  actually uses -- see `__executeRequests`) and, if it's not supported,
+        //  just call the default (the driver auto-commits on its own).
         const dbConn = me.db && me.db.__db;
+        const dbMethodName = me.mode === 'readonly' ? 'readTransaction' : 'transaction';
         const supportsNonstandardTransCb = Boolean(
-            dbConn && typeof dbConn.transaction === 'function' && dbConn.transaction.length >= 4
+            dbConn && typeof dbConn[dbMethodName] === 'function' && dbConn[dbMethodName].length >= 4
         );
         if (!supportsNonstandardTransCb) {
             me.__transFinishedCbFired = true;
@@ -310,7 +313,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                         return;
                     }
                 }
-                util.runContinuationSafely(executeNextRequest);
+                util.runContinuationSafely(advanceAfterDispatch);
             }
 
             /**
@@ -347,7 +350,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                      */
                     function (e) {
                         if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
-                            executeNextRequest();
+                            advanceAfterDispatch();
                         }
                     }
                 );
@@ -368,7 +371,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
                     if (me.__committed) { // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
-                        util.runContinuationSafely(executeNextRequest);
+                        util.runContinuationSafely(advanceAfterDispatch);
                         return;
                     }
                     me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
@@ -376,39 +379,64 @@ IDBTransaction.prototype.__executeRequests = function () {
             }
 
             /**
+             * Sets up `q` for the current queue index and, for a genuine
+             *   request (not one of our internal non-request queue entries),
+             *   deactivates the transaction for the duration of its
+             *   (possibly async) work. Returns `false` if there's nothing to
+             *   do (an already-aborted request).
+             * @returns {boolean}
+             */
+            function prepareNextRequest () {
+                q = me.__requests[i];
+                if (!q.req) {
+                    // Non-standard, non-`IDBRequest` queue entries (e.g.
+                    //   the internal `onupgradeneeded` dispatch op in
+                    //   `IDBFactory.js`) dispatch straight to user code
+                    //   without going through `success`/`error` below --
+                    //   unlike those, they never restore `__active`/
+                    //   `__handlerActive` to `true` before doing so, so
+                    //   they rely on the flags being left as they are
+                    //   (not reset here).
+                    return true;
+                }
+                if (q.req.__done) { // Avoid continuing with aborted requests
+                    return false;
+                }
+                // We're now handing off to (possibly async) work for
+                //   this request, so the transaction is no longer active
+                //   until its own `success`/`error` dispatch (below)
+                //   sets these flags again -- a check that happens to
+                //   run during this gap (e.g. `commit()` called from an
+                //   unrelated `setTimeout`) must see the transaction as
+                //   inactive, per spec.
+                me.__active = false;
+                me.__handlerActive = false;
+                return true;
+            }
+
+            /**
              * @returns {void}
              */
-            function runQueuedRequest () {
+            function launchQueuedOp () {
                 try {
-                    q = me.__requests[i];
                     if (!q.req) {
-                        // Non-standard, non-`IDBRequest` queue entries (e.g.
-                        //   the internal `onupgradeneeded` dispatch op in
-                        //   `IDBFactory.js`) dispatch straight to user code
-                        //   without going through `success`/`error` below --
-                        //   unlike those, they never restore `__active`/
-                        //   `__handlerActive` to `true` before doing so, so
-                        //   they rely on the flags being left as they are
-                        //   (not reset here).
                         q.op(tx, q.args, () => util.runContinuationSafely(executeNextRequest), error);
                         return;
                     }
-                    if (q.req.__done) { // Avoid continuing with aborted requests
-                        return;
-                    }
-                    // We're now handing off to (possibly async) work for
-                    //   this request, so the transaction is no longer active
-                    //   until its own `success`/`error` dispatch (below)
-                    //   sets these flags again -- a check that happens to
-                    //   run during this gap (e.g. `commit()` called from an
-                    //   unrelated `setTimeout`) must see the transaction as
-                    //   inactive, per spec.
-                    me.__active = false;
-                    me.__handlerActive = false;
                     q.op(tx, q.args, success, error, executeNextRequest);
                 } catch (e) {
                     error(/** @type {Error} */ (e));
                 }
+            }
+
+            /**
+             * @returns {void}
+             */
+            function runQueuedRequest () {
+                if (!prepareNextRequest()) {
+                    return;
+                }
+                launchQueuedOp();
             }
 
             /**
@@ -467,9 +495,54 @@ IDBTransaction.prototype.__executeRequests = function () {
                 i++;
                 if (i >= me.__requests.length) {
                     checkQueueEntry(10);
-                } else {
-                    runQueuedRequest();
+                    return;
                 }
+                runQueuedRequest();
+            }
+
+            /**
+             * Same as `executeNextRequest`, but used specifically as the
+             *   continuation from a request's own `success`/`error` dispatch
+             *   (see call sites above): gives same-tick microtasks scheduled
+             *   from within that handler (e.g. a plain
+             *   `Promise.resolve().then(...)`) a chance to run -- and still
+             *   observe the transaction as active -- before we deactivate it
+             *   again for the next queued request, per
+             *   https://github.com/w3c/IndexedDB/issues/87.
+             *
+             *   This is safe for `readonly` transactions too only because
+             *   `__executeRequests` now passes a `nonstandardTransCb` to
+             *   `readTransaction()` (matching `.transaction()`) and
+             *   `requestsFinished` defers `readonly` completion through
+             *   `__transactionEndCallback`/`__callTransFinishedCb` the same
+             *   way `readwrite` already did: the WebSQL driver's
+             *   "optimized" `readTransaction` path used to finalize the
+             *   underlying transaction as soon as no further `executeSql`
+             *   call was already in flight or queued, which -- before that
+             *   fix -- meant even a microtask-long gap here would let the
+             *   driver consider the transaction done, silently dropping
+             *   every subsequent queued request (never firing
+             *   `success`/`error` for it at all).
+             * @returns {void}
+             */
+            function advanceAfterDispatch () {
+                if (me.__errored || me.__requestsFinished) {
+                    return;
+                }
+                i++;
+                if (i >= me.__requests.length) {
+                    checkQueueEntry(10);
+                    return;
+                }
+                queueMicrotask(() => {
+                    if (me.__errored || me.__requestsFinished) {
+                        return;
+                    }
+                    if (!prepareNextRequest()) {
+                        return;
+                    }
+                    launchQueuedOp();
+                });
             }
 
             executeNextRequest();
@@ -499,16 +572,30 @@ IDBTransaction.prototype.__executeRequests = function () {
             }
         },
         function (currentTask, err, done, rollback, commit) {
-            if (currentTask.readOnly || err) {
+            if (err) {
                 return true;
             }
-            me.__transFinishedCb = function (err, cb) {
-                if (err) {
-                    rollback(err, cb);
-                } else {
-                    commit(cb);
+            // `readonly` transactions never hold a real SQL transaction open
+            //   (see `WebSQLTransaction`'s constructor skipping `BEGIN;` for
+            //   them), so there's no commit/rollback round trip to defer --
+            //   `done` itself is the "genuinely finished" signal for them,
+            //   called synchronously once `requestsFinished` (via
+            //   `__callTransFinishedCb`) confirms no further request is
+            //   coming.
+            me.__transFinishedCb = currentTask.readOnly
+                ? function (err, cb) {
+                    done(err);
+                    if (cb) {
+                        cb();
+                    }
                 }
-            };
+                : function (err, cb) {
+                    if (err) {
+                        rollback(err, cb);
+                    } else {
+                        commit(cb);
+                    }
+                };
             // Guarded by `__transFinishedCbFired`, not just `__completed`: this
             //   installation can race `IDBTransaction.prototype.__callTransFinishedCb`'s
             //   own `setTimeout` retry (see there) -- both watch for
@@ -557,7 +644,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 me.__storeHandles = {};
             }
         }
-        if (me.mode === 'readwrite') {
+        if (me.mode === 'readwrite' || me.mode === 'readonly') {
             if (me.__transactionFinished) {
                 complete();
                 return;
@@ -572,12 +659,12 @@ IDBTransaction.prototype.__executeRequests = function () {
             //   When that happens, its check for `me.__transactionEndCallback`
             //   (not yet set at that earlier time) finds nothing to do and
             //   just returns, so nothing else will ever re-trigger the actual
-            //   commit unless this explicitly does so now.
+            //   commit unless this explicitly does so now. For `readonly`,
+            //   `__transFinishedCb` (installed by the `nonstandardTransCb`
+            //   passed to `readTransaction()`, above) just calls the WebSQL
+            //   driver's own `done` -- there's no real commit/rollback SQL
+            //   step for a `readonly` transaction.
             me.__callTransFinishedCb(me.__errored, complete);
-            return;
-        }
-        if (me.mode === 'readonly') {
-            complete();
             return;
         }
         const ev = /** @type {Event & {complete: () => void}} */ (

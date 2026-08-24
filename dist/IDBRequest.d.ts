@@ -1,5 +1,5 @@
 export type IDBOpenDBRequestFull = IDBRequestFull & IDBOpenDBRequest;
-export type IDBRequestFull = IDBRequest & EventTarget & import("eventtargeter").ShimEventTarget & {
+export type IDBRequestFull = IDBRequest & EventTarget & import("eventtargeter").EventTargetInstance & {
     transaction: import("./IDBTransaction.js").IDBTransactionFull;
     __done: boolean;
     __result: import("./IDBDatabase.js").IDBDatabaseFull | undefined;
@@ -29,7 +29,7 @@ export class IDBRequest {
 }
 export namespace IDBRequest {
     /**
-     * @typedef {IDBRequest & EventTarget & import('eventtargeter').ShimEventTarget & {
+     * @typedef {IDBRequest & EventTarget & import('eventtargeter').EventTargetInstance & {
      *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
      *   __done: boolean,
      *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,

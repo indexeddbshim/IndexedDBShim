@@ -57,7 +57,6 @@ https://github.com/web-platform-tests/wpt/commit/57aa2ac737eec9526ad6c4ace61e590
 These are still failing regardless:
 - `transaction-deactivation-timing.any.js`: ?
 - `upgrade-transaction-deactivation-timing.any.js`: ?
-- `event-dispatch-active-flag.any.js`
 - `get-databases.any.js` (not sure if it is transaction timing)
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
@@ -87,26 +86,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     - `bindings-inject-values-bypass.any.js` - Failing
     - `structured-clone.any.js` - Failing many tests (125 total; 65 pass as
         of the investigation below). Re-investigated 2026-08-24:
-        - Fixed: boxed `Number` objects (`new Number(x)`) holding `NaN`/
-          `Infinity`/`-Infinity`/`-0` were cloning back as `0` (or losing
-          their sign, for `-0`). Root cause was in `typeson-registry` (a
-          package the user maintains), not IndexedDBShim: its
-          `NumberObject` type spec's `replace()` returned those special
-          values bare, but `typeson` core's own nested-replace guard
-          (`_stateObj.replaced`, set while already inside this spec's own
-          `replace()`) skips giving a bare `NaN`/`Infinity`/`-0` the
-          sentinel-string treatment the *un-boxed* `nan`/`infinity`/
-          `negativeZero` type specs normally would -- so it fell through to
-          plain JSON, which can't represent those values. Fixed by having
-          `NumberObject` do that same sentinel-encoding itself rather than
-          relying on the (in this one case, skipped) nested pass. A
-          `typeson`-core-level fix (relaxing that guard) was considered and
-          declined: the guard looks like a general "don't re-replace what
-          was just replaced" safeguard other type specs may also rely on
-          (e.g. a spec that deliberately returns `undefined`), so a proper
-          fix there would need much more careful testing across `typeson`'s
-          own suite than this contained, already-verified workaround needed.
-        - Remaining ~59 of the ~60 still-failing tests (`Date`, `RegExp`,
+        - ~59 of the ~60 still-failing tests (`Date`, `RegExp`,
           `ArrayBuffer`, typed arrays, `Map`, `Set`, `Array`, `Object`,
           `Error` and its subtypes, `FileList`, ...) share ONE root cause:
           `Sca.js`/`typeson` always decode a cloned value using *this
@@ -337,7 +317,6 @@ const goodBad = {
         '_service-worker-indexeddb.https.js',
         'bindings-inject-keys-bypass.any.js',
         'bindings-inject-values-bypass.any.js',
-        'event-dispatch-active-flag.any.js',
         'file_support.sub.js',
         'get-databases.any.js',
         'idb-partitioned-persistence.sub.js',
@@ -363,9 +342,6 @@ const goodBad = {
         //   test passes that particular assertion.
         'bindings-inject-keys-bypass.any.worker.js',
         'bindings-inject-values-bypass.any.worker.js',
-        // Flaky: also seen timing out (see `timeout` above) depending on
-        //   worker child-process scheduling overhead.
-        'event-dispatch-active-flag.any.worker.js',
         'idbcursor_update_index.any.worker.js',
         'idbobjectstore-put-unique-index-constraint-is-atomic.any.worker.js',
         'idlharness.any.worker.js',
@@ -405,6 +381,8 @@ const goodBad = {
         'delete-request-queue.any.js',
         'domstringlist.js',
         'error-attributes.any.js',
+        'event-dispatch-active-flag.any.js',
+        'event-dispatch-active-flag.any.worker.js',
         'fire-error-event-exception.any.js',
         'fire-success-event-exception.any.js',
         'fire-upgradeneeded-event-exception.any.js',

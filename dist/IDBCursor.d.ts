@@ -351,9 +351,15 @@ export namespace IDBCursorWithValue {
 /**
  * `getAll`/`getAllKeys` accept either the legacy `(query, count)` signature
  *   or, per the IndexedDB 3 draft's `getAllRecords` options shape, a single
- *   `{query, count, direction}` options object. A plain object is never a
- *   valid IndexedDB key (or key range), so the two forms can be told apart
- *   unambiguously by the shape of the sole argument.
+ *   `{query, count, direction}` options object -- including an *empty*
+ *   `{}` (WPT's own tests call `getAll({})` expecting every record back,
+ *   the same as `getAll()`, not a `DataError` from treating `{}` as an
+ *   invalid key). A plain object is never a valid IndexedDB key (or key
+ *   range), so the two forms can be told apart unambiguously by the shape
+ *   of the first argument alone -- WPT's own `get_all_with_options_and_count_test`
+ *   deliberately calls `getAll(options, count)` (an extra, non-overload-matching
+ *   second argument, which JS simply ignores) to confirm the options-shaped
+ *   first argument wins regardless of how many arguments were actually passed.
  * @param {IArguments} args
  * @throws {TypeError}
  * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
@@ -402,6 +408,7 @@ export function parseGetAllRecordsArgs(args: IArguments): {
  * @param {Integer|undefined} count
  * @param {string} direction
  * @param {"value"|"key"|"record"} mode
+ * @throws {TypeError}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 export function collectAll(source: import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull, query: import("./Key.js").Value, count: Integer | undefined, direction: string, mode: "value" | "key" | "record"): import("./IDBRequest.js").IDBRequestFull;

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.0 - 8/23/2026 */
+/*! indexeddbshim - v17.3.0 - 8/24/2026 */
 
 'use strict';
 
@@ -8,17 +8,6 @@ var require$$0 = require('fs');
 var require$$1 = require('path');
 var require$$2 = require('util');
 
-function _typeof(obj) {
-  "@babel/helpers - typeof";
-
-  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-  }, _typeof(obj);
-}
-
-/* eslint-disable n/no-sync -- Want sync naming */
 /* eslint-disable no-restricted-syntax -- Instanceof checks */
 /* eslint-disable unicorn/no-this-assignment -- TS */
 
@@ -42,48 +31,88 @@ function _typeof(obj) {
  *   legacyOutputDidListenersThrowFlag?: boolean
  * }} CustomOptions
  */
+
+/**
+ * @typedef {(
+ *   type: string, listener: Listener|{handleEvent: Listener}, options?: boolean|ListenerOptions
+ * ) => void} AddOrRemoveListenerMethod
+ */
+/**
+ * @typedef {(
+ *   type: string, listener: Listener|{handleEvent: Listener}, options?: boolean|ListenerOptions
+ * ) => boolean} HasListenerMethod
+ */
+
 /**
  * @typedef {{
- *   __legacyOutputDidListenersThrowError: unknown,
- *   target: EventTarget & {
- *     invokeCurrentListeners: InvokeCurrentListeners,
- *     _earlyListeners: AllListeners,
- *     _listeners: AllListeners,
- *     _lateListeners: AllListeners,
- *     _defaultListeners: AllListeners
- *   },
- *   composed: boolean,
- *   currentTarget: EventTarget,
- *   eventPhase: 0|1|2|3
- *   defaultPrevented: boolean,
- *   type: string,
- *   bubbles: boolean,
- *   cancelable: boolean,
- *   isTrusted: boolean,
- *   timeStamp: Integer,
- *   initEvent: (type: string, bubbles: boolean, cancelable: boolean) => void,
- *   preventDefault: () => void,
- *   composedPath: () => void,
- *   detail: any,
- *   initCustomEvent: (
+ *   _defaultSync?: boolean,
+ *   _extraProperties?: string[],
+ *   _legacyOutputDidListenersThrowCheck?: boolean,
+ *   _earlyListeners?: AllListeners,
+ *   _listeners?: AllListeners,
+ *   _lateListeners?: AllListeners,
+ *   _defaultListeners?: AllListeners,
+ *   _parent?: EventTargetInstance|null,
+ *   __getParent?: () => EventTargetInstance|null,
+ *   tryCatch: (evt: EventWithProps, cb: () => void) => void,
+ *   triggerErrorEvent: (err: unknown, evt: EventWithProps) => void,
+ *   invokeCurrentListeners: InvokeCurrentListeners,
+ *   dispatchEvent: (e: EventWithProps) => boolean,
+ *   _dispatchEvent: (e: EventWithProps, setTarget: boolean) => boolean,
+ *   __setOptions: (customOptions?: CustomOptions) => void,
+ *   addEventListener: AddOrRemoveListenerMethod,
+ *   removeEventListener: AddOrRemoveListenerMethod,
+ *   hasEventListener: HasListenerMethod,
+ *   addEarlyEventListener: AddOrRemoveListenerMethod,
+ *   removeEarlyEventListener: AddOrRemoveListenerMethod,
+ *   hasEarlyEventListener: HasListenerMethod,
+ *   addLateEventListener: AddOrRemoveListenerMethod,
+ *   removeLateEventListener: AddOrRemoveListenerMethod,
+ *   hasLateEventListener: HasListenerMethod,
+ *   addDefaultEventListener: AddOrRemoveListenerMethod,
+ *   removeDefaultEventListener: AddOrRemoveListenerMethod,
+ *   hasDefaultEventListener: HasListenerMethod,
+ *   [key: string]: any
+ * }} EventTargetInstance
+ */
+/**
+ * @typedef {{
+ *   __legacyOutputDidListenersThrowError?: unknown,
+ *   target?: EventTargetInstance,
+ *   composed?: boolean,
+ *   currentTarget?: EventTargetInstance|null,
+ *   eventPhase?: 0|1|2|3
+ *   defaultPrevented?: boolean,
+ *   type?: string,
+ *   bubbles?: boolean,
+ *   cancelable?: boolean,
+ *   isTrusted?: boolean,
+ *   timeStamp?: Integer,
+ *   initEvent?: (type: string, bubbles: boolean, cancelable: boolean) => void,
+ *   preventDefault?: () => void,
+ *   composedPath?: () => void,
+ *   detail?: any,
+ *   initCustomEvent?: (
  *     type: string, canBubble: boolean, cancelable: boolean,
  *     detail: any
- *   ) => void
+ *   ) => void,
+ *   [key: string]: any
  * }} EventWithProps
  */
 
 // Todo: Switch to ES6 classes
 
-var phases = {
+/** @type {{NONE: 0, CAPTURING_PHASE: 1, AT_TARGET: 2, BUBBLING_PHASE: 3}} */
+const phases = {
   NONE: 0,
   CAPTURING_PHASE: 1,
   AT_TARGET: 2,
   BUBBLING_PHASE: 3
 };
-var ShimDOMException$1 = typeof DOMException === 'undefined'
+const ShimDOMException$1 = typeof DOMException === 'undefined'
 // Todo: Better polyfill (if even needed here)
 /* eslint-disable no-shadow -- Polyfill */
-// eslint-disable-next-line operator-linebreak -- TS/JSDoc needs
+// eslint-disable-next-line @stylistic/operator-linebreak -- TS/JSDoc needs
 ?
 /**
  * @param {string} msg
@@ -93,48 +122,64 @@ var ShimDOMException$1 = typeof DOMException === 'undefined'
 function DOMException(msg, name) {
   // No need for `toString` as same as for `Error`
   /* eslint-enable no-shadow -- Polyfill */
-  var err = new Error(msg);
-  err.name = name;
+  const err = new Error(msg);
+  Object.defineProperty(err, 'name', {
+    value: name,
+    writable: true,
+    configurable: true
+  });
   return err;
 } : DOMException;
-var ev = new WeakMap();
-var evCfg = new WeakMap();
+
+/** @type {WeakMap<object, any>} */
+const ev = new WeakMap();
+/** @type {WeakMap<object, EventWithProps>} */
+const evCfg = new WeakMap();
+
+/**
+ * Retrieves the internal config bag for an event known to have already
+ * been registered in `evCfg` (i.e., not the very first, possibly-unset
+ * lookup on an incoming event).
+ * @param {object} key
+ * @returns {EventWithProps}
+ */
+function getEvCfg(key) {
+  return /** @type {EventWithProps} */evCfg.get(key);
+}
 
 // Todo: Set _ev argument outside of this function
 
 /* eslint-disable func-name-matching -- Shim vs. Polyfill */
 /* eslint-disable no-shadow -- Polyfilling */
 /**
-* We use an adapter class rather than a proxy not only for compatibility
-* but also since we have to clone native event properties anyways in order
-* to properly set `target`, etc.
-* The regular DOM method `dispatchEvent` won't work with this polyfill as
-* it expects a native event.
-* @class
-* @param {string} type
-*/
-var ShimEvent = /** @type {unknown} */function Event(type) {
-  var _this = this;
+ * We use an adapter class rather than a proxy not only for compatibility
+ * but also since we have to clone native event properties anyways in order
+ * to properly set `target`, etc.
+ * The regular DOM method `dispatchEvent` won't work with this polyfill as
+ * it expects a native event.
+ * @class
+ * @param {string} type
+ * @this {EventWithProps}
+ */
+const ShimEvent = function Event(type) {
   /* eslint-enable func-name-matching -- Shim vs. Polyfill */
   /* eslint-enable no-shadow -- Polyfilling */
-  // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
   // @ts-expect-error
   this[Symbol.toStringTag] = 'Event';
-  this.toString = function () {
+  this.toString = () => {
     return '[object Event]';
   };
+  // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
   // eslint-disable-next-line prefer-rest-params -- Don't want to change signature
-  var _arguments = Array.prototype.slice.call(arguments),
-    evInit = _arguments[1],
-    _ev = _arguments[2];
+  let [, evInit, _ev] = arguments;
   if (!arguments.length) {
     throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
   }
-  evInit = evInit || {};
-  _ev = _ev || {};
+  evInit ||= {};
+  _ev ||= {};
 
   /** @type {EventWithProps} */
-  var _evCfg = {};
+  const _evCfg = {};
   if ('composed' in evInit) {
     _evCfg.composed = evInit.composed;
   }
@@ -144,32 +189,46 @@ var ShimEvent = /** @type {unknown} */function Event(type) {
 
   ev.set(this, _ev);
   evCfg.set(this, _evCfg);
-  var that = /** @type {unknown} */this;
-  /** @type {ShimEvent} */
-  that.initEvent(type, evInit.bubbles, evInit.cancelable);
-  ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].forEach(function (pr) {
-    var prop = /** @type {"target"|"currentTarget"|"eventPhase"|"defaultPrevented"} */
+  /** @type {(type: string, bubbles: boolean, cancelable: boolean) => void} */
+  this.initEvent(type, evInit.bubbles, evInit.cancelable);
+  ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].forEach(pr => {
+    const prop = /** @type {"target"|"currentTarget"|"eventPhase"|"defaultPrevented"} */
     pr;
-    Object.defineProperty(_this, prop, {
-      get: function get() {
-        return /* prop in _evCfg && */_evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] :
+    Object.defineProperty(this, prop, {
+      get() {
+        return (/* prop in _evCfg && */_evCfg[prop] !== undefined) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] :
         // Defaults
         prop === 'eventPhase' ? 0 : prop === 'defaultPrevented' ? false : null;
       }
     });
   });
-  var props = [
+
+  // Legacy alias of `.defaultPrevented`/`.preventDefault()`; not backed by
+  //   `_evCfg` like the rest since it's derived, not stored.
+  Object.defineProperty(this, 'returnValue', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      return !this.defaultPrevented;
+    },
+    set(val) {
+      if (val === false) {
+        /** @type {() => void} */this.preventDefault();
+      }
+    }
+  });
+  const props = [
   // Event
   'type', 'bubbles', 'cancelable',
   // Defaults to false
   'isTrusted', 'timeStamp', 'initEvent',
   // Other event properties (not used by our code)
-  'composedPath', 'composed'];
+  'composed'];
   if (this.toString() === '[object CustomEvent]') {
     props.push('detail', 'initCustomEvent');
   }
-  Object.defineProperties(this, props.reduce(function (obj, pr) {
-    var prop =
+  Object.defineProperties(this, props.reduce((obj, pr) => {
+    const prop =
     /**
      * @type {"type"|"bubbles"|"cancelable"|"isTrusted"|
      *   "timeStamp"|"initEvent"|"composedPath"|"composed"|
@@ -178,22 +237,26 @@ var ShimEvent = /** @type {unknown} */function Event(type) {
      */
     pr;
     obj[prop] = {
-      get: function get() {
-        return prop in _evCfg ? _evCfg[prop] : prop in _ev ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
+      get() {
+        return Object.hasOwn(_evCfg, prop) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
       }
     };
     return obj;
   }, /** @type {{[key: string]: any}} */{}));
 };
 
-// @ts-expect-error Casting doesn't work
-ShimEvent.prototype.preventDefault = function () {
-  // @ts-expect-error Needed for exporting
+// Named function expressions (rather than anonymous ones assigned via
+//   member-expression `=`, which per spec never get an inferred `.name`)
+//   so `.name` matches the WebIDL operation identifier, e.g. for
+//   `idlharness.js`'s "property has wrong .name" checks.
+
+/** @this {EventWithProps} */
+ShimEvent.prototype.preventDefault = function preventDefault() {
   if (!(this instanceof ShimEvent)) {
     throw new TypeError('Illegal invocation');
   }
-  var _ev = ev.get(this);
-  var _evCfg = evCfg.get(this);
+  const _ev = ev.get(this);
+  const _evCfg = getEvCfg(this);
   if (this.cancelable && !_evCfg._passive) {
     _evCfg.defaultPrevented = true;
     if (typeof _ev.preventDefault === 'function') {
@@ -203,46 +266,65 @@ ShimEvent.prototype.preventDefault = function () {
   }
 };
 
-// @ts-expect-error Casting doesn't work
-ShimEvent.prototype.stopImmediatePropagation = function () {
-  var _evCfg = evCfg.get(this);
+/**
+ * A minimal, spec-shaped stand-in: this polyfill doesn't track a full
+ *   ancestor propagation path the way a real DOM event does, so this
+ *   always returns an empty path rather than a genuinely populated one.
+ * @this {EventWithProps}
+ * @returns {EventTargetInstance[]}
+ */
+ShimEvent.prototype.composedPath = function composedPath() {
+  if (!(this instanceof ShimEvent)) {
+    throw new TypeError('Illegal invocation');
+  }
+  return [];
+};
+
+/** @this {EventWithProps} */
+ShimEvent.prototype.stopImmediatePropagation = function stopImmediatePropagation() {
+  const _evCfg = getEvCfg(this);
   _evCfg._stopImmediatePropagation = true;
 };
 
-// @ts-expect-error Casting doesn't work
-ShimEvent.prototype.stopPropagation = function () {
-  var _evCfg = evCfg.get(this);
+/** @this {EventWithProps} */
+ShimEvent.prototype.stopPropagation = function stopPropagation() {
+  const _evCfg = getEvCfg(this);
   _evCfg._stopPropagation = true;
 };
 
-// @ts-expect-error Casting doesn't work
-ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
-  // Chrome currently has function length 1 only but WebIDL says 3
-  // const bubbles = arguments[1];
-  // const cancelable = arguments[2];
-  var _evCfg = evCfg.get(this);
+/**
+ * @param {string} type
+ * @param {boolean} [bubbles]
+ * @param {boolean} [cancelable]
+ * @this {EventWithProps}
+ */
+ShimEvent.prototype.initEvent = function initEvent(type, bubbles = false, cancelable = false) {
+  // WebIDL's optional args (defaulted here) keep `.length` at 1, matching real browsers
+  const _evCfg = getEvCfg(this);
   if (_evCfg._dispatched) {
     return;
   }
-  Object.defineProperty(this, 'type', {
-    enumerable: true,
-    configurable: true,
-    get: function get() {
-      return type;
-    }
-  });
-  Object.defineProperty(this, 'bubbles', {
-    enumerable: true,
-    configurable: true,
-    get: function get() {
-      return bubbles;
-    }
-  });
-  Object.defineProperty(this, 'cancelable', {
-    enumerable: true,
-    configurable: true,
-    get: function get() {
-      return cancelable;
+  Object.defineProperties(this, {
+    type: {
+      enumerable: true,
+      configurable: true,
+      get() {
+        return type;
+      }
+    },
+    bubbles: {
+      enumerable: true,
+      configurable: true,
+      get() {
+        return bubbles;
+      }
+    },
+    cancelable: {
+      enumerable: true,
+      configurable: true,
+      get() {
+        return cancelable;
+      }
     }
   });
   _evCfg.type = type;
@@ -253,42 +335,70 @@ ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
     _evCfg.cancelable = cancelable;
   }
 };
-['type', 'target', 'currentTarget'].forEach(function (prop) {
-  // @ts-expect-error Casting doesn't work
+// These attribute getters exist on the prototype only so idlharness-style
+//   interface checks find them there (matching real DOM implementations,
+//   where these are shared prototype accessors, not per-instance ones);
+//   accessing one directly on the prototype itself (rather than a real
+//   instance, which shadows these with the working per-instance getters
+//   set up in the constructor above) throws, same as a real browser's
+//   native accessor would for an unbound `this`. Each throw-stub's `.name`
+//   is set explicitly to `"get " + prop` since `{get () {...}}` -- a
+//   literal `get` key, not `get`-shorthand syntax -- names the function
+//   `"get"`, not `"get " + prop`.
+['type', 'target', 'currentTarget', 'eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp', 'composed'].forEach(prop => {
+  const get = function () {
+    throw new TypeError('Illegal invocation');
+  };
+  Object.defineProperty(get, 'name', {
+    value: 'get ' + prop,
+    configurable: true
+  });
   Object.defineProperty(ShimEvent.prototype, prop, {
     enumerable: true,
     configurable: true,
-    get: function get() {
-      throw new TypeError('Illegal invocation');
-    }
+    get
   });
 });
-['eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp'].forEach(function (prop) {
-  // @ts-expect-error Casting doesn't work
-  Object.defineProperty(ShimEvent.prototype, prop, {
+{
+  const get = function () {
+    throw new TypeError('Illegal invocation');
+  };
+  // Setters are always spec'd with one formal parameter, so `.length`
+  //   must be 1 even though this throws unconditionally.
+  /**
+   * @param {boolean} _val
+   */
+  // eslint-disable-next-line no-unused-vars -- Needed for `.length`
+  const set = function (_val) {
+    throw new TypeError('Illegal invocation');
+  };
+  Object.defineProperty(get, 'name', {
+    value: 'get returnValue',
+    configurable: true
+  });
+  Object.defineProperty(set, 'name', {
+    value: 'set returnValue',
+    configurable: true
+  });
+  Object.defineProperty(ShimEvent.prototype, 'returnValue', {
     enumerable: true,
     configurable: true,
-    get: function get() {
-      throw new TypeError('Illegal invocation');
-    }
+    get,
+    set
   });
-});
-['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'].forEach(function (prop, i) {
+}
+['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'].forEach((prop, i) => {
   Object.defineProperty(ShimEvent, prop, {
     enumerable: true,
     writable: false,
     value: i
   });
-  // @ts-expect-error Casting doesn't work
   Object.defineProperty(ShimEvent.prototype, prop, {
     writable: false,
     value: i
   });
 });
-// @ts-expect-error Casting doesn't work
 ShimEvent[Symbol.toStringTag] = 'Function';
-
-// @ts-expect-error Casting doesn't work
 ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
 Object.defineProperty(ShimEvent, 'prototype', {
   writable: false
@@ -299,46 +409,50 @@ Object.defineProperty(ShimEvent, 'prototype', {
 /**
  * @class
  * @param {string} type
+ * @this {EventWithProps}
  */
-var ShimCustomEvent = /** @type {unknown} */function CustomEvent(type) {
+const ShimCustomEvent = function CustomEvent(type) {
   /* eslint-enable func-name-matching -- Polyfill */
   /* eslint-enable no-shadow -- Polyfill */
 
-  // eslint-disable-next-line prefer-rest-params -- Keep signature
-  var _arguments2 = Array.prototype.slice.call(arguments),
-    evInit = _arguments2[1],
-    _ev = _arguments2[2];
+  // eslint-disable-next-line prefer-const, prefer-rest-params -- Keep signature
+  let [, evInit, _ev] = arguments;
   // @ts-expect-error Casting doesn't work
   ShimEvent.call(this, type, evInit, _ev);
   // @ts-expect-error
   this[Symbol.toStringTag] = 'CustomEvent';
-  this.toString = function () {
+  this.toString = () => {
     return '[object CustomEvent]';
   };
   // var _evCfg = evCfg.get(this);
-  evInit = evInit || {};
+  evInit ||= {};
   // @ts-ignore
   this.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
 };
-// @ts-expect-error Casting doesn't work
 Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
   enumerable: false,
   writable: true,
   configurable: true,
   value: ShimCustomEvent
 });
-// @ts-expect-error Casting doesn't work
-ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
-  // @ts-expect-error Needed for exporting
+/**
+ * @param {string} type
+ * @param {boolean} [bubbles]
+ * @param {boolean} [cancelable]
+ * @param {any} [detail]
+ * @this {EventWithProps}
+ */
+ShimCustomEvent.prototype.initCustomEvent = function initCustomEvent(type, bubbles = false, cancelable = false, detail = null) {
+  // WebIDL's optional args (defaulted here) keep `.length` at 1
   if (!(this instanceof ShimCustomEvent)) {
     throw new TypeError('Illegal invocation');
   }
-  var _evCfg = evCfg.get(this);
+  const _evCfg = getEvCfg(this);
   // @ts-expect-error Casting doesn't work
   ShimCustomEvent.call(this, type, {
-    bubbles: bubbles,
-    cancelable: cancelable,
-    detail: detail
+    bubbles,
+    cancelable,
+    detail
     // eslint-disable-next-line prefer-rest-params -- Keep signature
   }, arguments[4]);
   if (_evCfg._dispatched) {
@@ -348,24 +462,27 @@ ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable,
     _evCfg.detail = detail;
   }
   Object.defineProperty(this, 'detail', {
-    get: function get() {
+    get() {
       return _evCfg.detail;
     }
   });
 };
-// @ts-expect-error Casting doesn't work
 ShimCustomEvent[Symbol.toStringTag] = 'Function';
-// @ts-expect-error Casting doesn't work
 ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
-
-// @ts-expect-error Casting doesn't work
-Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
-  enumerable: true,
-  configurable: true,
-  get: function get() {
+{
+  const get = function () {
     throw new TypeError('Illegal invocation');
-  }
-});
+  };
+  Object.defineProperty(get, 'name', {
+    value: 'get detail',
+    configurable: true
+  });
+  Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
+    enumerable: true,
+    configurable: true,
+    get
+  });
+}
 Object.defineProperty(ShimCustomEvent, 'prototype', {
   writable: false
 });
@@ -376,50 +493,52 @@ Object.defineProperty(ShimCustomEvent, 'prototype', {
  * @returns {EventWithProps}
  */
 function copyEvent(e) {
-  var bubbles = e.bubbles,
-    cancelable = e.cancelable,
-    detail = e.detail,
-    type = e.type;
+  const {
+    bubbles,
+    cancelable,
+    detail,
+    type
+  } = e;
   if ('detail' in e) {
     // @ts-expect-error Casting doesn't work
     return new ShimCustomEvent(type, {
-      bubbles: bubbles,
-      cancelable: cancelable,
-      detail: detail
+      bubbles,
+      cancelable,
+      detail
     }, e);
   }
   // @ts-expect-error Casting doesn't work
   return new ShimEvent(type, {
-    bubbles: bubbles,
-    cancelable: cancelable
+    bubbles,
+    cancelable
   }, e);
 }
 
 /**
-* @typedef {object} ListenerOptions
-* @property {boolean} [once] Remove listener after invoking once
-* @property {boolean} [passive] Don't allow `preventDefault`
-* @property {boolean} [capture] Use `_children` and set `eventPhase`
-*/
+ * @typedef {object} ListenerOptions
+ * @property {boolean} [once] Remove listener after invoking once
+ * @property {boolean} [passive] Don't allow `preventDefault`
+ * @property {boolean} [capture] Use `_children` and set `eventPhase`
+ */
 
 /**
-* @typedef {object} ListenerAndOptions
-* @property {Listener} listener
-* @property {ListenerOptions} options
-*/
+ * @typedef {object} ListenerAndOptions
+ * @property {Listener} listener
+ * @property {ListenerOptions} options
+ */
 
 /**
-* @typedef {object} ListenerInfo
-* @property {ListenerAndOptions[]} listenersByTypeOptions
-* @property {ListenerOptions} options
-* @property {ListenerAndOptions[]} listenersByType
-*/
+ * @typedef {object} ListenerInfo
+ * @property {ListenerAndOptions[]} listenersByTypeOptions
+ * @property {ListenerOptions} options
+ * @property {ListenerAndOptions[]} listenersByType
+ */
 
 /**
-* @callback Listener
-* @param {EventWithProps} e
-* @returns {boolean}
-*/
+ * @callback Listener
+ * @param {EventWithProps} e
+ * @returns {boolean|void}
+ */
 
 /**
  * Keys are event types.
@@ -440,22 +559,24 @@ function copyEvent(e) {
  * @returns {ListenerInfo}
  */
 function getListenersOptions(listeners, type, options) {
-  var listenersByType = listeners[type];
-  if (listenersByType === undefined) listeners[type] = listenersByType = [];
-  var opts = typeof options === 'boolean' ? {
+  let listenersByType = listeners[type];
+  if (listenersByType === undefined) {
+    listeners[type] = listenersByType = [];
+  }
+  const opts = typeof options === 'boolean' ? {
     capture: options
   } : options || {};
-  var stringifiedOptions = JSON.stringify(opts);
-  var listenersByTypeOptions = listenersByType.filter(function (obj) {
+  const stringifiedOptions = JSON.stringify(opts);
+  const listenersByTypeOptions = listenersByType.filter(obj => {
     return stringifiedOptions === JSON.stringify(obj.options);
   });
   return {
-    listenersByTypeOptions: listenersByTypeOptions,
+    listenersByTypeOptions,
     options: opts,
-    listenersByType: listenersByType
+    listenersByType
   };
 }
-var methods = {
+const methods = {
   /**
    * @param {AllListeners} listeners
    * @param {Listener} listener
@@ -463,17 +584,25 @@ var methods = {
    * @param {boolean|ListenerOptions} options
    * @returns {void}
    */
-  addListener: function addListener(listeners, listener, type, options) {
-    var listenersOptions = getListenersOptions(listeners, type, options);
-    var listenersByTypeOptions = listenersOptions.listenersByTypeOptions;
-    options = listenersOptions.options;
-    var listenersByType = listenersOptions.listenersByType;
-    if (listenersByTypeOptions.some(function (l) {
+  addListener(listeners, listener, type, options) {
+    const listenersOptions = getListenersOptions(listeners, type, options);
+    const {
+      listenersByTypeOptions
+    } = listenersOptions;
+    ({
+      options
+    } = listenersOptions);
+    const {
+      listenersByType
+    } = listenersOptions;
+    if (listenersByTypeOptions.some(l => {
       return l.listener === listener;
-    })) return;
+    })) {
+      return;
+    }
     listenersByType.push({
-      listener: listener,
-      options: options
+      listener,
+      options
     });
   },
   /**
@@ -483,14 +612,18 @@ var methods = {
    * @param {boolean|ListenerOptions} options
    * @returns {void}
    */
-  removeListener: function removeListener(listeners, listener, type, options) {
-    var listenersOptions = getListenersOptions(listeners, type, options);
-    var listenersByType = listenersOptions.listenersByType;
-    var stringifiedOptions = JSON.stringify(listenersOptions.options);
-    listenersByType.some(function (l, i) {
+  removeListener(listeners, listener, type, options) {
+    const listenersOptions = getListenersOptions(listeners, type, options);
+    const {
+      listenersByType
+    } = listenersOptions;
+    const stringifiedOptions = JSON.stringify(listenersOptions.options);
+    listenersByType.some((l, i) => {
       if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
         listenersByType.splice(i, 1);
-        if (!listenersByType.length) delete listeners[type];
+        if (!listenersByType.length) {
+          delete listeners[type];
+        }
         return true;
       }
       return false;
@@ -504,10 +637,12 @@ var methods = {
    * @param {boolean|ListenerOptions} options
    * @returns {boolean}
    */
-  hasListener: function hasListener(listeners, listener, type, options) {
-    var listenersOptions = getListenersOptions(listeners, type, options);
-    var listenersByTypeOptions = listenersOptions.listenersByTypeOptions;
-    return listenersByTypeOptions.some(function (l) {
+  hasListener(listeners, listener, type, options) {
+    const listenersOptions = getListenersOptions(listeners, type, options);
+    const {
+      listenersByTypeOptions
+    } = listenersOptions;
+    return listenersByTypeOptions.some(l => {
       return l.listener === listener;
     });
   }
@@ -516,6 +651,7 @@ var methods = {
 /* eslint-disable no-shadow -- Polyfill */
 /**
  * @class
+ * @throws {TypeError}
  */
 function EventTarget() {
   /* eslint-enable no-shadow -- Polyfill */
@@ -523,69 +659,80 @@ function EventTarget() {
 }
 
 /**
- * @typedef {"addEarlyEventListener"|"removeEarlyEventListener"|"hasEarlyEventListener"|
- *   "addEventListener"|"removeEventListener"|"hasEventListener"|
- *   "addLateEventListener"|"removeLateEventListener"|"hasLateEventListener"|
- *   "addDefaultEventListener"|"removeDefaultEventListener"|"hasDefaultEventListener"
+ * @typedef {"addEarlyEventListener"|"removeEarlyEventListener"|"hasEarlyEventListener"
+ *   |"addEventListener"|"removeEventListener"|"hasEventListener"
+ *   |"addLateEventListener"|"removeLateEventListener"|"hasLateEventListener"
+ *   |"addDefaultEventListener"|"removeDefaultEventListener"|"hasDefaultEventListener"
  * } ListenerName
  */
 Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (/** @type {{[key: string]: Function}} */
 obj, listenerType) {
   ['add', 'remove', 'has'].forEach(function (method) {
-    var mainMethod = /** @type {ListenerName} */method + listenerType + 'EventListener';
+    const mainMethod = /** @type {ListenerName} */method + listenerType + 'EventListener';
     /**
      * @param {string} type
      * @param {Listener|{handleEvent: Listener}} listener
-     * @this {EventTarget & {
-     *   _earlyListeners: AllListeners,
-     *   _listeners: AllListeners,
-     *   _lateListeners: AllListeners,
-     *   _defaultListeners: AllListeners,
-     * }}
+     * @this {EventTargetInstance}
      * @returns {boolean|void}
      */
     obj[mainMethod] = function (type, listener) {
-      // eslint-disable-next-line prefer-rest-params -- Keep signature
-      var options = arguments[2]; // We keep the listener `length` as per WebIDL
-      if (arguments.length < 2) throw new TypeError('2 or more arguments required');
+      if (!(this instanceof EventTarget)) {
+        throw new TypeError('Illegal invocation');
+      }
+      if (arguments.length < 2) {
+        throw new TypeError('2 or more arguments required');
+      }
       if (typeof type !== 'string') {
         // @ts-expect-error It's ok to construct
         throw new ShimDOMException$1('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR');
       }
+      // eslint-disable-next-line prefer-rest-params -- Keep signature
+      const options = arguments[2]; // We keep the listener `length` as per WebIDL
       try {
+        // `listener` is nullable per WebIDL (`EventListener?`), and
+        //   the `in` operator throws for a `null`/non-object RHS,
+        //   so only look for `handleEvent` on an actual object.
         // As per code such as the following, handleEvent may throw,
         //  but is uncaught
         // https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/fire-error-event-exception.html#L54-L56
-        if ('handleEvent' in listener && listener.handleEvent.bind) {
+        if (listener && typeof listener === 'object' && 'handleEvent' in listener && listener.handleEvent.bind) {
           listener = listener.handleEvent.bind(listener);
         }
       } catch (err) {
         // eslint-disable-next-line no-console -- Feedback to user
         console.log('Uncaught `handleEvent` error', err);
       }
-      var arrStr = /** @type {"_earlyListeners"|"_listeners"|"_lateListeners"|"_defaultListeners"} */
+      const arrStr = /** @type {"_earlyListeners"|"_listeners"|"_lateListeners"|"_defaultListeners"} */
       '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
-      if (!this[arrStr]) {
+      if (!Object.hasOwn(this, arrStr)) {
         Object.defineProperty(this, arrStr, {
           value: {}
         });
       }
-      var meth = /** @type {"addListener"|"removeListener"|"hasListener"} */
+      const meth = /** @type {"addListener"|"removeListener"|"hasListener"} */
       method + 'Listener';
-      return methods[meth](this[arrStr], /** @type {Listener} */listener, type, options);
+      return methods[meth](/** @type {AllListeners} */this[arrStr], /** @type {Listener} */listener, type, options);
     };
+    // Assigned via a computed (`obj[mainMethod] = ...`) member
+    // expression, so per spec it never gets an inferred `.name` --
+    // matters for idlharness.js's "property has wrong .name" checks on
+    // e.g. `addEventListener`/`removeEventListener`.
+    Object.defineProperty(obj[mainMethod], 'name', {
+      value: mainMethod,
+      configurable: true
+    });
   });
   return obj;
 }, {}));
 Object.assign(EventTarget.prototype, {
   _legacyOutputDidListenersThrowCheck: undefined,
   /**
-   * @param {CustomOptions} customOptions
-   * @this {EventTarget.prototype}
+   * @param {CustomOptions} [customOptions]
+   * @this {EventTargetInstance}
    * @returns {void}
    */
-  __setOptions: function __setOptions(customOptions) {
-    customOptions = customOptions || {};
+  __setOptions(customOptions) {
+    customOptions ||= {};
     // Todo: Make into event properties?
     this._defaultSync = customOptions.defaultSync;
     this._extraProperties = customOptions.extraProperties || [];
@@ -596,70 +743,74 @@ Object.assign(EventTarget.prototype, {
     }
   },
   /**
-   * @param {ShimEvent} e
-   * @this {EventTarget & {
-   *   _dispatchEvent: (e: ShimEvent|ShimCustomEvent, setTarget: boolean) => boolean,
-  * }}
+   * @param {EventWithProps} e
+   * @this {EventTargetInstance & {
+   *   _dispatchEvent: (e: EventWithProps, setTarget: boolean) => boolean,
+   * }}
    * @returns {boolean}
    */
-  dispatchEvent: function dispatchEvent(e) {
+  dispatchEvent(e) {
     return this._dispatchEvent(e, true);
   },
   /**
    * @param {EventWithProps} e
    * @param {boolean} setTarget
-   * @this {EventTarget.prototype & {
-   *   _earlyListeners: AllListeners,
-   *   _listeners: AllListeners,
-   *   _lateListeners: AllListeners,
-   *   _defaultListeners: AllListeners,
-   * }}
+   * @this {EventTargetInstance}
    * @returns {boolean}
    */
-  _dispatchEvent: function _dispatchEvent(e, setTarget) {
-    var _this2 = this;
-    ['early', '', 'late', 'default'].forEach(function (listenerType) {
-      var arrStr = /** @type {"_earlyListeners"|"_listeners"|"_lateListeners"|"_defaultListeners"} */
+  _dispatchEvent(e, setTarget) {
+    ['early', '', 'late', 'default'].forEach(listenerType => {
+      const arrStr = /** @type {"_earlyListeners"|"_listeners"|"_lateListeners"|"_defaultListeners"} */
       '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
-      if (!_this2[arrStr]) {
-        Object.defineProperty(_this2, arrStr, {
+      if (!Object.hasOwn(this, arrStr)) {
+        Object.defineProperty(this, arrStr, {
           value: {}
         });
       }
     });
-    var _evCfg = evCfg.get(e);
+    let _evCfg = evCfg.get(e);
     if (_evCfg && setTarget && _evCfg._dispatched) {
       // @ts-expect-error It's ok to construct
       throw new ShimDOMException$1('The object is in an invalid state.', 'InvalidStateError');
     }
 
     /** @type {EventWithProps} */
-    var eventCopy;
+    let eventCopy;
     if (_evCfg) {
       eventCopy = e;
     } else {
       eventCopy = copyEvent(e);
-      _evCfg = evCfg.get(eventCopy);
+      _evCfg = getEvCfg(eventCopy);
       _evCfg._dispatched = true;
 
       /** @type {string[]} */
-      this._extraProperties.forEach(function (prop) {
-        if (prop in e) {
+      this._extraProperties.forEach(prop => {
+        if (Reflect.has(e, prop)) {
           /** @type {{[key: string]: any}} */eventCopy[prop] = /** @type {{[key: string]: any}} */e[prop]; // Todo: Put internal to `ShimEvent`?
         }
       });
     }
-    var _eventCopy = eventCopy,
-      type = _eventCopy.type;
+    const {
+      type: rawType
+    } = eventCopy;
+    const type = /** @type {string} */rawType;
+    const cfg = getEvCfg(eventCopy);
+
+    /**
+     * @returns {EventTargetInstance}
+     */
+    function getTarget() {
+      return /** @type {EventTargetInstance} */eventCopy.target;
+    }
 
     /**
      *
      * @returns {void}
      */
     function finishEventDispatch() {
-      _evCfg.eventPhase = phases.NONE;
-      _evCfg.currentTarget = null;
-      delete _evCfg._children;
+      cfg.eventPhase = phases.NONE;
+      cfg.currentTarget = null;
+      delete cfg._children;
     }
     /**
      *
@@ -667,146 +818,166 @@ Object.assign(EventTarget.prototype, {
      */
     function invokeDefaults() {
       // Ignore stopPropagation from defaults
-      _evCfg._stopImmediatePropagation = undefined;
-      _evCfg._stopPropagation = undefined;
+      cfg._stopImmediatePropagation = undefined;
+      cfg._stopPropagation = undefined;
       // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
-      if (!eventCopy.defaultPrevented || !_evCfg.cancelable) {
+      if (!eventCopy.defaultPrevented || !cfg.cancelable) {
         // 2nd check should be redundant
-        _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
-        eventCopy.target.invokeCurrentListeners(eventCopy.target._defaultListeners, eventCopy, type);
+        cfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
+        getTarget().invokeCurrentListeners(/** @type {AllListeners} */getTarget()._defaultListeners, eventCopy, type);
       }
       finishEventDispatch();
     }
-    var continueEventDispatch = function continueEventDispatch() {
+    const continueEventDispatch = () => {
       // Ignore stop propagation of user now
-      _evCfg._stopImmediatePropagation = undefined;
-      _evCfg._stopPropagation = undefined;
-      if (!_this2._defaultSync) {
+      cfg._stopImmediatePropagation = undefined;
+      cfg._stopPropagation = undefined;
+      if (!this._defaultSync) {
         setTimeout(invokeDefaults, 0);
-      } else invokeDefaults();
-      _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
+      } else {
+        invokeDefaults();
+      }
+      cfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
       // Sync default might have stopped
-      if (!_evCfg._stopPropagation) {
-        _evCfg._stopImmediatePropagation = undefined;
-        _evCfg._stopPropagation = undefined;
-        // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
-        eventCopy.target.invokeCurrentListeners(eventCopy.target._lateListeners, eventCopy, type);
+      if (!cfg._stopPropagation) {
+        cfg._stopImmediatePropagation = undefined;
+        cfg._stopPropagation = undefined;
+        // We could allow stopPropagation by only executing upon (cfg._stopPropagation)
+        getTarget().invokeCurrentListeners(/** @type {AllListeners} */getTarget()._lateListeners, eventCopy, type);
       }
       finishEventDispatch();
       return !eventCopy.defaultPrevented;
     };
-    if (setTarget) _evCfg.target = this;
+    if (setTarget) {
+      cfg.target = this;
+    }
     switch ('eventPhase' in eventCopy && eventCopy.eventPhase) {
       case phases.CAPTURING_PHASE:
         {
-          if (_evCfg._stopPropagation) {
+          if (cfg._stopPropagation) {
             return continueEventDispatch();
           }
-          this.invokeCurrentListeners(this._listeners, eventCopy, type);
-          var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
+          this.invokeCurrentListeners(/** @type {AllListeners} */this._listeners, eventCopy, type);
+          const child = cfg._children && cfg._children.length && cfg._children.pop();
           if (!child || child === eventCopy.target) {
-            _evCfg.eventPhase = phases.AT_TARGET;
+            cfg.eventPhase = phases.AT_TARGET;
           }
-          if (child) child._defaultSync = this._defaultSync;
+          if (child) {
+            child._defaultSync = this._defaultSync;
+          }
           return (child || this)._dispatchEvent(eventCopy, false);
         }
       case phases.AT_TARGET:
-        if (_evCfg._stopPropagation) {
+        if (cfg._stopPropagation) {
           return continueEventDispatch();
         }
-        this.invokeCurrentListeners(this._listeners, eventCopy, type, true);
-        if (!_evCfg.bubbles) {
+        this.invokeCurrentListeners(/** @type {AllListeners} */this._listeners, eventCopy, type, true);
+        if (!cfg.bubbles) {
           return continueEventDispatch();
         }
-        _evCfg.eventPhase = phases.BUBBLING_PHASE;
+        cfg.eventPhase = phases.BUBBLING_PHASE;
         return this._dispatchEvent(eventCopy, false);
       case phases.BUBBLING_PHASE:
         {
-          if (_evCfg._stopPropagation) {
+          if (cfg._stopPropagation) {
             return continueEventDispatch();
           }
-          var parent = this.__getParent && this.__getParent();
+          const parent = this.__getParent && this.__getParent();
           if (!parent) {
             return continueEventDispatch();
           }
-          parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
+          parent.invokeCurrentListeners(/** @type {AllListeners} */parent._listeners, eventCopy, type, true);
           parent._defaultSync = this._defaultSync;
           return parent._dispatchEvent(eventCopy, false);
         }
       case phases.NONE:
       default:
         {
-          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
-          this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
+          cfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
+          this.invokeCurrentListeners(/** @type {AllListeners} */this._earlyListeners, eventCopy, type);
           if (!('__getParent' in this)) {
-            _evCfg.eventPhase = phases.AT_TARGET;
+            cfg.eventPhase = phases.AT_TARGET;
             return this._dispatchEvent(eventCopy, false);
           }
 
           /* eslint-disable consistent-this -- Readability */
-          var par = this;
-          var root_ = this;
+          /** @type {EventTargetInstance|null} */
+          let par = this;
+          let root_ = this;
           /* eslint-enable consistent-this -- Readability */
           while (par.__getParent && (par = par.__getParent()) !== null) {
-            if (!_evCfg._children) {
-              _evCfg._children = [];
+            if (!cfg._children) {
+              cfg._children = [];
             }
-            _evCfg._children.push(root_);
+            cfg._children.push(root_);
             root_ = par;
           }
           root_._defaultSync = this._defaultSync;
-          _evCfg.eventPhase = phases.CAPTURING_PHASE;
+          cfg.eventPhase = phases.CAPTURING_PHASE;
           return root_._dispatchEvent(eventCopy, false);
         }
     }
   },
   /**
-   * @type {InvokeCurrentListeners}
-   * @this {EventTarget.prototype & {[key: string]: Listener}}
+   * @param {AllListeners} listeners
+   * @param {EventWithProps} eventCopy
+   * @param {string} type
+   * @param {boolean} [checkOnListeners]
+   * @this {EventTargetInstance}
+   * @returns {boolean}
    */
-  invokeCurrentListeners: function invokeCurrentListeners(listeners, eventCopy, type, checkOnListeners) {
-    var _this3 = this;
-    var _evCfg = evCfg.get(eventCopy);
+  invokeCurrentListeners(listeners, eventCopy, type, checkOnListeners) {
+    const _evCfg = getEvCfg(eventCopy);
     _evCfg.currentTarget = this;
-    var listOpts = getListenersOptions(listeners, type, {});
+    const listOpts = getListenersOptions(listeners, type, {});
     // eslint-disable-next-line unicorn/prefer-spread -- Performance?
-    var listenersByType = listOpts.listenersByType.concat();
-    var dummyIPos = listenersByType.length ? 1 : 0;
-    listenersByType.some(function (listenerObj, i) {
-      var onListener = checkOnListeners ? _this3['on' + type] : null;
-      if (_evCfg._stopImmediatePropagation) return true;
+    const listenersByType = listOpts.listenersByType.concat();
+    const dummyIPos = listenersByType.length ? 1 : 0;
+
+    // eslint-disable-next-line unicorn/no-unused-array-method-return -- Shortcircuiting
+    listenersByType.some((listenerObj, i) => {
+      if (_evCfg._stopImmediatePropagation) {
+        return true;
+      }
+      const onListener = checkOnListeners ? this['on' + type] : null;
       if (i === dummyIPos && typeof onListener === 'function') {
         // We don't splice this in as could be overwritten; executes here per
         //    https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
-        _this3.tryCatch(eventCopy, function () {
-          var ret = onListener.call(eventCopy.currentTarget, eventCopy);
+        this.tryCatch(eventCopy, () => {
+          const ret = onListener.call(eventCopy.currentTarget, eventCopy);
           if (ret === false) {
-            eventCopy.preventDefault();
+            /** @type {() => void} */eventCopy.preventDefault();
           }
         });
       }
-      var options = listenerObj.options;
-      var once = options.once,
-        passive = options.passive,
-        capture = options.capture;
+      const {
+        options
+      } = listenerObj;
+      const {
+        once,
+        passive,
+        capture
+      } = options;
       _evCfg._passive = passive;
       if (capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.CAPTURING_PHASE || eventCopy.eventPhase === phases.AT_TARGET || !capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.BUBBLING_PHASE) {
-        var listener = listenerObj.listener;
-        _this3.tryCatch(eventCopy, function () {
+        const {
+          listener
+        } = listenerObj;
+        this.tryCatch(eventCopy, () => {
           listener.call(eventCopy.currentTarget, eventCopy);
         });
         if (once) {
-          _this3.removeEventListener(type, listener, options);
+          this.removeEventListener(type, listener, options);
         }
       }
       return false;
     });
-    this.tryCatch(eventCopy, function () {
-      var onListener = checkOnListeners ? _this3['on' + type] : null;
+    this.tryCatch(eventCopy, () => {
+      const onListener = checkOnListeners ? this['on' + type] : null;
       if (typeof onListener === 'function' && listenersByType.length < 2) {
-        var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
+        const ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
         if (ret === false) {
-          eventCopy.preventDefault();
+          /** @type {() => void} */eventCopy.preventDefault();
         }
       }
     });
@@ -818,14 +989,14 @@ Object.assign(EventTarget.prototype, {
    * @param {() => void} cb
    * @returns {void}
    */
-  tryCatch: function tryCatch(evt, cb) {
+  tryCatch(evt, cb) {
     /* eslint-enable promise/prefer-await-to-callbacks -- Try-catch */
     try {
       // Per MDN: Exceptions thrown by event handlers are reported
       //    as uncaught exceptions; the event handlers run on a nested
       //    callstack: they block the caller until they complete, but
       //    exceptions do not propagate to the caller.
-      // eslint-disable-next-line promise/prefer-await-to-callbacks, n/callback-return --  Try-catch
+      // eslint-disable-next-line promise/prefer-await-to-callbacks --  Try-catch
       cb();
     } catch (err) {
       this.triggerErrorEvent(err, evt);
@@ -836,24 +1007,21 @@ Object.assign(EventTarget.prototype, {
    * @param {EventWithProps} evt
    * @returns {void}
    */
-  triggerErrorEvent: function triggerErrorEvent(err, evt) {
-    var error = err;
-    if (typeof err === 'string') {
-      error = new Error('Uncaught exception: ' + err);
-    }
-    var triggerGlobalErrorEvent;
-    var useNodeImpl = false;
-    if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || window && (typeof window === "undefined" ? "undefined" : _typeof(window)) === 'object' && !window.dispatchEvent) {
+  triggerErrorEvent(err, evt) {
+    const error = typeof err === 'string' ? new Error('Uncaught exception: ' + err) : err;
+    let triggerGlobalErrorEvent;
+    let useNodeImpl = false;
+    if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || window && typeof window === 'object' && !window.dispatchEvent) {
       useNodeImpl = true;
-      triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
-        setTimeout(function () {
+      triggerGlobalErrorEvent = () => {
+        setTimeout(() => {
           // Node won't be able to catch in this way if we throw in the main thread
           // console.log(err); // Should we auto-log for user?
           throw error; // Let user listen to `process.on('uncaughtException', (err) => {});`
-        });
+        }, 0);
       };
     } else {
-      triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
+      triggerGlobalErrorEvent = () => {
         // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
         //     and https://github.com/w3c/IndexedDB/issues/49
 
@@ -864,7 +1032,7 @@ Object.assign(EventTarget.prototype, {
         //        if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, error.columnNumber, error);
 
         // `ErrorEvent` properly triggers `window.onerror` and `window.addEventListener('error')` handlers
-        var errEv = new ErrorEvent('error', {
+        const errEv = new ErrorEvent('error', {
           error: err,
           message: /** @type {Error} */error.message || '',
           // We can't get the actually useful user's values!
@@ -883,7 +1051,9 @@ Object.assign(EventTarget.prototype, {
     //     <https://github.com/axemclion/IndexedDBShim/issues/280>), we can't
     //     avoid the above Node implementation (which, while providing some
     //     fallback mechanism, is unstable)
-    if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent();
+    if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) {
+      triggerGlobalErrorEvent();
+    }
 
     // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
     //    https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
@@ -896,25 +1066,24 @@ EventTarget.prototype[Symbol.toStringTag] = 'EventTargetPrototype';
 Object.defineProperty(EventTarget, 'prototype', {
   writable: false
 });
-var ShimEventTarget = EventTarget;
-var EventTargetFactory = {
+const ShimEventTarget = EventTarget;
+const EventTargetFactory = {
   /**
-   * @param {CustomOptions} customOptions
+   * @param {CustomOptions} [customOptions]
    * @returns {EventTarget}
    */
-  createInstance: function createInstance(customOptions) {
+  createInstance(customOptions) {
     /* eslint-disable func-name-matching -- Shim vs. Polyfill */
     /* eslint-disable no-shadow -- Polyfill */
     /**
      * @class
-     * @this {typeof ShimEventTarget.prototype}
+     * @this {EventTargetInstance}
      */
-    var ET = /** @type {unknown} */function EventTarget() {
+    const ET = function EventTarget() {
       /* eslint-enable no-shadow -- Polyfill */
       /* eslint-enable func-name-matching -- Shim vs. Polyfill */
       this.__setOptions(customOptions);
     };
-    // @ts-expect-error Casting doesn't work
     ET.prototype = ShimEventTarget.prototype;
     // @ts-expect-error Casting doesn't work
     return new ET();
@@ -932,7 +1101,6 @@ EventTarget.EventTargetFactory = EventTargetFactory;
 function setPrototypeOfCustomEvent() {
   // TODO: IDL needs but reported as slow!
   Object.setPrototypeOf(ShimCustomEvent, /** @type {object} */ShimEvent);
-  // @ts-expect-error How to overcome?
   Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
 }
 
@@ -2264,7 +2432,7 @@ function IDBRequest() {
 }
 
 /**
- * @typedef {IDBRequest & EventTarget & import('eventtargeter').ShimEventTarget & {
+ * @typedef {IDBRequest & EventTarget & import('eventtargeter').EventTargetInstance & {
  *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
  *   __done: boolean,
  *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,
@@ -2289,9 +2457,9 @@ function IDBRequest() {
  * @this {IDBRequestFull}
  */
 IDBRequest.__super = function IDBRequest() {
-  // @ts-expect-error It's ok
+  // @ts-ignore It's ok
   this[Symbol.toStringTag] = 'IDBRequest';
-  // @ts-expect-error Part of `ShimEventTarget`
+  // @ts-ignore Part of `ShimEventTarget`
   this.__setOptions({
     legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
   });
@@ -2413,9 +2581,9 @@ IDBOpenDBRequest.__createInstance = function () {
   function IDBOpenDBRequest() {
     IDBRequest.__super.call(this);
 
-    // @ts-expect-error It's ok
+    // @ts-ignore It's ok
     this[Symbol.toStringTag] = 'IDBOpenDBRequest';
-    // @ts-expect-error It's ok
+    // @ts-ignore It's ok
     this.__setOptions({
       legacyOutputDidListenersThrowFlag: true,
       // Event hook for IndexedB
@@ -4663,13 +4831,16 @@ IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
     return;
   }
   if (me.__transFinishedCb === IDBTransaction.prototype.__transFinishedCb) {
-    // Standard (3-argument) `transaction()` implementations (browser WebSQL,
-    //  `cordova-plugin-sqlite-2`, etc.) never invoke the non-standard 4th
-    //  callback that installs the real `__transFinishedCb`, so waiting for
-    //  it here would defer forever. Detect that via arity and, if it's not
-    //  supported, just call the default (the driver auto-commits on its own).
+    // Standard (3-argument) `transaction()`/`readTransaction()` implementations
+    //  (browser WebSQL, `cordova-plugin-sqlite-2`, etc.) never invoke the
+    //  non-standard 4th callback that installs the real `__transFinishedCb`,
+    //  so waiting for it here would defer forever. Detect that via arity
+    //  (checking whichever of the two methods this transaction's own mode
+    //  actually uses -- see `__executeRequests`) and, if it's not supported,
+    //  just call the default (the driver auto-commits on its own).
     const dbConn = me.db && me.db.__db;
-    const supportsNonstandardTransCb = Boolean(dbConn && typeof dbConn.transaction === 'function' && dbConn.transaction.length >= 4);
+    const dbMethodName = me.mode === 'readonly' ? 'readTransaction' : 'transaction';
+    const supportsNonstandardTransCb = Boolean(dbConn && typeof dbConn[dbMethodName] === 'function' && dbConn[dbMethodName].length >= 4);
     if (!supportsNonstandardTransCb) {
       me.__transFinishedCbFired = true;
       me.__transFinishedCb(err, cb);
@@ -4763,7 +4934,7 @@ IDBTransaction.prototype.__executeRequests = function () {
           return;
         }
       }
-      runContinuationSafely(executeNextRequest);
+      runContinuationSafely(advanceAfterDispatch);
     }
 
     /**
@@ -4793,9 +4964,14 @@ IDBTransaction.prototype.__executeRequests = function () {
       q.req.__done = true;
       q.req.__error = err;
       q.req.__result = undefined; // Must be undefined if an error per `result` getter
-      q.req.addLateEventListener('error', function (e) {
+      q.req.addLateEventListener('error',
+      /**
+       * @param {Event & {__legacyOutputDidListenersThrowError: boolean}} e
+       * @returns {void}
+       */
+      function (e) {
         if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
-          executeNextRequest();
+          advanceAfterDispatch();
         }
       });
       q.req.addDefaultEventListener('error', function () {
@@ -4819,7 +4995,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
         if (me.__committed) {
           // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
-          runContinuationSafely(executeNextRequest);
+          runContinuationSafely(advanceAfterDispatch);
           return;
         }
         me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
@@ -4827,40 +5003,65 @@ IDBTransaction.prototype.__executeRequests = function () {
     }
 
     /**
+     * Sets up `q` for the current queue index and, for a genuine
+     *   request (not one of our internal non-request queue entries),
+     *   deactivates the transaction for the duration of its
+     *   (possibly async) work. Returns `false` if there's nothing to
+     *   do (an already-aborted request).
+     * @returns {boolean}
+     */
+    function prepareNextRequest() {
+      q = me.__requests[i];
+      if (!q.req) {
+        // Non-standard, non-`IDBRequest` queue entries (e.g.
+        //   the internal `onupgradeneeded` dispatch op in
+        //   `IDBFactory.js`) dispatch straight to user code
+        //   without going through `success`/`error` below --
+        //   unlike those, they never restore `__active`/
+        //   `__handlerActive` to `true` before doing so, so
+        //   they rely on the flags being left as they are
+        //   (not reset here).
+        return true;
+      }
+      if (q.req.__done) {
+        // Avoid continuing with aborted requests
+        return false;
+      }
+      // We're now handing off to (possibly async) work for
+      //   this request, so the transaction is no longer active
+      //   until its own `success`/`error` dispatch (below)
+      //   sets these flags again -- a check that happens to
+      //   run during this gap (e.g. `commit()` called from an
+      //   unrelated `setTimeout`) must see the transaction as
+      //   inactive, per spec.
+      me.__active = false;
+      me.__handlerActive = false;
+      return true;
+    }
+
+    /**
      * @returns {void}
      */
-    function runQueuedRequest() {
+    function launchQueuedOp() {
       try {
-        q = me.__requests[i];
         if (!q.req) {
-          // Non-standard, non-`IDBRequest` queue entries (e.g.
-          //   the internal `onupgradeneeded` dispatch op in
-          //   `IDBFactory.js`) dispatch straight to user code
-          //   without going through `success`/`error` below --
-          //   unlike those, they never restore `__active`/
-          //   `__handlerActive` to `true` before doing so, so
-          //   they rely on the flags being left as they are
-          //   (not reset here).
           q.op(tx, q.args, () => runContinuationSafely(executeNextRequest), error);
           return;
         }
-        if (q.req.__done) {
-          // Avoid continuing with aborted requests
-          return;
-        }
-        // We're now handing off to (possibly async) work for
-        //   this request, so the transaction is no longer active
-        //   until its own `success`/`error` dispatch (below)
-        //   sets these flags again -- a check that happens to
-        //   run during this gap (e.g. `commit()` called from an
-        //   unrelated `setTimeout`) must see the transaction as
-        //   inactive, per spec.
-        me.__active = false;
-        me.__handlerActive = false;
         q.op(tx, q.args, success, error, executeNextRequest);
       } catch (e) {
         error(/** @type {Error} */e);
       }
+    }
+
+    /**
+     * @returns {void}
+     */
+    function runQueuedRequest() {
+      if (!prepareNextRequest()) {
+        return;
+      }
+      launchQueuedOp();
     }
 
     /**
@@ -4919,9 +5120,54 @@ IDBTransaction.prototype.__executeRequests = function () {
       i++;
       if (i >= me.__requests.length) {
         checkQueueEntry(10);
-      } else {
-        runQueuedRequest();
+        return;
       }
+      runQueuedRequest();
+    }
+
+    /**
+     * Same as `executeNextRequest`, but used specifically as the
+     *   continuation from a request's own `success`/`error` dispatch
+     *   (see call sites above): gives same-tick microtasks scheduled
+     *   from within that handler (e.g. a plain
+     *   `Promise.resolve().then(...)`) a chance to run -- and still
+     *   observe the transaction as active -- before we deactivate it
+     *   again for the next queued request, per
+     *   https://github.com/w3c/IndexedDB/issues/87.
+     *
+     *   This is safe for `readonly` transactions too only because
+     *   `__executeRequests` now passes a `nonstandardTransCb` to
+     *   `readTransaction()` (matching `.transaction()`) and
+     *   `requestsFinished` defers `readonly` completion through
+     *   `__transactionEndCallback`/`__callTransFinishedCb` the same
+     *   way `readwrite` already did: the WebSQL driver's
+     *   "optimized" `readTransaction` path used to finalize the
+     *   underlying transaction as soon as no further `executeSql`
+     *   call was already in flight or queued, which -- before that
+     *   fix -- meant even a microtask-long gap here would let the
+     *   driver consider the transaction done, silently dropping
+     *   every subsequent queued request (never firing
+     *   `success`/`error` for it at all).
+     * @returns {void}
+     */
+    function advanceAfterDispatch() {
+      if (me.__errored || me.__requestsFinished) {
+        return;
+      }
+      i++;
+      if (i >= me.__requests.length) {
+        checkQueueEntry(10);
+        return;
+      }
+      queueMicrotask(() => {
+        if (me.__errored || me.__requestsFinished) {
+          return;
+        }
+        if (!prepareNextRequest()) {
+          return;
+        }
+        launchQueuedOp();
+      });
     }
     executeNextRequest();
   }, function webSQLError(webSQLErr) {
@@ -4949,10 +5195,22 @@ IDBTransaction.prototype.__executeRequests = function () {
       me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
     }
   }, function (currentTask, err, done, rollback, commit) {
-    if (currentTask.readOnly || err) {
+    if (err) {
       return true;
     }
-    me.__transFinishedCb = function (err, cb) {
+    // `readonly` transactions never hold a real SQL transaction open
+    //   (see `WebSQLTransaction`'s constructor skipping `BEGIN;` for
+    //   them), so there's no commit/rollback round trip to defer --
+    //   `done` itself is the "genuinely finished" signal for them,
+    //   called synchronously once `requestsFinished` (via
+    //   `__callTransFinishedCb`) confirms no further request is
+    //   coming.
+    me.__transFinishedCb = currentTask.readOnly ? function (err, cb) {
+      done(err);
+      if (cb) {
+        cb();
+      }
+    } : function (err, cb) {
       if (err) {
         rollback(err, cb);
       } else {
@@ -5008,7 +5266,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         me.__storeHandles = {};
       }
     }
-    if (me.mode === 'readwrite') {
+    if (me.mode === 'readwrite' || me.mode === 'readonly') {
       if (me.__transactionFinished) {
         complete();
         return;
@@ -5023,12 +5281,12 @@ IDBTransaction.prototype.__executeRequests = function () {
       //   When that happens, its check for `me.__transactionEndCallback`
       //   (not yet set at that earlier time) finds nothing to do and
       //   just returns, so nothing else will ever re-trigger the actual
-      //   commit unless this explicitly does so now.
+      //   commit unless this explicitly does so now. For `readonly`,
+      //   `__transFinishedCb` (installed by the `nonstandardTransCb`
+      //   passed to `readTransaction()`, above) just calls the WebSQL
+      //   driver's own `done` -- there's no real commit/rollback SQL
+      //   step for a `readonly` transaction.
       me.__callTransFinishedCb(me.__errored, complete);
-      return;
-    }
-    if (me.mode === 'readonly') {
-      complete();
       return;
     }
     const ev = /** @type {Event & {complete: () => void}} */
@@ -5642,8 +5900,8 @@ class Typeson {
       {
         sync: c
       } = i,
-      u = {},
-      y = [],
+      y = {},
+      u = [],
       l = [],
       p = [],
       f = !("cyclic" in i) || i.cyclic,
@@ -5652,14 +5910,14 @@ class Typeson {
         encapsulateError: m
       } = i,
       finish = e => {
-        const t = Object.values(u);
+        const t = Object.values(y);
         if (i.iterateNone) return t.length ? t[0] : getJSONType(e);
         if (t.length) {
           if (i.returnTypeNames) return [...new Set(t)];
-          e && isPlainObject(e) && !n(e, "$types") ? e.$types = u : e = {
+          e && isPlainObject(e) && !n(e, "$types") ? e.$types = y : e = {
             $: e,
             $types: {
-              $: u
+              $: y
             }
           };
         } else isObject(e) && n(e, "$types") && (e = {
@@ -5673,10 +5931,10 @@ class Typeson {
         return await Promise.all(r.map(async function (r) {
           const n = [],
             [a] = t.splice(0, 1),
-            [o,, s, i, c, u, y] = a,
-            l = _encapsulate(o, r, s, i, n, true, y),
+            [o,, s, i, c, y, u] = a,
+            l = _encapsulate(o, r, s, i, n, true, u),
             p = hasConstructorOf(l, TypesonPromise);
-          return o && p ? (setOwnEnumerable(c, u, await l.p), checkPromises(e, n)) : (o ? setOwnEnumerable(c, u, l) : e = p ? l.p : l, checkPromises(e, n));
+          return o && p ? (setOwnEnumerable(c, y, await l.p), checkPromises(e, n)) : (o ? setOwnEnumerable(c, y, l) : e = p ? l.p : l, checkPromises(e, n));
         })), e;
       },
       _adaptBuiltinStateObjectProperties = (e, t, r) => {
@@ -5736,11 +5994,11 @@ class Typeson {
         })) : h = t, b && b(), h;
         if (null === t) return b && b(), t;
         if (o && t && "object" == typeof t && !s.iterateIn && !s.iterateUnsetNumeric) {
-          const r = y.indexOf(t);
-          if (-1 !== r) return u[e] = "#", b && b({
+          const r = u.indexOf(t);
+          if (-1 !== r) return y[e] = "#", b && b({
             cyclicKeypath: l[r]
           }), "#" + l[r];
-          true === o && (y.push(t), l.push(e));
+          true === o && (u.push(t), l.push(e));
         }
         const v = isPlainObject(t),
           w = a(t),
@@ -5804,16 +6062,16 @@ class Typeson {
       },
       replace = (e, t, r, n, a, o, s) => {
         const i = a ? this.plainObjectReplacers : this.nonplainObjectReplacers;
-        let y = i.length;
-        for (; y--;) {
-          const a = i[y];
+        let u = i.length;
+        for (; u--;) {
+          const a = i[u];
           if (a.test(t, r)) {
             const {
               type: i
             } = a;
             if (Object.hasOwn(this.revivers, i)) {
-              const t = u[e];
-              u[e] = t ? [i].concat(t) : i;
+              const t = y[e];
+              y[e] = t ? [i].concat(t) : i;
             }
             if (Object.assign(r, {
               type: i,
@@ -5821,14 +6079,14 @@ class Typeson {
             }), (c || !a.replaceAsync) && !a.replace) return s && s({
               typeDetected: true
             }), _encapsulate(e, t, f && "readonly", r, n, o, i);
-            let y;
+            let u;
             if (s && s({
               replacing: true
             }), c || !a.replaceAsync) {
               if (void 0 === a.replace) throw new TypeError("Missing replacer");
-              y = a.replace(t, r);
-            } else y = a.replaceAsync(t, r);
-            return _encapsulate(e, y, f && "readonly", r, n, o, i);
+              u = a.replace(t, r);
+            } else u = a.replaceAsync(t, r);
+            return _encapsulate(e, u, f && "readonly", r, n, o, i);
           }
         }
         return t;
@@ -5873,16 +6131,16 @@ class Typeson {
     if (true === i) return finishRevival(e.$);
     if (!i || "object" != typeof i || Array.isArray(i)) return finishRevival(e);
     const c = [],
-      u = Object.create(null),
-      y = {};
+      y = Object.create(null),
+      u = {};
     let l = true;
     i.$ && isPlainObject(i.$) && (e = e.$, i = i.$, l = false);
     const executeReviver = (e, t) => {
         const [r] = this.revivers[e] ?? [];
         if (!r) throw new Error("Unregistered type: " + e);
         if (s && !("revive" in r)) return t;
-        if (!s && r.reviveAsync) return r.reviveAsync(t, y);
-        if (r.revive) return r.revive(t, y);
+        if (!s && r.reviveAsync) return r.reviveAsync(t, u);
+        if (r.revive) return r.revive(t, u);
         throw new Error("Missing reviver");
       },
       p = [];
@@ -5920,7 +6178,7 @@ class Typeson {
       }, void 0);
     })();
     let d;
-    return hasConstructorOf(f, TypesonPromise) ? d = f.then(() => e) : (d = function _revive(e, t, o, y, f) {
+    return hasConstructorOf(f, TypesonPromise) ? d = f.then(() => e) : (d = function _revive(e, t, o, u, f) {
       if (l && "$types" === e) return;
       const d = p.length,
         m = n(i, e) ? i[e] : void 0,
@@ -5933,18 +6191,18 @@ class Typeson {
           hasConstructorOf(n, TypesonPromise) ? p.push(n.then(e => set(e))) : set(n);
         }), t = a; c.length;) {
           const [[e, t, r, a]] = c,
-            o = n(u, t),
-            s = o ? u[t] : getByKeyPath(e, t);
+            o = n(y, t),
+            s = o ? y[t] : getByKeyPath(e, t);
           if (!o && void 0 === s) break;
           setOwnEnumerable(r, a, s), c.shift();
         }
       }
-      if (!m) return u[e] = t, t;
+      if (!m) return y[e] = t, t;
       if ("#" === m) {
         const e = t.slice(1),
-          r = n(u, e),
-          a = r ? u[e] : getByKeyPath(o, e);
-        return r || void 0 !== a || c.push([o, e, y, f]), a;
+          r = n(y, e),
+          a = r ? y[e] : getByKeyPath(o, e);
+        return r || void 0 !== a || c.push([o, e, u, f]), a;
       }
       const applyType = t => {
         const r = [].concat(m).reduce(function reducer(e, t) {
@@ -5952,7 +6210,7 @@ class Typeson {
           if ("string" != typeof t) throw new TypeError("Bad type JSON");
           return executeReviver(t, e);
         }, t);
-        return hasConstructorOf(r, TypesonPromise) ? r.then(t => (u[e] = t, t)) : (u[e] = r, r);
+        return hasConstructorOf(r, TypesonPromise) ? r.then(t => (y[e] = t, t)) : (y[e] = r, r);
       };
       return !s && p.length > d ? TypesonPromise.all(p.slice(d)).then(() => applyType(t)) : applyType(t);
     }("", e, null), p.length && (d = TypesonPromise.resolve(d).then(e => TypesonPromise.all([e, ...p])).then(([e]) => e))), isThenable(d) ? s && o.throwOnBadSyncType ? (() => {
@@ -6028,8 +6286,8 @@ class Typeson {
 class Undefined {}
 Undefined.__typeson__type__ = "TypesonUndefined";
 const s = ["null", "boolean", "number", "string", "array", "object"];
-for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), u = 0; u < 64; u++) c[i.codePointAt(u)] = u;
-var y = function encode(e, t, r) {
+for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), y = 0; y < 64; y++) c[i.codePointAt(y)] = y;
+var u = function encode(e, t, r) {
     null == r && (r = e.byteLength);
     for (var n = new Uint8Array(e, 0, r), a = n.length, o = "", s = 0; s < a; s += 3) o += i[n[s] >> 2], o += i[(3 & n[s]) << 4 | n[s + 1] >> 4], o += i[(15 & n[s + 1]) << 2 | n[s + 2] >> 6], o += i[63 & n[s + 2]];
     return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
@@ -6042,10 +6300,10 @@ var y = function encode(e, t, r) {
       o,
       s,
       i = .75 * e.length,
-      u = 0;
+      y = 0;
     "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-    for (var y = new ArrayBuffer(i, t), l = new Uint8Array(y), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], a = c[e.codePointAt(p + 1)], o = c[e.codePointAt(p + 2)], s = c[e.codePointAt(p + 3)], l[u++] = n << 2 | a >> 4, l[u++] = (15 & a) << 4 | o >> 2, l[u++] = (3 & o) << 6 | 63 & s;
-    return y;
+    for (var u = new ArrayBuffer(i, t), l = new Uint8Array(u), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], a = c[e.codePointAt(p + 1)], o = c[e.codePointAt(p + 2)], s = c[e.codePointAt(p + 3)], l[y++] = n << 2 | a >> 4, l[y++] = (15 & a) << 4 | o >> 2, l[y++] = (3 & o) << 6 | 63 & s;
+    return u;
   };
 const p = {
     arraybuffer: {
@@ -6056,7 +6314,7 @@ const p = {
         return -1 !== r ? {
           index: r
         } : (t.buffers.push(e), {
-          s: y(e),
+          s: u(e),
           maxByteLength: e.maxByteLength,
           resizable: e.resizable
         });
@@ -6090,13 +6348,13 @@ const p = {
           });
           i.push(r), c += r;
         }
-        const u = new ArrayBuffer(c);
-        let y = 0;
+        const y = new ArrayBuffer(c);
+        let u = 0;
         for (let t = 0; t < s; t++) {
-          const r = new Uint8Array(u, y, i[t]);
+          const r = new Uint8Array(y, u, i[t]);
           e.copyTo(r, {
             planeIndex: t
-          }), y += i[t];
+          }), u += i[t];
         }
         return {
           format: t,
@@ -6104,7 +6362,7 @@ const p = {
           numberOfFrames: n,
           numberOfChannels: a,
           timestamp: o,
-          data: u
+          data: y
         };
       },
       revive: ({
@@ -6220,7 +6478,7 @@ const v = {
           byteOffset: t,
           byteLength: r
         } : (n.buffers.push(e), {
-          encoded: y(e),
+          encoded: u(e),
           maxByteLength: e.maxByteLength,
           resizable: e.resizable,
           byteOffset: t,
@@ -6417,7 +6675,7 @@ const E = {
       })
     }
   },
-  C = {
+  N = {
     error: {
       test: e => "Error" === toStringTag(e),
       replace: ({
@@ -6443,9 +6701,9 @@ const E = {
       }
     }
   },
-  B = {};
+  C = {};
 function create$2(e) {
-  B[e.name.toLowerCase()] = {
+  C[e.name.toLowerCase()] = {
     test: t => hasConstructorOf(t, e),
     replace: ({
       name: e,
@@ -6473,7 +6731,7 @@ function create$2(e) {
   };
 }
 [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(e => create$2(e)), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
-const N = {
+const B = {
     file: {
       test: e => "File" === toStringTag(e),
       replace(e) {
@@ -6511,7 +6769,7 @@ const N = {
     }
   },
   I = {
-    file: N.file,
+    file: B.file,
     filelist: {
       test: e => "FileList" === toStringTag(e),
       replace(e) {
@@ -6629,8 +6887,11 @@ const N = {
     },
     NumberObject: {
       test: e => "Number" === toStringTag(e) && "object" == typeof e,
-      replace: Number,
-      revive: e => new Number(e)
+      replace(e) {
+        const t = e.valueOf();
+        return Number.isNaN(t) ? "NaN" : t === 1 / 0 ? "Infinity" : t === -1 / 0 ? "-Infinity" : Object.is(t, -0) ? "-0" : t;
+      },
+      revive: e => new Number("NaN" === e ? NaN : "Infinity" === e ? 1 / 0 : "-Infinity" === e ? -1 / 0 : "-0" === e ? -0 : e)
     }
   },
   W = {
@@ -6703,7 +6964,7 @@ const X = {};
       } : (n.buffers.push(e), {
         maxByteLength: e.maxByteLength,
         resizable: e.resizable,
-        encoded: y(e),
+        encoded: u(e),
         byteOffset: t,
         length: r
       });
@@ -6718,10 +6979,10 @@ const X = {};
         maxByteLength: i,
         resizable: c
       } = t;
-      let u;
-      return "index" in t ? u = r.buffers[s] : (u = l(o, c ? {
+      let y;
+      return "index" in t ? y = r.buffers[s] : (y = l(o, c ? {
         maxByteLength: i
-      } : void 0), r.buffers.push(u)), new e(u, n, a);
+      } : void 0), r.buffers.push(y)), new e(y, n, a);
     }
   };
 }(e));
@@ -6754,8 +7015,8 @@ const Y = {
               duration: s,
               visibleRect: i,
               displayWidth: c,
-              displayHeight: u,
-              colorSpace: y
+              displayHeight: y,
+              colorSpace: u
             } = e,
             l = new ArrayBuffer(e.allocationSize());
           await e.copyTo(l), t({
@@ -6771,12 +7032,12 @@ const Y = {
               height: i.height
             },
             displayWidth: c,
-            displayHeight: u,
+            displayHeight: y,
             colorSpace: {
-              primaries: y.primaries,
-              transfer: y.transfer,
-              matrix: y.matrix,
-              fullRange: y.fullRange
+              primaries: u.primaries,
+              transfer: u.transfer,
+              matrix: u.matrix,
+              fullRange: u.fullRange
             },
             data: l
           });
@@ -6794,8 +7055,8 @@ const Y = {
         displayWidth: s,
         displayHeight: i,
         colorSpace: c,
-        data: u
-      }) => new VideoFrame(new Uint8Array(u), {
+        data: y
+      }) => new VideoFrame(new Uint8Array(y), {
         format: e,
         codedWidth: t,
         codedHeight: r,
@@ -6848,8 +7109,8 @@ const Y = {
     }
   }],
   ne = [D, M, L, F],
-  ce = [Z, Y, re, K, ne, O, z, U, _, N, I, h, C, B].concat("function" == typeof Map ? k : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
-const ue = ce.concat({
+  ce = [Z, Y, re, K, ne, O, z, U, _, B, I, h, N, C].concat("function" == typeof Map ? k : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
+const ye = ce.concat({
     checkDataCloneException: {
       test(e) {
         const t = {}.toString.call(e).slice(8, -1);
@@ -6869,7 +7130,7 @@ const ue = ce.concat({
 
 // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new Typeson().register(ue);
+let typeson = new Typeson().register(ye);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>
@@ -6878,7 +7139,7 @@ let typeson = new Typeson().register(ue);
  */
 function register(func) {
   // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
-  typeson = new Typeson().register(func(ue));
+  typeson = new Typeson().register(func(ye));
 }
 
 /**
@@ -6936,9 +7197,31 @@ function clone(val) {
   return decode(encode(val));
 }
 
+/**
+ * Per spec, a transaction must appear inactive to any code that runs
+ *   reentrantly *during* the structured clone of a value passed to
+ *   `add()`/`put()`/`IDBCursor#update()` (e.g. a getter on the value being
+ *   stored) -- even though the transaction is otherwise active for the
+ *   duration of that same call. `__active` is restored in a `finally` so a
+ *   `DataCloneError` (or any other throw from `clone()`) can't leave the
+ *   transaction permanently stuck inactive.
+ * @param {{__active: boolean}} transaction
+ * @param {AnyValue} val
+ * @returns {AnyValue}
+ */
+function cloneWithInactiveTransaction(transaction, val) {
+  transaction.__active = false;
+  try {
+    return clone(val);
+  } finally {
+    transaction.__active = true;
+  }
+}
+
 var Sca = /*#__PURE__*/Object.freeze({
   __proto__: null,
   clone: clone,
+  cloneWithInactiveTransaction: cloneWithInactiveTransaction,
   decode: decode,
   encode: encode,
   register: register
@@ -8239,7 +8522,7 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
     // Todo Binary: Avoid blobs loading async to ensure cloning (and errors therein)
     //   occurs sync; then can make cloning and this method without callbacks (except where ok
     //   to be async)
-    const clonedValue = clone(value);
+    const clonedValue = cloneWithInactiveTransaction(/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction, value);
     key = extractKeyValueDecodedFromValueUsingKeyPath(clonedValue, me.keyPath); // May throw so "rethrow"
     if (key.invalid) {
       throw createDOMException('DataError', 'KeyPath was specified, but key was invalid.');
@@ -8270,7 +8553,7 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
   } else {
     convertValueToKeyRethrowingAndIfInvalid(key);
   }
-  const clonedValue = clone(value);
+  const clonedValue = cloneWithInactiveTransaction(/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction, value);
   return [key, clonedValue];
 };
 
@@ -9912,7 +10195,14 @@ IDBFactory.prototype.open = function (name /* , version */) {
               req.__result = connection;
               connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
               req.__done = true;
-              req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished /* , error */) {
+              req.transaction.__addNonRequestToTransactionQueue(
+              /**
+               * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} tx
+               * @param {ObjectArray} args
+               * @param {(result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
+               * @returns {void}
+               */
+              function onupgradeneeded(tx, args, finished /* , error */) {
                 // Unlike ordinary requests, this dispatch doesn't go through
                 //   `IDBTransaction`'s own `success`/`error` closures, so it must
                 //   open/close the transaction's active-handler window itself.
@@ -9928,7 +10218,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
               });
 
               // eslint-disable-next-line camelcase -- Clear API
-              req.transaction.on__beforecomplete = function (ev) {
+              req.transaction.on__beforecomplete =
+              /**
+               * @param {Event & {complete: () => void}} ev
+               * @returns {void}
+               */
+              function (ev) {
                 connection.__upgradeTransaction = null;
                 /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */
                 req.__result.__versionTransaction = null;
@@ -11374,7 +11669,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     // eslint-disable-next-line unicorn/prefer-hoisting-branch-code -- Different
     addToQueue(clonedValue);
   } else {
-    const clonedValue = clone(valueToUpdate);
+    const clonedValue = cloneWithInactiveTransaction(/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.__store.transaction, valueToUpdate);
     addToQueue(clonedValue);
   }
   return request;
@@ -12611,7 +12906,7 @@ class WebSQLTransaction {
  * @typedef {(
  *   currentTask: TransactionTask,
  *   err: Error | null,
- *   done: () => void,
+ *   done: (er?: Error | boolean | null) => void,
  *   rollback: (err: Error | boolean, cb: () => void) => void,
  *   commit: (cb: () => void) => void
  * ) => boolean} NonstandardTransCb
@@ -12796,9 +13091,10 @@ class WebSQLDatabase {
    * @param {(trans: WebSQLTransaction) => void} txnCallback
    * @param {(err: Error) => void} [errorCallback]
    * @param {() => void} [successCallback]
+   * @param {NonstandardTransCb} [nonstandardTransCb]
    */
-  readTransaction(txnCallback, errorCallback, successCallback) {
-    this.#createTransaction(true, txnCallback, errorCallback, successCallback);
+  readTransaction(txnCallback, errorCallback, successCallback, nonstandardTransCb) {
+    this.#createTransaction(true, txnCallback, errorCallback, successCallback, nonstandardTransCb);
   }
 }
 

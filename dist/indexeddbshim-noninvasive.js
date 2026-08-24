@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.0 - 8/23/2026 */
+/*! indexeddbshim - v17.3.0 - 8/24/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -326,14 +326,14 @@
     var i = _toPrimitive(t, "string");
     return "symbol" == typeof i ? i : i + "";
   }
-  function _typeof$1(o) {
+  function _typeof(o) {
     "@babel/helpers - typeof";
 
-    return _typeof$1 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
       return typeof o;
     } : function (o) {
       return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-    }, _typeof$1(o);
+    }, _typeof(o);
   }
   function _unsupportedIterableToArray(r, a) {
     if (r) {
@@ -350,17 +350,6 @@
   // ID_Continue (includes Other_ID_Continue)
   var UnicodeIDContinue = String.raw(_templateObject2$1 || (_templateObject2$1 = _taggedTemplateLiteral(["(?:[$0-9A-Z_a-z\xAA\xB5\xB7\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u037F\u0386-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u052F\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0-\u08B4\u08B6-\u08BD\u08D4-\u08E1\u08E3-\u0963\u0966-\u096F\u0971-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0AF9\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C00-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58-\u0C5A\u0C60-\u0C63\u0C66-\u0C6F\u0C80-\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D01-\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D54-\u0D57\u0D5F-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DE6-\u0DEF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1369-\u1371\u1380-\u138F\u13A0-\u13F5\u13F8-\u13FD\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F8\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191E\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19DA\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1AB0-\u1ABD\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1C80-\u1C88\u1CD0-\u1CD2\u1CD4-\u1CF6\u1CF8\u1CF9\u1D00-\u1DF5\u1DFB-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2118-\u211D\u2124\u2126\u2128\u212A-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FD5\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA7AE\uA7B0-\uA7B7\uA7F7-\uA827\uA840-\uA873\uA880-\uA8C5\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA8FD\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uA9E0-\uA9FE\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uAB30-\uAB5A\uAB5C-\uAB65\uAB70-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE2F\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]|\uD800[\uDC00-\uDC0B\uDC0D-\uDC26\uDC28-\uDC3A\uDC3C\uDC3D\uDC3F-\uDC4D\uDC50-\uDC5D\uDC80-\uDCFA\uDD40-\uDD74\uDDFD\uDE80-\uDE9C\uDEA0-\uDED0\uDEE0\uDF00-\uDF1F\uDF30-\uDF4A\uDF50-\uDF7A\uDF80-\uDF9D\uDFA0-\uDFC3\uDFC8-\uDFCF\uDFD1-\uDFD5]|\uD801[\uDC00-\uDC9D\uDCA0-\uDCA9\uDCB0-\uDCD3\uDCD8-\uDCFB\uDD00-\uDD27\uDD30-\uDD63\uDE00-\uDF36\uDF40-\uDF55\uDF60-\uDF67]|\uD802[\uDC00-\uDC05\uDC08\uDC0A-\uDC35\uDC37\uDC38\uDC3C\uDC3F-\uDC55\uDC60-\uDC76\uDC80-\uDC9E\uDCE0-\uDCF2\uDCF4\uDCF5\uDD00-\uDD15\uDD20-\uDD39\uDD80-\uDDB7\uDDBE\uDDBF\uDE00-\uDE03\uDE05\uDE06\uDE0C-\uDE13\uDE15-\uDE17\uDE19-\uDE33\uDE38-\uDE3A\uDE3F\uDE60-\uDE7C\uDE80-\uDE9C\uDEC0-\uDEC7\uDEC9-\uDEE6\uDF00-\uDF35\uDF40-\uDF55\uDF60-\uDF72\uDF80-\uDF91]|\uD803[\uDC00-\uDC48\uDC80-\uDCB2\uDCC0-\uDCF2]|\uD804[\uDC00-\uDC46\uDC66-\uDC6F\uDC7F-\uDCBA\uDCD0-\uDCE8\uDCF0-\uDCF9\uDD00-\uDD34\uDD36-\uDD3F\uDD50-\uDD73\uDD76\uDD80-\uDDC4\uDDCA-\uDDCC\uDDD0-\uDDDA\uDDDC\uDE00-\uDE11\uDE13-\uDE37\uDE3E\uDE80-\uDE86\uDE88\uDE8A-\uDE8D\uDE8F-\uDE9D\uDE9F-\uDEA8\uDEB0-\uDEEA\uDEF0-\uDEF9\uDF00-\uDF03\uDF05-\uDF0C\uDF0F\uDF10\uDF13-\uDF28\uDF2A-\uDF30\uDF32\uDF33\uDF35-\uDF39\uDF3C-\uDF44\uDF47\uDF48\uDF4B-\uDF4D\uDF50\uDF57\uDF5D-\uDF63\uDF66-\uDF6C\uDF70-\uDF74]|\uD805[\uDC00-\uDC4A\uDC50-\uDC59\uDC80-\uDCC5\uDCC7\uDCD0-\uDCD9\uDD80-\uDDB5\uDDB8-\uDDC0\uDDD8-\uDDDD\uDE00-\uDE40\uDE44\uDE50-\uDE59\uDE80-\uDEB7\uDEC0-\uDEC9\uDF00-\uDF19\uDF1D-\uDF2B\uDF30-\uDF39]|\uD806[\uDCA0-\uDCE9\uDCFF\uDEC0-\uDEF8]|\uD807[\uDC00-\uDC08\uDC0A-\uDC36\uDC38-\uDC40\uDC50-\uDC59\uDC72-\uDC8F\uDC92-\uDCA7\uDCA9-\uDCB6]|\uD808[\uDC00-\uDF99]|\uD809[\uDC00-\uDC6E\uDC80-\uDD43]|[\uD80C\uD81C-\uD820\uD840-\uD868\uD86A-\uD86C\uD86F-\uD872][\uDC00-\uDFFF]|\uD80D[\uDC00-\uDC2E]|\uD811[\uDC00-\uDE46]|\uD81A[\uDC00-\uDE38\uDE40-\uDE5E\uDE60-\uDE69\uDED0-\uDEED\uDEF0-\uDEF4\uDF00-\uDF36\uDF40-\uDF43\uDF50-\uDF59\uDF63-\uDF77\uDF7D-\uDF8F]|\uD81B[\uDF00-\uDF44\uDF50-\uDF7E\uDF8F-\uDF9F\uDFE0]|\uD821[\uDC00-\uDFEC]|\uD822[\uDC00-\uDEF2]|\uD82C[\uDC00\uDC01]|\uD82F[\uDC00-\uDC6A\uDC70-\uDC7C\uDC80-\uDC88\uDC90-\uDC99\uDC9D\uDC9E]|\uD834[\uDD65-\uDD69\uDD6D-\uDD72\uDD7B-\uDD82\uDD85-\uDD8B\uDDAA-\uDDAD\uDE42-\uDE44]|\uD835[\uDC00-\uDC54\uDC56-\uDC9C\uDC9E\uDC9F\uDCA2\uDCA5\uDCA6\uDCA9-\uDCAC\uDCAE-\uDCB9\uDCBB\uDCBD-\uDCC3\uDCC5-\uDD05\uDD07-\uDD0A\uDD0D-\uDD14\uDD16-\uDD1C\uDD1E-\uDD39\uDD3B-\uDD3E\uDD40-\uDD44\uDD46\uDD4A-\uDD50\uDD52-\uDEA5\uDEA8-\uDEC0\uDEC2-\uDEDA\uDEDC-\uDEFA\uDEFC-\uDF14\uDF16-\uDF34\uDF36-\uDF4E\uDF50-\uDF6E\uDF70-\uDF88\uDF8A-\uDFA8\uDFAA-\uDFC2\uDFC4-\uDFCB\uDFCE-\uDFFF]|\uD836[\uDE00-\uDE36\uDE3B-\uDE6C\uDE75\uDE84\uDE9B-\uDE9F\uDEA1-\uDEAF]|\uD838[\uDC00-\uDC06\uDC08-\uDC18\uDC1B-\uDC21\uDC23\uDC24\uDC26-\uDC2A]|\uD83A[\uDC00-\uDCC4\uDCD0-\uDCD6\uDD00-\uDD4A\uDD50-\uDD59]|\uD83B[\uDE00-\uDE03\uDE05-\uDE1F\uDE21\uDE22\uDE24\uDE27\uDE29-\uDE32\uDE34-\uDE37\uDE39\uDE3B\uDE42\uDE47\uDE49\uDE4B\uDE4D-\uDE4F\uDE51\uDE52\uDE54\uDE57\uDE59\uDE5B\uDE5D\uDE5F\uDE61\uDE62\uDE64\uDE67-\uDE6A\uDE6C-\uDE72\uDE74-\uDE77\uDE79-\uDE7C\uDE7E\uDE80-\uDE89\uDE8B-\uDE9B\uDEA1-\uDEA3\uDEA5-\uDEA9\uDEAB-\uDEBB]|\uD869[\uDC00-\uDED6\uDF00-\uDFFF]|\uD86D[\uDC00-\uDF34\uDF40-\uDFFF]|\uD86E[\uDC00-\uDC1D\uDC20-\uDFFF]|\uD873[\uDC00-\uDEA1]|\uD87E[\uDC00-\uDE1D]|\uDB40[\uDD00-\uDDEF])"], ["(?:[$0-9A-Z_a-z\\xAA\\xB5\\xB7\\xBA\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\u02C1\\u02C6-\\u02D1\\u02E0-\\u02E4\\u02EC\\u02EE\\u0300-\\u0374\\u0376\\u0377\\u037A-\\u037D\\u037F\\u0386-\\u038A\\u038C\\u038E-\\u03A1\\u03A3-\\u03F5\\u03F7-\\u0481\\u0483-\\u0487\\u048A-\\u052F\\u0531-\\u0556\\u0559\\u0561-\\u0587\\u0591-\\u05BD\\u05BF\\u05C1\\u05C2\\u05C4\\u05C5\\u05C7\\u05D0-\\u05EA\\u05F0-\\u05F2\\u0610-\\u061A\\u0620-\\u0669\\u066E-\\u06D3\\u06D5-\\u06DC\\u06DF-\\u06E8\\u06EA-\\u06FC\\u06FF\\u0710-\\u074A\\u074D-\\u07B1\\u07C0-\\u07F5\\u07FA\\u0800-\\u082D\\u0840-\\u085B\\u08A0-\\u08B4\\u08B6-\\u08BD\\u08D4-\\u08E1\\u08E3-\\u0963\\u0966-\\u096F\\u0971-\\u0983\\u0985-\\u098C\\u098F\\u0990\\u0993-\\u09A8\\u09AA-\\u09B0\\u09B2\\u09B6-\\u09B9\\u09BC-\\u09C4\\u09C7\\u09C8\\u09CB-\\u09CE\\u09D7\\u09DC\\u09DD\\u09DF-\\u09E3\\u09E6-\\u09F1\\u0A01-\\u0A03\\u0A05-\\u0A0A\\u0A0F\\u0A10\\u0A13-\\u0A28\\u0A2A-\\u0A30\\u0A32\\u0A33\\u0A35\\u0A36\\u0A38\\u0A39\\u0A3C\\u0A3E-\\u0A42\\u0A47\\u0A48\\u0A4B-\\u0A4D\\u0A51\\u0A59-\\u0A5C\\u0A5E\\u0A66-\\u0A75\\u0A81-\\u0A83\\u0A85-\\u0A8D\\u0A8F-\\u0A91\\u0A93-\\u0AA8\\u0AAA-\\u0AB0\\u0AB2\\u0AB3\\u0AB5-\\u0AB9\\u0ABC-\\u0AC5\\u0AC7-\\u0AC9\\u0ACB-\\u0ACD\\u0AD0\\u0AE0-\\u0AE3\\u0AE6-\\u0AEF\\u0AF9\\u0B01-\\u0B03\\u0B05-\\u0B0C\\u0B0F\\u0B10\\u0B13-\\u0B28\\u0B2A-\\u0B30\\u0B32\\u0B33\\u0B35-\\u0B39\\u0B3C-\\u0B44\\u0B47\\u0B48\\u0B4B-\\u0B4D\\u0B56\\u0B57\\u0B5C\\u0B5D\\u0B5F-\\u0B63\\u0B66-\\u0B6F\\u0B71\\u0B82\\u0B83\\u0B85-\\u0B8A\\u0B8E-\\u0B90\\u0B92-\\u0B95\\u0B99\\u0B9A\\u0B9C\\u0B9E\\u0B9F\\u0BA3\\u0BA4\\u0BA8-\\u0BAA\\u0BAE-\\u0BB9\\u0BBE-\\u0BC2\\u0BC6-\\u0BC8\\u0BCA-\\u0BCD\\u0BD0\\u0BD7\\u0BE6-\\u0BEF\\u0C00-\\u0C03\\u0C05-\\u0C0C\\u0C0E-\\u0C10\\u0C12-\\u0C28\\u0C2A-\\u0C39\\u0C3D-\\u0C44\\u0C46-\\u0C48\\u0C4A-\\u0C4D\\u0C55\\u0C56\\u0C58-\\u0C5A\\u0C60-\\u0C63\\u0C66-\\u0C6F\\u0C80-\\u0C83\\u0C85-\\u0C8C\\u0C8E-\\u0C90\\u0C92-\\u0CA8\\u0CAA-\\u0CB3\\u0CB5-\\u0CB9\\u0CBC-\\u0CC4\\u0CC6-\\u0CC8\\u0CCA-\\u0CCD\\u0CD5\\u0CD6\\u0CDE\\u0CE0-\\u0CE3\\u0CE6-\\u0CEF\\u0CF1\\u0CF2\\u0D01-\\u0D03\\u0D05-\\u0D0C\\u0D0E-\\u0D10\\u0D12-\\u0D3A\\u0D3D-\\u0D44\\u0D46-\\u0D48\\u0D4A-\\u0D4E\\u0D54-\\u0D57\\u0D5F-\\u0D63\\u0D66-\\u0D6F\\u0D7A-\\u0D7F\\u0D82\\u0D83\\u0D85-\\u0D96\\u0D9A-\\u0DB1\\u0DB3-\\u0DBB\\u0DBD\\u0DC0-\\u0DC6\\u0DCA\\u0DCF-\\u0DD4\\u0DD6\\u0DD8-\\u0DDF\\u0DE6-\\u0DEF\\u0DF2\\u0DF3\\u0E01-\\u0E3A\\u0E40-\\u0E4E\\u0E50-\\u0E59\\u0E81\\u0E82\\u0E84\\u0E87\\u0E88\\u0E8A\\u0E8D\\u0E94-\\u0E97\\u0E99-\\u0E9F\\u0EA1-\\u0EA3\\u0EA5\\u0EA7\\u0EAA\\u0EAB\\u0EAD-\\u0EB9\\u0EBB-\\u0EBD\\u0EC0-\\u0EC4\\u0EC6\\u0EC8-\\u0ECD\\u0ED0-\\u0ED9\\u0EDC-\\u0EDF\\u0F00\\u0F18\\u0F19\\u0F20-\\u0F29\\u0F35\\u0F37\\u0F39\\u0F3E-\\u0F47\\u0F49-\\u0F6C\\u0F71-\\u0F84\\u0F86-\\u0F97\\u0F99-\\u0FBC\\u0FC6\\u1000-\\u1049\\u1050-\\u109D\\u10A0-\\u10C5\\u10C7\\u10CD\\u10D0-\\u10FA\\u10FC-\\u1248\\u124A-\\u124D\\u1250-\\u1256\\u1258\\u125A-\\u125D\\u1260-\\u1288\\u128A-\\u128D\\u1290-\\u12B0\\u12B2-\\u12B5\\u12B8-\\u12BE\\u12C0\\u12C2-\\u12C5\\u12C8-\\u12D6\\u12D8-\\u1310\\u1312-\\u1315\\u1318-\\u135A\\u135D-\\u135F\\u1369-\\u1371\\u1380-\\u138F\\u13A0-\\u13F5\\u13F8-\\u13FD\\u1401-\\u166C\\u166F-\\u167F\\u1681-\\u169A\\u16A0-\\u16EA\\u16EE-\\u16F8\\u1700-\\u170C\\u170E-\\u1714\\u1720-\\u1734\\u1740-\\u1753\\u1760-\\u176C\\u176E-\\u1770\\u1772\\u1773\\u1780-\\u17D3\\u17D7\\u17DC\\u17DD\\u17E0-\\u17E9\\u180B-\\u180D\\u1810-\\u1819\\u1820-\\u1877\\u1880-\\u18AA\\u18B0-\\u18F5\\u1900-\\u191E\\u1920-\\u192B\\u1930-\\u193B\\u1946-\\u196D\\u1970-\\u1974\\u1980-\\u19AB\\u19B0-\\u19C9\\u19D0-\\u19DA\\u1A00-\\u1A1B\\u1A20-\\u1A5E\\u1A60-\\u1A7C\\u1A7F-\\u1A89\\u1A90-\\u1A99\\u1AA7\\u1AB0-\\u1ABD\\u1B00-\\u1B4B\\u1B50-\\u1B59\\u1B6B-\\u1B73\\u1B80-\\u1BF3\\u1C00-\\u1C37\\u1C40-\\u1C49\\u1C4D-\\u1C7D\\u1C80-\\u1C88\\u1CD0-\\u1CD2\\u1CD4-\\u1CF6\\u1CF8\\u1CF9\\u1D00-\\u1DF5\\u1DFB-\\u1F15\\u1F18-\\u1F1D\\u1F20-\\u1F45\\u1F48-\\u1F4D\\u1F50-\\u1F57\\u1F59\\u1F5B\\u1F5D\\u1F5F-\\u1F7D\\u1F80-\\u1FB4\\u1FB6-\\u1FBC\\u1FBE\\u1FC2-\\u1FC4\\u1FC6-\\u1FCC\\u1FD0-\\u1FD3\\u1FD6-\\u1FDB\\u1FE0-\\u1FEC\\u1FF2-\\u1FF4\\u1FF6-\\u1FFC\\u200C\\u200D\\u203F\\u2040\\u2054\\u2071\\u207F\\u2090-\\u209C\\u20D0-\\u20DC\\u20E1\\u20E5-\\u20F0\\u2102\\u2107\\u210A-\\u2113\\u2115\\u2118-\\u211D\\u2124\\u2126\\u2128\\u212A-\\u2139\\u213C-\\u213F\\u2145-\\u2149\\u214E\\u2160-\\u2188\\u2C00-\\u2C2E\\u2C30-\\u2C5E\\u2C60-\\u2CE4\\u2CEB-\\u2CF3\\u2D00-\\u2D25\\u2D27\\u2D2D\\u2D30-\\u2D67\\u2D6F\\u2D7F-\\u2D96\\u2DA0-\\u2DA6\\u2DA8-\\u2DAE\\u2DB0-\\u2DB6\\u2DB8-\\u2DBE\\u2DC0-\\u2DC6\\u2DC8-\\u2DCE\\u2DD0-\\u2DD6\\u2DD8-\\u2DDE\\u2DE0-\\u2DFF\\u3005-\\u3007\\u3021-\\u302F\\u3031-\\u3035\\u3038-\\u303C\\u3041-\\u3096\\u3099-\\u309F\\u30A1-\\u30FA\\u30FC-\\u30FF\\u3105-\\u312D\\u3131-\\u318E\\u31A0-\\u31BA\\u31F0-\\u31FF\\u3400-\\u4DB5\\u4E00-\\u9FD5\\uA000-\\uA48C\\uA4D0-\\uA4FD\\uA500-\\uA60C\\uA610-\\uA62B\\uA640-\\uA66F\\uA674-\\uA67D\\uA67F-\\uA6F1\\uA717-\\uA71F\\uA722-\\uA788\\uA78B-\\uA7AE\\uA7B0-\\uA7B7\\uA7F7-\\uA827\\uA840-\\uA873\\uA880-\\uA8C5\\uA8D0-\\uA8D9\\uA8E0-\\uA8F7\\uA8FB\\uA8FD\\uA900-\\uA92D\\uA930-\\uA953\\uA960-\\uA97C\\uA980-\\uA9C0\\uA9CF-\\uA9D9\\uA9E0-\\uA9FE\\uAA00-\\uAA36\\uAA40-\\uAA4D\\uAA50-\\uAA59\\uAA60-\\uAA76\\uAA7A-\\uAAC2\\uAADB-\\uAADD\\uAAE0-\\uAAEF\\uAAF2-\\uAAF6\\uAB01-\\uAB06\\uAB09-\\uAB0E\\uAB11-\\uAB16\\uAB20-\\uAB26\\uAB28-\\uAB2E\\uAB30-\\uAB5A\\uAB5C-\\uAB65\\uAB70-\\uABEA\\uABEC\\uABED\\uABF0-\\uABF9\\uAC00-\\uD7A3\\uD7B0-\\uD7C6\\uD7CB-\\uD7FB\\uF900-\\uFA6D\\uFA70-\\uFAD9\\uFB00-\\uFB06\\uFB13-\\uFB17\\uFB1D-\\uFB28\\uFB2A-\\uFB36\\uFB38-\\uFB3C\\uFB3E\\uFB40\\uFB41\\uFB43\\uFB44\\uFB46-\\uFBB1\\uFBD3-\\uFD3D\\uFD50-\\uFD8F\\uFD92-\\uFDC7\\uFDF0-\\uFDFB\\uFE00-\\uFE0F\\uFE20-\\uFE2F\\uFE33\\uFE34\\uFE4D-\\uFE4F\\uFE70-\\uFE74\\uFE76-\\uFEFC\\uFF10-\\uFF19\\uFF21-\\uFF3A\\uFF3F\\uFF41-\\uFF5A\\uFF66-\\uFFBE\\uFFC2-\\uFFC7\\uFFCA-\\uFFCF\\uFFD2-\\uFFD7\\uFFDA-\\uFFDC]|\\uD800[\\uDC00-\\uDC0B\\uDC0D-\\uDC26\\uDC28-\\uDC3A\\uDC3C\\uDC3D\\uDC3F-\\uDC4D\\uDC50-\\uDC5D\\uDC80-\\uDCFA\\uDD40-\\uDD74\\uDDFD\\uDE80-\\uDE9C\\uDEA0-\\uDED0\\uDEE0\\uDF00-\\uDF1F\\uDF30-\\uDF4A\\uDF50-\\uDF7A\\uDF80-\\uDF9D\\uDFA0-\\uDFC3\\uDFC8-\\uDFCF\\uDFD1-\\uDFD5]|\\uD801[\\uDC00-\\uDC9D\\uDCA0-\\uDCA9\\uDCB0-\\uDCD3\\uDCD8-\\uDCFB\\uDD00-\\uDD27\\uDD30-\\uDD63\\uDE00-\\uDF36\\uDF40-\\uDF55\\uDF60-\\uDF67]|\\uD802[\\uDC00-\\uDC05\\uDC08\\uDC0A-\\uDC35\\uDC37\\uDC38\\uDC3C\\uDC3F-\\uDC55\\uDC60-\\uDC76\\uDC80-\\uDC9E\\uDCE0-\\uDCF2\\uDCF4\\uDCF5\\uDD00-\\uDD15\\uDD20-\\uDD39\\uDD80-\\uDDB7\\uDDBE\\uDDBF\\uDE00-\\uDE03\\uDE05\\uDE06\\uDE0C-\\uDE13\\uDE15-\\uDE17\\uDE19-\\uDE33\\uDE38-\\uDE3A\\uDE3F\\uDE60-\\uDE7C\\uDE80-\\uDE9C\\uDEC0-\\uDEC7\\uDEC9-\\uDEE6\\uDF00-\\uDF35\\uDF40-\\uDF55\\uDF60-\\uDF72\\uDF80-\\uDF91]|\\uD803[\\uDC00-\\uDC48\\uDC80-\\uDCB2\\uDCC0-\\uDCF2]|\\uD804[\\uDC00-\\uDC46\\uDC66-\\uDC6F\\uDC7F-\\uDCBA\\uDCD0-\\uDCE8\\uDCF0-\\uDCF9\\uDD00-\\uDD34\\uDD36-\\uDD3F\\uDD50-\\uDD73\\uDD76\\uDD80-\\uDDC4\\uDDCA-\\uDDCC\\uDDD0-\\uDDDA\\uDDDC\\uDE00-\\uDE11\\uDE13-\\uDE37\\uDE3E\\uDE80-\\uDE86\\uDE88\\uDE8A-\\uDE8D\\uDE8F-\\uDE9D\\uDE9F-\\uDEA8\\uDEB0-\\uDEEA\\uDEF0-\\uDEF9\\uDF00-\\uDF03\\uDF05-\\uDF0C\\uDF0F\\uDF10\\uDF13-\\uDF28\\uDF2A-\\uDF30\\uDF32\\uDF33\\uDF35-\\uDF39\\uDF3C-\\uDF44\\uDF47\\uDF48\\uDF4B-\\uDF4D\\uDF50\\uDF57\\uDF5D-\\uDF63\\uDF66-\\uDF6C\\uDF70-\\uDF74]|\\uD805[\\uDC00-\\uDC4A\\uDC50-\\uDC59\\uDC80-\\uDCC5\\uDCC7\\uDCD0-\\uDCD9\\uDD80-\\uDDB5\\uDDB8-\\uDDC0\\uDDD8-\\uDDDD\\uDE00-\\uDE40\\uDE44\\uDE50-\\uDE59\\uDE80-\\uDEB7\\uDEC0-\\uDEC9\\uDF00-\\uDF19\\uDF1D-\\uDF2B\\uDF30-\\uDF39]|\\uD806[\\uDCA0-\\uDCE9\\uDCFF\\uDEC0-\\uDEF8]|\\uD807[\\uDC00-\\uDC08\\uDC0A-\\uDC36\\uDC38-\\uDC40\\uDC50-\\uDC59\\uDC72-\\uDC8F\\uDC92-\\uDCA7\\uDCA9-\\uDCB6]|\\uD808[\\uDC00-\\uDF99]|\\uD809[\\uDC00-\\uDC6E\\uDC80-\\uDD43]|[\\uD80C\\uD81C-\\uD820\\uD840-\\uD868\\uD86A-\\uD86C\\uD86F-\\uD872][\\uDC00-\\uDFFF]|\\uD80D[\\uDC00-\\uDC2E]|\\uD811[\\uDC00-\\uDE46]|\\uD81A[\\uDC00-\\uDE38\\uDE40-\\uDE5E\\uDE60-\\uDE69\\uDED0-\\uDEED\\uDEF0-\\uDEF4\\uDF00-\\uDF36\\uDF40-\\uDF43\\uDF50-\\uDF59\\uDF63-\\uDF77\\uDF7D-\\uDF8F]|\\uD81B[\\uDF00-\\uDF44\\uDF50-\\uDF7E\\uDF8F-\\uDF9F\\uDFE0]|\\uD821[\\uDC00-\\uDFEC]|\\uD822[\\uDC00-\\uDEF2]|\\uD82C[\\uDC00\\uDC01]|\\uD82F[\\uDC00-\\uDC6A\\uDC70-\\uDC7C\\uDC80-\\uDC88\\uDC90-\\uDC99\\uDC9D\\uDC9E]|\\uD834[\\uDD65-\\uDD69\\uDD6D-\\uDD72\\uDD7B-\\uDD82\\uDD85-\\uDD8B\\uDDAA-\\uDDAD\\uDE42-\\uDE44]|\\uD835[\\uDC00-\\uDC54\\uDC56-\\uDC9C\\uDC9E\\uDC9F\\uDCA2\\uDCA5\\uDCA6\\uDCA9-\\uDCAC\\uDCAE-\\uDCB9\\uDCBB\\uDCBD-\\uDCC3\\uDCC5-\\uDD05\\uDD07-\\uDD0A\\uDD0D-\\uDD14\\uDD16-\\uDD1C\\uDD1E-\\uDD39\\uDD3B-\\uDD3E\\uDD40-\\uDD44\\uDD46\\uDD4A-\\uDD50\\uDD52-\\uDEA5\\uDEA8-\\uDEC0\\uDEC2-\\uDEDA\\uDEDC-\\uDEFA\\uDEFC-\\uDF14\\uDF16-\\uDF34\\uDF36-\\uDF4E\\uDF50-\\uDF6E\\uDF70-\\uDF88\\uDF8A-\\uDFA8\\uDFAA-\\uDFC2\\uDFC4-\\uDFCB\\uDFCE-\\uDFFF]|\\uD836[\\uDE00-\\uDE36\\uDE3B-\\uDE6C\\uDE75\\uDE84\\uDE9B-\\uDE9F\\uDEA1-\\uDEAF]|\\uD838[\\uDC00-\\uDC06\\uDC08-\\uDC18\\uDC1B-\\uDC21\\uDC23\\uDC24\\uDC26-\\uDC2A]|\\uD83A[\\uDC00-\\uDCC4\\uDCD0-\\uDCD6\\uDD00-\\uDD4A\\uDD50-\\uDD59]|\\uD83B[\\uDE00-\\uDE03\\uDE05-\\uDE1F\\uDE21\\uDE22\\uDE24\\uDE27\\uDE29-\\uDE32\\uDE34-\\uDE37\\uDE39\\uDE3B\\uDE42\\uDE47\\uDE49\\uDE4B\\uDE4D-\\uDE4F\\uDE51\\uDE52\\uDE54\\uDE57\\uDE59\\uDE5B\\uDE5D\\uDE5F\\uDE61\\uDE62\\uDE64\\uDE67-\\uDE6A\\uDE6C-\\uDE72\\uDE74-\\uDE77\\uDE79-\\uDE7C\\uDE7E\\uDE80-\\uDE89\\uDE8B-\\uDE9B\\uDEA1-\\uDEA3\\uDEA5-\\uDEA9\\uDEAB-\\uDEBB]|\\uD869[\\uDC00-\\uDED6\\uDF00-\\uDFFF]|\\uD86D[\\uDC00-\\uDF34\\uDF40-\\uDFFF]|\\uD86E[\\uDC00-\\uDC1D\\uDC20-\\uDFFF]|\\uD873[\\uDC00-\\uDEA1]|\\uD87E[\\uDC00-\\uDE1D]|\\uDB40[\\uDD00-\\uDDEF])"])));
 
-  function _typeof(obj) {
-    "@babel/helpers - typeof";
-
-    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-      return typeof obj;
-    } : function (obj) {
-      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    }, _typeof(obj);
-  }
-
-  /* eslint-disable n/no-sync -- Want sync naming */
   /* eslint-disable no-restricted-syntax -- Instanceof checks */
   /* eslint-disable unicorn/no-this-assignment -- TS */
 
@@ -384,38 +373,78 @@
    *   legacyOutputDidListenersThrowFlag?: boolean
    * }} CustomOptions
    */
+
+  /**
+   * @typedef {(
+   *   type: string, listener: Listener|{handleEvent: Listener}, options?: boolean|ListenerOptions
+   * ) => void} AddOrRemoveListenerMethod
+   */
+  /**
+   * @typedef {(
+   *   type: string, listener: Listener|{handleEvent: Listener}, options?: boolean|ListenerOptions
+   * ) => boolean} HasListenerMethod
+   */
+
   /**
    * @typedef {{
-   *   __legacyOutputDidListenersThrowError: unknown,
-   *   target: EventTarget & {
-   *     invokeCurrentListeners: InvokeCurrentListeners,
-   *     _earlyListeners: AllListeners,
-   *     _listeners: AllListeners,
-   *     _lateListeners: AllListeners,
-   *     _defaultListeners: AllListeners
-   *   },
-   *   composed: boolean,
-   *   currentTarget: EventTarget,
-   *   eventPhase: 0|1|2|3
-   *   defaultPrevented: boolean,
-   *   type: string,
-   *   bubbles: boolean,
-   *   cancelable: boolean,
-   *   isTrusted: boolean,
-   *   timeStamp: Integer,
-   *   initEvent: (type: string, bubbles: boolean, cancelable: boolean) => void,
-   *   preventDefault: () => void,
-   *   composedPath: () => void,
-   *   detail: any,
-   *   initCustomEvent: (
+   *   _defaultSync?: boolean,
+   *   _extraProperties?: string[],
+   *   _legacyOutputDidListenersThrowCheck?: boolean,
+   *   _earlyListeners?: AllListeners,
+   *   _listeners?: AllListeners,
+   *   _lateListeners?: AllListeners,
+   *   _defaultListeners?: AllListeners,
+   *   _parent?: EventTargetInstance|null,
+   *   __getParent?: () => EventTargetInstance|null,
+   *   tryCatch: (evt: EventWithProps, cb: () => void) => void,
+   *   triggerErrorEvent: (err: unknown, evt: EventWithProps) => void,
+   *   invokeCurrentListeners: InvokeCurrentListeners,
+   *   dispatchEvent: (e: EventWithProps) => boolean,
+   *   _dispatchEvent: (e: EventWithProps, setTarget: boolean) => boolean,
+   *   __setOptions: (customOptions?: CustomOptions) => void,
+   *   addEventListener: AddOrRemoveListenerMethod,
+   *   removeEventListener: AddOrRemoveListenerMethod,
+   *   hasEventListener: HasListenerMethod,
+   *   addEarlyEventListener: AddOrRemoveListenerMethod,
+   *   removeEarlyEventListener: AddOrRemoveListenerMethod,
+   *   hasEarlyEventListener: HasListenerMethod,
+   *   addLateEventListener: AddOrRemoveListenerMethod,
+   *   removeLateEventListener: AddOrRemoveListenerMethod,
+   *   hasLateEventListener: HasListenerMethod,
+   *   addDefaultEventListener: AddOrRemoveListenerMethod,
+   *   removeDefaultEventListener: AddOrRemoveListenerMethod,
+   *   hasDefaultEventListener: HasListenerMethod,
+   *   [key: string]: any
+   * }} EventTargetInstance
+   */
+  /**
+   * @typedef {{
+   *   __legacyOutputDidListenersThrowError?: unknown,
+   *   target?: EventTargetInstance,
+   *   composed?: boolean,
+   *   currentTarget?: EventTargetInstance|null,
+   *   eventPhase?: 0|1|2|3
+   *   defaultPrevented?: boolean,
+   *   type?: string,
+   *   bubbles?: boolean,
+   *   cancelable?: boolean,
+   *   isTrusted?: boolean,
+   *   timeStamp?: Integer,
+   *   initEvent?: (type: string, bubbles: boolean, cancelable: boolean) => void,
+   *   preventDefault?: () => void,
+   *   composedPath?: () => void,
+   *   detail?: any,
+   *   initCustomEvent?: (
    *     type: string, canBubble: boolean, cancelable: boolean,
    *     detail: any
-   *   ) => void
+   *   ) => void,
+   *   [key: string]: any
    * }} EventWithProps
    */
 
   // Todo: Switch to ES6 classes
 
+  /** @type {{NONE: 0, CAPTURING_PHASE: 1, AT_TARGET: 2, BUBBLING_PHASE: 3}} */
   var phases = {
     NONE: 0,
     CAPTURING_PHASE: 1,
@@ -425,7 +454,7 @@
   var ShimDOMException$1 = typeof DOMException === 'undefined'
   // Todo: Better polyfill (if even needed here)
   /* eslint-disable no-shadow -- Polyfill */
-  // eslint-disable-next-line operator-linebreak -- TS/JSDoc needs
+  // eslint-disable-next-line @stylistic/operator-linebreak -- TS/JSDoc needs
   ?
   /**
    * @param {string} msg
@@ -436,35 +465,54 @@
     // No need for `toString` as same as for `Error`
     /* eslint-enable no-shadow -- Polyfill */
     var err = new Error(msg);
-    err.name = name;
+    Object.defineProperty(err, 'name', {
+      value: name,
+      writable: true,
+      configurable: true
+    });
     return err;
   } : DOMException;
+
+  /** @type {WeakMap<object, any>} */
   var ev = new WeakMap();
+  /** @type {WeakMap<object, EventWithProps>} */
   var evCfg = new WeakMap();
+
+  /**
+   * Retrieves the internal config bag for an event known to have already
+   * been registered in `evCfg` (i.e., not the very first, possibly-unset
+   * lookup on an incoming event).
+   * @param {object} key
+   * @returns {EventWithProps}
+   */
+  function getEvCfg(key) {
+    return /** @type {EventWithProps} */evCfg.get(key);
+  }
 
   // Todo: Set _ev argument outside of this function
 
   /* eslint-disable func-name-matching -- Shim vs. Polyfill */
   /* eslint-disable no-shadow -- Polyfilling */
   /**
-  * We use an adapter class rather than a proxy not only for compatibility
-  * but also since we have to clone native event properties anyways in order
-  * to properly set `target`, etc.
-  * The regular DOM method `dispatchEvent` won't work with this polyfill as
-  * it expects a native event.
-  * @class
-  * @param {string} type
-  */
-  var ShimEvent = /** @type {unknown} */function Event(type) {
+   * We use an adapter class rather than a proxy not only for compatibility
+   * but also since we have to clone native event properties anyways in order
+   * to properly set `target`, etc.
+   * The regular DOM method `dispatchEvent` won't work with this polyfill as
+   * it expects a native event.
+   * @class
+   * @param {string} type
+   * @this {EventWithProps}
+   */
+  var ShimEvent = function Event(type) {
     var _this = this;
     /* eslint-enable func-name-matching -- Shim vs. Polyfill */
     /* eslint-enable no-shadow -- Polyfilling */
-    // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
     // @ts-expect-error
     this[Symbol.toStringTag] = 'Event';
     this.toString = function () {
       return '[object Event]';
     };
+    // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
     // eslint-disable-next-line prefer-rest-params -- Don't want to change signature
     var _arguments = Array.prototype.slice.call(arguments),
       evInit = _arguments[1],
@@ -472,8 +520,8 @@
     if (!arguments.length) {
       throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
     }
-    evInit = evInit || {};
-    _ev = _ev || {};
+    evInit || (evInit = {});
+    _ev || (_ev = {});
 
     /** @type {EventWithProps} */
     var _evCfg = {};
@@ -486,19 +534,33 @@
 
     ev.set(this, _ev);
     evCfg.set(this, _evCfg);
-    var that = /** @type {unknown} */this;
-    /** @type {ShimEvent} */
-    that.initEvent(type, evInit.bubbles, evInit.cancelable);
+    /** @type {(type: string, bubbles: boolean, cancelable: boolean) => void} */
+    this.initEvent(type, evInit.bubbles, evInit.cancelable);
     ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].forEach(function (pr) {
       var prop = /** @type {"target"|"currentTarget"|"eventPhase"|"defaultPrevented"} */
       pr;
       Object.defineProperty(_this, prop, {
         get: function get() {
-          return /* prop in _evCfg && */_evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] :
+          return (/* prop in _evCfg && */_evCfg[prop] !== undefined) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] :
           // Defaults
           prop === 'eventPhase' ? 0 : prop === 'defaultPrevented' ? false : null;
         }
       });
+    });
+
+    // Legacy alias of `.defaultPrevented`/`.preventDefault()`; not backed by
+    //   `_evCfg` like the rest since it's derived, not stored.
+    Object.defineProperty(this, 'returnValue', {
+      enumerable: true,
+      configurable: true,
+      get: function get() {
+        return !this.defaultPrevented;
+      },
+      set: function set(val) {
+        if (val === false) {
+          /** @type {() => void} */this.preventDefault();
+        }
+      }
     });
     var props = [
     // Event
@@ -506,7 +568,7 @@
     // Defaults to false
     'isTrusted', 'timeStamp', 'initEvent',
     // Other event properties (not used by our code)
-    'composedPath', 'composed'];
+    'composed'];
     if (this.toString() === '[object CustomEvent]') {
       props.push('detail', 'initCustomEvent');
     }
@@ -521,21 +583,25 @@
       pr;
       obj[prop] = {
         get: function get() {
-          return prop in _evCfg ? _evCfg[prop] : prop in _ev ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
+          return Object.hasOwn(_evCfg, prop) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
         }
       };
       return obj;
     }, /** @type {{[key: string]: any}} */{}));
   };
 
-  // @ts-expect-error Casting doesn't work
-  ShimEvent.prototype.preventDefault = function () {
-    // @ts-expect-error Needed for exporting
+  // Named function expressions (rather than anonymous ones assigned via
+  //   member-expression `=`, which per spec never get an inferred `.name`)
+  //   so `.name` matches the WebIDL operation identifier, e.g. for
+  //   `idlharness.js`'s "property has wrong .name" checks.
+
+  /** @this {EventWithProps} */
+  ShimEvent.prototype.preventDefault = function preventDefault() {
     if (!(this instanceof ShimEvent)) {
       throw new TypeError('Illegal invocation');
     }
     var _ev = ev.get(this);
-    var _evCfg = evCfg.get(this);
+    var _evCfg = getEvCfg(this);
     if (this.cancelable && !_evCfg._passive) {
       _evCfg.defaultPrevented = true;
       if (typeof _ev.preventDefault === 'function') {
@@ -545,46 +611,67 @@
     }
   };
 
-  // @ts-expect-error Casting doesn't work
-  ShimEvent.prototype.stopImmediatePropagation = function () {
-    var _evCfg = evCfg.get(this);
+  /**
+   * A minimal, spec-shaped stand-in: this polyfill doesn't track a full
+   *   ancestor propagation path the way a real DOM event does, so this
+   *   always returns an empty path rather than a genuinely populated one.
+   * @this {EventWithProps}
+   * @returns {EventTargetInstance[]}
+   */
+  ShimEvent.prototype.composedPath = function composedPath() {
+    if (!(this instanceof ShimEvent)) {
+      throw new TypeError('Illegal invocation');
+    }
+    return [];
+  };
+
+  /** @this {EventWithProps} */
+  ShimEvent.prototype.stopImmediatePropagation = function stopImmediatePropagation() {
+    var _evCfg = getEvCfg(this);
     _evCfg._stopImmediatePropagation = true;
   };
 
-  // @ts-expect-error Casting doesn't work
-  ShimEvent.prototype.stopPropagation = function () {
-    var _evCfg = evCfg.get(this);
+  /** @this {EventWithProps} */
+  ShimEvent.prototype.stopPropagation = function stopPropagation() {
+    var _evCfg = getEvCfg(this);
     _evCfg._stopPropagation = true;
   };
 
-  // @ts-expect-error Casting doesn't work
-  ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
-    // Chrome currently has function length 1 only but WebIDL says 3
-    // const bubbles = arguments[1];
-    // const cancelable = arguments[2];
-    var _evCfg = evCfg.get(this);
+  /**
+   * @param {string} type
+   * @param {boolean} [bubbles]
+   * @param {boolean} [cancelable]
+   * @this {EventWithProps}
+   */
+  ShimEvent.prototype.initEvent = function initEvent(type) {
+    var bubbles = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    var cancelable = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+    // WebIDL's optional args (defaulted here) keep `.length` at 1, matching real browsers
+    var _evCfg = getEvCfg(this);
     if (_evCfg._dispatched) {
       return;
     }
-    Object.defineProperty(this, 'type', {
-      enumerable: true,
-      configurable: true,
-      get: function get() {
-        return type;
-      }
-    });
-    Object.defineProperty(this, 'bubbles', {
-      enumerable: true,
-      configurable: true,
-      get: function get() {
-        return bubbles;
-      }
-    });
-    Object.defineProperty(this, 'cancelable', {
-      enumerable: true,
-      configurable: true,
-      get: function get() {
-        return cancelable;
+    Object.defineProperties(this, {
+      type: {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+          return type;
+        }
+      },
+      bubbles: {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+          return bubbles;
+        }
+      },
+      cancelable: {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+          return cancelable;
+        }
       }
     });
     _evCfg.type = type;
@@ -595,42 +682,70 @@
       _evCfg.cancelable = cancelable;
     }
   };
-  ['type', 'target', 'currentTarget'].forEach(function (prop) {
-    // @ts-expect-error Casting doesn't work
+  // These attribute getters exist on the prototype only so idlharness-style
+  //   interface checks find them there (matching real DOM implementations,
+  //   where these are shared prototype accessors, not per-instance ones);
+  //   accessing one directly on the prototype itself (rather than a real
+  //   instance, which shadows these with the working per-instance getters
+  //   set up in the constructor above) throws, same as a real browser's
+  //   native accessor would for an unbound `this`. Each throw-stub's `.name`
+  //   is set explicitly to `"get " + prop` since `{get () {...}}` -- a
+  //   literal `get` key, not `get`-shorthand syntax -- names the function
+  //   `"get"`, not `"get " + prop`.
+  ['type', 'target', 'currentTarget', 'eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp', 'composed'].forEach(function (prop) {
+    var get = function get() {
+      throw new TypeError('Illegal invocation');
+    };
+    Object.defineProperty(get, 'name', {
+      value: 'get ' + prop,
+      configurable: true
+    });
     Object.defineProperty(ShimEvent.prototype, prop, {
       enumerable: true,
       configurable: true,
-      get: function get() {
-        throw new TypeError('Illegal invocation');
-      }
+      get: get
     });
   });
-  ['eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp'].forEach(function (prop) {
-    // @ts-expect-error Casting doesn't work
-    Object.defineProperty(ShimEvent.prototype, prop, {
+  {
+    var get = function get() {
+      throw new TypeError('Illegal invocation');
+    };
+    // Setters are always spec'd with one formal parameter, so `.length`
+    //   must be 1 even though this throws unconditionally.
+    /**
+     * @param {boolean} _val
+     */
+    // eslint-disable-next-line no-unused-vars -- Needed for `.length`
+    var set = function set(_val) {
+      throw new TypeError('Illegal invocation');
+    };
+    Object.defineProperty(get, 'name', {
+      value: 'get returnValue',
+      configurable: true
+    });
+    Object.defineProperty(set, 'name', {
+      value: 'set returnValue',
+      configurable: true
+    });
+    Object.defineProperty(ShimEvent.prototype, 'returnValue', {
       enumerable: true,
       configurable: true,
-      get: function get() {
-        throw new TypeError('Illegal invocation');
-      }
+      get: get,
+      set: set
     });
-  });
+  }
   ['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'].forEach(function (prop, i) {
     Object.defineProperty(ShimEvent, prop, {
       enumerable: true,
       writable: false,
       value: i
     });
-    // @ts-expect-error Casting doesn't work
     Object.defineProperty(ShimEvent.prototype, prop, {
       writable: false,
       value: i
     });
   });
-  // @ts-expect-error Casting doesn't work
   ShimEvent[Symbol.toStringTag] = 'Function';
-
-  // @ts-expect-error Casting doesn't work
   ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
   Object.defineProperty(ShimEvent, 'prototype', {
     writable: false
@@ -641,12 +756,13 @@
   /**
    * @class
    * @param {string} type
+   * @this {EventWithProps}
    */
-  var ShimCustomEvent = /** @type {unknown} */function CustomEvent(type) {
+  var ShimCustomEvent = function CustomEvent(type) {
     /* eslint-enable func-name-matching -- Polyfill */
     /* eslint-enable no-shadow -- Polyfill */
 
-    // eslint-disable-next-line prefer-rest-params -- Keep signature
+    // eslint-disable-next-line prefer-const, prefer-rest-params -- Keep signature
     var _arguments2 = Array.prototype.slice.call(arguments),
       evInit = _arguments2[1],
       _ev = _arguments2[2];
@@ -658,24 +774,32 @@
       return '[object CustomEvent]';
     };
     // var _evCfg = evCfg.get(this);
-    evInit = evInit || {};
+    evInit || (evInit = {});
     // @ts-ignore
     this.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
   };
-  // @ts-expect-error Casting doesn't work
   Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
     enumerable: false,
     writable: true,
     configurable: true,
     value: ShimCustomEvent
   });
-  // @ts-expect-error Casting doesn't work
-  ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
-    // @ts-expect-error Needed for exporting
+  /**
+   * @param {string} type
+   * @param {boolean} [bubbles]
+   * @param {boolean} [cancelable]
+   * @param {any} [detail]
+   * @this {EventWithProps}
+   */
+  ShimCustomEvent.prototype.initCustomEvent = function initCustomEvent(type) {
+    var bubbles = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    var cancelable = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+    var detail = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+    // WebIDL's optional args (defaulted here) keep `.length` at 1
     if (!(this instanceof ShimCustomEvent)) {
       throw new TypeError('Illegal invocation');
     }
-    var _evCfg = evCfg.get(this);
+    var _evCfg = getEvCfg(this);
     // @ts-expect-error Casting doesn't work
     ShimCustomEvent.call(this, type, {
       bubbles: bubbles,
@@ -695,19 +819,22 @@
       }
     });
   };
-  // @ts-expect-error Casting doesn't work
   ShimCustomEvent[Symbol.toStringTag] = 'Function';
-  // @ts-expect-error Casting doesn't work
   ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
-
-  // @ts-expect-error Casting doesn't work
-  Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
-    enumerable: true,
-    configurable: true,
-    get: function get() {
+  {
+    var _get = function _get() {
       throw new TypeError('Illegal invocation');
-    }
-  });
+    };
+    Object.defineProperty(_get, 'name', {
+      value: 'get detail',
+      configurable: true
+    });
+    Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
+      enumerable: true,
+      configurable: true,
+      get: _get
+    });
+  }
   Object.defineProperty(ShimCustomEvent, 'prototype', {
     writable: false
   });
@@ -738,30 +865,30 @@
   }
 
   /**
-  * @typedef {object} ListenerOptions
-  * @property {boolean} [once] Remove listener after invoking once
-  * @property {boolean} [passive] Don't allow `preventDefault`
-  * @property {boolean} [capture] Use `_children` and set `eventPhase`
-  */
+   * @typedef {object} ListenerOptions
+   * @property {boolean} [once] Remove listener after invoking once
+   * @property {boolean} [passive] Don't allow `preventDefault`
+   * @property {boolean} [capture] Use `_children` and set `eventPhase`
+   */
 
   /**
-  * @typedef {object} ListenerAndOptions
-  * @property {Listener} listener
-  * @property {ListenerOptions} options
-  */
+   * @typedef {object} ListenerAndOptions
+   * @property {Listener} listener
+   * @property {ListenerOptions} options
+   */
 
   /**
-  * @typedef {object} ListenerInfo
-  * @property {ListenerAndOptions[]} listenersByTypeOptions
-  * @property {ListenerOptions} options
-  * @property {ListenerAndOptions[]} listenersByType
-  */
+   * @typedef {object} ListenerInfo
+   * @property {ListenerAndOptions[]} listenersByTypeOptions
+   * @property {ListenerOptions} options
+   * @property {ListenerAndOptions[]} listenersByType
+   */
 
   /**
-  * @callback Listener
-  * @param {EventWithProps} e
-  * @returns {boolean}
-  */
+   * @callback Listener
+   * @param {EventWithProps} e
+   * @returns {boolean|void}
+   */
 
   /**
    * Keys are event types.
@@ -783,7 +910,9 @@
    */
   function getListenersOptions(listeners, type, options) {
     var listenersByType = listeners[type];
-    if (listenersByType === undefined) listeners[type] = listenersByType = [];
+    if (listenersByType === undefined) {
+      listeners[type] = listenersByType = [];
+    }
     var opts = typeof options === 'boolean' ? {
       capture: options
     } : options || {};
@@ -812,7 +941,9 @@
       var listenersByType = listenersOptions.listenersByType;
       if (listenersByTypeOptions.some(function (l) {
         return l.listener === listener;
-      })) return;
+      })) {
+        return;
+      }
       listenersByType.push({
         listener: listener,
         options: options
@@ -832,7 +963,9 @@
       listenersByType.some(function (l, i) {
         if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
           listenersByType.splice(i, 1);
-          if (!listenersByType.length) delete listeners[type];
+          if (!listenersByType.length) {
+            delete listeners[type];
+          }
           return true;
         }
         return false;
@@ -858,6 +991,7 @@
   /* eslint-disable no-shadow -- Polyfill */
   /**
    * @class
+   * @throws {TypeError}
    */
   function EventTarget() {
     /* eslint-enable no-shadow -- Polyfill */
@@ -865,10 +999,10 @@
   }
 
   /**
-   * @typedef {"addEarlyEventListener"|"removeEarlyEventListener"|"hasEarlyEventListener"|
-   *   "addEventListener"|"removeEventListener"|"hasEventListener"|
-   *   "addLateEventListener"|"removeLateEventListener"|"hasLateEventListener"|
-   *   "addDefaultEventListener"|"removeDefaultEventListener"|"hasDefaultEventListener"
+   * @typedef {"addEarlyEventListener"|"removeEarlyEventListener"|"hasEarlyEventListener"
+   *   |"addEventListener"|"removeEventListener"|"hasEventListener"
+   *   |"addLateEventListener"|"removeLateEventListener"|"hasLateEventListener"
+   *   |"addDefaultEventListener"|"removeDefaultEventListener"|"hasDefaultEventListener"
    * } ListenerName
    */
   Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (/** @type {{[key: string]: Function}} */
@@ -878,27 +1012,30 @@
       /**
        * @param {string} type
        * @param {Listener|{handleEvent: Listener}} listener
-       * @this {EventTarget & {
-       *   _earlyListeners: AllListeners,
-       *   _listeners: AllListeners,
-       *   _lateListeners: AllListeners,
-       *   _defaultListeners: AllListeners,
-       * }}
+       * @this {EventTargetInstance}
        * @returns {boolean|void}
        */
       obj[mainMethod] = function (type, listener) {
-        // eslint-disable-next-line prefer-rest-params -- Keep signature
-        var options = arguments[2]; // We keep the listener `length` as per WebIDL
-        if (arguments.length < 2) throw new TypeError('2 or more arguments required');
+        if (!(this instanceof EventTarget)) {
+          throw new TypeError('Illegal invocation');
+        }
+        if (arguments.length < 2) {
+          throw new TypeError('2 or more arguments required');
+        }
         if (typeof type !== 'string') {
           // @ts-expect-error It's ok to construct
           throw new ShimDOMException$1('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR');
         }
+        // eslint-disable-next-line prefer-rest-params -- Keep signature
+        var options = arguments[2]; // We keep the listener `length` as per WebIDL
         try {
+          // `listener` is nullable per WebIDL (`EventListener?`), and
+          //   the `in` operator throws for a `null`/non-object RHS,
+          //   so only look for `handleEvent` on an actual object.
           // As per code such as the following, handleEvent may throw,
           //  but is uncaught
           // https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/fire-error-event-exception.html#L54-L56
-          if ('handleEvent' in listener && listener.handleEvent.bind) {
+          if (listener && _typeof(listener) === 'object' && 'handleEvent' in listener && listener.handleEvent.bind) {
             listener = listener.handleEvent.bind(listener);
           }
         } catch (err) {
@@ -907,27 +1044,35 @@
         }
         var arrStr = /** @type {"_earlyListeners"|"_listeners"|"_lateListeners"|"_defaultListeners"} */
         '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
-        if (!this[arrStr]) {
+        if (!Object.hasOwn(this, arrStr)) {
           Object.defineProperty(this, arrStr, {
             value: {}
           });
         }
         var meth = /** @type {"addListener"|"removeListener"|"hasListener"} */
         method + 'Listener';
-        return methods[meth](this[arrStr], /** @type {Listener} */listener, type, options);
+        return methods[meth](/** @type {AllListeners} */this[arrStr], /** @type {Listener} */listener, type, options);
       };
+      // Assigned via a computed (`obj[mainMethod] = ...`) member
+      // expression, so per spec it never gets an inferred `.name` --
+      // matters for idlharness.js's "property has wrong .name" checks on
+      // e.g. `addEventListener`/`removeEventListener`.
+      Object.defineProperty(obj[mainMethod], 'name', {
+        value: mainMethod,
+        configurable: true
+      });
     });
     return obj;
   }, {}));
   Object.assign(EventTarget.prototype, {
     _legacyOutputDidListenersThrowCheck: undefined,
     /**
-     * @param {CustomOptions} customOptions
-     * @this {EventTarget.prototype}
+     * @param {CustomOptions} [customOptions]
+     * @this {EventTargetInstance}
      * @returns {void}
      */
     __setOptions: function __setOptions(customOptions) {
-      customOptions = customOptions || {};
+      customOptions || (customOptions = {});
       // Todo: Make into event properties?
       this._defaultSync = customOptions.defaultSync;
       this._extraProperties = customOptions.extraProperties || [];
@@ -938,10 +1083,10 @@
       }
     },
     /**
-     * @param {ShimEvent} e
-     * @this {EventTarget & {
-     *   _dispatchEvent: (e: ShimEvent|ShimCustomEvent, setTarget: boolean) => boolean,
-    * }}
+     * @param {EventWithProps} e
+     * @this {EventTargetInstance & {
+     *   _dispatchEvent: (e: EventWithProps, setTarget: boolean) => boolean,
+     * }}
      * @returns {boolean}
      */
     dispatchEvent: function dispatchEvent(e) {
@@ -950,12 +1095,7 @@
     /**
      * @param {EventWithProps} e
      * @param {boolean} setTarget
-     * @this {EventTarget.prototype & {
-     *   _earlyListeners: AllListeners,
-     *   _listeners: AllListeners,
-     *   _lateListeners: AllListeners,
-     *   _defaultListeners: AllListeners,
-     * }}
+     * @this {EventTargetInstance}
      * @returns {boolean}
      */
     _dispatchEvent: function _dispatchEvent(e, setTarget) {
@@ -963,7 +1103,7 @@
       ['early', '', 'late', 'default'].forEach(function (listenerType) {
         var arrStr = /** @type {"_earlyListeners"|"_listeners"|"_lateListeners"|"_defaultListeners"} */
         '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
-        if (!_this2[arrStr]) {
+        if (!Object.hasOwn(_this2, arrStr)) {
           Object.defineProperty(_this2, arrStr, {
             value: {}
           });
@@ -981,27 +1121,36 @@
         eventCopy = e;
       } else {
         eventCopy = copyEvent(e);
-        _evCfg = evCfg.get(eventCopy);
+        _evCfg = getEvCfg(eventCopy);
         _evCfg._dispatched = true;
 
         /** @type {string[]} */
         this._extraProperties.forEach(function (prop) {
-          if (prop in e) {
+          if (Reflect.has(e, prop)) {
             /** @type {{[key: string]: any}} */eventCopy[prop] = /** @type {{[key: string]: any}} */e[prop]; // Todo: Put internal to `ShimEvent`?
           }
         });
       }
       var _eventCopy = eventCopy,
-        type = _eventCopy.type;
+        rawType = _eventCopy.type;
+      var type = /** @type {string} */rawType;
+      var cfg = getEvCfg(eventCopy);
+
+      /**
+       * @returns {EventTargetInstance}
+       */
+      function getTarget() {
+        return /** @type {EventTargetInstance} */eventCopy.target;
+      }
 
       /**
        *
        * @returns {void}
        */
       function finishEventDispatch() {
-        _evCfg.eventPhase = phases.NONE;
-        _evCfg.currentTarget = null;
-        delete _evCfg._children;
+        cfg.eventPhase = phases.NONE;
+        cfg.currentTarget = null;
+        delete cfg._children;
       }
       /**
        *
@@ -1009,121 +1158,136 @@
        */
       function invokeDefaults() {
         // Ignore stopPropagation from defaults
-        _evCfg._stopImmediatePropagation = undefined;
-        _evCfg._stopPropagation = undefined;
+        cfg._stopImmediatePropagation = undefined;
+        cfg._stopPropagation = undefined;
         // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
-        if (!eventCopy.defaultPrevented || !_evCfg.cancelable) {
+        if (!eventCopy.defaultPrevented || !cfg.cancelable) {
           // 2nd check should be redundant
-          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
-          eventCopy.target.invokeCurrentListeners(eventCopy.target._defaultListeners, eventCopy, type);
+          cfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
+          getTarget().invokeCurrentListeners(/** @type {AllListeners} */getTarget()._defaultListeners, eventCopy, type);
         }
         finishEventDispatch();
       }
       var continueEventDispatch = function continueEventDispatch() {
         // Ignore stop propagation of user now
-        _evCfg._stopImmediatePropagation = undefined;
-        _evCfg._stopPropagation = undefined;
+        cfg._stopImmediatePropagation = undefined;
+        cfg._stopPropagation = undefined;
         if (!_this2._defaultSync) {
           setTimeout(invokeDefaults, 0);
-        } else invokeDefaults();
-        _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
+        } else {
+          invokeDefaults();
+        }
+        cfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
         // Sync default might have stopped
-        if (!_evCfg._stopPropagation) {
-          _evCfg._stopImmediatePropagation = undefined;
-          _evCfg._stopPropagation = undefined;
-          // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
-          eventCopy.target.invokeCurrentListeners(eventCopy.target._lateListeners, eventCopy, type);
+        if (!cfg._stopPropagation) {
+          cfg._stopImmediatePropagation = undefined;
+          cfg._stopPropagation = undefined;
+          // We could allow stopPropagation by only executing upon (cfg._stopPropagation)
+          getTarget().invokeCurrentListeners(/** @type {AllListeners} */getTarget()._lateListeners, eventCopy, type);
         }
         finishEventDispatch();
         return !eventCopy.defaultPrevented;
       };
-      if (setTarget) _evCfg.target = this;
+      if (setTarget) {
+        cfg.target = this;
+      }
       switch ('eventPhase' in eventCopy && eventCopy.eventPhase) {
         case phases.CAPTURING_PHASE:
           {
-            if (_evCfg._stopPropagation) {
+            if (cfg._stopPropagation) {
               return continueEventDispatch();
             }
-            this.invokeCurrentListeners(this._listeners, eventCopy, type);
-            var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
+            this.invokeCurrentListeners(/** @type {AllListeners} */this._listeners, eventCopy, type);
+            var child = cfg._children && cfg._children.length && cfg._children.pop();
             if (!child || child === eventCopy.target) {
-              _evCfg.eventPhase = phases.AT_TARGET;
+              cfg.eventPhase = phases.AT_TARGET;
             }
-            if (child) child._defaultSync = this._defaultSync;
+            if (child) {
+              child._defaultSync = this._defaultSync;
+            }
             return (child || this)._dispatchEvent(eventCopy, false);
           }
         case phases.AT_TARGET:
-          if (_evCfg._stopPropagation) {
+          if (cfg._stopPropagation) {
             return continueEventDispatch();
           }
-          this.invokeCurrentListeners(this._listeners, eventCopy, type, true);
-          if (!_evCfg.bubbles) {
+          this.invokeCurrentListeners(/** @type {AllListeners} */this._listeners, eventCopy, type, true);
+          if (!cfg.bubbles) {
             return continueEventDispatch();
           }
-          _evCfg.eventPhase = phases.BUBBLING_PHASE;
+          cfg.eventPhase = phases.BUBBLING_PHASE;
           return this._dispatchEvent(eventCopy, false);
         case phases.BUBBLING_PHASE:
           {
-            if (_evCfg._stopPropagation) {
+            if (cfg._stopPropagation) {
               return continueEventDispatch();
             }
             var parent = this.__getParent && this.__getParent();
             if (!parent) {
               return continueEventDispatch();
             }
-            parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
+            parent.invokeCurrentListeners(/** @type {AllListeners} */parent._listeners, eventCopy, type, true);
             parent._defaultSync = this._defaultSync;
             return parent._dispatchEvent(eventCopy, false);
           }
         case phases.NONE:
         default:
           {
-            _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
-            this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
+            cfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
+            this.invokeCurrentListeners(/** @type {AllListeners} */this._earlyListeners, eventCopy, type);
             if (!('__getParent' in this)) {
-              _evCfg.eventPhase = phases.AT_TARGET;
+              cfg.eventPhase = phases.AT_TARGET;
               return this._dispatchEvent(eventCopy, false);
             }
 
             /* eslint-disable consistent-this -- Readability */
+            /** @type {EventTargetInstance|null} */
             var par = this;
             var root_ = this;
             /* eslint-enable consistent-this -- Readability */
             while (par.__getParent && (par = par.__getParent()) !== null) {
-              if (!_evCfg._children) {
-                _evCfg._children = [];
+              if (!cfg._children) {
+                cfg._children = [];
               }
-              _evCfg._children.push(root_);
+              cfg._children.push(root_);
               root_ = par;
             }
             root_._defaultSync = this._defaultSync;
-            _evCfg.eventPhase = phases.CAPTURING_PHASE;
+            cfg.eventPhase = phases.CAPTURING_PHASE;
             return root_._dispatchEvent(eventCopy, false);
           }
       }
     },
     /**
-     * @type {InvokeCurrentListeners}
-     * @this {EventTarget.prototype & {[key: string]: Listener}}
+     * @param {AllListeners} listeners
+     * @param {EventWithProps} eventCopy
+     * @param {string} type
+     * @param {boolean} [checkOnListeners]
+     * @this {EventTargetInstance}
+     * @returns {boolean}
      */
     invokeCurrentListeners: function invokeCurrentListeners(listeners, eventCopy, type, checkOnListeners) {
       var _this3 = this;
-      var _evCfg = evCfg.get(eventCopy);
+      var _evCfg = getEvCfg(eventCopy);
       _evCfg.currentTarget = this;
       var listOpts = getListenersOptions(listeners, type, {});
       // eslint-disable-next-line unicorn/prefer-spread -- Performance?
       var listenersByType = listOpts.listenersByType.concat();
       var dummyIPos = listenersByType.length ? 1 : 0;
+
+      // eslint-disable-next-line unicorn/no-unused-array-method-return -- Shortcircuiting
       listenersByType.some(function (listenerObj, i) {
+        if (_evCfg._stopImmediatePropagation) {
+          return true;
+        }
         var onListener = checkOnListeners ? _this3['on' + type] : null;
-        if (_evCfg._stopImmediatePropagation) return true;
         if (i === dummyIPos && typeof onListener === 'function') {
           // We don't splice this in as could be overwritten; executes here per
           //    https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
           _this3.tryCatch(eventCopy, function () {
             var ret = onListener.call(eventCopy.currentTarget, eventCopy);
             if (ret === false) {
-              eventCopy.preventDefault();
+              /** @type {() => void} */eventCopy.preventDefault();
             }
           });
         }
@@ -1148,7 +1312,7 @@
         if (typeof onListener === 'function' && listenersByType.length < 2) {
           var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
           if (ret === false) {
-            eventCopy.preventDefault();
+            /** @type {() => void} */eventCopy.preventDefault();
           }
         }
       });
@@ -1167,7 +1331,7 @@
         //    as uncaught exceptions; the event handlers run on a nested
         //    callstack: they block the caller until they complete, but
         //    exceptions do not propagate to the caller.
-        // eslint-disable-next-line promise/prefer-await-to-callbacks, n/callback-return --  Try-catch
+        // eslint-disable-next-line promise/prefer-await-to-callbacks --  Try-catch
         cb();
       } catch (err) {
         this.triggerErrorEvent(err, evt);
@@ -1179,10 +1343,7 @@
      * @returns {void}
      */
     triggerErrorEvent: function triggerErrorEvent(err, evt) {
-      var error = err;
-      if (typeof err === 'string') {
-        error = new Error('Uncaught exception: ' + err);
-      }
+      var error = typeof err === 'string' ? new Error('Uncaught exception: ' + err) : err;
       var triggerGlobalErrorEvent;
       var useNodeImpl = false;
       if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || window && (typeof window === "undefined" ? "undefined" : _typeof(window)) === 'object' && !window.dispatchEvent) {
@@ -1192,7 +1353,7 @@
             // Node won't be able to catch in this way if we throw in the main thread
             // console.log(err); // Should we auto-log for user?
             throw error; // Let user listen to `process.on('uncaughtException', (err) => {});`
-          });
+          }, 0);
         };
       } else {
         triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
@@ -1225,7 +1386,9 @@
       //     <https://github.com/axemclion/IndexedDBShim/issues/280>), we can't
       //     avoid the above Node implementation (which, while providing some
       //     fallback mechanism, is unstable)
-      if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent();
+      if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) {
+        triggerGlobalErrorEvent();
+      }
 
       // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
       //    https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
@@ -1241,7 +1404,7 @@
   var ShimEventTarget = EventTarget;
   var EventTargetFactory = {
     /**
-     * @param {CustomOptions} customOptions
+     * @param {CustomOptions} [customOptions]
      * @returns {EventTarget}
      */
     createInstance: function createInstance(customOptions) {
@@ -1249,14 +1412,13 @@
       /* eslint-disable no-shadow -- Polyfill */
       /**
        * @class
-       * @this {typeof ShimEventTarget.prototype}
+       * @this {EventTargetInstance}
        */
-      var ET = /** @type {unknown} */function EventTarget() {
+      var ET = function EventTarget() {
         /* eslint-enable no-shadow -- Polyfill */
         /* eslint-enable func-name-matching -- Shim vs. Polyfill */
         this.__setOptions(customOptions);
       };
-      // @ts-expect-error Casting doesn't work
       ET.prototype = ShimEventTarget.prototype;
       // @ts-expect-error Casting doesn't work
       return new ET();
@@ -1274,7 +1436,6 @@
   function setPrototypeOfCustomEvent() {
     // TODO: IDL needs but reported as slow!
     Object.setPrototypeOf(ShimCustomEvent, /** @type {object} */ShimEvent);
-    // @ts-expect-error How to overcome?
     Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
   }
 
@@ -1700,7 +1861,7 @@
    * @returns {obj is object}
    */
   function isObj(obj) {
-    return obj !== null && _typeof$1(obj) === 'object';
+    return obj !== null && _typeof(obj) === 'object';
   }
 
   /**
@@ -2436,7 +2597,7 @@
     if (!CFG.DEBUG) {
       return;
     }
-    var msg = error && _typeof$1(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
+    var msg = error && _typeof(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
     var method = typeof console.error === 'function' ? 'error' : 'log';
     console[method](name + ': ' + message + '. ' + (msg || ''));
     if (console.trace) {
@@ -2453,7 +2614,7 @@
    * @returns {boolean}
    */
   function isErrorOrDOMErrorOrDOMException(obj) {
-    return obj && _typeof$1(obj) === 'object' &&
+    return obj && _typeof(obj) === 'object' &&
     // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
     typeof obj.name === 'string';
   }
@@ -2602,7 +2763,7 @@
   }
 
   /**
-   * @typedef {IDBRequest & EventTarget & import('eventtargeter').ShimEventTarget & {
+   * @typedef {IDBRequest & EventTarget & import('eventtargeter').EventTargetInstance & {
    *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
    *   __done: boolean,
    *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,
@@ -2628,9 +2789,9 @@
    */
   IDBRequest.__super = function IDBRequest() {
     var _this = this;
-    // @ts-expect-error It's ok
+    // @ts-ignore It's ok
     this[Symbol.toStringTag] = 'IDBRequest';
-    // @ts-expect-error Part of `ShimEventTarget`
+    // @ts-ignore Part of `ShimEventTarget`
     this.__setOptions({
       legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
@@ -2749,9 +2910,9 @@
     function IDBOpenDBRequest() {
       IDBRequest.__super.call(this);
 
-      // @ts-expect-error It's ok
+      // @ts-ignore It's ok
       this[Symbol.toStringTag] = 'IDBOpenDBRequest';
-      // @ts-expect-error It's ok
+      // @ts-ignore It's ok
       this.__setOptions({
         legacyOutputDidListenersThrowFlag: true,
         // Event hook for IndexedB
@@ -3087,11 +3248,11 @@
       // verify that the keys encoded correctly
       var decodedKey1 = _decode(encodedKey1);
       var decodedKey2 = _decode(encodedKey2);
-      if (_typeof$1(first) === 'object') {
+      if (_typeof(first) === 'object') {
         first = JSON.stringify(first);
         decodedKey1 = JSON.stringify(decodedKey1);
       }
-      if (_typeof$1(second) === 'object') {
+      if (_typeof(second) === 'object') {
         second = JSON.stringify(second);
         decodedKey2 = JSON.stringify(decodedKey2);
       }
@@ -3574,7 +3735,7 @@
     if (isBinary(key)) {
       return 'binary';
     }
-    var keyType = _typeof$1(key);
+    var keyType = _typeof(key);
     return ['string', 'number'].includes(keyType) ? (/** @type {"string"|"number"} */keyType) : 'invalid';
   }
 
@@ -3785,7 +3946,7 @@
         {
           // Other `typeof` types which are not valid keys:
           //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function'
-          var _type = input === null ? 'null' : _typeof$1(input); // Convert `null` for convenience of consumers in reporting errors
+          var _type = input === null ? 'null' : _typeof(input); // Convert `null` for convenience of consumers in reporting errors
           return {
             type: _type,
             invalid: true,
@@ -5069,13 +5230,16 @@
       return;
     }
     if (me.__transFinishedCb === IDBTransaction.prototype.__transFinishedCb) {
-      // Standard (3-argument) `transaction()` implementations (browser WebSQL,
-      //  `cordova-plugin-sqlite-2`, etc.) never invoke the non-standard 4th
-      //  callback that installs the real `__transFinishedCb`, so waiting for
-      //  it here would defer forever. Detect that via arity and, if it's not
-      //  supported, just call the default (the driver auto-commits on its own).
+      // Standard (3-argument) `transaction()`/`readTransaction()` implementations
+      //  (browser WebSQL, `cordova-plugin-sqlite-2`, etc.) never invoke the
+      //  non-standard 4th callback that installs the real `__transFinishedCb`,
+      //  so waiting for it here would defer forever. Detect that via arity
+      //  (checking whichever of the two methods this transaction's own mode
+      //  actually uses -- see `__executeRequests`) and, if it's not supported,
+      //  just call the default (the driver auto-commits on its own).
       var dbConn = me.db && me.db.__db;
-      var supportsNonstandardTransCb = Boolean(dbConn && typeof dbConn.transaction === 'function' && dbConn.transaction.length >= 4);
+      var dbMethodName = me.mode === 'readonly' ? 'readTransaction' : 'transaction';
+      var supportsNonstandardTransCb = Boolean(dbConn && typeof dbConn[dbMethodName] === 'function' && dbConn[dbMethodName].length >= 4);
       if (!supportsNonstandardTransCb) {
         me.__transFinishedCbFired = true;
         me.__transFinishedCb(err, cb);
@@ -5169,7 +5333,7 @@
             return;
           }
         }
-        runContinuationSafely(executeNextRequest);
+        runContinuationSafely(advanceAfterDispatch);
       }
 
       /**
@@ -5202,9 +5366,14 @@
         q.req.__done = true;
         q.req.__error = err;
         q.req.__result = undefined; // Must be undefined if an error per `result` getter
-        q.req.addLateEventListener('error', function (e) {
+        q.req.addLateEventListener('error',
+        /**
+         * @param {Event & {__legacyOutputDidListenersThrowError: boolean}} e
+         * @returns {void}
+         */
+        function (e) {
           if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
-            executeNextRequest();
+            advanceAfterDispatch();
           }
         });
         q.req.addDefaultEventListener('error', function () {
@@ -5228,7 +5397,7 @@
           e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
           if (me.__committed) {
             // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
-            runContinuationSafely(executeNextRequest);
+            runContinuationSafely(advanceAfterDispatch);
             return;
           }
           me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
@@ -5236,42 +5405,67 @@
       }
 
       /**
+       * Sets up `q` for the current queue index and, for a genuine
+       *   request (not one of our internal non-request queue entries),
+       *   deactivates the transaction for the duration of its
+       *   (possibly async) work. Returns `false` if there's nothing to
+       *   do (an already-aborted request).
+       * @returns {boolean}
+       */
+      function prepareNextRequest() {
+        q = me.__requests[i];
+        if (!q.req) {
+          // Non-standard, non-`IDBRequest` queue entries (e.g.
+          //   the internal `onupgradeneeded` dispatch op in
+          //   `IDBFactory.js`) dispatch straight to user code
+          //   without going through `success`/`error` below --
+          //   unlike those, they never restore `__active`/
+          //   `__handlerActive` to `true` before doing so, so
+          //   they rely on the flags being left as they are
+          //   (not reset here).
+          return true;
+        }
+        if (q.req.__done) {
+          // Avoid continuing with aborted requests
+          return false;
+        }
+        // We're now handing off to (possibly async) work for
+        //   this request, so the transaction is no longer active
+        //   until its own `success`/`error` dispatch (below)
+        //   sets these flags again -- a check that happens to
+        //   run during this gap (e.g. `commit()` called from an
+        //   unrelated `setTimeout`) must see the transaction as
+        //   inactive, per spec.
+        me.__active = false;
+        me.__handlerActive = false;
+        return true;
+      }
+
+      /**
        * @returns {void}
        */
-      function runQueuedRequest() {
+      function launchQueuedOp() {
         try {
-          q = me.__requests[i];
           if (!q.req) {
-            // Non-standard, non-`IDBRequest` queue entries (e.g.
-            //   the internal `onupgradeneeded` dispatch op in
-            //   `IDBFactory.js`) dispatch straight to user code
-            //   without going through `success`/`error` below --
-            //   unlike those, they never restore `__active`/
-            //   `__handlerActive` to `true` before doing so, so
-            //   they rely on the flags being left as they are
-            //   (not reset here).
             q.op(tx, q.args, function () {
               return runContinuationSafely(executeNextRequest);
             }, error);
             return;
           }
-          if (q.req.__done) {
-            // Avoid continuing with aborted requests
-            return;
-          }
-          // We're now handing off to (possibly async) work for
-          //   this request, so the transaction is no longer active
-          //   until its own `success`/`error` dispatch (below)
-          //   sets these flags again -- a check that happens to
-          //   run during this gap (e.g. `commit()` called from an
-          //   unrelated `setTimeout`) must see the transaction as
-          //   inactive, per spec.
-          me.__active = false;
-          me.__handlerActive = false;
           q.op(tx, q.args, success, error, executeNextRequest);
         } catch (e) {
           error(/** @type {Error} */e);
         }
+      }
+
+      /**
+       * @returns {void}
+       */
+      function runQueuedRequest() {
+        if (!prepareNextRequest()) {
+          return;
+        }
+        launchQueuedOp();
       }
 
       /**
@@ -5330,9 +5524,54 @@
         i++;
         if (i >= me.__requests.length) {
           checkQueueEntry(10);
-        } else {
-          runQueuedRequest();
+          return;
         }
+        runQueuedRequest();
+      }
+
+      /**
+       * Same as `executeNextRequest`, but used specifically as the
+       *   continuation from a request's own `success`/`error` dispatch
+       *   (see call sites above): gives same-tick microtasks scheduled
+       *   from within that handler (e.g. a plain
+       *   `Promise.resolve().then(...)`) a chance to run -- and still
+       *   observe the transaction as active -- before we deactivate it
+       *   again for the next queued request, per
+       *   https://github.com/w3c/IndexedDB/issues/87.
+       *
+       *   This is safe for `readonly` transactions too only because
+       *   `__executeRequests` now passes a `nonstandardTransCb` to
+       *   `readTransaction()` (matching `.transaction()`) and
+       *   `requestsFinished` defers `readonly` completion through
+       *   `__transactionEndCallback`/`__callTransFinishedCb` the same
+       *   way `readwrite` already did: the WebSQL driver's
+       *   "optimized" `readTransaction` path used to finalize the
+       *   underlying transaction as soon as no further `executeSql`
+       *   call was already in flight or queued, which -- before that
+       *   fix -- meant even a microtask-long gap here would let the
+       *   driver consider the transaction done, silently dropping
+       *   every subsequent queued request (never firing
+       *   `success`/`error` for it at all).
+       * @returns {void}
+       */
+      function advanceAfterDispatch() {
+        if (me.__errored || me.__requestsFinished) {
+          return;
+        }
+        i++;
+        if (i >= me.__requests.length) {
+          checkQueueEntry(10);
+          return;
+        }
+        queueMicrotask(function () {
+          if (me.__errored || me.__requestsFinished) {
+            return;
+          }
+          if (!prepareNextRequest()) {
+            return;
+          }
+          launchQueuedOp();
+        });
       }
       executeNextRequest();
     }, function webSQLError(webSQLErr) {
@@ -5360,10 +5599,22 @@
         me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
       }
     }, function (currentTask, err, done, rollback, commit) {
-      if (currentTask.readOnly || err) {
+      if (err) {
         return true;
       }
-      me.__transFinishedCb = function (err, cb) {
+      // `readonly` transactions never hold a real SQL transaction open
+      //   (see `WebSQLTransaction`'s constructor skipping `BEGIN;` for
+      //   them), so there's no commit/rollback round trip to defer --
+      //   `done` itself is the "genuinely finished" signal for them,
+      //   called synchronously once `requestsFinished` (via
+      //   `__callTransFinishedCb`) confirms no further request is
+      //   coming.
+      me.__transFinishedCb = currentTask.readOnly ? function (err, cb) {
+        done(err);
+        if (cb) {
+          cb();
+        }
+      } : function (err, cb) {
         if (err) {
           rollback(err, cb);
         } else {
@@ -5419,7 +5670,7 @@
           me.__storeHandles = {};
         }
       }
-      if (me.mode === 'readwrite') {
+      if (me.mode === 'readwrite' || me.mode === 'readonly') {
         if (me.__transactionFinished) {
           complete();
           return;
@@ -5434,12 +5685,12 @@
         //   When that happens, its check for `me.__transactionEndCallback`
         //   (not yet set at that earlier time) finds nothing to do and
         //   just returns, so nothing else will ever re-trigger the actual
-        //   commit unless this explicitly does so now.
+        //   commit unless this explicitly does so now. For `readonly`,
+        //   `__transFinishedCb` (installed by the `nonstandardTransCb`
+        //   passed to `readTransaction()`, above) just calls the WebSQL
+        //   driver's own `done` -- there's no real commit/rollback SQL
+        //   step for a `readonly` transaction.
         me.__callTransFinishedCb(me.__errored, complete);
-        return;
-      }
-      if (me.mode === 'readonly') {
-        complete();
         return;
       }
       var ev = /** @type {Event & {complete: () => void}} */
@@ -5912,7 +6163,7 @@
     return Object.prototype.toString.call(e).slice(8, -1);
   }
   function hasConstructorOf(r, n) {
-    if (!r || "object" != _typeof$1(r)) return false;
+    if (!r || "object" != _typeof(r)) return false;
     var a = t(r);
     if (!a) return null === n;
     var o = e(a, "constructor") && a.constructor;
@@ -5927,7 +6178,7 @@
     return !r || hasConstructorOf(e, Object) || isUserObject(r);
   }
   function isObject(e) {
-    return null !== e && "object" == _typeof$1(e);
+    return null !== e && "object" == _typeof(e);
   }
   function escapeKeyPathComponent(e) {
     return e.replaceAll("''", "''''").replace(/^$/, "''").replaceAll("~", "~0").replaceAll(".", "~1");
@@ -5937,7 +6188,7 @@
   }
   function getByKeyPath(t, r, n) {
     if ("" === r) return t;
-    if (null === t || "object" != _typeof$1(t)) throw new TypeError("Unexpected non-object type");
+    if (null === t || "object" != _typeof(t)) throw new TypeError("Unexpected non-object type");
     var a = r.indexOf("."),
       o = unescapeKeyPathComponent(-1 === a ? r : r.slice(0, a));
     if (e(t, o)) {
@@ -5953,7 +6204,7 @@
     var o = t,
       s = r;
     for (;;) {
-      if (!o || "object" != _typeof$1(o)) throw new TypeError("Unexpected non-object type");
+      if (!o || "object" != _typeof(o)) throw new TypeError("Unexpected non-object type");
       var _r = s.indexOf("."),
         _i = unescapeKeyPathComponent(-1 === _r ? s : s.slice(0, _r));
       if ("__proto__" === _i) throw new TypeError("Invalid property");
@@ -5963,7 +6214,7 @@
     }
   }
   function getJSONType(e) {
-    return null === e ? "null" : Array.isArray(e) ? "array" : _typeof$1(e);
+    return null === e ? "null" : Array.isArray(e) ? "array" : _typeof(e);
   }
   /**
    * @file Typeson - JSON with types.
@@ -6072,22 +6323,22 @@
             sync: true
           }, this.options), s),
           c = i.sync,
-          u = {},
-          y = [],
+          y = {},
+          u = [],
           l = [],
           p = [],
           f = !("cyclic" in i) || i.cyclic,
           d = i.encapsulateObserver,
           m = i.encapsulateError,
           finish = function finish(e) {
-            var t = Object.values(u);
+            var t = Object.values(y);
             if (i.iterateNone) return t.length ? t[0] : getJSONType(e);
             if (t.length) {
               if (i.returnTypeNames) return _toConsumableArray(new Set(t));
-              e && isPlainObject(e) && !n(e, "$types") ? e.$types = u : e = {
+              e && isPlainObject(e) && !n(e, "$types") ? e.$types = y : e = {
                 $: e,
                 $types: {
-                  $: u
+                  $: y
                 }
               };
             } else isObject(e) && n(e, "$types") && (e = {
@@ -6111,18 +6362,18 @@
                     _context2.n = 2;
                     return Promise.all(r.map(/*#__PURE__*/function () {
                       var _ref = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(r) {
-                        var n, _t$splice, _t$splice2, a, _a, o, s, i, c, u, y, l, p, _t, _t2, _t3, _t4;
+                        var n, _t$splice, _t$splice2, a, _a, o, s, i, c, y, u, l, p, _t, _t2, _t3, _t4;
                         return _regenerator().w(function (_context) {
                           while (1) switch (_context.n) {
                             case 0:
-                              n = [], _t$splice = t.splice(0, 1), _t$splice2 = _slicedToArray(_t$splice, 1), a = _t$splice2[0], _a = _slicedToArray(a, 7), o = _a[0], s = _a[2], i = _a[3], c = _a[4], u = _a[5], y = _a[6], l = _encapsulate2(o, r, s, i, n, true, y), p = hasConstructorOf(l, TypesonPromise);
+                              n = [], _t$splice = t.splice(0, 1), _t$splice2 = _slicedToArray(_t$splice, 1), a = _t$splice2[0], _a = _slicedToArray(a, 7), o = _a[0], s = _a[2], i = _a[3], c = _a[4], y = _a[5], u = _a[6], l = _encapsulate2(o, r, s, i, n, true, u), p = hasConstructorOf(l, TypesonPromise);
                               if (!(o && p)) {
                                 _context.n = 2;
                                 break;
                               }
                               _t2 = setOwnEnumerable;
                               _t3 = c;
-                              _t4 = u;
+                              _t4 = y;
                               _context.n = 1;
                               return l.p;
                             case 1:
@@ -6131,7 +6382,7 @@
                               _context.n = 3;
                               break;
                             case 2:
-                              _t = (o ? setOwnEnumerable(c, u, l) : e = p ? l.p : l, _checkPromises(e, n));
+                              _t = (o ? setOwnEnumerable(c, y, l) : e = p ? l.p : l, _checkPromises(e, n));
                             case 3:
                               return _context.a(2, _t);
                           }
@@ -6205,16 +6456,16 @@
                   throw n;
                 }
               };
-            if (["string", "boolean", "number", "undefined"].includes(_typeof$1(t))) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (h = s.replaced ? t : replace(e, t, s, c, false, p, b), h !== t && (g = {
+            if (["string", "boolean", "number", "undefined"].includes(_typeof(t))) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (h = s.replaced ? t : replace(e, t, s, c, false, p, b), h !== t && (g = {
               replaced: h
             })) : h = t, b && b(), h;
             if (null === t) return b && b(), t;
-            if (o && t && "object" == _typeof$1(t) && !s.iterateIn && !s.iterateUnsetNumeric) {
-              var _r2 = y.indexOf(t);
-              if (-1 !== _r2) return u[e] = "#", b && b({
+            if (o && t && "object" == _typeof(t) && !s.iterateIn && !s.iterateUnsetNumeric) {
+              var _r2 = u.indexOf(t);
+              if (-1 !== _r2) return y[e] = "#", b && b({
                 cyclicKeypath: l[_r2]
               }), "#" + l[_r2];
-              true === o && (y.push(t), l.push(e));
+              true === o && (u.push(t), l.push(e));
             }
             var v = isPlainObject(t),
               w = a(t),
@@ -6224,7 +6475,7 @@
               replaced: O
             }) : "" === e && hasConstructorOf(t, TypesonPromise) ? (c.push([e, t, o, s, void 0, void 0, s.type]), h = t) : w && "object" !== s.iterateIn || "array" === s.iterateIn ? (A = new Array(t.length), g = {
               clone: A
-            }) : !v && ("object" != _typeof$1(t) || "toJSON" in t || hasConstructorOf(t, TypesonPromise) || hasConstructorOf(t, Promise) || hasConstructorOf(t, ArrayBuffer)) && "object" !== s.iterateIn ? h = t : (A = {}, s.addLength && (A.length = t.length), g = {
+            }) : !v && ("object" != _typeof(t) || "toJSON" in t || hasConstructorOf(t, TypesonPromise) || hasConstructorOf(t, Promise) || hasConstructorOf(t, ArrayBuffer)) && "object" !== s.iterateIn ? h = t : (A = {}, s.addLength && (A.length = t.length), g = {
               clone: A
             }), b && b(), i.iterateNone) return A !== null && A !== void 0 ? A : h;
             if (!A) return h;
@@ -6284,14 +6535,14 @@
           },
           replace = function replace(e, t, r, n, a, o, s) {
             var i = a ? _this2.plainObjectReplacers : _this2.nonplainObjectReplacers;
-            var y = i.length;
-            for (; y--;) {
-              var _a3 = i[y];
+            var u = i.length;
+            for (; u--;) {
+              var _a3 = i[u];
               if (_a3.test(t, r)) {
                 var _i2 = _a3.type;
                 if (Object.hasOwn(_this2.revivers, _i2)) {
-                  var _t5 = u[e];
-                  u[e] = _t5 ? [_i2].concat(_t5) : _i2;
+                  var _t5 = y[e];
+                  y[e] = _t5 ? [_i2].concat(_t5) : _i2;
                 }
                 if (Object.assign(r, {
                   type: _i2,
@@ -6299,14 +6550,14 @@
                 }), (c || !_a3.replaceAsync) && !_a3.replace) return s && s({
                   typeDetected: true
                 }), _encapsulate2(e, t, f && "readonly", r, n, o, _i2);
-                var _y = void 0;
+                var _u = void 0;
                 if (s && s({
                   replacing: true
                 }), c || !_a3.replaceAsync) {
                   if (void 0 === _a3.replace) throw new TypeError("Missing replacer");
-                  _y = _a3.replace(t, r);
-                } else _y = _a3.replaceAsync(t, r);
-                return _encapsulate2(e, _y, f && "readonly", r, n, o, _i2);
+                  _u = _a3.replace(t, r);
+                } else _u = _a3.replaceAsync(t, r);
+                return _encapsulate2(e, _u, f && "readonly", r, n, o, _i2);
               }
             }
             return t;
@@ -6349,13 +6600,13 @@
           if (o.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
           return Promise.resolve(e);
         }
-        if (!e || "object" != _typeof$1(e) || Array.isArray(e)) return finishRevival(e);
+        if (!e || "object" != _typeof(e) || Array.isArray(e)) return finishRevival(e);
         var i = e.$types;
         if (true === i) return finishRevival(e.$);
-        if (!i || "object" != _typeof$1(i) || Array.isArray(i)) return finishRevival(e);
+        if (!i || "object" != _typeof(i) || Array.isArray(i)) return finishRevival(e);
         var c = [],
-          u = Object.create(null),
-          y = {};
+          y = Object.create(null),
+          u = {};
         var l = true;
         i.$ && isPlainObject(i.$) && (e = e.$, i = i.$, l = false);
         var executeReviver = function executeReviver(e, t) {
@@ -6365,8 +6616,8 @@
               r = _ref5[0];
             if (!r) throw new Error("Unregistered type: " + e);
             if (s && !("revive" in r)) return t;
-            if (!s && r.reviveAsync) return r.reviveAsync(t, y);
-            if (r.revive) return r.revive(t, y);
+            if (!s && r.reviveAsync) return r.reviveAsync(t, u);
+            if (r.revive) return r.revive(t, u);
             throw new Error("Missing reviver");
           },
           p = [];
@@ -6411,7 +6662,7 @@
         var d;
         return hasConstructorOf(f, TypesonPromise) ? d = f.then(function () {
           return e;
-        }) : (d = function _revive(e, t, o, y, f) {
+        }) : (d = function _revive(e, t, o, u, f) {
           if (l && "$types" === e) return;
           var d = p.length,
             m = n(i, e) ? i[e] : void 0,
@@ -6432,18 +6683,18 @@
                 _t6 = _c$[1],
                 _r5 = _c$[2],
                 _a5 = _c$[3],
-                _o2 = n(u, _t6),
-                _s = _o2 ? u[_t6] : getByKeyPath(_e2, _t6);
+                _o2 = n(y, _t6),
+                _s = _o2 ? y[_t6] : getByKeyPath(_e2, _t6);
               if (!_o2 && void 0 === _s) break;
               setOwnEnumerable(_r5, _a5, _s), c.shift();
             }
           }
-          if (!m) return u[e] = t, t;
+          if (!m) return y[e] = t, t;
           if ("#" === m) {
             var _e3 = t.slice(1),
-              _r6 = n(u, _e3),
-              _a6 = _r6 ? u[_e3] : getByKeyPath(o, _e3);
-            return _r6 || void 0 !== _a6 || c.push([o, _e3, y, f]), _a6;
+              _r6 = n(y, _e3),
+              _a6 = _r6 ? y[_e3] : getByKeyPath(o, _e3);
+            return _r6 || void 0 !== _a6 || c.push([o, _e3, u, f]), _a6;
           }
           var applyType = function applyType(t) {
             var r = [].concat(m).reduce(function reducer(e, t) {
@@ -6454,8 +6705,8 @@
               return executeReviver(t, e);
             }, t);
             return hasConstructorOf(r, TypesonPromise) ? r.then(function (t) {
-              return u[e] = t, t;
-            }) : (u[e] = r, r);
+              return y[e] = t, t;
+            }) : (y[e] = r, r);
           };
           return !s && p.length > d ? TypesonPromise.all(p.slice(d)).then(function () {
             return applyType(t);
@@ -6560,8 +6811,8 @@
   });
   Undefined.__typeson__type__ = "TypesonUndefined";
   var s = ["null", "boolean", "number", "string", "array", "object"];
-  for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), u = 0; u < 64; u++) c[i.codePointAt(u)] = u;
-  var y = function encode(e, t, r) {
+  for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), y = 0; y < 64; y++) c[i.codePointAt(y)] = y;
+  var u = function encode(e, t, r) {
       null == r && (r = e.byteLength);
       for (var n = new Uint8Array(e, 0, r), a = n.length, o = "", s = 0; s < a; s += 3) o += i[n[s] >> 2], o += i[(3 & n[s]) << 4 | n[s + 1] >> 4], o += i[(15 & n[s + 1]) << 2 | n[s + 2] >> 6], o += i[63 & n[s + 2]];
       return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
@@ -6574,10 +6825,10 @@
         o,
         s,
         i = .75 * e.length,
-        u = 0;
+        y = 0;
       "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-      for (var y = new ArrayBuffer(i, t), l = new Uint8Array(y), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], a = c[e.codePointAt(p + 1)], o = c[e.codePointAt(p + 2)], s = c[e.codePointAt(p + 3)], l[u++] = n << 2 | a >> 4, l[u++] = (15 & a) << 4 | o >> 2, l[u++] = (3 & o) << 6 | 63 & s;
-      return y;
+      for (var u = new ArrayBuffer(i, t), l = new Uint8Array(u), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], a = c[e.codePointAt(p + 1)], o = c[e.codePointAt(p + 2)], s = c[e.codePointAt(p + 3)], l[y++] = n << 2 | a >> 4, l[y++] = (15 & a) << 4 | o >> 2, l[y++] = (3 & o) << 6 | 63 & s;
+      return u;
     };
   var p = {
       arraybuffer: {
@@ -6590,7 +6841,7 @@
           return -1 !== r ? {
             index: r
           } : (t.buffers.push(e), {
-            s: y(e),
+            s: u(e),
             maxByteLength: e.maxByteLength,
             resizable: e.resizable
           });
@@ -6624,13 +6875,13 @@
             });
             i.push(_r0), c += _r0;
           }
-          var u = new ArrayBuffer(c);
-          var y = 0;
+          var y = new ArrayBuffer(c);
+          var u = 0;
           for (var _t9 = 0; _t9 < s; _t9++) {
-            var _r1 = new Uint8Array(u, y, i[_t9]);
+            var _r1 = new Uint8Array(y, u, i[_t9]);
             e.copyTo(_r1, {
               planeIndex: _t9
-            }), y += i[_t9];
+            }), u += i[_t9];
           }
           return {
             format: t,
@@ -6638,7 +6889,7 @@
             numberOfFrames: n,
             numberOfChannels: a,
             timestamp: o,
-            data: u
+            data: y
           };
         },
         revive: function revive(_ref11) {
@@ -6662,7 +6913,7 @@
     d = {
       bigintObject: {
         test: function test(e) {
-          return "object" == _typeof$1(e) && hasConstructorOf(e, BigInt);
+          return "object" == _typeof(e) && hasConstructorOf(e, BigInt);
         },
         replace: String,
         revive: function revive(e) {
@@ -6789,7 +7040,7 @@
             byteOffset: t,
             byteLength: r
           } : (n.buffers.push(e), {
-            encoded: y(e),
+            encoded: u(e),
             maxByteLength: e.maxByteLength,
             resizable: e.resizable,
             byteOffset: t,
@@ -7016,7 +7267,7 @@
         }
       }
     },
-    C = {
+    N = {
       error: {
         test: function test(e) {
           return "Error" === toStringTag(e);
@@ -7045,9 +7296,9 @@
         }
       }
     },
-    B = {};
+    C = {};
   function create$2(e) {
-    B[e.name.toLowerCase()] = {
+    C[e.name.toLowerCase()] = {
       test: function test(t) {
         return hasConstructorOf(t, e);
       },
@@ -7080,7 +7331,7 @@
   [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(function (e) {
     return create$2(e);
   }), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
-  var N = {
+  var B = {
       file: {
         test: function test(e) {
           return "File" === toStringTag(e);
@@ -7123,7 +7374,7 @@
       }
     },
     I = {
-      file: N.file,
+      file: B.file,
       filelist: {
         test: function test(e) {
           return "FileList" === toStringTag(e);
@@ -7297,7 +7548,7 @@
     K = {
       StringObject: {
         test: function test(e) {
-          return "String" === toStringTag(e) && "object" == _typeof$1(e);
+          return "String" === toStringTag(e) && "object" == _typeof(e);
         },
         replace: String,
         revive: function revive(e) {
@@ -7306,7 +7557,7 @@
       },
       BooleanObject: {
         test: function test(e) {
-          return "Boolean" === toStringTag(e) && "object" == _typeof$1(e);
+          return "Boolean" === toStringTag(e) && "object" == _typeof(e);
         },
         replace: function replace(e) {
           return e.valueOf();
@@ -7317,11 +7568,14 @@
       },
       NumberObject: {
         test: function test(e) {
-          return "Number" === toStringTag(e) && "object" == _typeof$1(e);
+          return "Number" === toStringTag(e) && "object" == _typeof(e);
         },
-        replace: Number,
+        replace: function replace(e) {
+          var t = e.valueOf();
+          return Number.isNaN(t) ? "NaN" : t === 1 / 0 ? "Infinity" : t === -1 / 0 ? "-Infinity" : Object.is(t, -0) ? "-0" : t;
+        },
         revive: function revive(e) {
-          return new Number(e);
+          return new Number("NaN" === e ? NaN : "Infinity" === e ? 1 / 0 : "-Infinity" === e ? -1 / 0 : "-0" === e ? -0 : e);
         }
       }
     },
@@ -7418,7 +7672,7 @@
           } : (n.buffers.push(e), {
             maxByteLength: e.maxByteLength,
             resizable: e.resizable,
-            encoded: y(e),
+            encoded: u(e),
             byteOffset: t,
             length: r
           });
@@ -7431,10 +7685,10 @@
             s = t.index,
             i = t.maxByteLength,
             c = t.resizable;
-          var u;
-          return "index" in t ? u = r.buffers[s] : (u = l(o, c ? {
+          var y;
+          return "index" in t ? y = r.buffers[s] : (y = l(o, c ? {
             maxByteLength: i
-          } : void 0), r.buffers.push(u)), new e(u, n, a);
+          } : void 0), r.buffers.push(y)), new e(y, n, a);
         }
       };
     }(e);
@@ -7473,12 +7727,12 @@
         replaceAsync: function replaceAsync(e) {
           return new TypesonPromise(/*#__PURE__*/function () {
             var _ref29 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6(t, r) {
-              var _r12, _n3, _a7, _o3, _s2, _i3, _c, _u, _y2, _l, _t14;
+              var _r12, _n3, _a7, _o3, _s2, _i3, _c, _y, _u2, _l, _t14;
               return _regenerator().w(function (_context6) {
                 while (1) switch (_context6.p = _context6.n) {
                   case 0:
                     _context6.p = 0;
-                    _r12 = e.format, _n3 = e.codedWidth, _a7 = e.codedHeight, _o3 = e.timestamp, _s2 = e.duration, _i3 = e.visibleRect, _c = e.displayWidth, _u = e.displayHeight, _y2 = e.colorSpace, _l = new ArrayBuffer(e.allocationSize());
+                    _r12 = e.format, _n3 = e.codedWidth, _a7 = e.codedHeight, _o3 = e.timestamp, _s2 = e.duration, _i3 = e.visibleRect, _c = e.displayWidth, _y = e.displayHeight, _u2 = e.colorSpace, _l = new ArrayBuffer(e.allocationSize());
                     _context6.n = 1;
                     return e.copyTo(_l);
                   case 1:
@@ -7495,12 +7749,12 @@
                         height: _i3.height
                       },
                       displayWidth: _c,
-                      displayHeight: _u,
+                      displayHeight: _y,
                       colorSpace: {
-                        primaries: _y2.primaries,
-                        transfer: _y2.transfer,
-                        matrix: _y2.matrix,
-                        fullRange: _y2.fullRange
+                        primaries: _u2.primaries,
+                        transfer: _u2.transfer,
+                        matrix: _u2.matrix,
+                        fullRange: _u2.fullRange
                       },
                       data: _l
                     });
@@ -7530,8 +7784,8 @@
             s = _ref30.displayWidth,
             i = _ref30.displayHeight,
             c = _ref30.colorSpace,
-            u = _ref30.data;
-          return new VideoFrame(new Uint8Array(u), {
+            y = _ref30.data;
+          return new VideoFrame(new Uint8Array(y), {
             format: e,
             codedWidth: t,
             codedHeight: r,
@@ -7602,12 +7856,12 @@
       }
     }],
     ne = [D, M, L, F],
-    ce = [Z, Y, re, K, ne, O, z, U, _, N, I, h, C, B].concat("function" == typeof Map ? k : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
-  var ue = ce.concat({
+    ce = [Z, Y, re, K, ne, O, z, U, _, B, I, h, N, C].concat("function" == typeof Map ? k : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
+  var ye = ce.concat({
       checkDataCloneException: {
         test: function test(e) {
           var t = {}.toString.call(e).slice(8, -1);
-          if (["symbol", "function"].includes(_typeof$1(e)) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || ["ArrayBuffer", "DataView", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array"].includes(t) && function isBufferDetached(e) {
+          if (["symbol", "function"].includes(_typeof(e)) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || ["ArrayBuffer", "DataView", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array"].includes(t) && function isBufferDetached(e) {
             if ("boolean" == typeof e.detached) return e.detached;
             if (0 !== e.byteLength) return false;
             try {
@@ -7615,7 +7869,7 @@
             } catch (_unused) {
               return true;
             }
-          }(e) || e && "object" == _typeof$1(e) && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
+          }(e) || e && "object" == _typeof(e) && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
           return false;
         }
       }
@@ -7623,7 +7877,7 @@
 
   // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-  var typeson = new Typeson().register(ue);
+  var typeson = new Typeson().register(ye);
 
   /**
    * @param {(preset: import('typeson-registry').Preset) =>
@@ -7632,7 +7886,7 @@
    */
   function register(func) {
     // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
-    typeson = new Typeson().register(func(ue));
+    typeson = new Typeson().register(func(ye));
   }
 
   /**
@@ -7690,9 +7944,31 @@
     return decode(encode(val));
   }
 
+  /**
+   * Per spec, a transaction must appear inactive to any code that runs
+   *   reentrantly *during* the structured clone of a value passed to
+   *   `add()`/`put()`/`IDBCursor#update()` (e.g. a getter on the value being
+   *   stored) -- even though the transaction is otherwise active for the
+   *   duration of that same call. `__active` is restored in a `finally` so a
+   *   `DataCloneError` (or any other throw from `clone()`) can't leave the
+   *   transaction permanently stuck inactive.
+   * @param {{__active: boolean}} transaction
+   * @param {AnyValue} val
+   * @returns {AnyValue}
+   */
+  function cloneWithInactiveTransaction(transaction, val) {
+    transaction.__active = false;
+    try {
+      return clone(val);
+    } finally {
+      transaction.__active = true;
+    }
+  }
+
   var Sca = /*#__PURE__*/Object.freeze({
     __proto__: null,
     clone: clone,
+    cloneWithInactiveTransaction: cloneWithInactiveTransaction,
     decode: decode,
     encode: encode,
     register: register
@@ -9004,7 +9280,7 @@
       // Todo Binary: Avoid blobs loading async to ensure cloning (and errors therein)
       //   occurs sync; then can make cloning and this method without callbacks (except where ok
       //   to be async)
-      var _clonedValue = clone(value);
+      var _clonedValue = cloneWithInactiveTransaction(/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction, value);
       key = extractKeyValueDecodedFromValueUsingKeyPath(_clonedValue, me.keyPath); // May throw so "rethrow"
       if (key.invalid) {
         throw createDOMException('DataError', 'KeyPath was specified, but key was invalid.');
@@ -9035,7 +9311,7 @@
     } else {
       convertValueToKeyRethrowingAndIfInvalid(key);
     }
-    var clonedValue = clone(value);
+    var clonedValue = cloneWithInactiveTransaction(/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction, value);
     return [key, clonedValue];
   };
 
@@ -10322,7 +10598,7 @@
    * @returns {string}
    */
   var getOrigin = function getOrigin() {
-    return (typeof location === "undefined" ? "undefined" : _typeof$1(location)) !== 'object' || !location ? 'null' : location.origin;
+    return (typeof location === "undefined" ? "undefined" : _typeof(location)) !== 'object' || !location ? 'null' : location.origin;
   };
   var hasNullOrigin = function hasNullOrigin() {
     return CFG.checkOrigin !== false && getOrigin() === 'null';
@@ -10904,7 +11180,14 @@
                 req.__result = connection;
                 connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                 req.__done = true;
-                req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished /* , error */) {
+                req.transaction.__addNonRequestToTransactionQueue(
+                /**
+                 * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} tx
+                 * @param {ObjectArray} args
+                 * @param {(result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
+                 * @returns {void}
+                 */
+                function onupgradeneeded(tx, args, finished /* , error */) {
                   // Unlike ordinary requests, this dispatch doesn't go through
                   //   `IDBTransaction`'s own `success`/`error` closures, so it must
                   //   open/close the transaction's active-handler window itself.
@@ -10920,7 +11203,12 @@
                 });
 
                 // eslint-disable-next-line camelcase -- Clear API
-                req.transaction.on__beforecomplete = function (ev) {
+                req.transaction.on__beforecomplete =
+                /**
+                 * @param {Event & {complete: () => void}} ev
+                 * @returns {void}
+                 */
+                function (ev) {
                   connection.__upgradeTransaction = null;
                   /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */
                   req.__result.__versionTransaction = null;
@@ -12390,7 +12678,7 @@
       // eslint-disable-next-line unicorn/prefer-hoisting-branch-code -- Different
       addToQueue(clonedValue);
     } else {
-      var _clonedValue = clone(valueToUpdate);
+      var _clonedValue = cloneWithInactiveTransaction(/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.__store.transaction, valueToUpdate);
       addToQueue(_clonedValue);
     }
     return request;
@@ -12758,7 +13046,7 @@
 
   /** @type {SetConfig} */
   function setConfig(prop, val) {
-    if (prop && _typeof$1(prop) === 'object') {
+    if (prop && _typeof(prop) === 'object') {
       Object.entries(prop).forEach(function (_ref) {
         var _ref2 = _slicedToArray(_ref, 2),
           p = _ref2[0],
