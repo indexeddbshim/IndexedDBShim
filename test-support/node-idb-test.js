@@ -427,7 +427,16 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             //   line evaluated in this sandbox -- including for synchronous
             //   tests whose assertions run before `ending`/`content` below
             //   are even reached.
-            DOMException
+            DOMException,
+            // Same reasoning applies to `ArrayBuffer`: `Key.js`'s binary key
+            //   decoding does `new ArrayBuffer(...)` using this process's own
+            //   native global, not jsdom's -- so an `instanceof ArrayBuffer`
+            //   check from inside this sandbox (e.g.
+            //   idb_binary_key_conversion.any.js's "Array of
+            //   TypedArray(Int8Array)" test) needs to compare against this
+            //   same one, not the different one `environment.js` would
+            //   otherwise copy from `shimNS.window`.
+            ArrayBuffer
         };
 
         const baseCfg = {

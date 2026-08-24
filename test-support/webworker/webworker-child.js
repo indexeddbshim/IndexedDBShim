@@ -509,6 +509,14 @@ prom.then((scriptSource) => {
             (typeof obj === 'object' && obj !== null && Object.prototype.toString.call(obj) === '[object BigInt]'),
         configurable: true
     });
+    // Same idea for `ArrayBuffer`: `Key.js`'s binary key decoding does
+    //   `new ArrayBuffer(...)` using this process's own native global, not
+    //   the context's -- `Object.prototype.toString` tagging is realm-
+    //   independent here too.
+    Object.defineProperty(vm.runInContext('ArrayBuffer', workerCtxObj), Symbol.hasInstance, {
+        value: (obj) => typeof obj === 'object' && obj !== null && Object.prototype.toString.call(obj) === '[object ArrayBuffer]',
+        configurable: true
+    });
 
     /**
      * @returns {Function}
