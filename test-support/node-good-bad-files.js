@@ -179,11 +179,11 @@ Current worker test statuses with 2 files excluded:
 //   duration) and only run via this separate mode.
 Any-workers test counts (184 files): 125 good, 54 bad, 6 time out.
 Current any-workers test statuses with 1 file excluded:
-  'Pass': 941,
-  'Fail': 175,
-  'Timeout': 6,
+  'Pass': 1100,
+  'Fail': 22,
+  'Timeout': 5,
   'Not Run': 7,
-  'Total tests': 1129
+  'Total tests': 1134
 
 // Passing the "events" argument to `node-idb-test.js` will run the event
 //   tests (`Event`, `CustomEvent`, and `EventTarget`), currently
@@ -198,8 +198,8 @@ Current any-workers test statuses with 1 file excluded:
 // Todo: We ought to really run all of the web-platform-tests/dom/events tests
 Event Test counts: 2 files (1 good, 1 bad - '../non-indexedDB/__event-interface.js')
 Current Event test statuses with 0 files excluded:
-  'Pass': 52,
-  'Fail': 19,
+  'Pass': 50,
+  'Fail': 21,
   'Timeout': 0,
   'Not Run': 0,
   'Total tests': 71
