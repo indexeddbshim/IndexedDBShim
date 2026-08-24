@@ -10415,6 +10415,7 @@ const shimIndexedDB = IDBFactory.__createInstance();
 
 const readonlyProperties = /** @type {const} */['key', 'primaryKey', 'value'];
 
+/* eslint-disable jsdoc/valid-types -- pratt parser bug */
 /**
  * @typedef {{
  *   [Symbol.toStringTag]: 'IDBRecord',
@@ -10426,6 +10427,7 @@ const readonlyProperties = /** @type {const} */['key', 'primaryKey', 'value'];
  *   value: import('./Key.js').Value
  * }} IDBRecordFull
  */
+/* eslint-enable jsdoc/valid-types -- pratt parser bug */
 
 /**
  * The record type returned by `IDBObjectStore`/`IDBIndex#getAllRecords()`
@@ -10454,7 +10456,7 @@ IDBRecord.__createInstance = function (key, primaryKey, value) {
    * @this {IDBRecordFull}
    */
   function IDBRecord() {
-    // @ts-expect-error Should be ok
+    // @ts-ignore Should be ok
     this[Symbol.toStringTag] = 'IDBRecord';
     this.__key = key;
     this.__primaryKey = primaryKey;
@@ -11198,8 +11200,22 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
            * @returns {void}
            */
           function checkKey() {
-            const cmpResult = Number(key === undefined) || cmp(k, key);
-            if (cmpResult > 0 || cmpResult === 0 && (me.__unique || primaryKey === undefined || cmp(primKey, primaryKey) >= 0)) {
+            if (key === undefined) {
+              // No target key to compare against -- always accept the next
+              //   prefetched record, regardless of direction.
+              triggerSuccess(k, val, primKey);
+              return;
+            }
+            // `cmp(k, key) > 0` ("has this record passed the target key?")
+            //   only holds for an ascending (`next`) cursor; a descending
+            //   (`prev`) one passes the target once `k` has dropped *below*
+            //   it, i.e. `cmp(k, key) < 0` -- matching `continuePrimaryKey`'s
+            //   own direction-aware comparisons above.
+            const isPrev = me.direction.includes('prev');
+            const keyCmp = cmp(k, key);
+            const passedKey = isPrev ? keyCmp < 0 : keyCmp > 0;
+            const atKey = keyCmp === 0;
+            if (passedKey || atKey && (me.__unique || primaryKey === undefined || (isPrev ? cmp(primKey, primaryKey) <= 0 : cmp(primKey, primaryKey) >= 0))) {
               triggerSuccess(k, val, primKey);
               return;
             }
