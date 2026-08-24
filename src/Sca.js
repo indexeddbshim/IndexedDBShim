@@ -73,4 +73,25 @@ function clone (val) {
     return decode(encode(val));
 }
 
-export {encode, decode, clone, register};
+/**
+ * Per spec, a transaction must appear inactive to any code that runs
+ *   reentrantly *during* the structured clone of a value passed to
+ *   `add()`/`put()`/`IDBCursor#update()` (e.g. a getter on the value being
+ *   stored) -- even though the transaction is otherwise active for the
+ *   duration of that same call. `__active` is restored in a `finally` so a
+ *   `DataCloneError` (or any other throw from `clone()`) can't leave the
+ *   transaction permanently stuck inactive.
+ * @param {{__active: boolean}} transaction
+ * @param {AnyValue} val
+ * @returns {AnyValue}
+ */
+function cloneWithInactiveTransaction (transaction, val) {
+    transaction.__active = false;
+    try {
+        return clone(val);
+    } finally {
+        transaction.__active = true;
+    }
+}
+
+export {encode, decode, clone, cloneWithInactiveTransaction, register};

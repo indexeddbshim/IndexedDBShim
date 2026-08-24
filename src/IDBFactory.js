@@ -655,36 +655,49 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                             req.__done = true;
 
-                            req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished /* , error */) {
-                                // Unlike ordinary requests, this dispatch doesn't go through
-                                //   `IDBTransaction`'s own `success`/`error` closures, so it must
-                                //   open/close the transaction's active-handler window itself.
-                                req.transaction.__handlerActive = true;
-                                req.dispatchEvent(e);
-                                req.transaction.__handlerActive = false;
+                            req.transaction.__addNonRequestToTransactionQueue(
+                                /**
+                                 * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} tx
+                                 * @param {ObjectArray} args
+                                 * @param {(result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
+                                 * @returns {void}
+                                 */
+                                function onupgradeneeded (tx, args, finished /* , error */) {
+                                    // Unlike ordinary requests, this dispatch doesn't go through
+                                    //   `IDBTransaction`'s own `success`/`error` closures, so it must
+                                    //   open/close the transaction's active-handler window itself.
+                                    req.transaction.__handlerActive = true;
+                                    req.dispatchEvent(e);
+                                    req.transaction.__handlerActive = false;
 
-                                if (e.__legacyOutputDidListenersThrowError) {
-                                    logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', /** @type {Error} */ (e.__legacyOutputDidListenersThrowError)); // We do nothing else with this error as per spec
-                                    req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
-                                    return;
+                                    if (e.__legacyOutputDidListenersThrowError) {
+                                        logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', /** @type {Error} */ (e.__legacyOutputDidListenersThrowError)); // We do nothing else with this error as per spec
+                                        req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
+                                        return;
+                                    }
+                                    finished();
                                 }
-                                finished();
-                            });
+                            );
 
                             // eslint-disable-next-line camelcase -- Clear API
-                            req.transaction.on__beforecomplete = function (ev) {
-                                connection.__upgradeTransaction = null;
-                                /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */ (
-                                    req.__result
-                                ).__versionTransaction = null;
-                                sysdbFinishedCb(systx, false, function () {
-                                    req.transaction.__callTransFinishedCb(false, function () {
-                                        ev.complete();
-                                        req.__transaction = null;
+                            req.transaction.on__beforecomplete =
+                                /**
+                                 * @param {Event & {complete: () => void}} ev
+                                 * @returns {void}
+                                 */
+                                function (ev) {
+                                    connection.__upgradeTransaction = null;
+                                    /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */ (
+                                        req.__result
+                                    ).__versionTransaction = null;
+                                    sysdbFinishedCb(systx, false, function () {
+                                        req.transaction.__callTransFinishedCb(false, function () {
+                                            ev.complete();
+                                            req.__transaction = null;
+                                        });
+                                        return false;
                                     });
-                                    return false;
-                                });
-                            };
+                                };
 
                             // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__preabort = function () {

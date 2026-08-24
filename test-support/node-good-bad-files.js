@@ -85,15 +85,60 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     Uncaught exceptions have required their complete exclusion for now:
     - `bindings-inject-keys-bypass.any.js` - Failing
     - `bindings-inject-values-bypass.any.js` - Failing
-    - `structured-clone.any.js` - Failing many tests; (not breaking other tests anymore, however)
-        note that we mock the following with no-op functions:
-            `MessageChannel`, `DOMMatrix`, `DOMMatrixReadOnly`,
-            `DOMPoint`, `DOMPointReadOnly`, `DOMRect`,
-            `DOMRectReadOnly`, and `ImageData`;
-        for `ImageData`, we should be able to get a real version
-        by installing canvas (though see
-        https://github.com/jsdom/jsdom/issues/1749 in case this
-        can be avoided in the future as well)
+    - `structured-clone.any.js` - Failing many tests (125 total; 65 pass as
+        of the investigation below). Re-investigated 2026-08-24:
+        - Fixed: boxed `Number` objects (`new Number(x)`) holding `NaN`/
+          `Infinity`/`-Infinity`/`-0` were cloning back as `0` (or losing
+          their sign, for `-0`). Root cause was in `typeson-registry` (a
+          package the user maintains), not IndexedDBShim: its
+          `NumberObject` type spec's `replace()` returned those special
+          values bare, but `typeson` core's own nested-replace guard
+          (`_stateObj.replaced`, set while already inside this spec's own
+          `replace()`) skips giving a bare `NaN`/`Infinity`/`-0` the
+          sentinel-string treatment the *un-boxed* `nan`/`infinity`/
+          `negativeZero` type specs normally would -- so it fell through to
+          plain JSON, which can't represent those values. Fixed by having
+          `NumberObject` do that same sentinel-encoding itself rather than
+          relying on the (in this one case, skipped) nested pass. A
+          `typeson`-core-level fix (relaxing that guard) was considered and
+          declined: the guard looks like a general "don't re-replace what
+          was just replaced" safeguard other type specs may also rely on
+          (e.g. a spec that deliberately returns `undefined`), so a proper
+          fix there would need much more careful testing across `typeson`'s
+          own suite than this contained, already-verified workaround needed.
+        - Remaining ~59 of the ~60 still-failing tests (`Date`, `RegExp`,
+          `ArrayBuffer`, typed arrays, `Map`, `Set`, `Array`, `Object`,
+          `Error` and its subtypes, `FileList`, ...) share ONE root cause:
+          `Sca.js`/`typeson` always decode a cloned value using *this
+          process's own, outer, non-sandboxed* built-in classes, but the
+          test script comparing `Object.getPrototypeOf(orig)` against
+          `Object.getPrototypeOf(clone)` runs *inside* the vm sandbox --
+          two different realms' prototypes for the same built-in. Same
+          class of cross-realm-identity issue already fixed piecemeal this
+          session for `ArrayBuffer`/`DOMException`/`Event`/`EventTarget`
+          (see `environment.js`/`node-idb-test.js`'s `sandboxObj`), just
+          showing up across nearly every JS built-in type at once here.
+          The same fix pattern (pass the outer realm's class directly into
+          `sandboxObj`, replacing the sandbox's own copy) would likely
+          resolve most of these too, but `Array`/`Object`/`Date` were
+          deliberately given a *narrower* `Symbol.hasInstance`-only patch
+          instead of full sandbox replacement earlier in the same session,
+          suggesting full replacement was judged riskier for those
+          (`testharness.js` itself leans on them internally) -- extending
+          full replacement to `RegExp`/`Map`/`Set`/the `Error` family/
+          `FileList` too is a materially bigger, more architecturally
+          invasive change than anything else done this session, and was
+          explicitly deferred rather than attempted.
+        - `DOMMatrix`/`DOMPoint` fail separately and expectedly: we mock
+          them (along with `DOMMatrixReadOnly`, `DOMPoint(ReadOnly)`,
+          `DOMRect(ReadOnly)`) with no-op functions, so a genuine clone
+          round-trip was never going to work for those regardless.
+          `ImageData` now uses a real implementation (via `canvas`, already
+          installed), so it's no longer part of this gap.
+        - `MessageChannel`/`MessagePort` fail for a different, unrelated
+          reason: they're supposed to be unclonable (`store.put()` should
+          throw `DataCloneError`), but our mock passes through instead of
+          being recognized and rejected as such -- not investigated further.
 
 See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
@@ -112,8 +157,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - `index_sort_order.any.js' - Failing sometimes (when run full tests)
 - `transaction-scheduling-ro-waits-for-rw.any.js` - Failing sometimes
 - `transaction-scheduling-across-connections.any.js` - Failing sometimes
-
-- 'structured-clone-transaction-state.any.js' - Failing (cloning or transaction?)
 
 - 'reading-autoincrement-indexes-cursors.any.js' - Timing out
 - 'reading-autoincrement-indexes.any.js' - Timing out
@@ -307,7 +350,6 @@ const goodBad = {
         'ready-state-destroyed-execution-context.js',
         'serialize-sharedarraybuffer-throws.https.js',
         'storage-buckets.https.any.js',
-        'structured-clone-transaction-state.any.js',
         'structured-clone.any.js',
         'transaction-deactivation-timing.any.js',
         'transaction-lifetime.any.js',
@@ -547,6 +589,7 @@ const goodBad = {
         'request-event-ordering-small-values.any.js',
         'request_bubble-and-capture.any.js',
         'string-list-ordering.any.js',
+        'structured-clone-transaction-state.any.js',
         'transaction-abort-generator-revert.any.js',
         'transaction-abort-index-metadata-revert.any.js',
         'transaction-abort-multiple-metadata-revert.any.js',

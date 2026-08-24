@@ -423,7 +423,10 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
         // Todo Binary: Avoid blobs loading async to ensure cloning (and errors therein)
         //   occurs sync; then can make cloning and this method without callbacks (except where ok
         //   to be async)
-        const clonedValue = Sca.clone(value);
+        const clonedValue = Sca.cloneWithInactiveTransaction(
+            /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (me.transaction),
+            value
+        );
         key = Key.extractKeyValueDecodedFromValueUsingKeyPath(clonedValue, me.keyPath); // May throw so "rethrow"
         if (key.invalid) {
             throw createDOMException('DataError', 'KeyPath was specified, but key was invalid.');
@@ -454,7 +457,10 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
     } else {
         Key.convertValueToKeyRethrowingAndIfInvalid(key);
     }
-    const clonedValue = Sca.clone(value);
+    const clonedValue = Sca.cloneWithInactiveTransaction(
+    /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (me.transaction),
+        value
+    );
     return [key, clonedValue];
 };
 

@@ -924,7 +924,10 @@ IDBCursor.prototype.update = function (valueToUpdate) {
         // eslint-disable-next-line unicorn/prefer-hoisting-branch-code -- Different
         addToQueue(clonedValue);
     } else {
-        const clonedValue = Sca.clone(valueToUpdate);
+        const clonedValue = Sca.cloneWithInactiveTransaction(
+            /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (me.__store.transaction),
+            valueToUpdate
+        );
         addToQueue(clonedValue);
     }
     return request;

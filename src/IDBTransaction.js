@@ -339,11 +339,18 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.__done = true;
                 q.req.__error = err;
                 q.req.__result = undefined; // Must be undefined if an error per `result` getter
-                q.req.addLateEventListener('error', function (e) {
-                    if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
-                        executeNextRequest();
+                q.req.addLateEventListener(
+                    'error',
+                    /**
+                     * @param {Event & {__legacyOutputDidListenersThrowError: boolean}} e
+                     * @returns {void}
+                     */
+                    function (e) {
+                        if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
+                            executeNextRequest();
+                        }
                     }
-                });
+                );
                 q.req.addDefaultEventListener('error', function () {
                     if (!q.req) { // TS guard
                         return;

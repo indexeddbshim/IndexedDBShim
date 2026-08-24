@@ -17,7 +17,7 @@ function IDBRequest () {
 }
 
 /**
- * @typedef {IDBRequest & EventTarget & import('eventtargeter').ShimEventTarget & {
+ * @typedef {IDBRequest & EventTarget & import('eventtargeter').EventTargetInstance & {
  *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
  *   __done: boolean,
  *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,
@@ -42,9 +42,9 @@ function IDBRequest () {
  * @this {IDBRequestFull}
  */
 IDBRequest.__super = function IDBRequest () {
-    // @ts-expect-error It's ok
+    // @ts-ignore It's ok
     this[Symbol.toStringTag] = 'IDBRequest';
-    // @ts-expect-error Part of `ShimEventTarget`
+    // @ts-ignore Part of `ShimEventTarget`
     this.__setOptions({
         legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
@@ -171,9 +171,9 @@ IDBOpenDBRequest.__createInstance = function () {
     function IDBOpenDBRequest () {
         IDBRequest.__super.call(this);
 
-        // @ts-expect-error It's ok
+        // @ts-ignore It's ok
         this[Symbol.toStringTag] = 'IDBOpenDBRequest';
-        // @ts-expect-error It's ok
+        // @ts-ignore It's ok
         this.__setOptions({
             legacyOutputDidListenersThrowFlag: true, // Event hook for IndexedB
             extraProperties: ['oldVersion', 'newVersion', 'debug']
