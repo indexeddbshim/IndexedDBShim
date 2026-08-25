@@ -77,6 +77,14 @@ readonlyProperties.forEach((prop) => {
          * @returns {import('./Key.js').Key|import('./Key.js').Value}
          */
         get [prop] () {
+            // This is defined on the *shared* prototype (see above), so,
+            //   unlike a per-instance getter, it's reachable by calling it
+            //   directly on `IDBRecord.prototype` itself (not a real
+            //   instance) -- WebIDL requires that to throw.
+            if (!(this instanceof IDBRecordAlias)) {
+                throw new TypeError('Illegal invocation');
+            }
+            // @ts-expect-error `this` is a real instance past the check above
             return this['__' + prop];
         }
     };

@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- fix: throw on IDBRecord getters called off a real instance
+
 ## 17.3.1
 
 - fix: keep a transaction active through same-tick microtasks scheduled from a request's `success`/`error` handler (per w3c/IndexedDB#87), including for `readonly` transactions (needed a matching `websql-configurable` fix so `readTransaction()` can defer finalization) and for the equivalent timing around `onupgradeneeded`
