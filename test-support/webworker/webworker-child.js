@@ -458,10 +458,15 @@ prom.then(async (scriptSource) => {
         rootPath: workerConfig.rootPath
     });
 
-    // We will otherwise miss these tests (though not sure this is the best solution):
-    //   see test_primary_interface_of in idlharness.js
-    workerCtx.Object = Object;
-    // workerCtx.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
+    // `test_primary_interface_of` in idlharness.js does `obj instanceof
+    //   Object` to recognize plain objects built by this process's own
+    //   classes (e.g. `IDBFactory`) injected into the context. The actual
+    //   `Symbol.hasInstance` patch for that is applied below, alongside
+    //   `Array`/`Date`/`BigInt`/`ArrayBuffer`'s, once `workerCtxObj`
+    //   exists -- see the comment there for why a full `workerCtx.Object
+    //   = Object;` override here (replacing the context's own intrinsic
+    //   `Object` binding entirely, before it's even contextified) isn't
+    //   used instead.
 
     workerCtx.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
@@ -684,11 +689,31 @@ prom.then(async (scriptSource) => {
         value: (obj) => isDateObject(obj),
         configurable: true
     });
-    // Same idea for boxed `BigInt` objects: `workerCtx.Object = Object;`
-    //   below overwrites the context's own `Object` with this process's, so
-    //   `Object(1n)` boxes using this process's own `%BigInt.prototype%`,
-    //   not the context's -- `Object.prototype.toString` tagging a boxed
-    //   BigInt is a realm-independent, spec-guaranteed way to detect this
+    // `test_primary_interface_of` in idlharness.js does `obj instanceof
+    //   Object` against plain objects built by this process's own classes
+    //   (e.g. `IDBFactory`) injected into the context -- those are built
+    //   with this process's own `Object.prototype`, not the context's, so
+    //   without this they'd fail the check even though they're genuinely
+    //   plain objects. A `Symbol.hasInstance` patch alone (rather than
+    //   overwriting the context's own `Object` global entirely, the way
+    //   Array/Date above do) matters here specifically: classes defined
+    //   *inside* the context via `class X {}` syntax (e.g. `webidl2.js`'s
+    //   `Base`) have their real prototype chain tied to the context's own
+    //   true native `Object.prototype`, regardless of what the `Object`
+    //   global binding points to -- a full override would leave that
+    //   chain never terminating at whatever `Object.prototype` code
+    //   inside the context sees, breaking anything that walks it (e.g.
+    //   `Base.prototype.toJSON()`, walked while parsing WebIDL for
+    //   `idlharness.any.worker.js`).
+    Object.defineProperty(vm.runInContext('Object', workerCtxObj), Symbol.hasInstance, {
+        value: (obj) => obj !== null && typeof obj === 'object',
+        configurable: true
+    });
+    // Same idea for boxed `BigInt` objects: this process's own `Sca.js`/
+    //   `Key.js` reconstruct decoded values (including boxed BigInts)
+    //   using its own globals, not the context's, so a boxed BigInt
+    //   handed into the context needs a realm-independent way to be
+    //   recognized -- `Object.prototype.toString` tagging works
     //   regardless of which realm did the boxing.
     Object.defineProperty(vm.runInContext('BigInt', workerCtxObj), Symbol.hasInstance, {
         value: (obj) => typeof obj === 'bigint' ||

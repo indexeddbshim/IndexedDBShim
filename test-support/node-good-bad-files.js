@@ -215,13 +215,20 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     `Symbol.hasInstance`-only patch for `Object` fixes `instanceof` but not
     direct prototype-object identity comparisons) -- not this file's own
     issue, just another surface of it.
-    - `idlharness.any.worker.js`: distinct and more severe than the
-      window-context file above -- only 2 tests even run (`idl_test
-      setup` fails outright with `TypeError: Cannot convert undefined or
-      null to object`, so none of the individual interface checks
-      execute at all). Not traced further; likely something idlharness's
-      setup fetches or reads off a worker-only global that isn't
-      populated the same way as in the window context.
+    - `idlharness.any.worker.js`: 195/207. 6 failures
+      (`IDBFactory`/`IDBObjectStore`/`IDBIndex`/`IDBKeyRange`/
+      `IDBRecord`/`IDBCursor` "prototype is not Object.prototype") are
+      the same cross-realm identity gap as `idlharness.any.js` above.
+      The other 6 are worker-specific and not yet traced further:
+      `IDBRequest`/`IDBDatabase`/`IDBTransaction` "is not EventTarget",
+      `IDBOpenDBRequest` "is not IDBRequest", `IDBCursorWithValue` "is
+      not IDBCursor" (likely the same class of cross-realm constructor-
+      chain identity issue, one level up from the prototype-object
+      one), and `WorkerGlobalScope interface: attribute indexedDB`
+      ("must have a property 'indexedDB'" on the prototype --
+      `globalscope-indexedDB-SameObject.any.worker.js` already passes,
+      so `indexedDB` works functionally; this is about exactly how it's
+      exposed as a property).
 
 See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
