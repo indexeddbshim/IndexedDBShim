@@ -30,8 +30,10 @@ well relate to many of the same issues.)
 - `durability` transaction option (newly added)
     - https://github.com/axemclion/IndexedDBShim/issues/351
     - 'idbcursor_update_index.any.js' - Failing
+    - 'idbcursor_update_index.any.worker.js', - Failing
 - `navigator.storageBuckets` (`open` and `delete`)
     - 'storage-buckets.https.any.js' - Failing
+    - 'storage-buckets.https.any.worker.js', - Failing
 
 1. TIMING/TRANSACTION FINISHED TIMING
 
@@ -56,7 +58,9 @@ https://github.com/web-platform-tests/wpt/commit/57aa2ac737eec9526ad6c4ace61e590
 
 These are still failing regardless:
 - `transaction-deactivation-timing.any.js`: ?
+- 'transaction-deactivation-timing.any.worker.js', - Failing
 - `upgrade-transaction-deactivation-timing.any.js`: ?
+- 'upgrade-transaction-deactivation-timing.any.worker.js', - Failing
 - `get-databases.any.js` (not sure if it is transaction timing)
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
@@ -83,7 +87,9 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 5. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS; if so, add to known issues)
     Uncaught exceptions have required their complete exclusion for now:
     - `bindings-inject-keys-bypass.any.js` - Failing
+    - 'bindings-inject-keys-bypass.any.worker.js', - Failing
     - `bindings-inject-values-bypass.any.js` - Failing
+    - 'bindings-inject-values-bypass.any.worker.js', - Failing
     - `structured-clone.any.js` - Failing many tests (125 total; 65 pass as
         of the investigation below). Re-investigated 2026-08-24:
         - ~59 of the ~60 still-failing tests (`Date`, `RegExp`,
@@ -132,6 +138,12 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 7. UNKNOWN
 
+- 'database-names-by-origin.js' - Not running
+- 'idb-partitioned-coverage.sub.js' - Causes tests to crash
+- 'idbfactory-databases-opaque-origin.js' - Not running
+
+- 'idbindex_tombstones.any.js' - Timing out
+
 - `request-abort-ordering.any.js` - This times out sometimes (when run with full tests); possibly due to what it is following?
 - 'idbobjectstore_getAllKeys.any.js' - Failing sometimes (when run full tests)
 - `index_sort_order.any.js' - Failing sometimes (when run full tests)
@@ -142,8 +154,28 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - 'reading-autoincrement-indexes.any.js' - Timing out
 - 'reading-autoincrement-store-cursors.any.js' - Timing out
 - 'reading-autoincrement-store.any.js' - Timing out
+- 'reading-autoincrement-indexes-cursors.any.worker.js', - Timing out
+- 'reading-autoincrement-indexes.any.worker.js', - Timing out
+- 'reading-autoincrement-store-cursors.any.worker.js', - Timing out
+- 'reading-autoincrement-store.any.worker.js' - Timing out
+- 'transaction-scheduling-within-database.any.js', - Timing out
 
 - 'serialize-sharedarraybuffer-throws.https.js' - Failing (bug in test?)
+
+- '../non-indexedDB/DOMException-stack-accessor.js', - Failing
+- '_service-worker-indexeddb.https.js', - Failing
+
+- 'idbobjectstore-put-unique-index-constraint-is-atomic.any.js', - Failing
+- 'idbobjectstore-put-unique-index-constraint-is-atomic.any.worker.js', - Failing
+- 'idlharness.any.js', - Failing
+- 'idlharness.any.worker.js', - Failing
+- 'transaction-lifetime.any.js'  Failing
+- 'transaction-lifetime.any.worker.js', - Failing
+
+- 'transaction-abort-index-metadata-revert.any.worker.js', - Failing
+- 'transaction-abort-multiple-metadata-revert.any.worker.js', - Failing
+- 'upgrade-transaction-lifecycle-backend-aborted.any.worker.js', - Failing
+- 'upgrade-transaction-lifecycle-user-aborted.any.worker.js' - Failing
 
 Updated 2026-08-23 after bumping the web-platform-tests submodule from its
 long-pinned Dec 2022 commit to current origin/master (~22,000 commits of
