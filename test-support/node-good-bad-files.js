@@ -29,6 +29,49 @@ KNOWN ISSUES (INHERENT LIMITATIONS)
     something `DOMException`'s shim controls or can polyfill without
     reaching into `Error.prototype` itself.
 
+3. MICROTASK CHECKPOINT BETWEEN LISTENERS OF THE SAME EVENT
+
+- `transaction-deactivation-timing.any.js`: 4 of 5 tests pass. The one
+    failure, "Deactivation of new transactions happens at end of
+    invocation," registers *two* listeners on the same request's
+    `success` event. The first listener schedules a microtask (e.g.
+    `Promise.resolve().then(...)`); per spec, that microtask must run to
+    completion *before* the second listener is invoked -- dispatching an
+    event to multiple listeners isn't a tight synchronous loop, each
+    listener invocation is its own callback-completion boundary, and the
+    browser drains the microtask queue between them. `eventtargeter`'s
+    `invokeCurrentListeners` (its dispatch loop) instead invokes
+    same-type listeners back to back synchronously, with no yield point
+    in between, so a microtask scheduled by the first listener hasn't
+    run yet by the time the second one executes.
+
+    This can't be fixed without breaking a real spec guarantee, not just
+    "a lot of code to change": a real browser achieves the microtask
+    interleaving using native (non-JS) access to the microtask queue,
+    while `dispatchEvent()` itself still returns synchronously, with a
+    plain `boolean`, only once *every* listener and everything it
+    scheduled has fully settled. There is no JS/Node API that lets a
+    still-executing synchronous function force the microtask queue to
+    drain and resume -- draining only happens when the call stack
+    actually unwinds. (V8 itself does expose exactly this as a native
+    intrinsic, `%RunMicrotasks()`, but only under the `--allow-natives-
+    syntax` flag, which is not something production code can rely on
+    being enabled -- Node deliberately keeps V8 native syntax
+    unavailable outside of V8's own test suite.) So replicating the
+    interleaving in pure JS would
+    require `dispatchEvent()` to become genuinely asynchronous (return a
+    `Promise<boolean>`, or otherwise require the caller to `await` it).
+    But `dispatchEvent()`'s synchronous, `boolean`-returning signature is
+    the literal DOM `EventTarget` spec contract -- the exact thing this
+    library exists to accurately emulate. Any real consumer code using
+    the universal `if (target.dispatchEvent(evt)) { ... }` pattern to
+    check whether an event was cancelled would silently break, since a
+    `Promise` object is always truthy regardless of whether
+    `preventDefault()` was called. So the fix for this one WPT edge case
+    would make the polyfill non-compliant with the exact spec behavior
+    it exists to provide, for every normal use of `dispatchEvent()` --
+    not an acceptable trade for one test.
+
 KNOWN TESTING ISSUES
 
 (The following list remaining test failures/blockers for Node; the remaining browser
@@ -79,18 +122,6 @@ https://github.com/web-platform-tests/wpt/commit/57aa2ac737eec9526ad6c4ace61e590
 - `idbobjectstore-query-exception-order.any.js`
 
 These are still failing regardless:
-- `transaction-deactivation-timing.any.js`: 1 of 5 tests fails --
-  "Deactivation of new transactions happens at end of invocation" -- which
-  registers *two* listeners on the same request's `success` event; the
-  first schedules a microtask, and per spec a microtask checkpoint must run
-  *between* invoking each of the two listeners (event dispatch to multiple
-  listeners isn't just a tight synchronous loop -- each listener invocation
-  is its own callback-completion boundary). `eventtargeter`'s
-  `invokeCurrentListeners` currently does invoke same-type listeners back
-  to back with no microtask yield in between. Fixing this would mean
-  deferring each subsequent listener invocation, not just this one file's
-  scenario -- a change to the core dispatch loop itself, not a small,
-  isolated timing fix.
 - `get-databases.any.js` (not sure if it is transaction timing): 1 of 5
   tests fails -- `IDBFactory.databases()` should only report databases
   whose creation has actually *committed*, not ones still mid-flight in an
