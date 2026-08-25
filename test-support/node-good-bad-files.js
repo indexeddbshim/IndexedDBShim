@@ -311,6 +311,25 @@ const goodBad = {
         'idbfactory-deleteDatabase-opaque-origin.js'
     ],
     timeout: [
+        // Its `open_rq.onerror` assertions (and the trailing bare
+        //   `indexedDB.databases().then(...)`) are not wrapped in
+        //   `t.step_func`, so a failing assertion there never gets
+        //   attributed to the running test; `t.done()` is then never
+        //   called, and the test hangs until testharness.js's own
+        //   internal per-test timeout force-completes it -- a path our
+        //   jsdom environment doesn't tolerate well (see the `#rerun`
+        //   comment in `node-idb-test.js`), which is also why
+        //   `custom-reporter.js`'s `reportResults` throws trying to read
+        //   `document.querySelectorAll` from the already-torn-down
+        //   window by the time it runs. The underlying assertion
+        //   (`dbs.length === 0` after an aborted initial upgrade) hits
+        //   the same undocumented `IDBFactory.databases()` gap as
+        //   `get-databases.any.js` -- it does not yet track a real
+        //   "committed" flag per database, so an aborted-but-registered
+        //   database still shows up. Reliably times out both alone and
+        //   as part of the full sweep, so this is a real `timeout` entry,
+        //   not merely a full-sweep-only flake.
+        'abort-in-initial-upgradeneeded.any.js',
         'database-names-by-origin.js',
         'idb-explicit-commit.any.js',
         'idb-partitioned-basic.sub.js',
@@ -388,7 +407,6 @@ const goodBad = {
         '_interface-objects-002.worker.js',
         '_interface-objects-003.js',
         '_interface-objects-004.js',
-        'abort-in-initial-upgradeneeded.any.js',
         'blob-composite-blob-reads.any.js',
         'blob-contenttype.any.js',
         'blob-delete-objectstore-db.any.js',

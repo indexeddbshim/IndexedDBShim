@@ -272,6 +272,16 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                     );
                 } else { console.log('(None)'); }
 
+                console.log('Unexpected timeouts:');
+                const timedOutFiles = shimNS.files.Timeout.filter(
+                    (f) => ![...timeout, ...excludedWorkers, ...excludedNormal].includes(f)
+                );
+                if (timedOutFiles.length) {
+                    console.log(
+                        '  (' + timedOutFiles.length + '): [\n    ' + cleanJSONOutput(timedOutFiles).slice(1, -1) + '\n  ]\n'
+                    );
+                } else { console.log('(None)'); }
+
                 if (excluded.length) {
                     console.log(
                         'Please note that the following tests ' + excluded.length +

@@ -161,7 +161,11 @@
         try {
             reportResults(...args);
         } catch (err) {
-            shimNS.writeln('err' + err);
+            // Bare `String(err)` drops the stack, making a crash here (e.g.
+            //   `reportResults` itself throwing) nearly impossible to
+            //   diagnose after the fact -- print the stack too when we have
+            //   one.
+            shimNS.writeln('err' + (err && err.stack ? err.stack : err));
         }
     });
 }());
