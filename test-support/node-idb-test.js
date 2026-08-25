@@ -3,6 +3,12 @@
 // Must stay the first import in this file -- see its own header comment.
 import './setup-dom-polyfills.js';
 
+if (typeof Error.isError !== 'function') {
+    Error.isError = function (obj) {
+        return obj instanceof Error || (obj && typeof obj === 'object' && (Object.prototype.toString.call(obj) === '[object Error]' || Object.prototype.toString.call(obj) === '[object DOMException]'));
+    };
+}
+
 import {readFile, readdir, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -162,6 +168,15 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         //   called; without this, creating a new one per test file leaks
         //   memory across a full run.
         if (shimNS.window) {
+            if (shimNS.window._activeWorkers) {
+                shimNS.window._activeWorkers.forEach((w) => {
+                    try {
+                        w.terminate();
+                    } catch (err) {
+                        // ignore cleanup errors
+                    }
+                });
+            }
             shimNS.window.close();
         }
 
@@ -761,6 +776,9 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         window.DOMRectReadOnly = globalThis.DOMRectReadOnly;
         window.DOMQuad = globalThis.DOMQuad;
         window.FileList = globalThis.FileList;
+        if (typeof Float16Array !== 'undefined') {
+            window.Float16Array = Float16Array;
+        }
         Object.defineProperty(window.HTMLInputElement.prototype, 'files', {
             get () {
                 return new window.FileList(this._files || []);
@@ -809,7 +827,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             }
             _postMessage(...args);
         };
-        window.Worker = worker({
+        const OrigWorker = worker({
             relativePathType: 'file', // Todo: We need to change this to "url" when implemented
             // Todo: We might auto-detect this by looking at window.location
             basePath, // Todo: We need to change this to our server's base URL when implemented
@@ -817,12 +835,26 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             rootPath,
             permittedProtocols: ['http', 'https', 'blob', 'data']
         });
-        window.SharedWorker = sharedWorker({
+        const OrigSharedWorker = sharedWorker({
             relativePathType: 'file',
             basePath,
             rootPath,
             permittedProtocols: ['http', 'https', 'blob', 'data']
         });
+        window._activeWorkers = [];
+        window.Worker = function (...args) {
+            const w = new OrigWorker(...args);
+            window._activeWorkers.push(w);
+            return w;
+        };
+        window.Worker.prototype = OrigWorker.prototype;
+        Object.assign(window.Worker, OrigWorker);
+
+        window.SharedWorker = function (...args) {
+            const w = new OrigSharedWorker(...args);
+            window._activeWorkers.push(w);
+            return w;
+        };
         global.Blob = window.Blob;
         global.File = window.File;
         // keypath-special-identifiers.htm still relies on this property

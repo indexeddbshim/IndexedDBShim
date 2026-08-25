@@ -21,3 +21,12 @@ Object.assign(globalThis, {
     DOMMatrix, DOMMatrixReadOnly, DOMPoint, DOMPointReadOnly,
     DOMRect, DOMRectReadOnly, DOMQuad, FileList
 });
+
+if (typeof Float16Array === 'undefined') {
+    /**
+     * Polyfill for Float16Array.
+     */
+    class Float16Array extends Uint16Array {}
+    Float16Array.prototype[Symbol.toStringTag] = 'Float16Array';
+    globalThis.Float16Array = Float16Array;
+}

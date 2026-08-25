@@ -348,6 +348,9 @@ workerCtx.setTimeout = function (cb, ms) {
 //   `node-idb-test.js`'s `sandboxObj`) keeps the two aligned.
 workerCtx.TypeError = TypeError;
 workerCtx.DOMException = DOMException;
+if (typeof Float16Array !== 'undefined') {
+    workerCtx.Float16Array = Float16Array;
+}
 
 // Context elements required by the WebWorkers API spec
 /**
