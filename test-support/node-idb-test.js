@@ -49,6 +49,7 @@ const {JSDOM} = jsdom;
 //   is to crash the entire process, silently aborting a full-suite run at
 //   whichever file happens to hit this first.
 process.on('unhandledRejection', (reason) => {
+    console.error('UNHANDLED REJECTION:', reason);
     // A rejection can arrive after this file already completed (normally,
     //   or via testharness.js's own forced timeout) -- dispatching into an
     //   already-`close()`d window at that point re-triggers completion
@@ -461,7 +462,11 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 
     // Necessary for certain tests, but seems might be worse on performance
     const url = 'http://127.0.0.1:8000/IndexedDB/idlharness.any.html';
-    const {window} = await JSDOM.fromURL(url);
+    const virtualConsole = new jsdom.VirtualConsole();
+    virtualConsole.on('log', console.log);
+    virtualConsole.on('error', console.error);
+    virtualConsole.on('warn', console.warn);
+    const {window} = await JSDOM.fromURL(url, {virtualConsole});
     // const {window} = new JSDOM();
 
     try {

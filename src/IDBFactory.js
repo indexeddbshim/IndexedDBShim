@@ -557,6 +557,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
     const req = IDBOpenDBRequest.__createInstance();
     let calledDbCreateError = false;
+    let isRevertingSysdb = false;
 
     if (CFG.autoName && name === '') {
         // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
@@ -585,7 +586,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
      * @returns {boolean}
      */
     function dbCreateError (tx, err) {
-        if (calledDbCreateError) {
+        if (calledDbCreateError || isRevertingSysdb) {
             return false;
         }
         // Defensive cleanup: `pendingVersionChanges.set(name, ...)` (see
@@ -647,46 +648,63 @@ IDBFactory.prototype.open = function (name /* , version */) {
                      */
                     let sysdbFinishedCb = function (systx, err, cb) {
                         if (err) {
+                            /**
+                             * @param {any} [errorToShow]
+                             * @returns {void}
+                             */
+                            const manualRevert = function (errorToShow) {
+                                /**
+                                 * @param {string} [msg]
+                                 * @throws {Error}
+                                 * @returns {never}
+                                 */
+                                function reportError (msg) {
+                                    throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
+                                }
+
+                                sysdb.transaction(
+                                    function (systx) {
+                                        // Attempt to revert
+                                        if (oldVersion === 0) {
+                                            systx.executeSql(
+                                                'DELETE FROM dbVersions WHERE "name" = ?',
+                                                [sqlSafeName]
+                                            );
+                                        } else {
+                                            systx.executeSql(
+                                                'UPDATE dbVersions SET "version" = ? WHERE "name" = ?',
+                                                [oldVersion, sqlSafeName]
+                                            );
+                                        }
+                                    },
+                                    function (sqlErr) {
+                                        isRevertingSysdb = false;
+                                        cb(sqlErr);
+                                    },
+                                    function () {
+                                        isRevertingSysdb = false;
+                                        cb(errorToShow || reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
+                                    }
+                                );
+                            };
+
                             try {
-                                systx.executeSql('ROLLBACK', [], cb, cb);
-                            } catch (err) {
+                                systx.executeSql(
+                                    'ROLLBACK',
+                                    [],
+                                    function () {
+                                        cb();
+                                    },
+                                    function (tx, sqlErr) {
+                                        // Browser/Node may fail with expired transaction, so manually revert
+                                        manualRevert(sqlErr);
+                                        return false;
+                                    }
+                                );
+                            } catch (e) {
                                 // Browser may fail with expired transaction above so
                                 //     no choice but to manually revert
-                                sysdb.transaction(function (systx) {
-                                    /**
-                                     *
-                                     * @param {string} msg
-                                     * @throws {Error}
-                                     * @returns {never}
-                                     */
-                                    function reportError (msg) {
-                                        throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
-                                    }
-
-                                    // Attempt to revert
-                                    if (oldVersion === 0) {
-                                        systx.executeSql(
-                                            'DELETE FROM dbVersions WHERE "name" = ?',
-                                            [sqlSafeName],
-                                            function () {
-                                                // @ts-expect-error Force to work
-                                                cb(reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
-                                            },
-                                            // @ts-expect-error Force to work
-                                            reportError
-                                        );
-                                    } else {
-                                        systx.executeSql(
-                                            'UPDATE dbVersions SET "version" = ? WHERE "name" = ?',
-                                            [
-                                                oldVersion, sqlSafeName
-                                            ],
-                                            cb,
-                                            // @ts-expect-error Force to work
-                                            reportError
-                                        );
-                                    }
-                                });
+                                manualRevert(e);
                             }
                             return;
                         }
@@ -790,6 +808,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
                             // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__preabort = function () {
+                                isRevertingSysdb = true;
                                 pendingVersionChanges.delete(name);
                                 connection.__upgradeTransaction = null;
                                 // We ensure any cache is deleted before any request error events fire and try to reopen
@@ -808,6 +827,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 req.__done = false;
 
                                 connection.close();
+                                isRevertingSysdb = true;
                                 setTimeout(() => {
                                     const err = createDOMException('AbortError', 'The upgrade transaction was aborted.');
                                     sysdbFinishedCb(systx, err, function (reportError) {
@@ -876,7 +896,36 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         }
                         sysdbFinishedCb = function (systx, err, cb) {
                             if (err) {
-                                rollback(err, cb);
+                                rollback(err,
+                                    /**
+                                     * @param {Error} [reportError]
+                                     * @returns {void}
+                                     */
+                                    function (reportError) {
+                                        sysdb.transaction(
+                                            function (systx) {
+                                                if (oldVersion === 0) {
+                                                    systx.executeSql(
+                                                        'DELETE FROM dbVersions WHERE "name" = ?',
+                                                        [sqlSafeName]
+                                                    );
+                                                } else {
+                                                    systx.executeSql(
+                                                        'UPDATE dbVersions SET "version" = ? WHERE "name" = ?',
+                                                        [oldVersion, sqlSafeName]
+                                                    );
+                                                }
+                                            },
+                                            function (sqlErr) {
+                                                isRevertingSysdb = false;
+                                                cb(sqlErr);
+                                            },
+                                            function () {
+                                                isRevertingSysdb = false;
+                                                cb(reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
+                                            }
+                                        );
+                                    });
                             } else {
                                 commit(cb);
                             }

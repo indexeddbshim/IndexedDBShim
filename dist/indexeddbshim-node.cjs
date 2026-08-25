@@ -7095,14 +7095,14 @@ const B = {
       revive: () => 1 / 0
     }
   },
-  k = {
+  D = {
     map: {
       test: e => "Map" === toStringTag(e),
       replace: e => e.entries().toArray(),
       revive: e => new Map(e)
     }
   },
-  D = {
+  R = {
     nan: {
       test: e => Number.isNaN(e),
       replace: () => "NaN",
@@ -7357,8 +7357,8 @@ const Y = {
       revive() {}
     }
   }],
-  ne = [D, M, L, F],
-  ce = [Z, Y, re, K, ne, O, z, U, _, B, I, h, N, C].concat("function" == typeof Map ? k : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
+  ne = [R, M, L, F],
+  ce = [Z, Y, re, K, ne, O, z, U, _, B, I, h, N, C].concat("function" == typeof Map ? D : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
 const ue = ce.concat({
     checkDataCloneException: {
       test(e) {
@@ -7375,11 +7375,53 @@ const ue = ce.concat({
         return false;
       }
     }
+  }),
+  ye = ue.concat({
+    checkSharedArrayBufferException: {
+      test(e) {
+        if ("SharedArrayBuffer" === {}.toString.call(e).slice(8, -1)) throw new DOMException("The object cannot be cloned.", "DataCloneError");
+        return false;
+      }
+    }
   });
 
 // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new Typeson().register(ue);
+// Although typeson-registry already has a FileList type in its structured cloning presets,
+//   we need to override it so it works with our tests
+
+const specSet = ye.flatMap(preset => Array.isArray(preset) ? preset : [preset]).find(preset => preset && !Array.isArray(preset) && 'filelist' in preset);
+const origFileList = specSet && !Array.isArray(specSet) && 'filelist' in specSet ? specSet.filelist : undefined;
+const origTest = origFileList && typeof origFileList === 'object' && 'test' in origFileList && typeof origFileList.test === 'function' ? origFileList.test : undefined;
+const origRevive = origFileList && typeof origFileList === 'object' && 'revive' in origFileList && typeof origFileList.revive === 'function' ? origFileList.revive : undefined;
+const customFileList = origFileList ? {
+  ...origFileList,
+  /**
+   * @param {unknown} x
+   * @param {import('typeson').StateObject} state
+   * @returns {boolean}
+   */
+  test(x, state) {
+    if (typeof FileList !== 'undefined') {
+      return x instanceof FileList;
+    }
+    return typeof origTest === 'function' ? origTest(x, state) : false;
+  },
+  /**
+   * @param {unknown} x
+   * @param {import('typeson').StateObject} state
+   * @returns {unknown}
+   */
+  revive(x, state) {
+    if (typeof FileList !== 'undefined') {
+      return Reflect.construct(FileList, [x]);
+    }
+    return typeof origRevive === 'function' ? origRevive(x, state) : undefined;
+  }
+} : undefined;
+let typeson = new Typeson().register([ye, customFileList ? {
+  filelist: customFileList
+} : {}]);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>
@@ -7388,7 +7430,7 @@ let typeson = new Typeson().register(ue);
  */
 function register(func) {
   // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
-  typeson = new Typeson().register(func(ue));
+  typeson = new Typeson().register(func(ye));
 }
 
 /**
@@ -10449,6 +10491,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
   }
   const req = IDBOpenDBRequest.__createInstance();
   let calledDbCreateError = false;
+  let isRevertingSysdb = false;
   if (CFG.autoName && name === '') {
     // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
     name = 'autoNamedDatabase_' + nameCounter++;
@@ -10475,7 +10518,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
    * @returns {boolean}
    */
   function dbCreateError(tx, err) {
-    if (calledDbCreateError) {
+    if (calledDbCreateError || isRevertingSysdb) {
       return false;
     }
     // Defensive cleanup: `pendingVersionChanges.set(name, ...)` (see
@@ -10539,36 +10582,46 @@ IDBFactory.prototype.open = function (name /* , version */) {
            */
           let sysdbFinishedCb = function (systx, err, cb) {
             if (err) {
-              try {
-                systx.executeSql('ROLLBACK', [], cb, cb);
-              } catch (err) {
-                // Browser may fail with expired transaction above so
-                //     no choice but to manually revert
+              /**
+               * @param {any} [errorToShow]
+               * @returns {void}
+               */
+              const manualRevert = function (errorToShow) {
+                /**
+                 * @param {string} [msg]
+                 * @throws {Error}
+                 * @returns {never}
+                 */
+                function reportError(msg) {
+                  throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
+                }
                 sysdb.transaction(function (systx) {
-                  /**
-                   *
-                   * @param {string} msg
-                   * @throws {Error}
-                   * @returns {never}
-                   */
-                  function reportError(msg) {
-                    throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
-                  }
-
                   // Attempt to revert
                   if (oldVersion === 0) {
-                    systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
-                      // @ts-expect-error Force to work
-                      cb(reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
-                    },
-                    // @ts-expect-error Force to work
-                    reportError);
+                    systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName]);
                   } else {
-                    systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb,
-                    // @ts-expect-error Force to work
-                    reportError);
+                    systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName]);
                   }
+                }, function (sqlErr) {
+                  isRevertingSysdb = false;
+                  cb(sqlErr);
+                }, function () {
+                  isRevertingSysdb = false;
+                  cb(errorToShow || reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                 });
+              };
+              try {
+                systx.executeSql('ROLLBACK', [], function () {
+                  cb();
+                }, function (tx, sqlErr) {
+                  // Browser/Node may fail with expired transaction, so manually revert
+                  manualRevert(sqlErr);
+                  return false;
+                });
+              } catch (e) {
+                // Browser may fail with expired transaction above so
+                //     no choice but to manually revert
+                manualRevert(e);
               }
               return;
             }
@@ -10669,6 +10722,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
               // eslint-disable-next-line camelcase -- Clear API
               req.transaction.on__preabort = function () {
+                isRevertingSysdb = true;
                 pendingVersionChanges.delete(name);
                 connection.__upgradeTransaction = null;
                 // We ensure any cache is deleted before any request error events fire and try to reopen
@@ -10686,6 +10740,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 req.__result = undefined;
                 req.__done = false;
                 connection.close();
+                isRevertingSysdb = true;
                 setTimeout(() => {
                   const err = createDOMException('AbortError', 'The upgrade transaction was aborted.');
                   sysdbFinishedCb(systx, err, function (reportError) {
@@ -10747,7 +10802,26 @@ IDBFactory.prototype.open = function (name /* , version */) {
             }
             sysdbFinishedCb = function (systx, err, cb) {
               if (err) {
-                rollback(err, cb);
+                rollback(err,
+                /**
+                 * @param {Error} [reportError]
+                 * @returns {void}
+                 */
+                function (reportError) {
+                  sysdb.transaction(function (systx) {
+                    if (oldVersion === 0) {
+                      systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName]);
+                    } else {
+                      systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName]);
+                    }
+                  }, function (sqlErr) {
+                    isRevertingSysdb = false;
+                    cb(sqlErr);
+                  }, function () {
+                    isRevertingSysdb = false;
+                    cb(reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
+                  });
+                });
               } else {
                 commit(cb);
               }
