@@ -173,29 +173,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     - 'bindings-inject-keys-bypass.any.worker.js', - Failing
     - `bindings-inject-values-bypass.any.js` - Failing
     - 'bindings-inject-values-bypass.any.worker.js', - Failing
-    - `idlharness.any.js`: 201/207. The remaining 6 failures
-    ("existence and properties of interface prototype object" for
-    `IDBFactory`/`IDBObjectStore`/`IDBIndex`/`IDBKeyRange`/`IDBRecord`/
-    `IDBCursor`) are all `Object.getPrototypeOf(X.prototype) !==
-    Object.prototype`, i.e. the same cross-realm `Object.prototype`
-    identity gap already documented above (the narrower
-    `Symbol.hasInstance`-only patch for `Object` fixes `instanceof` but not
-    direct prototype-object identity comparisons) -- not this file's own
-    issue, just another surface of it.
-    - `idlharness.any.worker.js`: 195/207. 6 failures
-      (`IDBFactory`/`IDBObjectStore`/`IDBIndex`/`IDBKeyRange`/
-      `IDBRecord`/`IDBCursor` "prototype is not Object.prototype") are
-      the same cross-realm identity gap as `idlharness.any.js` above.
-      The other 6 are worker-specific and not yet traced further:
-      `IDBRequest`/`IDBDatabase`/`IDBTransaction` "is not EventTarget",
-      `IDBOpenDBRequest` "is not IDBRequest", `IDBCursorWithValue` "is
-      not IDBCursor" (likely the same class of cross-realm constructor-
-      chain identity issue, one level up from the prototype-object
-      one), and `WorkerGlobalScope interface: attribute indexedDB`
-      ("must have a property 'indexedDB'" on the prototype --
-      `globalscope-indexedDB-SameObject.any.worker.js` already passes,
-      so `indexedDB` works functionally; this is about exactly how it's
-      exposed as a property).
 
 See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
@@ -361,13 +338,11 @@ const goodBad = {
         'idbfactory-origin-isolation.js',
         'idbindex-cross-realm-methods.js',
         'idbobjectstore-cross-realm-methods.js',
-        'idlharness.any.js',
         'ready-state-destroyed-execution-context.js',
         'storage-buckets.https.any.js',
         'transaction-deactivation-timing.any.js',
         'bindings-inject-keys-bypass.any.worker.js',
         'bindings-inject-values-bypass.any.worker.js',
-        'idlharness.any.worker.js',
         'storage-buckets.https.any.worker.js',
         'transaction-deactivation-timing.any.worker.js'
     ],
@@ -564,6 +539,8 @@ const goodBad = {
         'idbtransaction_abort.any.worker.js',
         'idbtransaction_objectStoreNames.any.js',
         'idbversionchangeevent.any.js',
+        'idlharness.any.js',
+        'idlharness.any.worker.js',
         'index_sort_order.any.js',
         'interleaved-cursors-large.any.js',
         'interleaved-cursors-small.any.js',
