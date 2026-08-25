@@ -668,7 +668,22 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     //   open/close the transaction's active-handler window itself.
                                     req.transaction.__handlerActive = true;
                                     req.dispatchEvent(e);
-                                    req.transaction.__handlerActive = false;
+                                    // Give any same-tick microtask scheduled from within the
+                                    //   `upgradeneeded` handler (e.g. a plain
+                                    //   `Promise.resolve().then(...)`) a chance to run -- and still
+                                    //   observe the transaction as active -- before we deactivate it
+                                    //   again, per https://github.com/w3c/IndexedDB/issues/87. Only
+                                    //   the flag reset itself is deferred here -- unlike
+                                    //   `IDBTransaction.js`'s `advanceAfterDispatch`, `finished()`
+                                    //   (this transaction's own queue-advancement/completion signal)
+                                    //   still runs synchronously, at exactly its previous timing: an
+                                    //   earlier attempt at deferring `finished()` too raced against
+                                    //   unrelated test setup that assumed a freshly deleted/created
+                                    //   database's upgrade transaction had already fully completed by
+                                    //   the time this function returns.
+                                    queueMicrotask(() => {
+                                        req.transaction.__handlerActive = false;
+                                    });
 
                                     if (e.__legacyOutputDidListenersThrowError) {
                                         logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', /** @type {Error} */ (e.__legacyOutputDidListenersThrowError)); // We do nothing else with this error as per spec

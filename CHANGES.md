@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 17.4.0 (unreleased)
+
+- fix: keep a transaction active through same-tick microtasks scheduled from a request's `success`/`error` handler (per w3c/IndexedDB#87), including for `readonly` transactions (needed a matching `websql-configurable` fix so `readTransaction()` can defer finalization) and for the equivalent timing around `onupgradeneeded`
+
 ## 17.3.0
 
 - feat: add `IDBTransaction.commit()`, including making a transaction correctly go inactive between request callbacks (rather than staying "active" for its whole lifetime) so `commit()`'s own inactive check works as spec'd; this also fixes transactions hanging/growing memory unboundedly under WPT's `keepAlive()`-style request-reissuing pattern, traced to SQL callbacks resolving via `queueMicrotask` (now `setTimeout`) and starving out real timers

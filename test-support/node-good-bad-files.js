@@ -57,11 +57,25 @@ https://github.com/web-platform-tests/wpt/commit/57aa2ac737eec9526ad6c4ace61e590
 - `idbobjectstore-query-exception-order.any.js`
 
 These are still failing regardless:
-- `transaction-deactivation-timing.any.js`: ?
-- 'transaction-deactivation-timing.any.worker.js', - Failing
-- `upgrade-transaction-deactivation-timing.any.js`: ?
-- 'upgrade-transaction-deactivation-timing.any.worker.js', - Failing
-- `get-databases.any.js` (not sure if it is transaction timing)
+- `transaction-deactivation-timing.any.js`: 1 of 5 tests fails --
+  "Deactivation of new transactions happens at end of invocation" -- which
+  registers *two* listeners on the same request's `success` event; the
+  first schedules a microtask, and per spec a microtask checkpoint must run
+  *between* invoking each of the two listeners (event dispatch to multiple
+  listeners isn't just a tight synchronous loop -- each listener invocation
+  is its own callback-completion boundary). `eventtargeter`'s
+  `invokeCurrentListeners` currently does invoke same-type listeners back
+  to back with no microtask yield in between. Fixing this would mean
+  deferring each subsequent listener invocation, not just this one file's
+  scenario -- a change to the core dispatch loop itself, not a small,
+  isolated timing fix.
+- `get-databases.any.js` (not sure if it is transaction timing): 1 of 5
+  tests fails -- `IDBFactory.databases()` should only report databases
+  whose creation has actually *committed*, not ones still mid-flight in an
+  uncommitted `versionchange` transaction. This needs `IDBFactory.js`'s
+  database registry to track a real "committed" flag per database (a
+  separate feature gap, unrelated to the event/microtask timing issue
+  above).
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
 
@@ -90,37 +104,31 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     - 'bindings-inject-keys-bypass.any.worker.js', - Failing
     - `bindings-inject-values-bypass.any.js` - Failing
     - 'bindings-inject-values-bypass.any.worker.js', - Failing
-    - `structured-clone.any.js` - Failing many tests (125 total; 65 pass as
-        of the investigation below). Re-investigated 2026-08-24:
-        - ~59 of the ~60 still-failing tests (`Date`, `RegExp`,
-          `ArrayBuffer`, typed arrays, `Map`, `Set`, `Array`, `Object`,
-          `Error` and its subtypes, `FileList`, ...) share ONE root cause:
-          `Sca.js`/`typeson` always decode a cloned value using *this
-          process's own, outer, non-sandboxed* built-in classes, but the
-          test script comparing `Object.getPrototypeOf(orig)` against
-          `Object.getPrototypeOf(clone)` runs *inside* the vm sandbox --
-          two different realms' prototypes for the same built-in. Same
-          class of cross-realm-identity issue already fixed piecemeal this
-          session for `ArrayBuffer`/`DOMException`/`Event`/`EventTarget`
-          (see `environment.js`/`node-idb-test.js`'s `sandboxObj`), just
-          showing up across nearly every JS built-in type at once here.
-          The same fix pattern (pass the outer realm's class directly into
-          `sandboxObj`, replacing the sandbox's own copy) would likely
-          resolve most of these too, but `Array`/`Object`/`Date` were
-          deliberately given a *narrower* `Symbol.hasInstance`-only patch
-          instead of full sandbox replacement earlier in the same session,
-          suggesting full replacement was judged riskier for those
-          (`testharness.js` itself leans on them internally) -- extending
-          full replacement to `RegExp`/`Map`/`Set`/the `Error` family/
-          `FileList` too is a materially bigger, more architecturally
-          invasive change than anything else done this session, and was
-          explicitly deferred rather than attempted.
+    - `structured-clone.any.js` - Failing ~60 of 125 tests:
+        - ~59 of those share ONE root cause: `Sca.js`/`typeson` always
+          decode a cloned value using *this process's own, outer,
+          non-sandboxed* built-in classes (`Date`, `RegExp`, `ArrayBuffer`,
+          typed arrays, `Map`, `Set`, `Array`, `Object`, `Error` and its
+          subtypes, `FileList`, ...), but the test script comparing
+          `Object.getPrototypeOf(orig)` against `Object.getPrototypeOf(clone)`
+          runs *inside* the vm sandbox -- two different realms' prototypes
+          for the same built-in. Same class of cross-realm-identity issue
+          as elsewhere in this file (see `environment.js`/
+          `node-idb-test.js`'s `sandboxObj`), just showing up across nearly
+          every JS built-in type at once here. The same fix pattern (pass
+          the outer realm's class directly into `sandboxObj`, replacing the
+          sandbox's own copy) would likely resolve most of these too, but
+          `Array`/`Object`/`Date` deliberately use a *narrower*
+          `Symbol.hasInstance`-only patch instead of full sandbox
+          replacement (`testharness.js` itself leans on them internally,
+          making full replacement riskier for those) -- extending full
+          replacement to `RegExp`/`Map`/`Set`/the `Error` family/
+          `FileList` too would be a materially bigger, more
+          architecturally invasive change.
         - `DOMMatrix`/`DOMPoint` fail separately and expectedly: we mock
           them (along with `DOMMatrixReadOnly`, `DOMPoint(ReadOnly)`,
           `DOMRect(ReadOnly)`) with no-op functions, so a genuine clone
           round-trip was never going to work for those regardless.
-          `ImageData` now uses a real implementation (via `canvas`, already
-          installed), so it's no longer part of this gap.
         - `MessageChannel`/`MessagePort` fail for a different, unrelated
           reason: they're supposed to be unclonable (`store.put()` should
           throw `DataCloneError`), but our mock passes through instead of
@@ -242,57 +250,11 @@ Current worker test statuses with 2 files excluded:
 
 // Passing the "events" argument to `node-idb-test.js` will run the event
 //   tests (`Event`, `CustomEvent`, and `EventTarget`): two idlharness-style
-//   interface-conformance files, plus (see further below) the 9 functional
-//   tests ported from web-platform-tests/dom/events/*.any.js. These are
-//   relevant for IndexedDB in that we are implementing and passing events.
-//   These are not present in the IndexedDB folder. Unlike the previous
-//   tests, the two idlharness-style files below are hard-coded. They could
-//   conceivably be live-updated from `web-platform-tests/dom/interfaces.html`
-//   and `web-platform-tests/dom/interface-objects.html` (where
-//   the contents were originally obtained), but any partial inclusion might
-//   be fragile.
-// `__event-interface.js`'s embedded IDL was brought up to the current DOM
-//   spec (it had been using pre-modern `[Constructor(...)]`/`void`-return
-//   syntax); the vendored `idlharness.js`/`WebIDLParser.js` it runs against
-//   are the live, submodule-synced copies under `web-platform-tests/resources/`,
-//   so this is now an accurate conformance check, not a stale fixture.
-//   The 19 real gaps this then surfaced in `eventtargeter` (the `ShimEvent`/
-//   `ShimEventTarget`/`ShimCustomEvent` source, not IndexedDBShim itself)
-//   have been fixed there: named getter/method functions so `.name` matches
-//   the spec'd "get propName"/method-name auto-naming, `composedPath()`
-//   added as a real operation, `returnValue` added (get/set), `composed`
-//   exposed on the prototype, and `initEvent`/`initCustomEvent` given
-//   default parameter values so `.length` reflects only their required
-//   argument.
-// The 9 functional (non-idlharness) tests from
-//   web-platform-tests/dom/events/*.any.js are now also ported in, alongside
-//   the two idlharness-style files above -- copied verbatim except for
-//   swapping the "META: ..." header for the beginscript/endscript
-//   resource-include markers this harness uses (see `DOMException-*.js` for
-//   the same pattern). Getting these to genuinely pass (not just load)
-//   surfaced several further real gaps in `eventtargeter`, since fixed
-//   there: `addEventListener`/`removeEventListener`/`hasEventListener`'s
-//   duplicate-listener identity now compares only `capture` for the
-//   standard (non-early/late/default) listener type, matching spec, instead
-//   of full-options equality (a breaking change to eventtargeter's own
-//   previously-tested, non-spec-compliant behavior -- fixed there too, by
-//   explicit user decision); the `signal` option now validates its value
-//   (throwing for `null`/non-`AbortSignal`, via duck-typing rather than
-//   `instanceof` to tolerate a signal constructed in a different realm);
-//   `once` listeners are now removed *before* invocation rather than after,
-//   so a reentrant nested dispatch from within the listener doesn't see it
-//   as still registered; a listener removed mid-dispatch by an earlier
-//   sibling listener (e.g. via an aborted shared `signal`) is no longer
-//   invoked even though it was present in the snapshot taken at the start
-//   of that dispatch pass; `isTrusted` is now a real, shared-getter-function
-//   `[LegacyUnforgeable]`-style own property (previously a fresh per-instance
-//   closure, failing idlharness's "same getter reference across instances"
-//   check) defaulting to `false` rather than `undefined`; `timeStamp` is now
-//   actually set (via `performance.now()`) rather than never assigned; and
-//   `srcElement` was added as a legacy alias of `target`. `AbortController`/
-//   `AbortSignal`/`removeEventListener` were also added to this harness's
-//   own sandboxed-global copy list (`environment.js`), alongside the
-//   already-present `addEventListener`.
+//   interface-conformance files (hard-coded, not live-fetched from the WPT
+//   submodule), plus the 9 functional tests ported from
+//   web-platform-tests/dom/events/*.any.js. These are relevant for
+//   IndexedDB in that we are implementing and passing events; they are not
+//   present in the IndexedDB folder itself.
 Event Test counts: 11 files (11 good)
 Current Event test statuses with 0 files excluded:
   'Pass': 114,
@@ -315,13 +277,6 @@ Current Event test statuses with 0 files excluded:
 //   `DOMException-constructor-behavior.js`, `DOMException-constants.js`,
 //   `DOMException-is-error.js`, `DOMException-custom-bindings.js`,
 //   `DOMException-stack-accessor.js`.
-// Porting surfaced 2 real fixes (in `environment.js`, same cross-realm
-//   pattern already applied there for `Event`/`EventTarget`): `DOMException`
-//   is passed directly into the sandbox via `sandboxObj` rather than copied
-//   from `shimNS.window`, which left it enumerable there (a `vm` artifact of
-//   passing a plain object literal) and its `.prototype`'s own `[[Prototype]]`
-//   pointing at the *outer* realm's `Error.prototype` instead of the
-//   sandbox's own -- both fixed.
 // The 6 remaining failures are all in `DOMException-stack-accessor.js` and
 //   are not fixable here: 5 test the `Error.prototype.stack`-as-a-shared-
 //   accessor TC39 proposal (https://tc39.es/proposal-error-stack-accessor/),
@@ -393,7 +348,6 @@ const goodBad = {
         'structured-clone.any.js',
         'transaction-deactivation-timing.any.js',
         'transaction-lifetime.any.js',
-        'upgrade-transaction-deactivation-timing.any.js',
         // `.any.worker.js` dedicated-worker-context variants (run via the
         //   `any-workers` mode, not the default corpus); many mirror their
         //   window-context `.any.js` counterpart's status above, but some
@@ -411,7 +365,6 @@ const goodBad = {
         'transaction-abort-multiple-metadata-revert.any.worker.js',
         'transaction-deactivation-timing.any.worker.js',
         'transaction-lifetime.any.worker.js',
-        'upgrade-transaction-deactivation-timing.any.worker.js',
         'upgrade-transaction-lifecycle-backend-aborted.any.worker.js',
         'upgrade-transaction-lifecycle-user-aborted.any.worker.js'
     ],
@@ -654,6 +607,7 @@ const goodBad = {
         'transaction-scheduling-ro-waits-for-rw.any.js',
         'transaction-scheduling-rw-scopes.any.js',
         'transaction_bubble-and-capture.any.js',
+        'upgrade-transaction-deactivation-timing.any.js',
         'upgrade-transaction-lifecycle-backend-aborted.any.js',
         'upgrade-transaction-lifecycle-committed.any.js',
         'upgrade-transaction-lifecycle-user-aborted.any.js',
@@ -793,6 +747,7 @@ const goodBad = {
         'transaction-lifetime-empty.any.worker.js',
         'transaction-requestqueue.any.worker.js',
         'transaction_bubble-and-capture.any.worker.js',
+        'upgrade-transaction-deactivation-timing.any.worker.js',
         'upgrade-transaction-lifecycle-committed.any.worker.js',
         'value.any.worker.js',
         'value_recursive.any.worker.js',
