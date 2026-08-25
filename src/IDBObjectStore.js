@@ -6,6 +6,7 @@ import DOMStringList from './DOMStringList.js';
 import * as util from './util.js';
 import * as Key from './Key.js';
 import {executeFetchIndexData, buildFetchIndexDataSQL, IDBIndex} from './IDBIndex.js';
+import cmp from './cmp.js';
 import IDBTransaction from './IDBTransaction.js';
 import * as Sca from './Sca.js';
 import CFG from './CFG.js';
@@ -69,6 +70,11 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
  *     failCb: import('./Key.js').SQLFailureCallback
  *   ) => void,
+ *   __checkIndexConstraints: (
+ *     tx: WebSQLTransaction,
+ *     value: import('./Key.js').Value,
+ *     excludeKey: import('./Key.js').Key|Integer|undefined
+ *   ) => SyncPromise,
  *   __insertData: (
  *     tx: WebSQLTransaction,
  *     encoded: string,
@@ -519,6 +525,77 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
 };
 
 /**
+ * Validates `value`'s unique index entries against the table's *current*
+ *   state without mutating anything -- used by `__storingRecordObjectStore`
+ *   to check a `put()`'s constraints *before* `__overwrite` deletes the
+ *   existing row for that key, so a rejected `put()` can't end up losing
+ *   the record it was trying to replace (see
+ *   `idbobjectstore-put-unique-index-constraint-is-atomic.any.js`).
+ *   `excludeKey`, when given, treats a conflicting record as a non-conflict
+ *   if it's the very record being overwritten (its own current entry would
+ *   otherwise self-conflict on every no-op `put()` of an unchanged value).
+ *   `__insertData` below still runs its own (now redundant, but harmless --
+ *   the old row is gone by then) equivalent check as its first step; this
+ *   isn't merged into it because `__insertData` also performs the actual
+ *   `INSERT`, which cannot safely run before `__overwrite`'s `DELETE` when
+ *   overwriting an existing key.
+ * @param {WebSQLTransaction} tx
+ * @param {import('./Key.js').Value} value
+ * @param {import('./Key.js').Key|Integer|undefined} excludeKey
+ * @this {IDBObjectStoreFull}
+ * @returns {SyncPromise}
+ */
+IDBObjectStore.prototype.__checkIndexConstraints = function (tx, value, excludeKey) {
+    const me = this;
+    const indexPromises = Object.keys(me.__indexes).map((indexName) => {
+        return new SyncPromise((resolve, reject) => {
+            const index = me.__indexes[indexName];
+            if (index.__pendingCreate || index.__deleted || !index.unique) {
+                resolve(undefined);
+                return;
+            }
+            /**
+             * @type {import('./Key.js').KeyValueObject|
+             *   import('./Key.js').KeyPathEvaluateValue}
+             */
+            let indexKey;
+            try {
+                indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry);
+                if (
+                    ('invalid' in indexKey && indexKey.invalid) ||
+                    ('failure' in indexKey && indexKey.failure)
+                ) {
+                    throw new Error('Go to catch');
+                }
+            } catch (err) {
+                resolve(undefined);
+                return;
+            }
+            indexKey = indexKey.value;
+            if (indexKey === undefined) {
+                resolve(undefined);
+                return;
+            }
+            const multiCheck = index.multiEntry && Array.isArray(indexKey);
+            const fetchArgs = buildFetchIndexDataSQL(true, index, indexKey, 'key', multiCheck);
+            executeFetchIndexData(null, ...fetchArgs, tx, null, function success (key) {
+                if (key === undefined || (excludeKey !== undefined && cmp(key, excludeKey) === 0)) {
+                    resolve(undefined);
+                    return;
+                }
+                reject(createDOMException(
+                    'ConstraintError',
+                    'Index already contains a record equal to ' +
+                        (multiCheck ? 'one of the subkeys of' : '') +
+                        '`indexKey`'
+                ));
+            }, reject);
+        });
+    });
+    return SyncPromise.all(indexPromises);
+};
+
+/**
  *
  * @param {WebSQLTransaction} tx
  * @param {string} encoded
@@ -794,7 +871,32 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
                     }, error);
                 }
                 if (!noOverwrite) {
-                    store.__overwrite(tx, clonedKeyOrCurrentNumber, insert, error);
+                    // Validate unique index constraints *before* `__overwrite`
+                    //   deletes the existing row at this key -- otherwise a
+                    //   `put()` that ends up rejected still permanently loses
+                    //   the record it was trying to replace (see
+                    //   `idbobjectstore-put-unique-index-constraint-is-atomic.any.js`).
+                    store.__checkIndexConstraints(tx, value, clonedKeyOrCurrentNumber).then(() => {
+                        store.__overwrite(tx, clonedKeyOrCurrentNumber, insert, error);
+                        return undefined;
+                    /**
+                     * @param {Error|DOMException} err
+                     * @returns {null}
+                     */
+                    }).catch(function (err) {
+                        /**
+                         * @returns {void}
+                         */
+                        function fail () {
+                            error(err);
+                        }
+                        if (typeof oldCn === 'number') {
+                            Key.assignCurrentNumber(tx, store, oldCn, fail, fail);
+                            return null;
+                        }
+                        fail();
+                        return null;
+                    });
                     return;
                 }
                 insert(tx);

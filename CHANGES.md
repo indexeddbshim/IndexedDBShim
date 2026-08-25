@@ -1,8 +1,9 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 17.3.2
 
-- fix: throw on IDBRecord getters called off a real instance
+- fix: make `put()` atomic when it fails a unique index constraint
+- fix: throw on `IDBRecord` getters called off a real instance
 - fix: update `typeson-registry` to get throwing for `MessageChannel`/`MessagePort`
 
 ## 17.3.1

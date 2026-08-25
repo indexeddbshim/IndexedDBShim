@@ -139,17 +139,6 @@ These are still failing regardless:
   cache-invalidation rule can't satisfy both, so this needs the
   positional continuation rewrite mentioned above, not a cache-lifetime
   tweak.
-- `idbobjectstore-put-unique-index-constraint-is-atomic.any.js`/
-  `.any.worker.js`: genuinely fails -- "A put() that fails a unique
-  index constraint must not delete the record it would have
-  overwritten." The record `put()` was about to overwrite ends up
-  deleted (`undefined`) even though the `put()` itself fails with a
-  `ConstraintError` from a unique index violation. Points to
-  `IDBObjectStore.__overwrite`/`__insertData` removing the old row
-  before the new value is fully validated against unique index
-  constraints, with no rollback when the constraint check subsequently
-  fails -- a real atomicity bug in the overwrite sequencing, not
-  investigated further for a fix.
 - `transaction-lifetime.any.js`/`.any.worker.js`: genuinely fails on
   blocked-event-ordering assertions ("No Blocked event"/"Blocked
   event"), each with an unhandled `TransactionInactiveError` or an
@@ -429,7 +418,6 @@ const goodBad = {
         'idbfactory-origin-isolation.js',
         'idbindex-cross-realm-methods.js',
         'idbobjectstore-cross-realm-methods.js',
-        'idbobjectstore-put-unique-index-constraint-is-atomic.any.js',
         'idlharness.any.js',
         'ready-state-destroyed-execution-context.js',
         'serialize-sharedarraybuffer-throws.https.js',
@@ -440,7 +428,6 @@ const goodBad = {
         'bindings-inject-keys-bypass.any.worker.js',
         'bindings-inject-values-bypass.any.worker.js',
         'idbcursor_update_index.any.worker.js',
-        'idbobjectstore-put-unique-index-constraint-is-atomic.any.worker.js',
         'idlharness.any.worker.js',
         'storage-buckets.https.any.worker.js',
         'transaction-deactivation-timing.any.worker.js',
@@ -598,6 +585,7 @@ const goodBad = {
         'idbobjectstore_getAllRecords.any.worker.js',
         'idbobjectstore-index-finished.any.js',
         'idbobjectstore-query-exception-order.any.js',
+        'idbobjectstore-put-unique-index-constraint-is-atomic.any.js',
         'idbobjectstore-rename-abort.any.js',
         'idbobjectstore-rename-errors.any.js',
         'idbobjectstore-rename-store.any.js',
@@ -773,6 +761,7 @@ const goodBad = {
         'idbobjectstore-deleteIndex-exception-order.any.worker.js',
         'idbobjectstore-index-finished.any.worker.js',
         'idbobjectstore-query-exception-order.any.worker.js',
+        'idbobjectstore-put-unique-index-constraint-is-atomic.any.worker.js',
         'idbobjectstore-rename-abort.any.worker.js',
         'idbobjectstore-rename-errors.any.worker.js',
         'idbobjectstore-rename-store.any.worker.js',

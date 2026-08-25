@@ -84,7 +84,7 @@ readonlyProperties.forEach((prop) => {
             if (!(this instanceof IDBRecordAlias)) {
                 throw new TypeError('Illegal invocation');
             }
-            // @ts-expect-error `this` is a real instance past the check above
+            // @ts-ignore `this` is a real instance past the check above (not an issue in TS7)
             return this['__' + prop];
         }
     };
