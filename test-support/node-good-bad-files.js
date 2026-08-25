@@ -159,14 +159,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - `transaction-scheduling-ro-waits-for-rw.any.js` - Failing sometimes
 - `transaction-scheduling-across-connections.any.js` - Failing sometimes
 
-- 'reading-autoincrement-indexes-cursors.any.js' - Timing out
-- 'reading-autoincrement-indexes.any.js' - Timing out
-- 'reading-autoincrement-store-cursors.any.js' - Timing out
-- 'reading-autoincrement-store.any.js' - Timing out
-- 'reading-autoincrement-indexes-cursors.any.worker.js', - Timing out
-- 'reading-autoincrement-indexes.any.worker.js', - Timing out
-- 'reading-autoincrement-store-cursors.any.worker.js', - Timing out
-- 'reading-autoincrement-store.any.worker.js' - Timing out
 - 'transaction-scheduling-within-database.any.js', - Timing out
 
 - 'serialize-sharedarraybuffer-throws.https.js' - Failing (bug in test?)
@@ -338,15 +330,7 @@ const goodBad = {
         'idbfactory-deleteDatabase-opaque-origin.js',
         'idbfactory-open-opaque-origin.js',
         'idbindex_tombstones.any.js',
-        'reading-autoincrement-indexes-cursors.any.js',
-        'reading-autoincrement-indexes.any.js',
-        'reading-autoincrement-store-cursors.any.js',
-        'reading-autoincrement-store.any.js',
-        'transaction-scheduling-within-database.any.js',
-        'reading-autoincrement-indexes-cursors.any.worker.js',
-        'reading-autoincrement-indexes.any.worker.js',
-        'reading-autoincrement-store-cursors.any.worker.js',
-        'reading-autoincrement-store.any.worker.js'
+        'transaction-scheduling-within-database.any.js'
     ],
     badFiles: [
         '../non-indexedDB/DOMException-stack-accessor.js',
@@ -602,6 +586,14 @@ const goodBad = {
         'objectstore_keyorder.any.js',
         'open-request-queue.any.js',
         'parallel-cursors-upgrade.any.js',
+        'reading-autoincrement-indexes-cursors.any.js',
+        'reading-autoincrement-indexes.any.js',
+        'reading-autoincrement-store-cursors.any.js',
+        'reading-autoincrement-store.any.js',
+        'reading-autoincrement-indexes-cursors.any.worker.js',
+        'reading-autoincrement-indexes.any.worker.js',
+        'reading-autoincrement-store-cursors.any.worker.js',
+        'reading-autoincrement-store.any.worker.js',
         'request-abort-ordering.any.js',
         'request-event-ordering-large-mixed-with-small-values.any.js',
         'request-event-ordering-large-then-small-values.any.js',
