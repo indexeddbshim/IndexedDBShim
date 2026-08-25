@@ -25,10 +25,6 @@ well relate to many of the same issues.)
 
 0. MISSING/NEW APIS
 
-- `durability` transaction option (newly added)
-    - https://github.com/axemclion/IndexedDBShim/issues/351
-    - 'idbcursor_update_index.any.js' - Failing
-    - 'idbcursor_update_index.any.worker.js', - Failing
 - `navigator.storageBuckets` (`open` and `delete`)
     - 'storage-buckets.https.any.js' - Failing
     - 'storage-buckets.https.any.worker.js', - Failing
@@ -95,6 +91,24 @@ These are still failing regardless:
   change already called out as needed in `IDBDatabase.js`. However, doing
   this would mean not easily being able to span multiple stores atomically
   in a single transaction (it might be doable with ATTACH DATABASE).
+- `idbcursor_update_index.any.js`/`idbcursor_update_index.any.worker.js`:
+  8 of 9 tests pass.
+  The one failure, "Modify records during cursor iteration and verify
+  updated records", opens an index cursor and repeatedly increments and
+  `update()`s the very field the index (and the cursor's iteration order)
+  is sorted on, expecting every record to eventually converge on the
+  range's upper bound (`[10, 10, 10]`); we instead get `[2, 3, 10]` --
+  only the last record keeps getting revisited and climbs to the bound,
+  the earlier two are each visited once and never revisited. `__findBasic`
+  in `IDBCursor.js` re-queries `WHERE <indexed column> > cursor's last-
+  seen key value` on each `continue()`, using whatever key the *previous*
+  row had -- once a later row's key passes that threshold, an earlier
+  row's just-updated key can fall behind it permanently, since the
+  threshold only ratchets forward. Real engines instead track the
+  cursor's exact position (key *and* primary key) against the live index
+  and re-resolve ties by primary key each step, which is a materially
+  different (and more invasive) continuation algorithm than a single
+  monotonically-increasing SQL threshold -- not a small, isolated fix.
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
 
