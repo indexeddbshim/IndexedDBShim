@@ -406,7 +406,10 @@ prom.then(async (scriptSource) => {
                 );
                 const scriptBasename = path.basename(arg);
                 if (Object.hasOwn(nodeReplacementHacks, scriptBasename)) {
-                    scriptSource = scriptSource.replace(...nodeReplacementHacks[scriptBasename]);
+                    scriptSource = nodeReplacementHacks[scriptBasename].reduce(
+                        (content, pair) => content.replace(...pair),
+                        scriptSource
+                    );
                 }
                 vm.runInContext(
                     scriptSource,

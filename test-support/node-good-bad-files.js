@@ -173,40 +173,10 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     - 'bindings-inject-keys-bypass.any.worker.js', - Failing
     - `bindings-inject-values-bypass.any.js` - Failing
     - 'bindings-inject-values-bypass.any.worker.js', - Failing
-    - `structured-clone.any.js` - Failing 29 of 125 tests. All share the
-      same root cause: `Sca.js`/`typeson` decode a cloned value using
-      *this process's own, outer, non-sandboxed* built-in classes, but
-      the test script comparing `Object.getPrototypeOf(orig)` against
-      `Object.getPrototypeOf(clone)` runs *inside* the vm sandbox -- two
-      different realms' prototypes for the same built-in. `Array`/
-      `Object`/`RegExp` can't be fixed by passing the outer realm's
-      class into `sandboxObj` (`node-idb-test.js`) the way `ArrayBuffer`
-      and others are: their test values are built via literal syntax
-      (`{}`/`[]`/`/re/`), which always uses the running realm's true
-      intrinsic prototype regardless of what the global binding points
-      to. `TypeError`/`RangeError`/`ReferenceError`/`SyntaxError`/
-      `URIError` can't either, for a different reason -- V8 also throws
-      these natively for the sandbox's own internal operations
-      (undefined-variable access, non-callable calls, malformed URI
-      sequences, ...), and a natively thrown error always uses the
-      realm's true intrinsic constructor too, so replacing the binding
-      would break `assert_throws_js`-style checks elsewhere that expect
-      a natively thrown error to be `instanceof` the sandbox's own copy.
-      `DOMMatrix`/`DOMPoint` fail separately and expectedly: we mock
-      them (along with `DOMMatrixReadOnly`, `DOMPoint(ReadOnly)`,
-      `DOMRect(ReadOnly)`) with no-op functions, so a genuine clone
-      round-trip was never going to work for those regardless.
-      `FileList` has no realm-independent fix either -- it's only ever
-      constructed by a real `<input type=file>`, not by test code
-      directly.
-    - `serialize-sharedarraybuffer-throws.https.js`: genuinely fails, and
-      it's not a test bug -- same class of gap as the `MessageChannel`/
-      `MessagePort` unclonable-type failures just above:
-      `objStore.put({sab: sab})` should throw `DataCloneError` for a
-      `SharedArrayBuffer` (structured clone must reject it per spec) but
-      doesn't throw at all, since `Sca.js`/`typeson`'s clone algorithm
-      doesn't recognize/reject this type as unclonable and just passes it
-      through.
+    - `structured-clone.any.js` - Failing 1 of 125 tests: the `FileList`
+      clone round trip. `FileList` has no realm-independent fix -- it's
+      only ever constructed by a real `<input type=file>`, not by test
+      code directly.
     - `idlharness.any.js`: 201/207. The remaining 6 failures
     ("existence and properties of interface prototype object" for
     `IDBFactory`/`IDBObjectStore`/`IDBIndex`/`IDBKeyRange`/`IDBRecord`/
@@ -397,7 +367,6 @@ const goodBad = {
         'idbobjectstore-cross-realm-methods.js',
         'idlharness.any.js',
         'ready-state-destroyed-execution-context.js',
-        'serialize-sharedarraybuffer-throws.https.js',
         'storage-buckets.https.any.js',
         'structured-clone.any.js',
         'transaction-deactivation-timing.any.js',
@@ -642,6 +611,7 @@ const goodBad = {
         'request-event-ordering-large-values.any.js',
         'request-event-ordering-small-values.any.js',
         'request_bubble-and-capture.any.js',
+        'serialize-sharedarraybuffer-throws.https.js',
         'string-list-ordering.any.js',
         'structured-clone-transaction-state.any.js',
         'transaction-abort-generator-revert.any.js',

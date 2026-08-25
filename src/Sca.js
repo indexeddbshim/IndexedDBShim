@@ -1,12 +1,12 @@
 import {
-    Typeson, hasConstructorOf, structuredCloningThrowing
+    Typeson, hasConstructorOf, structuredCloningForStorage
 } from 'typeson-registry';
 
 import {createDOMException, ShimDOMException} from './DOMException.js';
 
 // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new Typeson().register(structuredCloningThrowing);
+let typeson = new Typeson().register(structuredCloningForStorage);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>
@@ -15,7 +15,7 @@ let typeson = new Typeson().register(structuredCloningThrowing);
  */
 function register (func) {
     // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
-    typeson = new Typeson().register(func(structuredCloningThrowing));
+    typeson = new Typeson().register(func(structuredCloningForStorage));
 }
 
 /**

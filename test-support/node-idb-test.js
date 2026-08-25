@@ -1,5 +1,8 @@
 // Todo: Reuse any relevant portions in this file or `node-buildjs.js` for adapting tests for browser shimming
 
+// Must stay the first import in this file -- see its own header comment.
+import './setup-dom-polyfills.js';
+
 import {readFile, readdir, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -8,7 +11,7 @@ import {MessageChannel} from 'node:worker_threads';
 // import sourceMapSupport from 'source-map-support/source-map-support.js';
 
 import jsdom from 'jsdom';
-import {ImageData, DOMPoint, DOMMatrix} from 'canvas';
+import {ImageData} from 'canvas';
 import colors from 'colors/safe.js';
 
 import CY from 'cyclonejs'; // Todo: Replace this with Sca (but need to make requireable)
@@ -431,7 +434,10 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     //   replaced typically lives in the real WPT source pulled in via
     //   `harnessContent`, not in our own generated glue.
     if (Object.hasOwn(nodeReplacementHacks, shimNS.fileName)) {
-        allContent = allContent.replace(...nodeReplacementHacks[shimNS.fileName]);
+        allContent = nodeReplacementHacks[shimNS.fileName].reduce(
+            (content, pair) => content.replace(...pair),
+            allContent
+        );
     }
 
     // Build the window each time for test safety
@@ -496,8 +502,9 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             //   Object.getPrototypeOf(orig), Object.getPrototypeOf(clone))`
             //   needs `orig` (built by the test script's own `new Date(...)`
             //   etc.) to share the exact same prototype the decoded `clone`
-            //   got. Unlike `Array`/`Object` (excluded here deliberately --
-            //   see `environment.js`), none of these have a literal syntax
+            //   got. Unlike `Array`/`Object` (excluded from this
+            //   unconditional list -- see the conditional addition below,
+            //   and `environment.js`), none of these have a literal syntax
             //   that would bypass this global binding. `TypeError`/
             //   `RangeError`/`ReferenceError`/`SyntaxError`/`URIError` are
             //   deliberately excluded too, even though `Sca.js` needs them
@@ -528,7 +535,28 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             Uint32Array,
             Float32Array,
             Float64Array,
-            Float16Array
+            Float16Array,
+            // `Array`/`Object` stay out of the unconditional list above for
+            //   every other file: global binding replacement can't help
+            //   their *literal* (`[]`/`{}`) uses anyway (see the comment
+            //   above), and testharness.js's own pervasive internal use of
+            //   both would make full replacement risky for the whole
+            //   corpus. `RangeError`/`ReferenceError`/`SyntaxError`/
+            //   `URIError` stay out too, for the native-throw reason given
+            //   above -- risky for the *whole* corpus, since some other
+            //   file might genuinely trigger one of these natively and
+            //   need it to match the sandbox's own copy. `structured-
+            //   clone.any.js` gets all of them here instead, scoped to
+            //   just this one file's own sandbox (confirmed directly not
+            //   to trigger any of these natively on its own), paired with
+            //   `node-replacement-hacks.js` rewriting its Array/Object/
+            //   RegExp literals into constructor calls that route through
+            //   these rebound globals -- containing the risk to this one
+            //   file's testharness-internal behavior rather than the
+            //   whole corpus.
+            ...(shimNS.fileName === 'structured-clone.any.js'
+                ? {Array, Object, RangeError, ReferenceError, SyntaxError, URIError}
+                : {})
         };
 
         const baseCfg = {
@@ -713,13 +741,20 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         };
 
         global.ImageData = window.ImageData = ImageData;
-        window.DOMPoint = DOMPoint;
-        window.DOMMatrix = DOMMatrix;
+        // These come from `typeson-registry/polyfills`, assigned onto
+        //   `globalThis` by `setup-dom-polyfills.js` (this file's own first
+        //   import) -- using the same classes here that `Sca.js` decodes a
+        //   clone with is what lets `structured-clone.any.js`'s
+        //   `assert_equals(Object.getPrototypeOf(orig),
+        //   Object.getPrototypeOf(clone))` pass for these types.
+        window.DOMMatrix = globalThis.DOMMatrix;
+        window.DOMMatrixReadOnly = globalThis.DOMMatrixReadOnly;
+        window.DOMPoint = globalThis.DOMPoint;
+        window.DOMPointReadOnly = globalThis.DOMPointReadOnly;
+        window.DOMRect = globalThis.DOMRect;
+        window.DOMRectReadOnly = globalThis.DOMRectReadOnly;
+        window.DOMQuad = globalThis.DOMQuad;
         window.MessageChannel = MessageChannel;
-        window.DOMMatrixReadOnly = window.DOMPointReadOnly =
-            window.DOMRect = window.DOMRectReadOnly = function () {
-                // Testing
-            };
 
         // Polyfill enough for our tests
         const cou = await import('typeson-registry/polyfills');
