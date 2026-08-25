@@ -310,17 +310,6 @@ prom.then(async (scriptSource) => {
     ['clearTimeout', 'setInterval', 'clearInterval'].forEach((prop) => {
         workerCtx[prop] = global[prop];
     });
-    // Same override as `node-idb-test.js`'s window-context setup: a plain
-    //   `setTimeout(fn, 0)` doesn't reliably run after this shim's real,
-    //   async SQL operations have finished marking a transaction inactive
-    //   (we use real SQLite, not synchronous, so there's no equivalent of a
-    //   browser's zero-cost microtask boundary for that to line up with) --
-    //   tests relying on that ordering (e.g.
-    //   idbcursor-advance-exception-order.any.js's "TransactionInactiveError
-    //   vs. InvalidStateError" cases) need the same grace period here.
-    workerCtx.setTimeout = function (cb, ms) {
-        return global.setTimeout(cb, (ms || 0) + 500);
-    };
 
     // `indexeddbshim(workerCtx, ...)` below installs `IDBKeyRange`/
     //   `IDBObjectStore`/etc. using THIS process's own `src/DOMException.js`/

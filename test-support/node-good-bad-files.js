@@ -134,20 +134,7 @@ issues (microtask-between-listeners, whole-database locking, cursor
 positional tracking), not from this deferral's timing. Kept anyway as
 a minor, low-risk tightening.
 
-Besides at least the following tests which would otherwise fail if our tests did not override `setTimeout` to
-increase the timeout to ensure the transaction has expired in our implementation, for an idea
-of what is the actual expected behavior, see also
-https://github.com/web-platform-tests/wpt/commit/57aa2ac737eec9526ad6c4ace61e590730ec3b9e
-
-- `idbcursor-advance-exception-order.any.js`
-- `idbindex-query-exception-order.any.js`
-- `idbobjectstore-add-put-exception-order.any.js`
-- `idbobjectstore-clear-exception-order.any.js`
-- `idbobjectstore-delete-exception-order.any.js`
-- `idbobjectstore-deleteIndex-exception-order.any.js`
-- `idbobjectstore-query-exception-order.any.js`
-
-These are still failing regardless:
+These are still failing:
 - `idbcursor_update_index.any.js`/`idbcursor_update_index.any.worker.js`:
   8 of 9 tests pass.
   The one failure, "Modify records during cursor iteration and verify

@@ -527,11 +527,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         // window.CustomEvent = window.ShimCustomEvent; // Used in events tests
         */
 
-        const _setTimeout = window.setTimeout;
-        window.setTimeout = function (cb, ms) { // Override to better ensure transaction has expired (otherwise we'd mostly need sync SQLite operations)
-            _setTimeout(cb, ms + 500);
-        };
-
         Object.defineProperty(window.CustomEvent.prototype, 'constructor', {
             enumerable: false
         });

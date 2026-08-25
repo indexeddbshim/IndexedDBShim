@@ -77,12 +77,6 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
         testWin[prop] = loaderWin[prop];
     });
 
-    // Override to better ensure transaction has expired
-    const _setTimeout = testWin.setTimeout;
-    testWin.setTimeout = function (cb, ms) {
-        return _setTimeout(cb, ms + 500);
-    };
-
     loaderWin.setGlobalVars(testWin, {
         fullIDLSupport: true,
         replaceNonIDBGlobals: true,
