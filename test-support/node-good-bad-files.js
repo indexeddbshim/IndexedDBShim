@@ -151,6 +151,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - 'idbfactory-databases-opaque-origin.js' - Not running
 
 - 'idbindex_tombstones.any.js' - Timing out
+- `abort-in-initial-upgradeneeded.any.js` - Timing out
 
 - `request-abort-ordering.any.js` - This times out sometimes (when run with full tests); possibly due to what it is following?
 - 'idbobjectstore_getAllKeys.any.js' - Failing sometimes (when run full tests)
