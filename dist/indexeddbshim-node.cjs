@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.1 - 8/24/2026 */
+/*! indexeddbshim - v17.3.2 - 8/24/2026 */
 
 'use strict';
 
@@ -6135,8 +6135,8 @@ class Typeson {
       {
         sync: c
       } = i,
-      y = {},
-      u = [],
+      u = {},
+      y = [],
       l = [],
       p = [],
       f = !("cyclic" in i) || i.cyclic,
@@ -6145,14 +6145,14 @@ class Typeson {
         encapsulateError: m
       } = i,
       finish = e => {
-        const t = Object.values(y);
+        const t = Object.values(u);
         if (i.iterateNone) return t.length ? t[0] : getJSONType(e);
         if (t.length) {
           if (i.returnTypeNames) return [...new Set(t)];
-          e && isPlainObject(e) && !n(e, "$types") ? e.$types = y : e = {
+          e && isPlainObject(e) && !n(e, "$types") ? e.$types = u : e = {
             $: e,
             $types: {
-              $: y
+              $: u
             }
           };
         } else isObject(e) && n(e, "$types") && (e = {
@@ -6166,10 +6166,10 @@ class Typeson {
         return await Promise.all(r.map(async function (r) {
           const n = [],
             [a] = t.splice(0, 1),
-            [o,, s, i, c, y, u] = a,
-            l = _encapsulate(o, r, s, i, n, true, u),
+            [o,, s, i, c, u, y] = a,
+            l = _encapsulate(o, r, s, i, n, true, y),
             p = hasConstructorOf(l, TypesonPromise);
-          return o && p ? (setOwnEnumerable(c, y, await l.p), checkPromises(e, n)) : (o ? setOwnEnumerable(c, y, l) : e = p ? l.p : l, checkPromises(e, n));
+          return o && p ? (setOwnEnumerable(c, u, await l.p), checkPromises(e, n)) : (o ? setOwnEnumerable(c, u, l) : e = p ? l.p : l, checkPromises(e, n));
         })), e;
       },
       _adaptBuiltinStateObjectProperties = (e, t, r) => {
@@ -6229,11 +6229,11 @@ class Typeson {
         })) : h = t, b && b(), h;
         if (null === t) return b && b(), t;
         if (o && t && "object" == typeof t && !s.iterateIn && !s.iterateUnsetNumeric) {
-          const r = u.indexOf(t);
-          if (-1 !== r) return y[e] = "#", b && b({
+          const r = y.indexOf(t);
+          if (-1 !== r) return u[e] = "#", b && b({
             cyclicKeypath: l[r]
           }), "#" + l[r];
-          true === o && (u.push(t), l.push(e));
+          true === o && (y.push(t), l.push(e));
         }
         const v = isPlainObject(t),
           w = a(t),
@@ -6297,16 +6297,16 @@ class Typeson {
       },
       replace = (e, t, r, n, a, o, s) => {
         const i = a ? this.plainObjectReplacers : this.nonplainObjectReplacers;
-        let u = i.length;
-        for (; u--;) {
-          const a = i[u];
+        let y = i.length;
+        for (; y--;) {
+          const a = i[y];
           if (a.test(t, r)) {
             const {
               type: i
             } = a;
             if (Object.hasOwn(this.revivers, i)) {
-              const t = y[e];
-              y[e] = t ? [i].concat(t) : i;
+              const t = u[e];
+              u[e] = t ? [i].concat(t) : i;
             }
             if (Object.assign(r, {
               type: i,
@@ -6314,14 +6314,14 @@ class Typeson {
             }), (c || !a.replaceAsync) && !a.replace) return s && s({
               typeDetected: true
             }), _encapsulate(e, t, f && "readonly", r, n, o, i);
-            let u;
+            let y;
             if (s && s({
               replacing: true
             }), c || !a.replaceAsync) {
               if (void 0 === a.replace) throw new TypeError("Missing replacer");
-              u = a.replace(t, r);
-            } else u = a.replaceAsync(t, r);
-            return _encapsulate(e, u, f && "readonly", r, n, o, i);
+              y = a.replace(t, r);
+            } else y = a.replaceAsync(t, r);
+            return _encapsulate(e, y, f && "readonly", r, n, o, i);
           }
         }
         return t;
@@ -6366,16 +6366,16 @@ class Typeson {
     if (true === i) return finishRevival(e.$);
     if (!i || "object" != typeof i || Array.isArray(i)) return finishRevival(e);
     const c = [],
-      y = Object.create(null),
-      u = {};
+      u = Object.create(null),
+      y = {};
     let l = true;
     i.$ && isPlainObject(i.$) && (e = e.$, i = i.$, l = false);
     const executeReviver = (e, t) => {
         const [r] = this.revivers[e] ?? [];
         if (!r) throw new Error("Unregistered type: " + e);
         if (s && !("revive" in r)) return t;
-        if (!s && r.reviveAsync) return r.reviveAsync(t, u);
-        if (r.revive) return r.revive(t, u);
+        if (!s && r.reviveAsync) return r.reviveAsync(t, y);
+        if (r.revive) return r.revive(t, y);
         throw new Error("Missing reviver");
       },
       p = [];
@@ -6413,7 +6413,7 @@ class Typeson {
       }, void 0);
     })();
     let d;
-    return hasConstructorOf(f, TypesonPromise) ? d = f.then(() => e) : (d = function _revive(e, t, o, u, f) {
+    return hasConstructorOf(f, TypesonPromise) ? d = f.then(() => e) : (d = function _revive(e, t, o, y, f) {
       if (l && "$types" === e) return;
       const d = p.length,
         m = n(i, e) ? i[e] : void 0,
@@ -6426,18 +6426,18 @@ class Typeson {
           hasConstructorOf(n, TypesonPromise) ? p.push(n.then(e => set(e))) : set(n);
         }), t = a; c.length;) {
           const [[e, t, r, a]] = c,
-            o = n(y, t),
-            s = o ? y[t] : getByKeyPath(e, t);
+            o = n(u, t),
+            s = o ? u[t] : getByKeyPath(e, t);
           if (!o && void 0 === s) break;
           setOwnEnumerable(r, a, s), c.shift();
         }
       }
-      if (!m) return y[e] = t, t;
+      if (!m) return u[e] = t, t;
       if ("#" === m) {
         const e = t.slice(1),
-          r = n(y, e),
-          a = r ? y[e] : getByKeyPath(o, e);
-        return r || void 0 !== a || c.push([o, e, u, f]), a;
+          r = n(u, e),
+          a = r ? u[e] : getByKeyPath(o, e);
+        return r || void 0 !== a || c.push([o, e, y, f]), a;
       }
       const applyType = t => {
         const r = [].concat(m).reduce(function reducer(e, t) {
@@ -6445,7 +6445,7 @@ class Typeson {
           if ("string" != typeof t) throw new TypeError("Bad type JSON");
           return executeReviver(t, e);
         }, t);
-        return hasConstructorOf(r, TypesonPromise) ? r.then(t => (y[e] = t, t)) : (y[e] = r, r);
+        return hasConstructorOf(r, TypesonPromise) ? r.then(t => (u[e] = t, t)) : (u[e] = r, r);
       };
       return !s && p.length > d ? TypesonPromise.all(p.slice(d)).then(() => applyType(t)) : applyType(t);
     }("", e, null), p.length && (d = TypesonPromise.resolve(d).then(e => TypesonPromise.all([e, ...p])).then(([e]) => e))), isThenable(d) ? s && o.throwOnBadSyncType ? (() => {
@@ -6521,8 +6521,8 @@ class Typeson {
 class Undefined {}
 Undefined.__typeson__type__ = "TypesonUndefined";
 const s = ["null", "boolean", "number", "string", "array", "object"];
-for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), y = 0; y < 64; y++) c[i.codePointAt(y)] = y;
-var u = function encode(e, t, r) {
+for (var i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", c = new Uint8Array(256), u = 0; u < 64; u++) c[i.codePointAt(u)] = u;
+var y = function encode(e, t, r) {
     null == r && (r = e.byteLength);
     for (var n = new Uint8Array(e, 0, r), a = n.length, o = "", s = 0; s < a; s += 3) o += i[n[s] >> 2], o += i[(3 & n[s]) << 4 | n[s + 1] >> 4], o += i[(15 & n[s + 1]) << 2 | n[s + 2] >> 6], o += i[63 & n[s + 2]];
     return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
@@ -6535,10 +6535,10 @@ var u = function encode(e, t, r) {
       o,
       s,
       i = .75 * e.length,
-      y = 0;
+      u = 0;
     "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-    for (var u = new ArrayBuffer(i, t), l = new Uint8Array(u), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], a = c[e.codePointAt(p + 1)], o = c[e.codePointAt(p + 2)], s = c[e.codePointAt(p + 3)], l[y++] = n << 2 | a >> 4, l[y++] = (15 & a) << 4 | o >> 2, l[y++] = (3 & o) << 6 | 63 & s;
-    return u;
+    for (var y = new ArrayBuffer(i, t), l = new Uint8Array(y), p = 0; p < r; p += 4) n = c[e.codePointAt(p)], a = c[e.codePointAt(p + 1)], o = c[e.codePointAt(p + 2)], s = c[e.codePointAt(p + 3)], l[u++] = n << 2 | a >> 4, l[u++] = (15 & a) << 4 | o >> 2, l[u++] = (3 & o) << 6 | 63 & s;
+    return y;
   };
 const p = {
     arraybuffer: {
@@ -6549,7 +6549,7 @@ const p = {
         return -1 !== r ? {
           index: r
         } : (t.buffers.push(e), {
-          s: u(e),
+          s: y(e),
           maxByteLength: e.maxByteLength,
           resizable: e.resizable
         });
@@ -6583,13 +6583,13 @@ const p = {
           });
           i.push(r), c += r;
         }
-        const y = new ArrayBuffer(c);
-        let u = 0;
+        const u = new ArrayBuffer(c);
+        let y = 0;
         for (let t = 0; t < s; t++) {
-          const r = new Uint8Array(y, u, i[t]);
+          const r = new Uint8Array(u, y, i[t]);
           e.copyTo(r, {
             planeIndex: t
-          }), u += i[t];
+          }), y += i[t];
         }
         return {
           format: t,
@@ -6597,7 +6597,7 @@ const p = {
           numberOfFrames: n,
           numberOfChannels: a,
           timestamp: o,
-          data: y
+          data: u
         };
       },
       revive: ({
@@ -6713,7 +6713,7 @@ const v = {
           byteOffset: t,
           byteLength: r
         } : (n.buffers.push(e), {
-          encoded: u(e),
+          encoded: y(e),
           maxByteLength: e.maxByteLength,
           resizable: e.resizable,
           byteOffset: t,
@@ -7199,7 +7199,7 @@ const X = {};
       } : (n.buffers.push(e), {
         maxByteLength: e.maxByteLength,
         resizable: e.resizable,
-        encoded: u(e),
+        encoded: y(e),
         byteOffset: t,
         length: r
       });
@@ -7214,10 +7214,10 @@ const X = {};
         maxByteLength: i,
         resizable: c
       } = t;
-      let y;
-      return "index" in t ? y = r.buffers[s] : (y = l(o, c ? {
+      let u;
+      return "index" in t ? u = r.buffers[s] : (u = l(o, c ? {
         maxByteLength: i
-      } : void 0), r.buffers.push(y)), new e(y, n, a);
+      } : void 0), r.buffers.push(u)), new e(u, n, a);
     }
   };
 }(e));
@@ -7250,8 +7250,8 @@ const Y = {
               duration: s,
               visibleRect: i,
               displayWidth: c,
-              displayHeight: y,
-              colorSpace: u
+              displayHeight: u,
+              colorSpace: y
             } = e,
             l = new ArrayBuffer(e.allocationSize());
           await e.copyTo(l), t({
@@ -7267,12 +7267,12 @@ const Y = {
               height: i.height
             },
             displayWidth: c,
-            displayHeight: y,
+            displayHeight: u,
             colorSpace: {
-              primaries: u.primaries,
-              transfer: u.transfer,
-              matrix: u.matrix,
-              fullRange: u.fullRange
+              primaries: y.primaries,
+              transfer: y.transfer,
+              matrix: y.matrix,
+              fullRange: y.fullRange
             },
             data: l
           });
@@ -7290,8 +7290,8 @@ const Y = {
         displayWidth: s,
         displayHeight: i,
         colorSpace: c,
-        data: y
-      }) => new VideoFrame(new Uint8Array(y), {
+        data: u
+      }) => new VideoFrame(new Uint8Array(u), {
         format: e,
         codedWidth: t,
         codedHeight: r,
@@ -7345,11 +7345,11 @@ const Y = {
   }],
   ne = [D, M, L, F],
   ce = [Z, Y, re, K, ne, O, z, U, _, B, I, h, N, C].concat("function" == typeof Map ? k : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? p : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? v : [], "undefined" != typeof BigInt ? [m, d] : [], "undefined" != typeof DOMException ? A : [], "undefined" != typeof QuotaExceededError ? W : [], "undefined" != typeof WebTransportError ? te : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? S : [], "undefined" != typeof DOMQuad ? P : [], "undefined" != typeof DOMMatrix ? T : [], "undefined" != typeof AudioData ? f : [], "undefined" != typeof EncodedAudioChunk ? E : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ee : []);
-const ye = ce.concat({
+const ue = ce.concat({
     checkDataCloneException: {
       test(e) {
         const t = {}.toString.call(e).slice(8, -1);
-        if (["symbol", "function"].includes(typeof e) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || ["ArrayBuffer", "DataView", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array"].includes(t) && function isBufferDetached(e) {
+        if (["symbol", "function"].includes(typeof e) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel", "MessagePort"].includes(t) || e && e.constructor && ["MessageChannel", "MessagePort"].includes(e.constructor.name) || ["ArrayBuffer", "DataView", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array"].includes(t) && function isBufferDetached(e) {
           if ("boolean" == typeof e.detached) return e.detached;
           if (0 !== e.byteLength) return false;
           try {
@@ -7365,7 +7365,7 @@ const ye = ce.concat({
 
 // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new Typeson().register(ye);
+let typeson = new Typeson().register(ue);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>
@@ -7374,7 +7374,7 @@ let typeson = new Typeson().register(ye);
  */
 function register(func) {
   // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
-  typeson = new Typeson().register(func(ye));
+  typeson = new Typeson().register(func(ue));
 }
 
 /**
@@ -8424,6 +8424,11 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
  *     failCb: import('./Key.js').SQLFailureCallback
  *   ) => void,
+ *   __checkIndexConstraints: (
+ *     tx: WebSQLTransaction,
+ *     value: import('./Key.js').Value,
+ *     excludeKey: import('./Key.js').Key|Integer|undefined
+ *   ) => SyncPromise,
  *   __insertData: (
  *     tx: WebSQLTransaction,
  *     encoded: string,
@@ -8845,6 +8850,69 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
 };
 
 /**
+ * Validates `value`'s unique index entries against the table's *current*
+ *   state without mutating anything -- used by `__storingRecordObjectStore`
+ *   to check a `put()`'s constraints *before* `__overwrite` deletes the
+ *   existing row for that key, so a rejected `put()` can't end up losing
+ *   the record it was trying to replace (see
+ *   `idbobjectstore-put-unique-index-constraint-is-atomic.any.js`).
+ *   `excludeKey`, when given, treats a conflicting record as a non-conflict
+ *   if it's the very record being overwritten (its own current entry would
+ *   otherwise self-conflict on every no-op `put()` of an unchanged value).
+ *   `__insertData` below still runs its own (now redundant, but harmless --
+ *   the old row is gone by then) equivalent check as its first step; this
+ *   isn't merged into it because `__insertData` also performs the actual
+ *   `INSERT`, which cannot safely run before `__overwrite`'s `DELETE` when
+ *   overwriting an existing key.
+ * @param {WebSQLTransaction} tx
+ * @param {import('./Key.js').Value} value
+ * @param {import('./Key.js').Key|Integer|undefined} excludeKey
+ * @this {IDBObjectStoreFull}
+ * @returns {SyncPromise}
+ */
+IDBObjectStore.prototype.__checkIndexConstraints = function (tx, value, excludeKey) {
+  const me = this;
+  const indexPromises = Object.keys(me.__indexes).map(indexName => {
+    return new SyncPromise((resolve, reject) => {
+      const index = me.__indexes[indexName];
+      if (index.__pendingCreate || index.__deleted || !index.unique) {
+        resolve(undefined);
+        return;
+      }
+      /**
+       * @type {import('./Key.js').KeyValueObject|
+       *   import('./Key.js').KeyPathEvaluateValue}
+       */
+      let indexKey;
+      try {
+        indexKey = extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry);
+        if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
+          throw new Error('Go to catch');
+        }
+      } catch (err) {
+        resolve(undefined);
+        return;
+      }
+      indexKey = indexKey.value;
+      if (indexKey === undefined) {
+        resolve(undefined);
+        return;
+      }
+      const multiCheck = index.multiEntry && Array.isArray(indexKey);
+      const fetchArgs = buildFetchIndexDataSQL(true, index, indexKey, 'key', multiCheck);
+      executeFetchIndexData(null, ...fetchArgs, tx, null, function success(key) {
+        if (key === undefined || excludeKey !== undefined && cmp(key, excludeKey) === 0) {
+          resolve(undefined);
+          return;
+        }
+        reject(createDOMException('ConstraintError', 'Index already contains a record equal to ' + (multiCheck ? 'one of the subkeys of' : '') + '`indexKey`'));
+      }, reject);
+    });
+  });
+  return SyncPromise.all(indexPromises);
+};
+
+/**
  *
  * @param {WebSQLTransaction} tx
  * @param {string} encoded
@@ -9096,7 +9164,32 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
           }, error);
         }
         if (!noOverwrite) {
-          store.__overwrite(tx, clonedKeyOrCurrentNumber, insert, error);
+          // Validate unique index constraints *before* `__overwrite`
+          //   deletes the existing row at this key -- otherwise a
+          //   `put()` that ends up rejected still permanently loses
+          //   the record it was trying to replace (see
+          //   `idbobjectstore-put-unique-index-constraint-is-atomic.any.js`).
+          store.__checkIndexConstraints(tx, value, clonedKeyOrCurrentNumber).then(() => {
+            store.__overwrite(tx, clonedKeyOrCurrentNumber, insert, error);
+            return undefined;
+            /**
+             * @param {Error|DOMException} err
+             * @returns {null}
+             */
+          }).catch(function (err) {
+            /**
+             * @returns {void}
+             */
+            function fail() {
+              error(err);
+            }
+            if (typeof oldCn === 'number') {
+              assignCurrentNumber(tx, store, oldCn, fail, fail);
+              return null;
+            }
+            fail();
+            return null;
+          });
           return;
         }
         insert(tx);
@@ -11034,6 +11127,14 @@ readonlyProperties.forEach(prop => {
      * @returns {import('./Key.js').Key|import('./Key.js').Value}
      */
     get [prop]() {
+      // This is defined on the *shared* prototype (see above), so,
+      //   unlike a per-instance getter, it's reachable by calling it
+      //   directly on `IDBRecord.prototype` itself (not a real
+      //   instance) -- WebIDL requires that to throw.
+      if (!(this instanceof IDBRecordAlias)) {
+        throw new TypeError('Illegal invocation');
+      }
+      // @ts-ignore `this` is a real instance past the check above (not an issue in TS7)
       return this['__' + prop];
     }
   };

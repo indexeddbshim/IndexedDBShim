@@ -29,6 +29,7 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     __idbdb: import("./IDBDatabase.js").IDBDatabaseFull;
     __validateKeyAndValueAndCloneValue: (value: import("./Key.js").Value, key: import("./Key.js").Key, cursorUpdate: boolean) => KeyValueArray;
     __deriveKey: (tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback) => void;
+    __checkIndexConstraints: (tx: WebSQLTransaction, value: import("./Key.js").Value, excludeKey: import("./Key.js").Key | Integer | undefined) => SyncPromise;
     __insertData: (tx: WebSQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void) => SyncPromise;
     __overwrite: (tx: WebSQLTransaction, key: import("./Key.js").Key, cb: (tx: WebSQLTransaction) => void, error: (err: (Error & {
         code?: number;
@@ -78,6 +79,28 @@ declare class IDBObjectStore {
      * @returns {void}
      */
     __deriveKey(this: IDBObjectStoreFull, tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback): void;
+    /**
+     * Validates `value`'s unique index entries against the table's *current*
+     *   state without mutating anything -- used by `__storingRecordObjectStore`
+     *   to check a `put()`'s constraints *before* `__overwrite` deletes the
+     *   existing row for that key, so a rejected `put()` can't end up losing
+     *   the record it was trying to replace (see
+     *   `idbobjectstore-put-unique-index-constraint-is-atomic.any.js`).
+     *   `excludeKey`, when given, treats a conflicting record as a non-conflict
+     *   if it's the very record being overwritten (its own current entry would
+     *   otherwise self-conflict on every no-op `put()` of an unchanged value).
+     *   `__insertData` below still runs its own (now redundant, but harmless --
+     *   the old row is gone by then) equivalent check as its first step; this
+     *   isn't merged into it because `__insertData` also performs the actual
+     *   `INSERT`, which cannot safely run before `__overwrite`'s `DELETE` when
+     *   overwriting an existing key.
+     * @param {WebSQLTransaction} tx
+     * @param {import('./Key.js').Value} value
+     * @param {import('./Key.js').Key|Integer|undefined} excludeKey
+     * @this {IDBObjectStoreFull}
+     * @returns {SyncPromise}
+     */
+    __checkIndexConstraints(this: IDBObjectStoreFull, tx: WebSQLTransaction, value: import("./Key.js").Value, excludeKey: import("./Key.js").Key | Integer | undefined): SyncPromise;
     /**
      *
      * @param {WebSQLTransaction} tx
@@ -248,6 +271,11 @@ declare namespace IDBObjectStore {
      *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
      *     failCb: import('./Key.js').SQLFailureCallback
      *   ) => void,
+     *   __checkIndexConstraints: (
+     *     tx: WebSQLTransaction,
+     *     value: import('./Key.js').Value,
+     *     excludeKey: import('./Key.js').Key|Integer|undefined
+     *   ) => SyncPromise,
      *   __insertData: (
      *     tx: WebSQLTransaction,
      *     encoded: string,
