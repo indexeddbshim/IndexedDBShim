@@ -155,12 +155,6 @@ These are still failing regardless:
   cache-invalidation rule can't satisfy both, so this needs the
   positional continuation rewrite mentioned above, not a cache-lifetime
   tweak.
-- `transaction-lifetime.any.js`/`.any.worker.js`: genuinely fails on
-  blocked-event-ordering assertions ("No Blocked event"/"Blocked
-  event"), each with an unhandled `TransactionInactiveError` or an
-  upgradeneeded-vs-blocked event-order mismatch -- likely another
-  instance of this section's event/transaction-timing class of gap, but
-  not traced to a specific line.
 - `abort-in-initial-upgradeneeded.any.js`/`.any.worker.js`: its
   `open_rq.onerror` assertions (and the trailing bare
   `indexedDB.databases().then(...)`) are not wrapped in `t.step_func`,
@@ -440,14 +434,12 @@ const goodBad = {
         'storage-buckets.https.any.js',
         'structured-clone.any.js',
         'transaction-deactivation-timing.any.js',
-        'transaction-lifetime.any.js',
         'bindings-inject-keys-bypass.any.worker.js',
         'bindings-inject-values-bypass.any.worker.js',
         'idbcursor_update_index.any.worker.js',
         'idlharness.any.worker.js',
         'storage-buckets.https.any.worker.js',
-        'transaction-deactivation-timing.any.worker.js',
-        'transaction-lifetime.any.worker.js'
+        'transaction-deactivation-timing.any.worker.js'
     ],
     goodFiles: [
         '../non-indexedDB/__event-interface.js',
@@ -688,6 +680,7 @@ const goodBad = {
         'transaction-abort-request-error.any.js',
         'transaction-create_in_versionchange.any.js',
         'transaction-lifetime-empty.any.js',
+        'transaction-lifetime.any.js',
         'transaction-relaxed-durability.any.js',
         'transaction-requestqueue.any.js',
         'transaction-scheduling-across-connections.any.js',
@@ -837,6 +830,7 @@ const goodBad = {
         'transaction-abort-request-error.any.worker.js',
         'transaction-create_in_versionchange.any.worker.js',
         'transaction-lifetime-empty.any.worker.js',
+        'transaction-lifetime.any.worker.js',
         'transaction-requestqueue.any.worker.js',
         'transaction_bubble-and-capture.any.worker.js',
         'upgrade-transaction-deactivation-timing.any.worker.js',

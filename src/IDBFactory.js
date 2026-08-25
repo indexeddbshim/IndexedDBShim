@@ -156,7 +156,29 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
             return new SyncPromise(function (resolve) {
                 setTimeout(() => {
                     entry.dispatchEvent(e); // No need to catch errors
-                    resolve(undefined);
+                    // Unlike a native `Promise`, `SyncPromise#then` chains
+                    //   synchronously off `resolve()` (verified directly:
+                    //   `SyncPromise.resolve().then(cb)` runs `cb` before
+                    //   even the calling code below it finishes) -- so
+                    //   resolving immediately here would let the
+                    //   `connectionsClosed()` check below run before a
+                    //   same-task-but-microtask-later continuation of a
+                    //   `versionchange` listener above (e.g. an `await`-
+                    //   based one that then calls `db.close()`, as in
+                    //   `transaction-lifetime.any.js`) ever gets a turn,
+                    //   incorrectly firing `blocked` even though the
+                    //   connection was about to close in time. Give real
+                    //   microtask-deferred continuations a small, bounded
+                    //   number of turns first -- same pattern as
+                    //   `IDBTransaction.js`'s `checkQueueEntry`.
+                    let attemptsLeft = 10;
+                    (function wait () {
+                        if (attemptsLeft-- <= 0) {
+                            resolve(undefined);
+                            return;
+                        }
+                        queueMicrotask(wait);
+                    }());
                 }, 0);
             });
         });
@@ -668,22 +690,43 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     //   open/close the transaction's active-handler window itself.
                                     req.transaction.__handlerActive = true;
                                     req.dispatchEvent(e);
-                                    // Give any same-tick microtask scheduled from within the
+                                    // Give any microtask-scheduled continuation of the
                                     //   `upgradeneeded` handler (e.g. a plain
-                                    //   `Promise.resolve().then(...)`) a chance to run -- and still
-                                    //   observe the transaction as active -- before we deactivate it
-                                    //   again, per https://github.com/w3c/IndexedDB/issues/87. Only
-                                    //   the flag reset itself is deferred here -- unlike
-                                    //   `IDBTransaction.js`'s `advanceAfterDispatch`, `finished()`
-                                    //   (this transaction's own queue-advancement/completion signal)
-                                    //   still runs synchronously, at exactly its previous timing: an
-                                    //   earlier attempt at deferring `finished()` too raced against
-                                    //   unrelated test setup that assumed a freshly deleted/created
-                                    //   database's upgrade transaction had already fully completed by
-                                    //   the time this function returns.
-                                    queueMicrotask(() => {
-                                        req.transaction.__handlerActive = false;
-                                    });
+                                    //   `Promise.resolve().then(...)`, or an `await`-based
+                                    //   continuation of a promise resolved from within the handler,
+                                    //   such as testharness.js's own `EventWatcher`) a chance to
+                                    //   run -- and still observe the transaction as active -- before
+                                    //   we deactivate it again, per
+                                    //   https://github.com/w3c/IndexedDB/issues/87. A single deferred
+                                    //   tick isn't always enough: an `await`-based continuation can
+                                    //   take more than one microtask turn to resume (e.g.
+                                    //   `transaction-lifetime.any.js`'s `EventWatcher`-based
+                                    //   `await eventWatcher.wait_for('upgradeneeded')`), so retry a
+                                    //   small, bounded number of times first -- same pattern as
+                                    //   `IDBTransaction.js`'s `checkQueueEntry` -- rather than
+                                    //   resetting after only one. Only the flag reset itself is
+                                    //   deferred here -- unlike `IDBTransaction.js`'s
+                                    //   `advanceAfterDispatch`, `finished()` (this transaction's own
+                                    //   queue-advancement/completion signal) still runs
+                                    //   synchronously, at exactly its previous timing: an earlier
+                                    //   attempt at deferring `finished()` too raced against unrelated
+                                    //   test setup that assumed a freshly deleted/created database's
+                                    //   upgrade transaction had already fully completed by the time
+                                    //   this function returns.
+                                    /**
+                                     * @param {Integer} attemptsLeft
+                                     * @returns {void}
+                                     */
+                                    function deferHandlerActiveReset (attemptsLeft) {
+                                        if (attemptsLeft <= 0) {
+                                            req.transaction.__handlerActive = false;
+                                            return;
+                                        }
+                                        queueMicrotask(() => {
+                                            deferHandlerActiveReset(attemptsLeft - 1);
+                                        });
+                                    }
+                                    deferHandlerActiveReset(10);
 
                                     if (e.__legacyOutputDidListenersThrowError) {
                                         logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', /** @type {Error} */ (e.__legacyOutputDidListenersThrowError)); // We do nothing else with this error as per spec

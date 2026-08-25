@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- fix: give async upgradeneeded/versionchange continuations enough
+microtask grace before deactivating
+
 ## 17.3.2
 
 - fix: make `put()` atomic when it fails a unique index constraint
