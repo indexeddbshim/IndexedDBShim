@@ -8,6 +8,7 @@ import IDBObjectStore from './IDBObjectStore.js';
 import CFG from './CFG.js';
 
 let uniqueID = 0;
+const activeTransactions = new Set();
 const listeners = ['onabort', 'oncomplete', 'onerror'];
 const readonlyProperties = ['objectStoreNames', 'mode', 'durability', 'db', 'error'];
 
@@ -137,6 +138,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode, durability = '
         me.__mode = mode;
         me.__durability = durability;
         me.__db = db;
+        activeTransactions.add(me);
         me.__error = null;
         // @ts-expect-error Part of `ShimEventTarget`
         me.__setOptions({
@@ -641,6 +643,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 me.__errored = true;
                 throw e;
             } finally {
+                activeTransactions.delete(me);
                 me.__storeHandles = {};
             }
         }
@@ -855,6 +858,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         });
     }
     me.__active = false; // Setting here and in requestsFinished for https://github.com/w3c/IndexedDB/issues/87
+    activeTransactions.delete(me);
 
     if (err !== null) {
         me.__error = err;
@@ -1064,7 +1068,7 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
  * @returns {void}
  */
 IDBTransaction.__assertActive = function (tx) {
-    if (!tx || !tx.__active || tx.__committed) {
+    if (!tx || !tx.__active || !tx.__handlerActive || tx.__committed) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
 };
@@ -1094,5 +1098,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
     writable: false
 });
 /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
+IDBTransaction.activeTransactions = activeTransactions;
 
 export default IDBTransaction;

@@ -333,7 +333,14 @@ workerCtx.console = console;
  * @returns {NodeJS.Timeout}
  */
 workerCtx.setTimeout = function (cb, ms) {
-    return global.setTimeout(cb, (ms || 0) + 500);
+    return global.setTimeout(() => {
+        if (workerCtx.IDBTransaction && workerCtx.IDBTransaction.activeTransactions) {
+            for (const tx of workerCtx.IDBTransaction.activeTransactions) {
+                tx.__handlerActive = false;
+            }
+        }
+        return cb();
+    }, (ms || 0) + 500);
 };
 
 // `indexeddbshim(workerCtx, ...)` below installs `IDBKeyRange`/

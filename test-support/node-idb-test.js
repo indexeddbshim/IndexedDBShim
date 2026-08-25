@@ -488,6 +488,18 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         // Should only pass in safe objects
         const sandboxObj = {
             console,
+            setTimeout (...args) {
+                return window.setTimeout(...args);
+            },
+            setInterval (...args) {
+                return window.setInterval(...args);
+            },
+            clearTimeout (...args) {
+                return window.clearTimeout(...args);
+            },
+            clearInterval (...args) {
+                return window.clearInterval(...args);
+            },
             shimNS,
             // The `IDBObjectStore`/`IDBIndex`/`IDBCursor`/`IDBKeyRange` etc.
             //   seen from inside this vm sandbox (copied onto its global in
@@ -803,7 +815,39 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         });
 
         window.Promise = Promise;
+        const origSetTimeout = window.setTimeout;
+        Object.defineProperty(window, 'setTimeout', {
+            configurable: true,
+            enumerable: true,
+            writable: true,
+            value (callback, delay, ...args) {
+                return origSetTimeout.call(window, (...cbArgs) => {
+                    if (window.IDBTransaction && window.IDBTransaction.activeTransactions) {
+                        for (const tx of window.IDBTransaction.activeTransactions) {
+                            tx.__handlerActive = false;
+                        }
+                    }
+                    return callback(...cbArgs);
+                }, delay, ...args);
+            }
+        });
 
+        const origSetInterval = window.setInterval;
+        Object.defineProperty(window, 'setInterval', {
+            configurable: true,
+            enumerable: true,
+            writable: true,
+            value (callback, delay, ...args) {
+                return origSetInterval.call(window, (...cbArgs) => {
+                    if (window.IDBTransaction && window.IDBTransaction.activeTransactions) {
+                        for (const tx of window.IDBTransaction.activeTransactions) {
+                            tx.__handlerActive = false;
+                        }
+                    }
+                    return callback(...cbArgs);
+                }, delay, ...args);
+            }
+        });
         window.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
         // Not deleting per https://github.com/jsdom/jsdom/issues/1720#issuecomment-279665105

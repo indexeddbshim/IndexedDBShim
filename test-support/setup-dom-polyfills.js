@@ -27,9 +27,5 @@ if (typeof Float16Array === 'undefined') {
      * Polyfill for Float16Array.
      */
     class Float16Array extends Uint16Array {}
-    Object.defineProperty(Float16Array.prototype, Symbol.toStringTag, {
-        value: 'Float16Array',
-        configurable: true
-    });
     globalThis.Float16Array = Float16Array;
 }
