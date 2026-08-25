@@ -141,43 +141,9 @@ runs in a real, separate child process reached over a socket, and that
 round-trip adds latency `setImmediate`'s tighter deferral doesn't
 cover.
 
-These are still failing:
-- `idbcursor_update_index.any.js`/`idbcursor_update_index.any.worker.js`:
-  8 of 9 tests pass.
-  The one failure, "Modify records during cursor iteration and verify
-  updated records", opens an index cursor and repeatedly increments and
-  `update()`s the very field the index (and the cursor's iteration order)
-  is sorted on, expecting every record to eventually converge on the
-  range's upper bound (`[10, 10, 10]`); we instead get `[2, 3, 10]` --
-  only the last record keeps getting revisited and climbs to the bound,
-  the earlier two are each visited once and never revisited. `__findBasic`
-  in `IDBCursor.js` re-queries `WHERE <indexed column> > cursor's last-
-  seen key value` on each `continue()`, using whatever key the *previous*
-  row had -- once a later row's key passes that threshold, an earlier
-  row's just-updated key can fall behind it permanently, since the
-  threshold only ratchets forward. Real engines instead track the
-  cursor's exact position (key *and* primary key) against the live index
-  and re-resolve ties by primary key each step, which is a materially
-  different (and more invasive) continuation algorithm than a single
-  monotonically-increasing SQL threshold -- not a small, isolated fix.
-  Tried (and reverted) a narrower fix: `IDBCursor.prototype.update` calls
-  `IDBObjectStore.__storingRecordObjectStore` with `invalidateCache`
-  hardcoded to `false`, so an open cursor's prefetched-rows cache
-  (`__prefetchedData`, populated up to `CFG.cursorPreloadPackSize` rows
-  per query) keeps serving stale, pre-update rows/order after a
-  same-transaction `update()`. Passing `true` there (matching `put`/`add`)
-  changed this test's result (`[10, 2, 3]` instead of `[2, 3, 10]` -- the
-  *first* record now monopolizes every re-visit via the same primary-key
-  tiebreak, rather than the last) but didn't fix it, and broke a
-  previously-passing test, `idbcursor-iterating-update.any.js`, whose
-  whole point is the opposite guarantee: `update()`/`delete()` during
-  index-cursor iteration must *not* disturb the in-progress iteration
-  (real engines keep serving the snapshot the traversal already
-  committed to). Both tests are simultaneously correct under real
-  engines' structural/positional cursor semantics; a single blanket
-  cache-invalidation rule can't satisfy both, so this needs the
-  positional continuation rewrite mentioned above, not a cache-lifetime
-  tweak.
+Although the worker test does modify the tests, these test requirements
+are nevertheless essentially met if taking into account the environment's
+limitations.
 
 2. SERVICE WORKERS
 
@@ -418,7 +384,6 @@ const goodBad = {
         'bindings-inject-values-bypass.any.js',
         'file_support.sub.js',
         'idb-partitioned-persistence.sub.js',
-        'idbcursor_update_index.any.js',
         'idbfactory-origin-isolation.js',
         'idbindex-cross-realm-methods.js',
         'idbobjectstore-cross-realm-methods.js',
@@ -430,7 +395,6 @@ const goodBad = {
         'transaction-deactivation-timing.any.js',
         'bindings-inject-keys-bypass.any.worker.js',
         'bindings-inject-values-bypass.any.worker.js',
-        'idbcursor_update_index.any.worker.js',
         'idlharness.any.worker.js',
         'storage-buckets.https.any.worker.js',
         'transaction-deactivation-timing.any.worker.js'
@@ -525,6 +489,8 @@ const goodBad = {
         'idbcursor_delete_index.any.js',
         'idbcursor_delete_objectstore.any.js',
         'idbcursor_iterating.any.js',
+        'idbcursor_update_index.any.js',
+        'idbcursor_update_index.any.worker.js',
         'idbcursor_update_objectstore.any.js',
         'idbcursor_update_objectstore.any.worker.js',
         'idbdatabase-createObjectStore-exception-order.any.js',

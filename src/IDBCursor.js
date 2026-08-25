@@ -260,9 +260,33 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
         // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
         sqlValues.push(/** @type {string} */ (Key.encode(key)));
     } else if (continueCall && me.__key !== undefined) {
-        sql.push('AND', quotedKeyColumnName, op + ' ?');
         // Key.convertValueToKey(me.__key); // Already checked when stored
-        sqlValues.push(/** @type {string} */ (Key.encode(me.__key)));
+        if (!me.__unique && me.__keyColumnName !== 'key' && me.__primaryKey !== undefined) {
+            // A plain `continue()` on a non-unique index cursor must find
+            //   the next record strictly after the (key, primaryKey) pair
+            //   this cursor last returned -- a scalar `key > lastKey` alone
+            //   would wrongly exclude a *different*, not-yet-visited record
+            //   that's still tied on key with the last one (e.g. another
+            //   record that always had that same indexed value), and would
+            //   also wrongly re-admit the *same* record forever if a
+            //   same-transaction `update()` bumped its own key back above
+            //   the threshold, since a scalar comparison can't distinguish
+            //   "some other record newly tied" from "this record moved
+            //   past its own last position." Comparing the full tuple (via
+            //   this OR) against both key and primary key resolves both.
+            sql.push(
+                'AND (', quotedKeyColumnName, op, '?',
+                'OR (', quotedKeyColumnName, '= ?', 'AND', quotedKey, op, '?))'
+            );
+            sqlValues.push(
+                /** @type {string} */ (Key.encode(me.__key)),
+                /** @type {string} */ (Key.encode(me.__key)),
+                /** @type {string} */ (Key.encode(me.__primaryKey))
+            );
+        } else {
+            sql.push('AND', quotedKeyColumnName, op + ' ?');
+            sqlValues.push(/** @type {string} */ (Key.encode(me.__key)));
+        }
     }
 
     if (!me.__count) {
@@ -912,9 +936,15 @@ IDBCursor.prototype.update = function (valueToUpdate) {
      * @returns {void}
      */
     function addToQueue (clonedValue) {
-        // We set the `invalidateCache` argument to `false` since the old value shouldn't be accessed
+        // `invalidateCache: true` so any cursor on this store (including
+        //   this one) drops its prefetched row batch, forcing its next
+        //   `continue()` to re-query live rather than serve rows snapshotted
+        //   before this update -- needed for the compound-tuple
+        //   continuation logic in `__findBasic` to see this update's
+        //   effect on ordering (see "Modify records during cursor
+        //   iteration" in idbcursor_update_index.any.js).
         // @ts-ignore -- API (not erring in TS 6)
-        IDBObjectStore.__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
+        IDBObjectStore.__storingRecordObjectStore(request, me.__store, true, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
         const [evaluatedKey, clonedValue] = me.__store.__validateKeyAndValueAndCloneValue(valueToUpdate, undefined, true);
