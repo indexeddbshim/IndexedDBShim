@@ -56,6 +56,7 @@ const {JSDOM} = jsdom;
 //   whichever file happens to hit this first.
 process.on('unhandledRejection', (reason) => {
     console.error('UNHANDLED REJECTION:', reason);
+    console.error('shimNS.fileName', shimNS.fileName);
     // A rejection can arrive after this file already completed (normally,
     //   or via testharness.js's own forced timeout) -- dispatching into an
     //   already-`close()`d window at that point re-triggers completion
