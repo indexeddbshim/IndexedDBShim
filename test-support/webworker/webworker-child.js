@@ -45,7 +45,7 @@ if (process.argv.length < 4) {
 const workerCtx = {};
 const sockPath = process.argv[2];
 let workerURL = process.argv[3];
-const scriptLoc = new wwutil.WorkerLocation(workerURL);
+let scriptLoc = new wwutil.WorkerLocation(workerURL);
 // Connect to the parent process
 
 const workerOptions = {
@@ -138,6 +138,20 @@ case 'file':
         //   fetched from the live server rather than read locally.
         // eslint-disable-next-line unicorn/prefer-https -- Local
         workerURL = workerURL.replace(/.*web-platform-tests/v, 'http://web-platform.test:8000').replace(/\/$/v, '');
+        // `self.location`/`self.location.pathname` (set from `scriptLoc`
+        //   below) must reflect the URL actually used to fetch this
+        //   worker's content -- the canonical, short `/IndexedDB/...` WPT
+        //   path -- not the long local filesystem path `scriptLoc` was
+        //   originally built from above. Left stale, `location.pathname`
+        //   would be a full local disk path (e.g.
+        //   `/Users/.../web-platform-tests/IndexedDB/foo.any.worker.js`),
+        //   which some tests (e.g. `resources/support-promises.js`'s
+        //   `databaseName()`) fold into a SQLite filename; combined with a
+        //   long enough WPT test name and SQLite's own `-journal`/`-wal`
+        //   suffix, that can exceed the OS's filename length limit and
+        //   fail with a generic SQLITE_CANTOPEN, with no indication the
+        //   real cause was an overlong, wrongly-local `location.pathname`.
+        scriptLoc = new wwutil.WorkerLocation(workerURL);
         prom = new Promise((resolve) => { // eslint-disable-line promise/avoid-new -- No API
             http.get(workerURL, (res) => {
                 res.setEncoding('utf8');

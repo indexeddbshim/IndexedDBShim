@@ -283,26 +283,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
   across origins -- needs the same real multi-window/cross-origin
   environment gap as the rest of this section.
 
-7. WORKER-CONTEXT-SPECIFIC FAILURES
-
-`.any.worker.js` dedicated-worker-context variants (run via the
-`any-workers` mode, not the default corpus) mostly mirror their
-window-context `.any.js` counterpart's status, but some fail
-differently:
-
-- `transaction-abort-index-metadata-revert.any.worker.js`,
-  `transaction-abort-multiple-metadata-revert.any.worker.js`,
-  `upgrade-transaction-lifecycle-backend-aborted.any.worker.js`, and
-  `upgrade-transaction-lifecycle-user-aborted.any.worker.js` all fail
-  with the exact same error -- `"UnknownError: ... unable to open
-  database file--(SQLITE_CANTOPEN)"` (or `"SqliteError: unable to open
-  database file"`) -- while their window-context counterparts all pass
-  cleanly. Almost certainly the SQLite file path
-  (`CFG.databaseBasePath`/memory database resolution) not surviving
-  correctly across the worker child-process boundary (`webworker.js`)
-  for whatever *second* database open these particular abort/lifecycle
-  tests each trigger; root cause not traced further.
-
 ----
 
 Updated 2026-08-23 after bumping the web-platform-tests submodule from its
@@ -467,12 +447,8 @@ const goodBad = {
         'idbobjectstore-put-unique-index-constraint-is-atomic.any.worker.js',
         'idlharness.any.worker.js',
         'storage-buckets.https.any.worker.js',
-        'transaction-abort-index-metadata-revert.any.worker.js',
-        'transaction-abort-multiple-metadata-revert.any.worker.js',
         'transaction-deactivation-timing.any.worker.js',
-        'transaction-lifetime.any.worker.js',
-        'upgrade-transaction-lifecycle-backend-aborted.any.worker.js',
-        'upgrade-transaction-lifecycle-user-aborted.any.worker.js'
+        'transaction-lifetime.any.worker.js'
     ],
     goodFiles: [
         '../non-indexedDB/__event-interface.js',
@@ -854,6 +830,8 @@ const goodBad = {
         'request_bubble-and-capture.any.worker.js',
         'string-list-ordering.any.worker.js',
         'transaction-abort-generator-revert.any.worker.js',
+        'transaction-abort-index-metadata-revert.any.worker.js',
+        'transaction-abort-multiple-metadata-revert.any.worker.js',
         'transaction-abort-object-store-metadata-revert.any.worker.js',
         'transaction-abort-request-error.any.worker.js',
         'transaction-create_in_versionchange.any.worker.js',
@@ -861,7 +839,9 @@ const goodBad = {
         'transaction-requestqueue.any.worker.js',
         'transaction_bubble-and-capture.any.worker.js',
         'upgrade-transaction-deactivation-timing.any.worker.js',
+        'upgrade-transaction-lifecycle-backend-aborted.any.worker.js',
         'upgrade-transaction-lifecycle-committed.any.worker.js',
+        'upgrade-transaction-lifecycle-user-aborted.any.worker.js',
         'value.any.worker.js',
         'value_recursive.any.worker.js',
         'writer-starvation.any.worker.js'
