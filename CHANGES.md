@@ -3,6 +3,8 @@
 ## 17.4.0 (unreleased)
 
 - fix: keep a transaction active through same-tick microtasks scheduled from a request's `success`/`error` handler (per w3c/IndexedDB#87), including for `readonly` transactions (needed a matching `websql-configurable` fix so `readTransaction()` can defer finalization) and for the equivalent timing around `onupgradeneeded`
+- fix: don't force `Error` prototype onto the native `DOMException`
+- test: track `abort-in-initial-upgradeneeded.any.js` as a known timeout
 
 ## 17.3.0
 

@@ -274,8 +274,24 @@ function setGlobalVars (idb, initialConfig) {
                     Object.setPrototypeOf(shimIDBRequest, ShimEventTarget);
                     Object.setPrototypeOf(shimIDBTransaction, ShimEventTarget);
                     Object.setPrototypeOf(shimIDBVersionChangeEvent, ShimEvent);
-                    Object.setPrototypeOf(ShimDOMException, Error);
-                    Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
+                    // `ShimDOMException` is the real native `DOMException` when one
+                    //   is available (see `DOMException.js`'s `useNativeDOMException`)
+                    //   -- which, unlike the shim classes above, is a single,
+                    //   process-wide singleton shared by reference across every
+                    //   sandbox this library gets installed into (see
+                    //   `node-idb-test.js`'s `sandboxObj`). A native `DOMException`
+                    //   already has the correct prototype chain out of the box
+                    //   (`Object.getPrototypeOf(DOMException) === Function.prototype`,
+                    //   not `Error`), so forcing it here isn't just unneeded but
+                    //   actively wrong -- and, because it's shared, permanently
+                    //   wrong for every later use of `DOMException` in the same
+                    //   process (e.g. a later WPT test file's own idlharness-style
+                    //   check that `DOMException` does *not* inherit from `Error`
+                    //   on the class side), not just this one shim install.
+                    if (typeof DOMException === 'undefined' || ShimDOMException !== DOMException) {
+                        Object.setPrototypeOf(ShimDOMException, Error);
+                        Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
+                    }
                 }
                 if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
                     if (CFG.addNonIDBGlobals) {
