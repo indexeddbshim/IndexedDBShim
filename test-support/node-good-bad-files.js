@@ -17,6 +17,18 @@ KNOWN ISSUES (INHERENT LIMITATIONS)
     live-removed at load time via `node-replacement-hacks.js` rather than
     left failing (see README's Known Issues)
 
+2. ERROR.PROTOTYPE.STACK ACCESSOR
+
+- `../non-indexedDB/DOMException-stack-accessor.js`: 3 of 9 tests pass.
+    All 6 failures are about `Error.prototype.stack`'s own property
+    descriptor (`Object.getOwnPropertyDescriptor(Error.prototype, 'stack')`
+    returns `undefined` in this Node/V8 environment, where the WPT test
+    expects an accessor property with `get`/`set`). Looks like a genuine
+    Node/V8-vs-browser-V8 engine difference in how `Error.stack` is
+    exposed (per-instance vs. an `Error.prototype`-level accessor), not
+    something `DOMException`'s shim controls or can polyfill without
+    reaching into `Error.prototype` itself.
+
 KNOWN TESTING ISSUES
 
 (The following list remaining test failures/blockers for Node; the remaining browser
@@ -127,6 +139,46 @@ These are still failing regardless:
   cache-invalidation rule can't satisfy both, so this needs the
   positional continuation rewrite mentioned above, not a cache-lifetime
   tweak.
+- `idbobjectstore-put-unique-index-constraint-is-atomic.any.js`/
+  `.any.worker.js`: genuinely fails -- "A put() that fails a unique
+  index constraint must not delete the record it would have
+  overwritten." The record `put()` was about to overwrite ends up
+  deleted (`undefined`) even though the `put()` itself fails with a
+  `ConstraintError` from a unique index violation. Points to
+  `IDBObjectStore.__overwrite`/`__insertData` removing the old row
+  before the new value is fully validated against unique index
+  constraints, with no rollback when the constraint check subsequently
+  fails -- a real atomicity bug in the overwrite sequencing, not
+  investigated further for a fix.
+- `transaction-lifetime.any.js`/`.any.worker.js`: genuinely fails on
+  blocked-event-ordering assertions ("No Blocked event"/"Blocked
+  event"), each with an unhandled `TransactionInactiveError` or an
+  upgradeneeded-vs-blocked event-order mismatch -- likely another
+  instance of this section's event/transaction-timing class of gap, but
+  not traced to a specific line.
+- `abort-in-initial-upgradeneeded.any.js`/`.any.worker.js`: its
+  `open_rq.onerror` assertions (and the trailing bare
+  `indexedDB.databases().then(...)`) are not wrapped in `t.step_func`,
+  so a failing assertion there never gets attributed to the running
+  test; `t.done()` is then never called, and the test hangs until
+  testharness.js's own internal per-test timeout force-completes it --
+  a path our jsdom environment doesn't tolerate well (see the `#rerun`
+  comment in `node-idb-test.js`), which is also why
+  `custom-reporter.js`'s `reportResults` throws trying to read
+  `document.querySelectorAll` from the already-torn-down window by the
+  time it runs. The underlying assertion (`dbs.length === 0` after an
+  aborted initial upgrade) hits the same undocumented
+  `IDBFactory.databases()` gap as `get-databases.any.js` above -- it
+  does not yet track a real "committed" flag per database, so an
+  aborted-but-registered database still shows up. Reliably times out
+  both alone and as part of the full sweep, so this is a real `timeout`
+  entry, not merely a full-sweep-only flake.
+- `transaction-scheduling-within-database.any.js`: same whole-database
+  SQLite-locking limitation as `idb-explicit-commit.any.js` above: two
+  same-scope `readonly` transactions each spin `get()` requests waiting
+  for the OTHER to report at least one success before releasing, which
+  needs true concurrent execution the shared per-database lock can't
+  provide -- a genuine deadlock, not a request/scheduling bug.
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
 
@@ -142,7 +194,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/283>.
 
 - `idbfactory-deleteDatabase-opaque-origin.js`
 - `idbfactory-open-opaque-origin.js`
-- `idbfactory-databases-opaque-origin.js`
+- `idbfactory-databases-opaque-origin.js` ("no real multi-host/multi-window browsing context" limitation)
 - `idbfactory-origin-isolation.js`
 
 See <https://github.com/axemclion/IndexedDBShim/issues/286>.
@@ -187,6 +239,30 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
           reason: they're supposed to be unclonable (`store.put()` should
           throw `DataCloneError`), but our mock passes through instead of
           being recognized and rejected as such -- not investigated further.
+    - `serialize-sharedarraybuffer-throws.https.js`: genuinely fails, and
+      it's not a test bug -- same class of gap as the `MessageChannel`/
+      `MessagePort` unclonable-type failures just above:
+      `objStore.put({sab: sab})` should throw `DataCloneError` for a
+      `SharedArrayBuffer` (structured clone must reject it per spec) but
+      doesn't throw at all, since `Sca.js`/`typeson`'s clone algorithm
+      doesn't recognize/reject this type as unclonable and just passes it
+      through.
+    - `idlharness.any.js`: 201/207. The remaining 6 failures
+    ("existence and properties of interface prototype object" for
+    `IDBFactory`/`IDBObjectStore`/`IDBIndex`/`IDBKeyRange`/`IDBRecord`/
+    `IDBCursor`) are all `Object.getPrototypeOf(X.prototype) !==
+    Object.prototype`, i.e. the same cross-realm `Object.prototype`
+    identity gap already documented above (the narrower
+    `Symbol.hasInstance`-only patch for `Object` fixes `instanceof` but not
+    direct prototype-object identity comparisons) -- not this file's own
+    issue, just another surface of it.
+    - `idlharness.any.worker.js`: distinct and more severe than the
+      window-context file above -- only 2 tests even run (`idl_test
+      setup` fails outright with `TypeError: Cannot convert undefined or
+      null to object`, so none of the individual interface checks
+      execute at all). Not traced further; likely something idlharness's
+      setup fetches or reads off a worker-only global that isn't
+      populated the same way as in the window context.
 
 See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
@@ -207,111 +283,31 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
   across origins -- needs the same real multi-window/cross-origin
   environment gap as the rest of this section.
 
-7. UNKNOWN
+7. WORKER-CONTEXT-SPECIFIC FAILURES
 
-(`database-names-by-origin.js` and `idb-partitioned-coverage.sub.js` have
-moved to section 6 above (HTML in tests), and `idbfactory-databases-
-opaque-origin.js` to section 3 (OPAQUE ORIGIN TESTING) -- all three are
-the same "no real multi-host/multi-window browsing context" limitation
-as their respective section's other entries, not actually unknown.)
+`.any.worker.js` dedicated-worker-context variants (run via the
+`any-workers` mode, not the default corpus) mostly mirror their
+window-context `.any.js` counterpart's status, but some fail
+differently:
 
-(`abort-in-initial-upgradeneeded.any.js`/`.any.worker.js` and
-`idbindex_tombstones.any.js`/`transaction-scheduling-within-database.any.js`
--- see the `timeout` entries with their explanatory comments above
-instead, and `idbindex_tombstones.any.js` has moved to `goodFiles`
-entirely, now passing 4/4 reliably.)
-
-`request-abort-ordering.any.js`, `idbobjectstore_getAllKeys.any.js`,
-`index_sort_order.any.js`, `transaction-scheduling-ro-waits-for-rw.any.js`,
-and `transaction-scheduling-across-connections.any.js` were listed here as
-sometimes failing/timing out in the full sweep, but all five have now
-passed reliably across multiple full `w3c-good-only` sweeps this session
-(0 unexpected failures/timeouts) -- removed as stale.
-
-- `serialize-sharedarraybuffer-throws.https.js`: genuinely fails, and
-  it's not a test bug -- `objStore.put({sab: sab})` should throw
-  `DataCloneError` for a `SharedArrayBuffer` (structured clone must
-  reject it per spec) but doesn't throw at all. Same class of gap as the
-  `MessageChannel`/`MessagePort` unclonable-type failures already
-  documented in section 5: `Sca.js`/`typeson`'s clone algorithm doesn't
-  recognize/reject this type as unclonable, so it just passes it through.
-
-- `idbobjectstore-put-unique-index-constraint-is-atomic.any.js`/
-  `.any.worker.js`: genuinely fails -- "A put() that fails a unique
-  index constraint must not delete the record it would have
-  overwritten." The record `put()` was about to overwrite ends up
-  deleted (`undefined`) even though the `put()` itself fails with a
-  `ConstraintError` from a unique index violation. This points to
-  `IDBObjectStore.__overwrite`/`__insertData` removing the old row
-  before the new value has been fully validated against unique index
-  constraints, with no rollback of that removal when the constraint
-  check subsequently fails -- a real atomicity bug in the overwrite
-  sequencing, not investigated further for a fix.
-
-- `idlharness.any.js`: was 198 of 207 pass; fixed 3 of the 9 failures
-  this session (now 201/207, 6 remaining). The 3 fixed were `IDBRecord`
-  "attribute key/primaryKey/value" checks -- WebIDL requires that calling
-  an attribute's getter on the bare interface prototype (not a real
-  instance) throw `TypeError`, but `IDBRecord.js`'s getters (needed on
-  the *shared* prototype, unlike most other interfaces' per-instance
-  getters via `util.defineReadonlyProperties`, so that WPT's
-  `assert_idl_attribute` sees them as inherited) had no such brand check
-  and just returned `undefined`. Fixed by adding an `instanceof` check
-  that throws before reading `this['__' + prop]`; verified the
-  currently-passing `idbindex_getAllRecords.any.js` (29/29) and
-  `idbobjectstore_getAllRecords.any.js` (25/25) -- the only other
-  `IDBRecord`-touching tests -- are unaffected. The remaining 6 failures
-  ("existence and properties of interface prototype object" for
-  `IDBFactory`/`IDBObjectStore`/`IDBIndex`/`IDBKeyRange`/`IDBRecord`/
-  `IDBCursor`) are all `Object.getPrototypeOf(X.prototype) !==
-  Object.prototype`, i.e. the same cross-realm `Object.prototype`
-  identity gap already documented in section 5 above (the narrower
-  `Symbol.hasInstance`-only patch for `Object` fixes `instanceof` but not
-  direct prototype-object identity comparisons) -- not this file's own
-  issue, just another surface of it.
-- `idlharness.any.worker.js`: distinct and more severe than the
-  window-context file above -- only 2 tests even run (`idl_test setup`
-  fails outright with `TypeError: Cannot convert undefined or null to
-  object`, so none of the individual interface checks execute at all).
-  Not traced further; likely something idlharness's setup fetches or
-  reads off a worker-only global that isn't populated the same way as in
-  the window context.
-
-- `../non-indexedDB/DOMException-stack-accessor.js`: 3 of 9 tests pass.
-  All 6 failures are about `Error.prototype.stack`'s own property
-  descriptor (`Object.getOwnPropertyDescriptor(Error.prototype, 'stack')`
-  returns `undefined` in this Node/V8 environment, where the WPT test
-  expects an accessor property with `get`/`set`). This looks like a
-  genuine Node/V8-vs-browser-V8 engine difference in how `Error.stack`
-  is exposed (per-instance vs. an `Error.prototype`-level accessor),
-  not something `DOMException`'s shim controls or can polyfill without
-  reaching into `Error.prototype` itself -- likely belongs with the
-  other KNOWN ISSUES (inherent environment limitations) rather than a
-  fixable gap, though not moved there without more certainty.
-
-- `transaction-lifetime.any.js`/`.any.worker.js`: genuinely fails on
-  blocked-event-ordering assertions ("No Blocked event"/"Blocked event"),
-  each with an unhandled `TransactionInactiveError` or an
-  upgradeneeded-vs-blocked event-order mismatch -- likely another
-  instance of the same event/transaction-timing class of gap already
-  documented in section 1, but not traced to a specific line.
-
+- `idbfactory_cmp.any.worker.js` throws a `TypeError` from the wrong
+  realm (fails an `instanceof` check against the worker's own
+  `TypeError`) where the window-context test passes that particular
+  assertion.
 - `transaction-abort-index-metadata-revert.any.worker.js`,
   `transaction-abort-multiple-metadata-revert.any.worker.js`,
   `upgrade-transaction-lifecycle-backend-aborted.any.worker.js`, and
-  `upgrade-transaction-lifecycle-user-aborted.any.worker.js` all
-  genuinely fail, and all four share the exact same underlying error:
-  `"UnknownError: ... unable to open database file--(SQLITE_CANTOPEN)"`
-  (or `"SqliteError: unable to open database file"`). Their
-  window-context `.any.js` counterparts all pass cleanly, so this is
-  worker-context-specific -- almost certainly the SQLite file path
+  `upgrade-transaction-lifecycle-user-aborted.any.worker.js` all fail
+  with the exact same error -- `"UnknownError: ... unable to open
+  database file--(SQLITE_CANTOPEN)"` (or `"SqliteError: unable to open
+  database file"`) -- while their window-context counterparts all pass
+  cleanly. Almost certainly the SQLite file path
   (`CFG.databaseBasePath`/memory database resolution) not surviving
   correctly across the worker child-process boundary (`webworker.js`)
   for whatever *second* database open these particular abort/lifecycle
-  tests each trigger. Root cause not traced further; a concrete example
-  of the "worker-context files can fail differently than their
-  window-context counterpart" note already given for
-  `idbfactory_cmp.any.worker.js` above.
+  tests each trigger; root cause not traced further.
+
+----
 
 Updated 2026-08-23 after bumping the web-platform-tests submodule from its
 long-pinned Dec 2022 commit to current origin/master (~22,000 commits of
@@ -439,24 +435,6 @@ const goodBad = {
         'idbfactory-deleteDatabase-opaque-origin.js'
     ],
     timeout: [
-        // Its `open_rq.onerror` assertions (and the trailing bare
-        //   `indexedDB.databases().then(...)`) are not wrapped in
-        //   `t.step_func`, so a failing assertion there never gets
-        //   attributed to the running test; `t.done()` is then never
-        //   called, and the test hangs until testharness.js's own
-        //   internal per-test timeout force-completes it -- a path our
-        //   jsdom environment doesn't tolerate well (see the `#rerun`
-        //   comment in `node-idb-test.js`), which is also why
-        //   `custom-reporter.js`'s `reportResults` throws trying to read
-        //   `document.querySelectorAll` from the already-torn-down
-        //   window by the time it runs. The underlying assertion
-        //   (`dbs.length === 0` after an aborted initial upgrade) hits
-        //   the same undocumented `IDBFactory.databases()` gap as
-        //   `get-databases.any.js` -- it does not yet track a real
-        //   "committed" flag per database, so an aborted-but-registered
-        //   database still shows up. Reliably times out both alone and
-        //   as part of the full sweep, so this is a real `timeout` entry,
-        //   not merely a full-sweep-only flake.
         'abort-in-initial-upgradeneeded.any.js',
         'abort-in-initial-upgradeneeded.any.worker.js',
         'database-names-by-origin.js',
@@ -465,12 +443,6 @@ const goodBad = {
         'idbfactory-databases-opaque-origin.js',
         'idbfactory-deleteDatabase-opaque-origin.js',
         'idbfactory-open-opaque-origin.js',
-        // Same whole-database SQLite-locking limitation as
-        //   `idb-explicit-commit.any.js` above: two same-scope `readonly`
-        //   transactions each spin `get()` requests waiting for the OTHER
-        //   to report at least one success before releasing, which needs
-        //   true concurrent execution the shared per-database lock can't
-        //   provide -- a genuine deadlock, not a request/scheduling bug.
         'transaction-scheduling-within-database.any.js'
     ],
     badFiles: [
@@ -493,13 +465,6 @@ const goodBad = {
         'structured-clone.any.js',
         'transaction-deactivation-timing.any.js',
         'transaction-lifetime.any.js',
-        // `.any.worker.js` dedicated-worker-context variants (run via the
-        //   `any-workers` mode, not the default corpus); many mirror their
-        //   window-context `.any.js` counterpart's status above, but some
-        //   fail differently, e.g. `idbfactory_cmp.any.worker.js` throws a
-        //   `TypeError` from the wrong realm (fails an `instanceof` check
-        //   against the worker's own `TypeError`) where the window-context
-        //   test passes that particular assertion.
         'bindings-inject-keys-bypass.any.worker.js',
         'bindings-inject-values-bypass.any.worker.js',
         'idbcursor_update_index.any.worker.js',
