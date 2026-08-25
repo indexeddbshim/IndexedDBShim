@@ -340,6 +340,12 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         content = await readFile(path.join(dirPath, shimNS.fileName), 'utf8');
     } catch (err) {
         console.error('Error 3', err);
+        // Without this, a single unreadable file (e.g. a stale/missing
+        //   built js file) silently breaks the `finishedCheck` recursion
+        //   for the whole run -- no more files get processed, and no
+        //   final stats or `exit()` ever happen, with nothing in the
+        //   output to say the run aborted early.
+        shimNS.finished();
         return;
     }
 
