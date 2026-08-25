@@ -3,6 +3,7 @@
 ## ?
 
 - fix: throw on IDBRecord getters called off a real instance
+- fix: update `typeson-registry` to get throwing for `MessageChannel`/`MessagePort`
 
 ## 17.3.1
 

@@ -210,7 +210,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     - 'bindings-inject-keys-bypass.any.worker.js', - Failing
     - `bindings-inject-values-bypass.any.js` - Failing
     - 'bindings-inject-values-bypass.any.worker.js', - Failing
-    - `structured-clone.any.js` - Failing ~60 of 125 tests:
+    - `structured-clone.any.js` - Failing ~59 of 125 tests
         - ~59 of those share ONE root cause: `Sca.js`/`typeson` always
           decode a cloned value using *this process's own, outer,
           non-sandboxed* built-in classes (`Date`, `RegExp`, `ArrayBuffer`,
@@ -235,10 +235,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
           them (along with `DOMMatrixReadOnly`, `DOMPoint(ReadOnly)`,
           `DOMRect(ReadOnly)`) with no-op functions, so a genuine clone
           round-trip was never going to work for those regardless.
-        - `MessageChannel`/`MessagePort` fail for a different, unrelated
-          reason: they're supposed to be unclonable (`store.put()` should
-          throw `DataCloneError`), but our mock passes through instead of
-          being recognized and rejected as such -- not investigated further.
     - `serialize-sharedarraybuffer-throws.https.js`: genuinely fails, and
       it's not a test bug -- same class of gap as the `MessageChannel`/
       `MessagePort` unclonable-type failures just above:
