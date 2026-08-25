@@ -25,8 +25,6 @@ well relate to many of the same issues.)
 
 0. MISSING/NEW APIS
 
-- `IDBTransaction.prototype.commit` (newly added)
-    - `idb-explicit-commit.any.js`
 - `durability` transaction option (newly added)
     - https://github.com/axemclion/IndexedDBShim/issues/351
     - 'idbcursor_update_index.any.js' - Failing
@@ -76,6 +74,27 @@ These are still failing regardless:
   database registry to track a real "committed" flag per database (a
   separate feature gap, unrelated to the event/microtask timing issue
   above).
+- `idb-explicit-commit.any.js`: 9 of 12 tests pass -- `commit()` itself
+  (committing, going inactive immediately, throwing on double-commit or
+  abort-after-commit, etc.) is fully implemented and correct. The 10th
+  test, "Transactions with same scope should stay in program order, even
+  if one calls commit", deadlocks (and permanently blocks the remaining
+  2 tests in the file, which testharness.js never gets to run): it starts
+  a `readwrite` transaction on `books` kept artificially alive by
+  continuously re-queuing `get()` requests, then expects a *different*,
+  non-overlapping-scope `readonly` transaction on `not_books` to run
+  concurrently and complete -- which is exactly what `IDBDatabase.js`'s
+  own `transaction()` comment already documents as unsupported: the
+  WebSQL/SQLite backend locks the *whole* database per transaction, not
+  per-scope, so non-overlapping transactions still serialize behind each
+  other. The `not_books` transaction can never run until the `books` one
+  finishes, but the `books` one is only released by the `not_books`
+  transaction completing -- a genuine deadlock from this pre-existing
+  whole-database-locking limitation, not a `commit()` bug. Fixing it for
+  real would mean the same "save the stores in separate databases"
+  change already called out as needed in `IDBDatabase.js`. However, doing
+  this would mean not easily being able to span multiple stores atomically
+  in a single transaction (it might be doable with ATTACH DATABASE).
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
 
