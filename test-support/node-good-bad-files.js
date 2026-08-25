@@ -173,10 +173,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     - 'bindings-inject-keys-bypass.any.worker.js', - Failing
     - `bindings-inject-values-bypass.any.js` - Failing
     - 'bindings-inject-values-bypass.any.worker.js', - Failing
-    - `structured-clone.any.js` - Failing 1 of 125 tests: the `FileList`
-      clone round trip. `FileList` has no realm-independent fix -- it's
-      only ever constructed by a real `<input type=file>`, not by test
-      code directly.
     - `idlharness.any.js`: 201/207. The remaining 6 failures
     ("existence and properties of interface prototype object" for
     `IDBFactory`/`IDBObjectStore`/`IDBIndex`/`IDBKeyRange`/`IDBRecord`/
@@ -368,7 +364,6 @@ const goodBad = {
         'idlharness.any.js',
         'ready-state-destroyed-execution-context.js',
         'storage-buckets.https.any.js',
-        'structured-clone.any.js',
         'transaction-deactivation-timing.any.js',
         'bindings-inject-keys-bypass.any.worker.js',
         'bindings-inject-values-bypass.any.worker.js',
@@ -614,6 +609,7 @@ const goodBad = {
         'serialize-sharedarraybuffer-throws.https.js',
         'string-list-ordering.any.js',
         'structured-clone-transaction-state.any.js',
+        'structured-clone.any.js',
         'transaction-abort-generator-revert.any.js',
         'transaction-abort-index-metadata-revert.any.js',
         'transaction-abort-multiple-metadata-revert.any.js',

@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- fix: resolve structured-clone FileList cloning
+
 ## 17.3.3
 
 - fix: give async upgradeneeded/versionchange continuations enough

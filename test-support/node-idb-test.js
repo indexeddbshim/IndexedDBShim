@@ -535,7 +535,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             Uint32Array,
             Float32Array,
             Float64Array,
-            Float16Array,
+            ...(typeof Float16Array !== 'undefined' ? {Float16Array} : {}),
+            FileList: globalThis.FileList,
             // `Array`/`Object` stay out of the unconditional list above for
             //   every other file: global binding replacement can't help
             //   their *literal* (`[]`/`{}`) uses anyway (see the comment
@@ -754,6 +755,15 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         window.DOMRect = globalThis.DOMRect;
         window.DOMRectReadOnly = globalThis.DOMRectReadOnly;
         window.DOMQuad = globalThis.DOMQuad;
+        window.FileList = globalThis.FileList;
+        Object.defineProperty(window.HTMLInputElement.prototype, 'files', {
+            get () {
+                return new window.FileList(this._files || []);
+            },
+            set (val) {
+                this._files = val;
+            }
+        });
         window.MessageChannel = MessageChannel;
 
         // Polyfill enough for our tests

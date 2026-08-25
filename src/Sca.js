@@ -6,7 +6,57 @@ import {createDOMException, ShimDOMException} from './DOMException.js';
 
 // See: https://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new Typeson().register(structuredCloningForStorage);
+// Although typeson-registry already has a FileList type in its structured cloning presets,
+//   we need to override it so it works with our tests
+
+const specSet = structuredCloningForStorage
+    .flatMap((preset) => (Array.isArray(preset) ? preset : [preset]))
+    .find((preset) => preset && !Array.isArray(preset) && 'filelist' in preset);
+
+const origFileList = specSet && !Array.isArray(specSet) && 'filelist' in specSet
+    ? specSet.filelist
+    : undefined;
+
+const origTest = origFileList && typeof origFileList === 'object' && 'test' in origFileList && typeof origFileList.test === 'function'
+    ? origFileList.test
+    : undefined;
+
+const origRevive = origFileList && typeof origFileList === 'object' && 'revive' in origFileList && typeof origFileList.revive === 'function'
+    ? origFileList.revive
+    : undefined;
+
+const customFileList = origFileList
+    ? {
+        ...origFileList,
+        /**
+         * @param {unknown} x
+         * @param {import('typeson').StateObject} state
+         * @returns {boolean}
+         */
+        test (x, state) {
+            if (typeof FileList !== 'undefined') {
+                return x instanceof FileList;
+            }
+            return typeof origTest === 'function' ? origTest(x, state) : false;
+        },
+        /**
+         * @param {unknown} x
+         * @param {import('typeson').StateObject} state
+         * @returns {unknown}
+         */
+        revive (x, state) {
+            if (typeof FileList !== 'undefined') {
+                return Reflect.construct(FileList, [x]);
+            }
+            return typeof origRevive === 'function' ? origRevive(x, state) : undefined;
+        }
+    }
+    : undefined;
+
+let typeson = new Typeson().register([
+    structuredCloningForStorage,
+    customFileList ? {filelist: customFileList} : {}
+]);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>

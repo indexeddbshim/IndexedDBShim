@@ -8,12 +8,16 @@
 //   them, so without this running first, `structured-clone.any.js`'s
 //   DOMMatrix/DOMPoint/DOMRect round-trips have no clone implementation to
 //   go through at all -- not just a sandbox-realm prototype mismatch.
+import './define-dummy-html-input.js';
 import {
     DOMMatrix, DOMMatrixReadOnly, DOMPoint, DOMPointReadOnly,
     DOMRect, DOMRectReadOnly, DOMQuad
 } from 'typeson-registry/polyfills';
 
+// Todo: Check if exported from /polyfills once typeson-registry updates
+import {FileList} from 'typeson-registry/polyfills/FileList.js';
+
 Object.assign(globalThis, {
     DOMMatrix, DOMMatrixReadOnly, DOMPoint, DOMPointReadOnly,
-    DOMRect, DOMRectReadOnly, DOMQuad
+    DOMRect, DOMRectReadOnly, DOMQuad, FileList
 });
