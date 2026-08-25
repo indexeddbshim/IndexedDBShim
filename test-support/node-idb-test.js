@@ -890,6 +890,17 @@ try {
         }
         await readAndEvaluateFiles(jsFiles, true);
         break;
+    } case 'good-worker': case 'good-workers': {
+        // Unlike `any-workers` (every worker-context file on disk),
+        //   this only runs the worker-context files already vetted into
+        //   `goodFiles` (both `workerFileRegex`-style, e.g.
+        //   `_interface-objects-001.worker.js`, and `anyWorkerFileRegex`-
+        //   style, e.g. `reading-autoincrement-store.any.worker.js`).
+        const jsFiles = goodFiles.filter(
+            (file) => workerFileRegex.test(file) || anyWorkerFileRegex.test(file)
+        );
+        await readAndEvaluateFiles(jsFiles, true);
+        break;
     } default: {
         if (!fileIndex && fileArg && fileArg !== 'all') {
             await readAndEvaluateFiles([fileArg], true); // Allow specific worker files to be passed

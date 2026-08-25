@@ -102,6 +102,7 @@
     "w3c-test": "run-s clean-w3c test-and-start:w3c",
     "w3c-good-only": "NODE_OPTIONS=--max_old_space_size=16384 node test-support/node-idb-test.js good",
     "w3c-bad-only": "NODE_OPTIONS=--max_old_space_size=16384 node test-support/node-idb-test.js bad",
+    "w3c-good-worker-only": "NODE_OPTIONS=--max_old_space_size=16384 node test-support/node-idb-test.js good-worker",
     "w3c-good": "run-s w3c-build w3c-good-only clean-w3c",
     "w3c-bad": "run-s w3c-build w3c-bad-only clean-w3c",
     "w3c-good-test": "run-s w3c-good-only clean-w3c",
