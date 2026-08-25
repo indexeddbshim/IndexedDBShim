@@ -5,6 +5,7 @@
 - fix: give async upgradeneeded/versionchange continuations enough
 microtask grace before deactivating
 - fix: don't let databases() see uncommitted creates/upgrades
+- fix: opt into websql-configurable's concurrentReaders mode to avoid same-scoped readonly operations deadlocking
 
 ## 17.3.2
 

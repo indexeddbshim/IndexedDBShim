@@ -36,16 +36,28 @@ const READ_ONLY_ERROR = new Error(
 //   connection and a newly-opened one during an upgrade. `PRAGMA
 //   busy_timeout` can't safely arbitrate between them here: it blocks the
 //   single JS thread synchronously while it retries, but the lock holder's
-//   own release is itself scheduled via `setTimeout` below, which can never
-//   fire while that retry loop is blocking the same thread -- so instead of
-//   waiting, the second connection's write just fails with "database is
-//   locked". Serialize writes per file path instead, so a second
-//   connection's `BEGIN` waits for the first connection's transaction to
-//   actually finish rather than colliding with it.
+//   own release is itself scheduled via `setImmediate` below, which can
+//   never fire while that retry loop is blocking the same thread -- so
+//   instead of waiting, a second connection's write just fails with
+//   "database is locked".
+//
+// `fileReaders`/`fileWriter` implement a simple (not starvation-proof --
+//   see the release loop below) reader/writer lock per file path instead:
+//   any number of `readonly` transactions may hold the file concurrently,
+//   matching what SQLite itself already natively supports (multiple
+//   readers never need to exclude each other, only a writer needs
+//   exclusivity), while a non-`readonly` transaction still waits for
+//   exclusive access -- no concurrent readers, no concurrent writer. A
+//   simple single-owner mutex (this file's prior implementation) would
+//   otherwise serialize even purely-concurrent-reader scenarios that
+//   never touch a writer at all, for no reason `better-sqlite3`/SQLite
+//   itself requires.
+/** @type {Map<string, Set<{_db: any, _qFilePath: string}>>} */
+const fileReaders = new Map();
 /** @type {Map<string, {_db: any, _qFilePath: string}>} */
-const fileLockOwners = new Map();
-/** @type {Map<string, (() => void)[]>} */
-const fileLockWaiters = new Map();
+const fileWriter = new Map();
+/** @type {Map<string, {isReader: boolean, resume: () => void}[]>} */
+const fileWaiters = new Map();
 const beginRe = /^\s*BEGIN\b/iu;
 const endRe = /^\s*(END|COMMIT|ROLLBACK)\b/iu;
 
@@ -158,14 +170,29 @@ SQLiteDatabase.prototype.exec = function exec (queries, readOnly, callback) {
     //   already fully independent -- so there is nothing to serialize.
     const filePath = this._qFilePath === ':memory:' ? null : this._qFilePath;
     if (filePath && queries[0] && beginRe.test(queries[0].sql)) {
-        const owner = fileLockOwners.get(filePath);
-        if (owner && owner !== this) {
-            const waiters = fileLockWaiters.get(filePath) || [];
-            waiters.push(() => this.exec(queries, readOnly, callback));
-            fileLockWaiters.set(filePath, waiters);
+        const activeReaders = fileReaders.get(filePath);
+        const hasActiveReaders = Boolean(activeReaders && activeReaders.size);
+        const activeWriter = fileWriter.get(filePath);
+        const blockedByWriter = Boolean(activeWriter && activeWriter !== this);
+        const blocked = blockedByWriter || (!readOnly && hasActiveReaders);
+        if (blocked) {
+            const waiters = fileWaiters.get(filePath) || [];
+            waiters.push({
+                isReader: readOnly,
+                resume: () => this.exec(queries, readOnly, callback)
+            });
+            fileWaiters.set(filePath, waiters);
             return;
         }
-        fileLockOwners.set(filePath, this);
+        if (readOnly) {
+            if (activeReaders) {
+                activeReaders.add(this);
+            } else {
+                fileReaders.set(filePath, new Set([this]));
+            }
+        } else {
+            fileWriter.set(filePath, this);
+        }
     }
 
     const db = this._db._db;
@@ -227,11 +254,48 @@ SQLiteDatabase.prototype.exec = function exec (queries, readOnly, callback) {
         //   and never see the matching release, deadlocking every later
         //   connection to the same file.
         if (filePath && queries.some((q) => endRe.test(q.sql))) {
-            fileLockOwners.delete(filePath);
-            const waiters = fileLockWaiters.get(filePath);
-            const nextWaitingExec = waiters && waiters.shift();
-            if (nextWaitingExec) {
-                nextWaitingExec();
+            const activeReaders = fileReaders.get(filePath);
+            if (activeReaders) {
+                activeReaders.delete(this);
+                if (!activeReaders.size) {
+                    fileReaders.delete(filePath);
+                }
+            }
+            if (fileWriter.get(filePath) === this) {
+                fileWriter.delete(filePath);
+            }
+            // Resume as many waiters as the lock now genuinely allows:
+            //   any leading run of readers (concurrent reads are always
+            //   fine), then at most one writer, since a writer needs
+            //   exclusivity -- stop there rather than looking past it.
+            //   Not starvation-proof: a steady stream of arriving readers
+            //   could in principle keep a waiting writer waiting
+            //   indefinitely, but that's an acceptable tradeoff here over
+            //   the added complexity of tracking arrival order across
+            //   reader/writer kinds.
+            const waiters = fileWaiters.get(filePath);
+            if (waiters) {
+                while (waiters.length) {
+                    if (fileWriter.has(filePath)) {
+                        break;
+                    }
+                    const next = waiters[0];
+                    const stillHasReaders = fileReaders.get(filePath);
+                    if (!next.isReader && stillHasReaders && stillHasReaders.size) {
+                        break;
+                    }
+                    waiters.shift();
+                    next.resume();
+                    if (!next.isReader) {
+                        // A writer just took exclusive ownership (inside
+                        //   `resume()`, synchronously, via the acquire
+                        //   logic above) -- nothing else may proceed now.
+                        break;
+                    }
+                }
+                if (!waiters.length) {
+                    fileWaiters.delete(filePath);
+                }
             }
         }
         callback(null, results);

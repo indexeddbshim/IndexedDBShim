@@ -173,7 +173,7 @@
     "sync-promise-expanded": "^2.0.0",
     "typeson": "10.2.0",
     "typeson-registry": "14.2.2",
-    "websql-configurable": "^3.0.6"
+    "websql-configurable": "^3.1.0"
   },
   "devDependencies": {
     "@babel/core": "^8.0.1",

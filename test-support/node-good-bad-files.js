@@ -179,12 +179,6 @@ These are still failing regardless:
   cache-invalidation rule can't satisfy both, so this needs the
   positional continuation rewrite mentioned above, not a cache-lifetime
   tweak.
-- `transaction-scheduling-within-database.any.js`: same whole-database
-  SQLite-locking limitation as `idb-explicit-commit.any.js` above: two
-  same-scope `readonly` transactions each spin `get()` requests waiting
-  for the OTHER to report at least one success before releasing, which
-  needs true concurrent execution the shared per-database lock can't
-  provide -- a genuine deadlock, not a request/scheduling bug.
 
 See <https://github.com/axemclion/IndexedDBShim/issues/296>.
 
@@ -418,8 +412,7 @@ const goodBad = {
         'idb-partitioned-basic.sub.js',
         'idbfactory-databases-opaque-origin.js',
         'idbfactory-deleteDatabase-opaque-origin.js',
-        'idbfactory-open-opaque-origin.js',
-        'transaction-scheduling-within-database.any.js'
+        'idbfactory-open-opaque-origin.js'
     ],
     badFiles: [
         '../non-indexedDB/DOMException-stack-accessor.js',
@@ -696,6 +689,7 @@ const goodBad = {
         'transaction-scheduling-ordering.any.js',
         'transaction-scheduling-ro-waits-for-rw.any.js',
         'transaction-scheduling-rw-scopes.any.js',
+        'transaction-scheduling-within-database.any.js',
         'transaction_bubble-and-capture.any.js',
         'upgrade-transaction-deactivation-timing.any.js',
         'upgrade-transaction-lifecycle-backend-aborted.any.js',

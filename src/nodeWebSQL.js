@@ -40,5 +40,12 @@ function wrappedSQLiteDatabase (name) {
     return db;
 }
 
-const nodeWebSQL = customOpenDatabase(/** @type {SQLiteDatabaseConstructor} */ (/** @type {unknown} */ (wrappedSQLiteDatabase)), {});
+// `concurrentReaders` is off by default in `websql-configurable` itself (to
+//   preserve the WebSQL spec's strict, one-at-a-time transaction ordering
+//   that library's own test suite depends on), but IndexedDBShim only ever
+//   uses it as an internal SQL execution engine -- it doesn't need or expose
+//   that ordering guarantee itself -- so it's safe, and needed, to opt in
+//   here: without it, two same-scope `readonly` IDBTransactions can deadlock
+//   waiting on each other (see `transaction-scheduling-within-database.any.js`).
+const nodeWebSQL = customOpenDatabase(/** @type {SQLiteDatabaseConstructor} */ (/** @type {unknown} */ (wrappedSQLiteDatabase)), {websql: {concurrentReaders: true}});
 export default nodeWebSQL;
