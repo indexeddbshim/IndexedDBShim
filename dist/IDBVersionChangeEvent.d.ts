@@ -6,6 +6,9 @@ export type IDBVersionChangeEventFull = globalThis.Event & {
         newVersion?: Integer | null;
     };
 };
+declare const IDBVersionChangeEvent_base: {
+    new (type: string): {};
+};
 /**
  * @typedef {number} Integer
  */
@@ -15,32 +18,16 @@ export type IDBVersionChangeEventFull = globalThis.Event & {
  * }} IDBVersionChangeEventFull
  */
 /**
- * Babel apparently having a problem adding `hasInstance` to a class,
- * so we are redefining as a function.
- * @class
- * @param {string} type
- * @this {IDBVersionChangeEventFull}
+ * `extends ShimEvent` via a real `class`, now that `Event` (`ShimEvent`)
+ *   is itself a real, constructible class in `eventtargeter` -- the old
+ *   `ShimEvent.call(this, type)` + `Object.create(ShimEvent.prototype)`
+ *   pattern this used to use is illegal for a real class constructor
+ *   (only callable via `new`/`super()`).
  */
-declare function IDBVersionChangeEvent(this: IDBVersionChangeEventFull, type: string, ...args: any[]): void;
-declare class IDBVersionChangeEvent {
+declare class IDBVersionChangeEvent extends IDBVersionChangeEvent_base {
     /**
-     * @typedef {number} Integer
-     */
-    /**
-     * @typedef {globalThis.Event & {
-     *   __eventInitDict: {oldVersion?: Integer, newVersion?: Integer|null}
-     * }} IDBVersionChangeEventFull
-     */
-    /**
-     * Babel apparently having a problem adding `hasInstance` to a class,
-     * so we are redefining as a function.
-     * @class
      * @param {string} type
-     * @this {IDBVersionChangeEventFull}
      */
-    constructor(this: IDBVersionChangeEventFull, type: string, ...args: any[]);
-    toString: () => string;
-    __eventInitDict: any;
-    [Symbol.toStringTag]: string;
+    constructor(type: string, ...args: any[]);
 }
 //# sourceMappingURL=IDBVersionChangeEvent.d.ts.map

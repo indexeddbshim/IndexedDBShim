@@ -149,32 +149,83 @@ function getEvCfg(key) {
 
 // Todo: Set _ev argument outside of this function
 
-/* eslint-disable func-name-matching -- Shim vs. Polyfill */
-/* eslint-disable no-shadow -- Polyfilling */
 /**
- * We use an adapter class rather than a proxy not only for compatibility
- * but also since we have to clone native event properties anyways in order
- * to properly set `target`, etc.
- * The regular DOM method `dispatchEvent` won't work with this polyfill as
- * it expects a native event.
- * @class
- * @param {string} type
- * @this {EventWithProps}
+ * Defines own-property getters on `instance` for each named prop, each
+ *   preferring `_evCfg`'s own value (e.g. set by `initEvent`), falling
+ *   back to whatever the wrapped `_ev` (a real native event, or another
+ *   `Event` this one is copying, per `copyEvent`) has, and finally a
+ *   spec-shaped default. Shared by `Event`'s own base properties and, via
+ *   its own extra call, `CustomEvent`'s `detail`/`initCustomEvent` --
+ *   factored out so neither needs any special-casing of the other to know
+ *   which extra properties to define.
+ * @param {EventWithProps} instance
+ * @param {string[]} props
+ * @param {EventWithProps} _evCfg
+ * @param {EventWithProps} _ev
+ * @returns {void}
  */
-const ShimEvent = function Event(type) {
-  /* eslint-enable func-name-matching -- Shim vs. Polyfill */
-  /* eslint-enable no-shadow -- Polyfilling */
-  // @ts-expect-error
-  this[Symbol.toStringTag] = 'Event';
-  this.toString = () => {
-    return '[object Event]';
-  };
-  // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
-  // eslint-disable-next-line prefer-rest-params -- Don't want to change signature
-  let [, evInit, _ev] = arguments;
-  if (!arguments.length) {
-    throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
+function definePassthroughProps(instance, props, _evCfg, _ev) {
+  Object.defineProperties(instance, props.reduce((obj, pr) => {
+    const prop =
+    /**
+     * @type {"type"|"bubbles"|"cancelable"|"isTrusted"|
+     *   "timeStamp"|"initEvent"|"composedPath"|"composed"|
+     *   "detail"|"initCustomEvent"
+     * }
+     */
+    pr;
+    obj[prop] = {
+      configurable: true,
+      get() {
+        return Object.hasOwn(_evCfg, prop) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
+      }
+    };
+    return obj;
+  }, /** @type {{[key: string]: any}} */{}));
+}
+
+/**
+ * A single, shared getter function (not a fresh closure per instance,
+ *   unlike the rest of the passthrough props): idlharness.js's own
+ *   `[LegacyUnforgeable]`-attribute check expects the *same* getter
+ *   function reference across every instance's own `isTrusted` property
+ *   descriptor (real browsers back this with a shared native accessor over
+ *   an internal slot). Still installed as an *own* property per instance
+ *   (see `initEventInternal`, below) -- not on the prototype -- since
+ *   `[LegacyUnforgeable]` also requires it be defined directly on each
+ *   instance (undeletable/unshadowable there), which idlharness.js checks
+ *   for via `Object.getOwnPropertyDescriptor(new Event(...), "isTrusted")`.
+ * @this {EventWithProps}
+ * @throws {TypeError}
+ * @returns {boolean}
+ */
+function getIsTrusted() {
+  if (!(this instanceof ShimEvent)) {
+    throw new TypeError('Illegal invocation');
   }
+  const _evCfg = getEvCfg(this);
+  const _ev = ev.get(this);
+  return Boolean(Object.hasOwn(_evCfg, 'isTrusted') ? _evCfg.isTrusted : Reflect.has(_ev, 'isTrusted') && _ev.isTrusted);
+}
+
+/**
+ * The shared setup behind `Event`'s own constructor: populates the
+ *   WeakMap-backed internal state and defines the base `Event` own-
+ *   property getters on `instance`. Kept as a plain, reusable function
+ *   (not just inlined into the constructor) so
+ *   `CustomEvent.prototype.initCustomEvent` -- which, per the legacy DOM
+ *   Level 3 `initEvent`-family API, must remain callable *after*
+ *   construction to reinitialize an existing instance, not only from
+ *   within the constructor -- can re-run this directly on an existing
+ *   instance without trying to re-invoke a class constructor (illegal
+ *   outside of `new`/`super()`).
+ * @param {EventWithProps} instance
+ * @param {string} type
+ * @param {EventInit} [evInit]
+ * @param {EventWithProps} [_ev]
+ * @returns {void}
+ */
+function initEventInternal(instance, type, evInit, _ev) {
   evInit ||= {};
   _ev ||= {};
 
@@ -185,16 +236,18 @@ const ShimEvent = function Event(type) {
   }
 
   // _evCfg.isTrusted = true; // We are not always using this for user-created events
-  // _evCfg.timeStamp = new Date().valueOf(); // This is no longer a timestamp, but monotonic (elapsed?)
-
-  ev.set(this, _ev);
-  evCfg.set(this, _evCfg);
-  /** @type {(type: string, bubbles: boolean, cancelable: boolean) => void} */
-  this.initEvent(type, evInit.bubbles, evInit.cancelable);
+  // Per spec, a `DOMHighResTimeStamp` (`performance.now()`-based, where
+  //   available) rather than a wall-clock `Date`-based one.
+  _evCfg.timeStamp = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
+  ev.set(instance, _ev);
+  evCfg.set(instance, _evCfg);
+  /** @type {(type: string, bubbles?: boolean, cancelable?: boolean) => void} */
+  instance.initEvent(type, evInit.bubbles, evInit.cancelable);
   ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].forEach(pr => {
     const prop = /** @type {"target"|"currentTarget"|"eventPhase"|"defaultPrevented"} */
     pr;
-    Object.defineProperty(this, prop, {
+    Object.defineProperty(instance, prop, {
+      configurable: true,
       get() {
         return (/* prop in _evCfg && */_evCfg[prop] !== undefined) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] :
         // Defaults
@@ -202,56 +255,111 @@ const ShimEvent = function Event(type) {
       }
     });
   });
-
-  // Legacy alias of `.defaultPrevented`/`.preventDefault()`; not backed by
-  //   `_evCfg` like the rest since it's derived, not stored.
-  Object.defineProperty(this, 'returnValue', {
-    enumerable: true,
-    configurable: true,
-    get() {
-      return !this.defaultPrevented;
+  Object.defineProperties(instance, {
+    // `[LegacyUnforgeable]` per spec: a real, shared getter function
+    //   (see `getIsTrusted`, above), but still installed as an *own*
+    //   property of each instance rather than the prototype.
+    isTrusted: {
+      enumerable: true,
+      configurable: false,
+      get: getIsTrusted
     },
-    set(val) {
-      if (val === false) {
-        /** @type {() => void} */this.preventDefault();
+    // Legacy alias of `.target`.
+    srcElement: {
+      configurable: true,
+      get() {
+        return instance.target;
+      }
+    },
+    // Legacy alias of `.defaultPrevented`/`.preventDefault()`; not
+    //   backed by `_evCfg` like the rest since it's derived, not stored.
+    returnValue: {
+      enumerable: true,
+      configurable: true,
+      get() {
+        return !instance.defaultPrevented;
+      },
+      set(val) {
+        if (val === false) {
+          /** @type {() => void} */instance.preventDefault();
+        }
       }
     }
   });
-  const props = [
+  definePassthroughProps(instance, [
   // Event
   'type', 'bubbles', 'cancelable',
   // Defaults to false
-  'isTrusted', 'timeStamp', 'initEvent',
+  'timeStamp',
+  // `initEvent` deliberately excluded: it's an *operation*, not a data
+  //   attribute -- shadowing it here (the same way `type`/`bubbles`/
+  //   etc. legitimately need to reflect a wrapped/copied event) would
+  //   permanently replace the real, callable prototype method with a
+  //   plain data getter (returning `undefined` for any event not
+  //   wrapping a native one with its own `initEvent`), breaking both
+  //   re-callability and idlharness's "operation" conformance checks.
+  // `isTrusted` deliberately excluded too: idlharness.js's own
+  //   "attribute exists on prototype" checks expect the *same*
+  //   getter function reference for every instance (matching a real
+  //   `[LegacyUnforgeable]` accessor backed by an internal slot), not
+  //   a fresh own-property closure per instance -- see the shared
+  //   `ShimEventProto.isTrusted` accessor defined below instead.
   // Other event properties (not used by our code)
-  'composed'];
-  if (this.toString() === '[object CustomEvent]') {
-    props.push('detail', 'initCustomEvent');
-  }
-  Object.defineProperties(this, props.reduce((obj, pr) => {
-    const prop =
-    /**
-     * @type {"type"|"bubbles"|"cancelable"|"isTrusted"|
-     *   "timeStamp"|"initEvent"|"composedPath"|"composed"|
-     *   "detail"|"initCustomEvent"
-     * }
-     */
-    pr;
-    obj[prop] = {
-      get() {
-        return Object.hasOwn(_evCfg, prop) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
-      }
+  'composed'], _evCfg, _ev);
+}
+
+/* eslint-disable no-shadow -- Polyfilling */
+/**
+ * We use an adapter class rather than a proxy not only for compatibility
+ * but also since we have to clone native event properties anyways in order
+ * to properly set `target`, etc.
+ * The regular DOM method `dispatchEvent` won't work with this polyfill as
+ * it expects a native event.
+ */
+class Event {
+  /* eslint-enable no-shadow -- Polyfilling */
+  /**
+   * @param {string} type
+   */
+  constructor(type) {
+    // eslint-disable-next-line consistent-this -- TS constructors can't use `@this`
+    const me = /** @type {EventWithProps} */ /** @type {unknown} */this;
+    // @ts-expect-error Symbol not part of the string index signature
+    me[Symbol.toStringTag] = 'Event';
+    me.toString = () => {
+      return '[object Event]';
     };
-    return obj;
-  }, /** @type {{[key: string]: any}} */{}));
-};
+    // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
+    // eslint-disable-next-line prefer-rest-params -- Don't want to change signature
+    const [, evInit, _ev] = arguments;
+    if (!arguments.length) {
+      throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
+    }
+    // WebIDL coerces `type` to a `DOMString`: a `type` with a custom
+    //   `toString`/`Symbol.toPrimitive` that throws must have that
+    //   error propagate out of the constructor.
+    type = String(type);
+    initEventInternal(me, type, evInit, _ev);
+  }
+}
+const ShimEvent = Event;
 
 // Named function expressions (rather than anonymous ones assigned via
 //   member-expression `=`, which per spec never get an inferred `.name`)
 //   so `.name` matches the WebIDL operation identifier, e.g. for
 //   `idlharness.js`'s "property has wrong .name" checks.
 
+// A real class's own declared shape doesn't include methods added to its
+//   `.prototype` afterward (unlike the plain-function `.prototype` this
+//   used to be, which TS treats far more loosely) -- assigning through
+//   this untyped alias, rather than `ShimEvent.prototype` directly, keeps
+//   that dynamic-augmentation pattern working without a `@ts-expect-error`
+//   on every single line below.
+/** @type {any} */
+const ShimEventProto = ShimEvent.prototype;
+
 /** @this {EventWithProps} */
-ShimEvent.prototype.preventDefault = function preventDefault() {
+ShimEventProto.preventDefault = function preventDefault() {
   if (!(this instanceof ShimEvent)) {
     throw new TypeError('Illegal invocation');
   }
@@ -267,27 +375,33 @@ ShimEvent.prototype.preventDefault = function preventDefault() {
 };
 
 /**
- * A minimal, spec-shaped stand-in: this polyfill doesn't track a full
- *   ancestor propagation path the way a real DOM event does, so this
- *   always returns an empty path rather than a genuinely populated one.
+ * Per spec, returns the empty list once dispatch has finished (or hasn't
+ *   started); while an event is actively being dispatched, returns the
+ *   full target-to-root propagation path computed once up front by
+ *   `_dispatchEvent` (see there), regardless of which phase dispatch is
+ *   currently in.
  * @this {EventWithProps}
  * @returns {EventTargetInstance[]}
  */
-ShimEvent.prototype.composedPath = function composedPath() {
+ShimEventProto.composedPath = function composedPath() {
   if (!(this instanceof ShimEvent)) {
     throw new TypeError('Illegal invocation');
   }
-  return [];
+  const _evCfg = getEvCfg(this);
+  if (!_evCfg._dispatchFlag || !_evCfg._path) {
+    return [];
+  }
+  return [..._evCfg._path];
 };
 
 /** @this {EventWithProps} */
-ShimEvent.prototype.stopImmediatePropagation = function stopImmediatePropagation() {
+ShimEventProto.stopImmediatePropagation = function stopImmediatePropagation() {
   const _evCfg = getEvCfg(this);
   _evCfg._stopImmediatePropagation = true;
 };
 
 /** @this {EventWithProps} */
-ShimEvent.prototype.stopPropagation = function stopPropagation() {
+ShimEventProto.stopPropagation = function stopPropagation() {
   const _evCfg = getEvCfg(this);
   _evCfg._stopPropagation = true;
 };
@@ -298,7 +412,7 @@ ShimEvent.prototype.stopPropagation = function stopPropagation() {
  * @param {boolean} [cancelable]
  * @this {EventWithProps}
  */
-ShimEvent.prototype.initEvent = function initEvent(type, bubbles = false, cancelable = false) {
+ShimEventProto.initEvent = function initEvent(type, bubbles = false, cancelable = false) {
   // WebIDL's optional args (defaulted here) keep `.length` at 1, matching real browsers
   const _evCfg = getEvCfg(this);
   if (_evCfg._dispatched) {
@@ -335,6 +449,7 @@ ShimEvent.prototype.initEvent = function initEvent(type, bubbles = false, cancel
     _evCfg.cancelable = cancelable;
   }
 };
+
 // These attribute getters exist on the prototype only so idlharness-style
 //   interface checks find them there (matching real DOM implementations,
 //   where these are shared prototype accessors, not per-instance ones);
@@ -398,43 +513,44 @@ ShimEvent.prototype.initEvent = function initEvent(type, bubbles = false, cancel
     value: i
   });
 });
+// @ts-expect-error Not part of the class body itself
 ShimEvent[Symbol.toStringTag] = 'Function';
-ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
-Object.defineProperty(ShimEvent, 'prototype', {
-  writable: false
-});
+ShimEventProto[Symbol.toStringTag] = 'EventPrototype';
+// A real class's own `.prototype` is already non-writable/non-configurable
+//   per spec, so no explicit freeze is needed here.
 
-/* eslint-disable func-name-matching -- Polyfill */
 /* eslint-disable no-shadow -- Polyfill */
 /**
- * @class
- * @param {string} type
- * @this {EventWithProps}
+ * `CustomEvent extends Event` via a real `class`: `super()`'s call into
+ *   `Event`'s own constructor already gives this the correct prototype
+ *   chain (`CustomEvent.prototype.__proto__ === Event.prototype`) and
+ *   `new.target` propagation for any further subclass.
  */
-const ShimCustomEvent = function CustomEvent(type) {
-  /* eslint-enable func-name-matching -- Polyfill */
+class CustomEvent extends Event {
   /* eslint-enable no-shadow -- Polyfill */
-
-  // eslint-disable-next-line prefer-const, prefer-rest-params -- Keep signature
-  let [, evInit, _ev] = arguments;
-  // @ts-expect-error Casting doesn't work
-  ShimEvent.call(this, type, evInit, _ev);
-  // @ts-expect-error
-  this[Symbol.toStringTag] = 'CustomEvent';
-  this.toString = () => {
-    return '[object CustomEvent]';
-  };
-  // var _evCfg = evCfg.get(this);
-  evInit ||= {};
-  // @ts-ignore
-  this.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
-};
-Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
-  enumerable: false,
-  writable: true,
-  configurable: true,
-  value: ShimCustomEvent
-});
+  /**
+   * @param {string} type
+   */
+  constructor(type) {
+    // eslint-disable-next-line prefer-const, prefer-rest-params -- Keep signature
+    let [, evInit, _ev] = arguments;
+    // @ts-expect-error Casting doesn't work
+    super(type, evInit, _ev);
+    // eslint-disable-next-line consistent-this -- TS constructors can't use `@this`
+    const me = /** @type {EventWithProps} */ /** @type {unknown} */this;
+    // @ts-expect-error Symbol not part of the string index signature
+    me[Symbol.toStringTag] = 'CustomEvent';
+    me.toString = () => {
+      return '[object CustomEvent]';
+    };
+    evInit ||= {};
+    // @ts-ignore
+    me.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
+  }
+}
+const ShimCustomEvent = CustomEvent;
+/** @type {any} */
+const ShimCustomEventProto = ShimCustomEvent.prototype;
 /**
  * @param {string} type
  * @param {boolean} [bubbles]
@@ -442,18 +558,18 @@ Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
  * @param {any} [detail]
  * @this {EventWithProps}
  */
-ShimCustomEvent.prototype.initCustomEvent = function initCustomEvent(type, bubbles = false, cancelable = false, detail = null) {
+ShimCustomEventProto.initCustomEvent = function initCustomEvent(type, bubbles = false, cancelable = false, detail = null) {
   // WebIDL's optional args (defaulted here) keep `.length` at 1
   if (!(this instanceof ShimCustomEvent)) {
     throw new TypeError('Illegal invocation');
   }
   const _evCfg = getEvCfg(this);
-  // @ts-expect-error Casting doesn't work
-  ShimCustomEvent.call(this, type, {
+  // @ts-expect-error `detail` isn't part of `EventInit`, only used internally here
+  // eslint-disable-next-line prefer-rest-params -- Keep signature
+  initEventInternal(this, type, {
     bubbles,
     cancelable,
     detail
-    // eslint-disable-next-line prefer-rest-params -- Keep signature
   }, arguments[4]);
   if (_evCfg._dispatched) {
     return;
@@ -461,14 +577,14 @@ ShimCustomEvent.prototype.initCustomEvent = function initCustomEvent(type, bubbl
   if (detail !== undefined) {
     _evCfg.detail = detail;
   }
-  Object.defineProperty(this, 'detail', {
-    get() {
-      return _evCfg.detail;
-    }
-  });
+  // `initCustomEvent` deliberately excluded -- see the matching comment
+  //   in `initEventInternal` for `initEvent`, above; the same reasoning
+  //   applies here.
+  definePassthroughProps(this, ['detail'], _evCfg, ev.get(this));
 };
+// @ts-expect-error Not part of the class body itself
 ShimCustomEvent[Symbol.toStringTag] = 'Function';
-ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
+ShimCustomEventProto[Symbol.toStringTag] = 'CustomEventPrototype';
 {
   const get = function () {
     throw new TypeError('Illegal invocation');
@@ -483,9 +599,8 @@ ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
     get
   });
 }
-Object.defineProperty(ShimCustomEvent, 'prototype', {
-  writable: false
-});
+// A real class's own `.prototype` is already non-writable/non-configurable
+//   per spec, so no explicit freeze is needed here.
 
 /**
  *
@@ -519,6 +634,7 @@ function copyEvent(e) {
  * @property {boolean} [once] Remove listener after invoking once
  * @property {boolean} [passive] Don't allow `preventDefault`
  * @property {boolean} [capture] Use `_children` and set `eventPhase`
+ * @property {AbortSignal} [signal] Remove the listener when this aborts
  */
 
 /**
@@ -552,13 +668,34 @@ function copyEvent(e) {
  */
 
 /**
+ * Per spec, two `addEventListener`/`removeEventListener` calls refer to
+ *   the *same* listener registration if and only if their `type`,
+ *   `listener`, and `capture` all match -- `passive`/`once`/`signal` play
+ *   no part in that identity (they're just per-registration behavior
+ *   flags). The non-standard early/late/default listener variants
+ *   (IndexedDBShim's own extension, not part of any spec) keep the
+ *   original full-options-equality behavior instead, via `captureOnly`.
+ * @param {ListenerOptions} a
+ * @param {ListenerOptions} b
+ * @param {boolean} captureOnly
+ * @returns {boolean}
+ */
+function optionsMatch(a, b, captureOnly) {
+  if (captureOnly) {
+    return Boolean(a.capture) === Boolean(b.capture);
+  }
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/**
  *
  * @param {AllListeners} listeners
  * @param {string} type
  * @param {boolean|ListenerOptions} options
+ * @param {boolean} captureOnly
  * @returns {ListenerInfo}
  */
-function getListenersOptions(listeners, type, options) {
+function getListenersOptions(listeners, type, options, captureOnly) {
   let listenersByType = listeners[type];
   if (listenersByType === undefined) {
     listeners[type] = listenersByType = [];
@@ -566,9 +703,8 @@ function getListenersOptions(listeners, type, options) {
   const opts = typeof options === 'boolean' ? {
     capture: options
   } : options || {};
-  const stringifiedOptions = JSON.stringify(opts);
   const listenersByTypeOptions = listenersByType.filter(obj => {
-    return stringifiedOptions === JSON.stringify(obj.options);
+    return optionsMatch(opts, obj.options, captureOnly);
   });
   return {
     listenersByTypeOptions,
@@ -582,10 +718,11 @@ const methods = {
    * @param {Listener} listener
    * @param {string} type
    * @param {boolean|ListenerOptions} options
+   * @param {boolean} captureOnly
    * @returns {void}
    */
-  addListener(listeners, listener, type, options) {
-    const listenersOptions = getListenersOptions(listeners, type, options);
+  addListener(listeners, listener, type, options, captureOnly) {
+    const listenersOptions = getListenersOptions(listeners, type, options, captureOnly);
     const {
       listenersByTypeOptions
     } = listenersOptions;
@@ -610,16 +747,16 @@ const methods = {
    * @param {Listener} listener
    * @param {string} type
    * @param {boolean|ListenerOptions} options
+   * @param {boolean} captureOnly
    * @returns {void}
    */
-  removeListener(listeners, listener, type, options) {
-    const listenersOptions = getListenersOptions(listeners, type, options);
+  removeListener(listeners, listener, type, options, captureOnly) {
+    const listenersOptions = getListenersOptions(listeners, type, options, captureOnly);
     const {
       listenersByType
     } = listenersOptions;
-    const stringifiedOptions = JSON.stringify(listenersOptions.options);
     listenersByType.some((l, i) => {
-      if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
+      if (l.listener === listener && optionsMatch(listenersOptions.options, l.options, captureOnly)) {
         listenersByType.splice(i, 1);
         if (!listenersByType.length) {
           delete listeners[type];
@@ -635,10 +772,11 @@ const methods = {
    * @param {Listener} listener
    * @param {string} type
    * @param {boolean|ListenerOptions} options
+   * @param {boolean} captureOnly
    * @returns {boolean}
    */
-  hasListener(listeners, listener, type, options) {
-    const listenersOptions = getListenersOptions(listeners, type, options);
+  hasListener(listeners, listener, type, options, captureOnly) {
+    const listenersOptions = getListenersOptions(listeners, type, options, captureOnly);
     const {
       listenersByTypeOptions
     } = listenersOptions;
@@ -650,12 +788,31 @@ const methods = {
 
 /* eslint-disable no-shadow -- Polyfill */
 /**
- * @class
- * @throws {TypeError}
+ * A real, constructible, subclassable `EventTarget`: `new EventTarget()`
+ *   works directly, and so does `class Foo extends EventTarget {}` (its
+ *   `super()` call runs this same constructor body, with `new.target` set
+ *   to `Foo`, which is all a plain, non-`class` base needs to support
+ *   subclassing correctly -- the engine already gives `this` the
+ *   subclass's own prototype).
  */
-function EventTarget() {
+class EventTarget {
   /* eslint-enable no-shadow -- Polyfill */
-  throw new TypeError('Illegal constructor');
+  /**
+   * Per WebIDL (`constructor();`), this takes no arguments -- declaring a
+   *   formal parameter here (even an optional one) would give
+   *   `EventTarget.length` the wrong value for idlharness.js's own
+   *   "interface object length" check. `EventTargetFactory.createInstance`
+   *   (the only place custom, non-standard per-instance options are
+   *   actually used) never calls this constructor at all -- it borrows
+   *   this class's `.prototype` directly for its own separate function --
+   *   so there's no internal caller that needs to pass options through
+   *   here either.
+   */
+  constructor() {
+    // eslint-disable-next-line consistent-this -- TS constructors can't use `@this`
+    const me = /** @type {EventTargetInstance} */ /** @type {unknown} */this;
+    me.__setOptions();
+  }
 }
 
 /**
@@ -711,7 +868,64 @@ obj, listenerType) {
       }
       const meth = /** @type {"addListener"|"removeListener"|"hasListener"} */
       method + 'Listener';
-      return methods[meth](/** @type {AllListeners} */this[arrStr], /** @type {Listener} */listener, type, options);
+      // Per spec, only `capture` distinguishes one standard listener
+      //   registration from another (`passive`/`once`/`signal` don't);
+      //   the non-standard early/late/default variants keep comparing
+      //   the full options object instead -- see `optionsMatch`.
+      const captureOnly = listenerType === '';
+      let finalOptions = options;
+      if (captureOnly && method === 'add') {
+        // Per spec, `addEventListener`'s options argument is
+        //   converted to a full `AddEventListenerOptions` dictionary
+        //   -- reading `capture`/`once`/`passive` (and `signal`, if
+        //   present) off it -- the moment the call is made,
+        //   regardless of whether all of those values end up used
+        //   (e.g. `passive`/`once` aren't part of the identity
+        //   comparison above, but a getter on them must still be
+        //   observed to have run). `removeEventListener`/
+        //   `hasEventListener` only accept `EventListenerOptions`
+        //   (just `capture`), so they're deliberately excluded here.
+        const rawOptions = typeof options === 'boolean' ? {
+          capture: options
+        } : options || {};
+        finalOptions = /** @type {ListenerOptions} */{
+          capture: Boolean(rawOptions.capture),
+          once: Boolean(rawOptions.once),
+          passive: Boolean(rawOptions.passive)
+        };
+        if ('signal' in rawOptions) {
+          finalOptions.signal = rawOptions.signal;
+        }
+      }
+      if (method === 'add' && finalOptions && typeof finalOptions === 'object' && 'signal' in finalOptions) {
+        const {
+          signal
+        } = finalOptions;
+        // `AddEventListenerOptions.signal` is a non-nullable `AbortSignal`
+        //   per WebIDL, so converting `null` (or anything else that
+        //   isn't a real `AbortSignal`) throws, matching a real
+        //   browser's dictionary-member type conversion. Duck-typed
+        //   rather than `instanceof AbortSignal`: a caller's signal
+        //   may come from a different realm than this module's own
+        //   (e.g. constructed inside a `vm` sandbox), whose
+        //   `AbortSignal` is a distinct class with its own separate
+        //   identity, failing a same-realm `instanceof` check
+        //   despite being a perfectly genuine signal.
+        if (!signal || typeof signal !== 'object' || typeof signal.aborted !== 'boolean' || typeof signal.addEventListener !== 'function') {
+          throw new TypeError("Failed to convert value to 'AbortSignal'.");
+        }
+        if (signal.aborted) {
+          return undefined;
+        }
+        const removeMethod = /** @type {"removeEventListener"|"removeEarlyEventListener"|"removeLateEventListener"|"removeDefaultEventListener"} */
+        'remove' + listenerType + 'EventListener';
+        signal.addEventListener('abort', () => {
+          this[removeMethod](type, listener, finalOptions);
+        }, {
+          once: true
+        });
+      }
+      return methods[meth](/** @type {AllListeners} */this[arrStr], /** @type {Listener} */listener, type, finalOptions, captureOnly);
     };
     // Assigned via a computed (`obj[mainMethod] = ...`) member
     // expression, so per spec it never gets an inferred `.name` --
@@ -810,6 +1024,7 @@ Object.assign(EventTarget.prototype, {
     function finishEventDispatch() {
       cfg.eventPhase = phases.NONE;
       cfg.currentTarget = null;
+      cfg._dispatchFlag = false;
       delete cfg._children;
     }
     /**
@@ -893,6 +1108,21 @@ Object.assign(EventTarget.prototype, {
       case phases.NONE:
       default:
         {
+          // The full target-to-root path, computed once up front (used
+          //   by `composedPath()`) -- kept separate from `cfg._children`
+          //   below, which is consumed as a stack while walking back
+          //   down during the capturing phase.
+          /* eslint-disable consistent-this -- Readability */
+          /** @type {EventTargetInstance[]} */
+          const path = [this];
+          /** @type {EventTargetInstance|null} */
+          let pathNode = this;
+          /* eslint-enable consistent-this -- Readability */
+          while (pathNode.__getParent && (pathNode = pathNode.__getParent()) !== null) {
+            path.push(pathNode);
+          }
+          cfg._path = path;
+          cfg._dispatchFlag = true;
           cfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
           this.invokeCurrentListeners(/** @type {AllListeners} */this._earlyListeners, eventCopy, type);
           if (!('__getParent' in this)) {
@@ -929,15 +1159,28 @@ Object.assign(EventTarget.prototype, {
   invokeCurrentListeners(listeners, eventCopy, type, checkOnListeners) {
     const _evCfg = getEvCfg(eventCopy);
     _evCfg.currentTarget = this;
-    const listOpts = getListenersOptions(listeners, type, {});
+
+    // `captureOnly` is irrelevant here: only `listOpts.listenersByType`
+    //   (the full, unfiltered list for this type) is used below, never
+    //   the options-filtered `listenersByTypeOptions`.
+    const listOpts = getListenersOptions(listeners, type, {}, false);
+    const liveListenersByType = listOpts.listenersByType;
     // eslint-disable-next-line unicorn/prefer-spread -- Performance?
-    const listenersByType = listOpts.listenersByType.concat();
+    const listenersByType = liveListenersByType.concat();
     const dummyIPos = listenersByType.length ? 1 : 0;
 
     // eslint-disable-next-line unicorn/no-unused-array-method-return -- Shortcircuiting
     listenersByType.some((listenerObj, i) => {
       if (_evCfg._stopImmediatePropagation) {
         return true;
+      }
+      // A listener removed by an earlier callback in this same pass
+      //   (e.g. via an aborted `signal`, or a plain `removeEventListener`
+      //   call from within a sibling listener) must not be invoked,
+      //   even though it was still present in the snapshot taken at
+      //   the start of this pass.
+      if (!liveListenersByType.includes(listenerObj)) {
+        return false;
       }
       const onListener = checkOnListeners ? this['on' + type] : null;
       if (i === dummyIPos && typeof onListener === 'function') {
@@ -963,12 +1206,16 @@ Object.assign(EventTarget.prototype, {
         const {
           listener
         } = listenerObj;
-        this.tryCatch(eventCopy, () => {
-          listener.call(eventCopy.currentTarget, eventCopy);
-        });
+        // Per spec, a `once` listener is removed *before* it's
+        //   invoked, not after: a reentrant dispatch from within the
+        //   listener itself (e.g. dispatching the same event type
+        //   again synchronously) must not see it as still registered.
         if (once) {
           this.removeEventListener(type, listener, options);
         }
+        this.tryCatch(eventCopy, () => {
+          listener.call(eventCopy.currentTarget, eventCopy);
+        });
       }
       return false;
     });
@@ -1062,10 +1309,12 @@ Object.assign(EventTarget.prototype, {
     }
   }
 });
+// @ts-expect-error Not part of the class body itself
 EventTarget.prototype[Symbol.toStringTag] = 'EventTargetPrototype';
-Object.defineProperty(EventTarget, 'prototype', {
-  writable: false
-});
+// A real class's own `.prototype` is already non-writable/non-configurable
+//   per spec, so no explicit freeze is needed here (unlike `ShimEvent`/
+//   `ShimCustomEvent`, which remain plain functions for now).
+
 const ShimEventTarget = EventTarget;
 const EventTargetFactory = {
   /**
@@ -1094,15 +1343,6 @@ EventTarget.ShimCustomEvent = ShimCustomEvent;
 EventTarget.ShimDOMException = ShimDOMException$1;
 EventTarget.ShimEventTarget = EventTarget;
 EventTarget.EventTargetFactory = EventTargetFactory;
-
-/**
- * @returns {void}
- */
-function setPrototypeOfCustomEvent() {
-  // TODO: IDL needs but reported as slow!
-  Object.setPrototypeOf(ShimCustomEvent, /** @type {object} */ShimEvent);
-  Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
-}
 
 /**
  * @typedef {T[keyof T]} ValueOf<T>
@@ -1945,27 +2185,31 @@ const readonlyProperties$7 = ['oldVersion', 'newVersion'];
  */
 
 /**
- * Babel apparently having a problem adding `hasInstance` to a class,
- * so we are redefining as a function.
- * @class
- * @param {string} type
- * @this {IDBVersionChangeEventFull}
+ * `extends ShimEvent` via a real `class`, now that `Event` (`ShimEvent`)
+ *   is itself a real, constructible class in `eventtargeter` -- the old
+ *   `ShimEvent.call(this, type)` + `Object.create(ShimEvent.prototype)`
+ *   pattern this used to use is illegal for a real class constructor
+ *   (only callable via `new`/`super()`).
  */
-function IDBVersionChangeEvent(type /* , eventInitDict */) {
-  // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
-  // @ts-expect-error It's passing only one!
-  ShimEvent.call(this, type);
-  // @ts-expect-error It's ok
-  this[Symbol.toStringTag] = 'IDBVersionChangeEvent';
-  this.toString = function () {
-    return '[object IDBVersionChangeEvent]';
-  };
-  // eslint-disable-next-line prefer-rest-params -- API
-  this.__eventInitDict = arguments[1] || {};
+class IDBVersionChangeEvent extends ShimEvent {
+  /**
+   * @param {string} type
+   */
+  constructor(type /* , eventInitDict */) {
+    // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
+    super(type);
+    const me = /** @type {IDBVersionChangeEventFull} */ /** @type {unknown} */this;
+    // @ts-expect-error It's ok
+    me[Symbol.toStringTag] = 'IDBVersionChangeEvent';
+    me.toString = function () {
+      return '[object IDBVersionChangeEvent]';
+    };
+    // eslint-disable-next-line prefer-rest-params -- API
+    me.__eventInitDict = arguments[1] || {};
+  }
 }
 
-// @ts-expect-error It's ok
-IDBVersionChangeEvent.prototype = Object.create(ShimEvent.prototype);
+// @ts-expect-error Not part of the class body itself
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
@@ -1999,15 +2243,6 @@ Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
    * @returns {boolean}
    */
   obj => isObj(obj) && 'oldVersion' in obj && 'defaultPrevented' in obj && typeof obj.defaultPrevented === 'boolean'
-});
-Object.defineProperty(IDBVersionChangeEvent.prototype, 'constructor', {
-  enumerable: false,
-  writable: true,
-  configurable: true,
-  value: IDBVersionChangeEvent
-});
-Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
-  writable: false
 });
 
 /**
@@ -12247,7 +12482,6 @@ function setGlobalVars(idb, initialConfig) {
           Object.setPrototypeOf(IDBVersionChangeEvent, ShimEvent);
           Object.setPrototypeOf(ShimDOMException, Error);
           Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
-          setPrototypeOfCustomEvent();
         }
         if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
           if (CFG.addNonIDBGlobals) {

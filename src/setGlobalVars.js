@@ -1,4 +1,3 @@
-import {setPrototypeOfCustomEvent} from 'eventtargeter';
 import shimIDBVersionChangeEvent from './IDBVersionChangeEvent.js';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor.js';
 import shimIDBRecord from './IDBRecord.js';
@@ -277,7 +276,6 @@ function setGlobalVars (idb, initialConfig) {
                     Object.setPrototypeOf(shimIDBVersionChangeEvent, ShimEvent);
                     Object.setPrototypeOf(ShimDOMException, Error);
                     Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
-                    setPrototypeOfCustomEvent();
                 }
                 if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
                     if (CFG.addNonIDBGlobals) {

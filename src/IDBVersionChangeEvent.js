@@ -14,27 +14,30 @@ const readonlyProperties = ['oldVersion', 'newVersion'];
  */
 
 /**
- * Babel apparently having a problem adding `hasInstance` to a class,
- * so we are redefining as a function.
- * @class
- * @param {string} type
- * @this {IDBVersionChangeEventFull}
+ * `extends ShimEvent` via a real `class`, now that `Event` (`ShimEvent`)
+ *   is itself a real, constructible class in `eventtargeter` -- the old
+ *   `ShimEvent.call(this, type)` + `Object.create(ShimEvent.prototype)`
+ *   pattern this used to use is illegal for a real class constructor
+ *   (only callable via `new`/`super()`).
  */
-function IDBVersionChangeEvent (type /* , eventInitDict */) { // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
-    // @ts-expect-error It's passing only one!
-    ShimEvent.call(this, type);
-    // @ts-expect-error It's ok
-    this[Symbol.toStringTag] = 'IDBVersionChangeEvent';
-    this.toString = function () {
-        return '[object IDBVersionChangeEvent]';
-    };
-    // eslint-disable-next-line prefer-rest-params -- API
-    this.__eventInitDict = arguments[1] || {};
+class IDBVersionChangeEvent extends ShimEvent {
+    /**
+     * @param {string} type
+     */
+    constructor (type /* , eventInitDict */) { // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
+        super(type);
+        const me = /** @type {IDBVersionChangeEventFull} */ (/** @type {unknown} */ (this));
+        // @ts-expect-error It's ok
+        me[Symbol.toStringTag] = 'IDBVersionChangeEvent';
+        me.toString = function () {
+            return '[object IDBVersionChangeEvent]';
+        };
+        // eslint-disable-next-line prefer-rest-params -- API
+        me.__eventInitDict = arguments[1] || {};
+    }
 }
 
-// @ts-expect-error It's ok
-IDBVersionChangeEvent.prototype = Object.create(ShimEvent.prototype);
-
+// @ts-expect-error Not part of the class body itself
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
@@ -75,16 +78,9 @@ Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
         'defaultPrevented' in obj && typeof obj.defaultPrevented === 'boolean'
 });
 
-Object.defineProperty(IDBVersionChangeEvent.prototype, 'constructor', {
-    enumerable: false,
-    writable: true,
-    configurable: true,
-    value: IDBVersionChangeEvent
-});
-
-Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
-    writable: false
-});
+// A real class's own `.prototype` (and its `.constructor` back-reference)
+//   is already set up correctly and non-writable/non-configurable per
+//   spec, so no explicit setup is needed here.
 /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 export default IDBVersionChangeEvent;

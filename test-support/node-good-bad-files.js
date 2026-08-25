@@ -241,13 +241,14 @@ Current worker test statuses with 2 files excluded:
   'Total tests': 96
 
 // Passing the "events" argument to `node-idb-test.js` will run the event
-//   tests (`Event`, `CustomEvent`, and `EventTarget`), currently
-//   interface-related ones only. These are relevant
-//   for IndexedDB in that we are implementing and passing events. These
-//   are not present in the IndexedDB folder. Unlike the previous tests, these
-//   tests are hard-coded. It could be conceivably live-updated from
-//   `web-platform-tests/dom/interfaces.html` and
-//   `web-platform-tests/dom/interface-objects.html` (where
+//   tests (`Event`, `CustomEvent`, and `EventTarget`): two idlharness-style
+//   interface-conformance files, plus (see further below) the 9 functional
+//   tests ported from web-platform-tests/dom/events/*.any.js. These are
+//   relevant for IndexedDB in that we are implementing and passing events.
+//   These are not present in the IndexedDB folder. Unlike the previous
+//   tests, the two idlharness-style files below are hard-coded. They could
+//   conceivably be live-updated from `web-platform-tests/dom/interfaces.html`
+//   and `web-platform-tests/dom/interface-objects.html` (where
 //   the contents were originally obtained), but any partial inclusion might
 //   be fragile.
 // `__event-interface.js`'s embedded IDL was brought up to the current DOM
@@ -263,14 +264,42 @@ Current worker test statuses with 2 files excluded:
 //   exposed on the prototype, and `initEvent`/`initCustomEvent` given
 //   default parameter values so `.length` reflects only their required
 //   argument.
-// Todo: We ought to really run all of the web-platform-tests/dom/events tests
-Event Test counts: 2 files (2 good)
+// The 9 functional (non-idlharness) tests from
+//   web-platform-tests/dom/events/*.any.js are now also ported in, alongside
+//   the two idlharness-style files above -- copied verbatim except for
+//   swapping the "META: ..." header for the beginscript/endscript
+//   resource-include markers this harness uses (see `DOMException-*.js` for
+//   the same pattern). Getting these to genuinely pass (not just load)
+//   surfaced several further real gaps in `eventtargeter`, since fixed
+//   there: `addEventListener`/`removeEventListener`/`hasEventListener`'s
+//   duplicate-listener identity now compares only `capture` for the
+//   standard (non-early/late/default) listener type, matching spec, instead
+//   of full-options equality (a breaking change to eventtargeter's own
+//   previously-tested, non-spec-compliant behavior -- fixed there too, by
+//   explicit user decision); the `signal` option now validates its value
+//   (throwing for `null`/non-`AbortSignal`, via duck-typing rather than
+//   `instanceof` to tolerate a signal constructed in a different realm);
+//   `once` listeners are now removed *before* invocation rather than after,
+//   so a reentrant nested dispatch from within the listener doesn't see it
+//   as still registered; a listener removed mid-dispatch by an earlier
+//   sibling listener (e.g. via an aborted shared `signal`) is no longer
+//   invoked even though it was present in the snapshot taken at the start
+//   of that dispatch pass; `isTrusted` is now a real, shared-getter-function
+//   `[LegacyUnforgeable]`-style own property (previously a fresh per-instance
+//   closure, failing idlharness's "same getter reference across instances"
+//   check) defaulting to `false` rather than `undefined`; `timeStamp` is now
+//   actually set (via `performance.now()`) rather than never assigned; and
+//   `srcElement` was added as a legacy alias of `target`. `AbortController`/
+//   `AbortSignal`/`removeEventListener` were also added to this harness's
+//   own sandboxed-global copy list (`environment.js`), alongside the
+//   already-present `addEventListener`.
+Event Test counts: 11 files (11 good)
 Current Event test statuses with 0 files excluded:
-  'Pass': 73,
+  'Pass': 114,
   'Fail': 0,
   'Timeout': 0,
   'Not Run': 0,
-  'Total tests': 73
+  'Total tests': 114
 
 // Passing the "exception" (or "domexception") argument to `node-idb-test.js`
 //   will run the `DOMException` tests (from
@@ -388,10 +417,19 @@ const goodBad = {
     ],
     goodFiles: [
         '../non-indexedDB/__event-interface.js',
+        '../non-indexedDB/AddEventListenerOptions-once.js',
+        '../non-indexedDB/AddEventListenerOptions-passive.js',
+        '../non-indexedDB/AddEventListenerOptions-signal.js',
         '../non-indexedDB/DOMException-constructor-and-prototype.js',
         '../non-indexedDB/DOMException-constructor-behavior.js',
         '../non-indexedDB/DOMException-is-error.js',
         '../non-indexedDB/DOMException-custom-bindings.js',
+        '../non-indexedDB/Event-constructors.js',
+        '../non-indexedDB/Event-isTrusted.js',
+        '../non-indexedDB/EventTarget-add-remove-listener.js',
+        '../non-indexedDB/EventTarget-addEventListener.js',
+        '../non-indexedDB/EventTarget-constructible.js',
+        '../non-indexedDB/EventTarget-removeEventListener.js',
         '../non-indexedDB/interface-objects.js',
         '_interface-objects-001.worker.js',
         '_interface-objects-002.worker.js',

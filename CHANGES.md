@@ -12,7 +12,7 @@
 - fix: bring `Event`/`CustomEvent`/`EventTarget` up to current WebIDL conformance
 - fix: transaction-inactive-during-clone spec compliance; TS7 compatibility
 - test: restore and update the W3C/WPT Node test harness (`npm run w3c-test-only` and friends), which crashed on startup due to a dangling import of the no-longer-installable `sourcemap-transformer` package left over from its removal
-- chore: update typeson-registry, devDeps; lint
+- chore: update typeson-registry, eventtargeter, devDeps; lint
 - chore: adjust for TS 7 compatibility
 
 ## 17.2.2

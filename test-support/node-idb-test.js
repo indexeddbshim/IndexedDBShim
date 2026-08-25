@@ -4,7 +4,6 @@ import {readFile, readdir, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import vm from 'node:vm';
 import {MessageChannel} from 'node:worker_threads';
-import {fileURLToPath} from 'node:url';
 
 // import sourceMapSupport from 'source-map-support/source-map-support.js';
 
@@ -27,7 +26,7 @@ import nodeReplacementHacks from './node-replacement-hacks.js';
 //     // Needed along with sourcemap transform
 //     environment: 'node'
 // });
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 
 const {
     goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal,
@@ -833,7 +832,16 @@ try {
         // Tests `EventTarget`, etc. shims
         await readAndEvaluateFiles([
             '../non-indexedDB/__event-interface.js',
-            '../non-indexedDB/interface-objects.js'
+            '../non-indexedDB/interface-objects.js',
+            '../non-indexedDB/AddEventListenerOptions-once.js',
+            '../non-indexedDB/AddEventListenerOptions-passive.js',
+            '../non-indexedDB/AddEventListenerOptions-signal.js',
+            '../non-indexedDB/Event-constructors.js',
+            '../non-indexedDB/Event-isTrusted.js',
+            '../non-indexedDB/EventTarget-add-remove-listener.js',
+            '../non-indexedDB/EventTarget-addEventListener.js',
+            '../non-indexedDB/EventTarget-constructible.js',
+            '../non-indexedDB/EventTarget-removeEventListener.js'
         ]);
         break;
     case 'exceptions': case 'exception': case 'domexception':

@@ -13,7 +13,7 @@ self.parent = self;
         // Needed early by testing framework
         'Function', 'TypeError',
         'clearTimeout', 'setTimeout',
-        'addEventListener', 'document',
+        'addEventListener', 'removeEventListener', 'document',
         'location', 'ImageData', 'Blob', 'File', 'Event', 'MessageChannel',
         'DOMMatrix', 'DOMMatrixReadOnly', 'DOMPoint', 'DOMPointReadOnly',
         'DOMRect', 'DOMRectReadOnly',
@@ -22,7 +22,7 @@ self.parent = self;
         //   and copying jsdom's different one over it here would break
         //   `instanceof ArrayBuffer` checks against buffers `Key.js`
         //   produces -- see `node-idb-test.js`'s `sandboxObj` comment.
-        'BigInt', 'FileReader', 'Promise'
+        'BigInt', 'FileReader', 'Promise', 'AbortController', 'AbortSignal'
     ).forEach((prop) => {
         // Isn't working for 'indexedDB' and its getter; see <https://github.com/axemclion/IndexedDBShim/issues/280>
         const desc = Object.getOwnPropertyDescriptor(shimNS.window, prop);
@@ -90,8 +90,9 @@ self.parent = self;
     //   re-declared per sandbox.
     // `CustomEvent` is deliberately excluded here: its prototype is
     //   already correctly chained to `Event.prototype` (not directly to
-    //   `Object.prototype`) via eventtargeter's own `setPrototypeOfCustomEvent`,
-    //   called elsewhere -- re-pointing it here would overwrite that link.
+    //   `Object.prototype`) automatically, since `CustomEvent` is a real
+    //   `class CustomEvent extends Event` in eventtargeter -- re-pointing
+    //   it here would overwrite that link.
     ['Event', 'EventTarget'].forEach((name) => {
         const ctor = shimNS.window[name];
         if (ctor && ctor.prototype) {
