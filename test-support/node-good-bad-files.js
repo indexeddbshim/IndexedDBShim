@@ -173,31 +173,32 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
     - 'bindings-inject-keys-bypass.any.worker.js', - Failing
     - `bindings-inject-values-bypass.any.js` - Failing
     - 'bindings-inject-values-bypass.any.worker.js', - Failing
-    - `structured-clone.any.js` - Failing ~59 of 125 tests
-        - ~59 of those share ONE root cause: `Sca.js`/`typeson` always
-          decode a cloned value using *this process's own, outer,
-          non-sandboxed* built-in classes (`Date`, `RegExp`, `ArrayBuffer`,
-          typed arrays, `Map`, `Set`, `Array`, `Object`, `Error` and its
-          subtypes, `FileList`, ...), but the test script comparing
-          `Object.getPrototypeOf(orig)` against `Object.getPrototypeOf(clone)`
-          runs *inside* the vm sandbox -- two different realms' prototypes
-          for the same built-in. Same class of cross-realm-identity issue
-          as elsewhere in this file (see `environment.js`/
-          `node-idb-test.js`'s `sandboxObj`), just showing up across nearly
-          every JS built-in type at once here. The same fix pattern (pass
-          the outer realm's class directly into `sandboxObj`, replacing the
-          sandbox's own copy) would likely resolve most of these too, but
-          `Array`/`Object`/`Date` deliberately use a *narrower*
-          `Symbol.hasInstance`-only patch instead of full sandbox
-          replacement (`testharness.js` itself leans on them internally,
-          making full replacement riskier for those) -- extending full
-          replacement to `RegExp`/`Map`/`Set`/the `Error` family/
-          `FileList` too would be a materially bigger, more
-          architecturally invasive change.
-        - `DOMMatrix`/`DOMPoint` fail separately and expectedly: we mock
-          them (along with `DOMMatrixReadOnly`, `DOMPoint(ReadOnly)`,
-          `DOMRect(ReadOnly)`) with no-op functions, so a genuine clone
-          round-trip was never going to work for those regardless.
+    - `structured-clone.any.js` - Failing 29 of 125 tests. All share the
+      same root cause: `Sca.js`/`typeson` decode a cloned value using
+      *this process's own, outer, non-sandboxed* built-in classes, but
+      the test script comparing `Object.getPrototypeOf(orig)` against
+      `Object.getPrototypeOf(clone)` runs *inside* the vm sandbox -- two
+      different realms' prototypes for the same built-in. `Array`/
+      `Object`/`RegExp` can't be fixed by passing the outer realm's
+      class into `sandboxObj` (`node-idb-test.js`) the way `ArrayBuffer`
+      and others are: their test values are built via literal syntax
+      (`{}`/`[]`/`/re/`), which always uses the running realm's true
+      intrinsic prototype regardless of what the global binding points
+      to. `TypeError`/`RangeError`/`ReferenceError`/`SyntaxError`/
+      `URIError` can't either, for a different reason -- V8 also throws
+      these natively for the sandbox's own internal operations
+      (undefined-variable access, non-callable calls, malformed URI
+      sequences, ...), and a natively thrown error always uses the
+      realm's true intrinsic constructor too, so replacing the binding
+      would break `assert_throws_js`-style checks elsewhere that expect
+      a natively thrown error to be `instanceof` the sandbox's own copy.
+      `DOMMatrix`/`DOMPoint` fail separately and expectedly: we mock
+      them (along with `DOMMatrixReadOnly`, `DOMPoint(ReadOnly)`,
+      `DOMRect(ReadOnly)`) with no-op functions, so a genuine clone
+      round-trip was never going to work for those regardless.
+      `FileList` has no realm-independent fix either -- it's only ever
+      constructed by a real `<input type=file>`, not by test code
+      directly.
     - `serialize-sharedarraybuffer-throws.https.js`: genuinely fails, and
       it's not a test bug -- same class of gap as the `MessageChannel`/
       `MessagePort` unclonable-type failures just above:

@@ -487,7 +487,48 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             //   TypedArray(Int8Array)" test) needs to compare against this
             //   same one, not the different one `environment.js` would
             //   otherwise copy from `shimNS.window`.
-            ArrayBuffer
+            ArrayBuffer,
+            // `Sca.js`/`typeson-registry` likewise always reconstruct a
+            //   decoded clone using this process's own native classes for
+            //   every one of these (resolved via plain Node module scope),
+            //   not jsdom's or this sandbox's own copies -- e.g.
+            //   `structured-clone.any.js`'s `assert_equals(
+            //   Object.getPrototypeOf(orig), Object.getPrototypeOf(clone))`
+            //   needs `orig` (built by the test script's own `new Date(...)`
+            //   etc.) to share the exact same prototype the decoded `clone`
+            //   got. Unlike `Array`/`Object` (excluded here deliberately --
+            //   see `environment.js`), none of these have a literal syntax
+            //   that would bypass this global binding. `TypeError`/
+            //   `RangeError`/`ReferenceError`/`SyntaxError`/`URIError` are
+            //   deliberately excluded too, even though `Sca.js` needs them
+            //   for the same reason -- unlike `EvalError` (essentially
+            //   never thrown by the engine itself in modern JS), those are
+            //   also thrown natively by V8 for the sandbox's own internal
+            //   operations (undefined-variable access, non-callable calls,
+            //   malformed URI sequences, etc.), and a *natively* thrown
+            //   error always uses the realm's true intrinsic constructor
+            //   regardless of what this binding points to -- replacing it
+            //   would make `assert_throws_js`-style checks against a
+            //   natively thrown error fail instead (confirmed directly:
+            //   `idbkeyrange_incorrect.any.js`'s "noExistingVariable is not
+            //   defined" case, expecting `instanceof` the sandbox's own
+            //   `ReferenceError`).
+            Date,
+            RegExp,
+            Map,
+            Set,
+            Error,
+            EvalError,
+            Int8Array,
+            Uint8Array,
+            Uint8ClampedArray,
+            Int16Array,
+            Uint16Array,
+            Int32Array,
+            Uint32Array,
+            Float32Array,
+            Float64Array,
+            Float16Array
         };
 
         const baseCfg = {
