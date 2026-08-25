@@ -310,6 +310,19 @@ prom.then(async (scriptSource) => {
     ['clearTimeout', 'setInterval', 'clearInterval'].forEach((prop) => {
         workerCtx[prop] = global[prop];
     });
+    // Unlike the window context (`node-idb-test.js`, which no longer needs
+    //   this now that `nodeSQLiteDatabase.js` defers its SQL callback via
+    //   `setImmediate` rather than `setTimeout(..., 0)`), a worker's script
+    //   runs in a real, separate child process reached over a Unix-domain-
+    //   socket-wrapped WebSocket (see `webworker.js`) -- that round-trip
+    //   adds real latency `setImmediate`'s tighter deferral doesn't cover,
+    //   so tests relying on a transaction having genuinely finished by the
+    //   time a `setTimeout` fires (e.g. idbcursor-advance-exception-order.
+    //   any.worker.js's "TransactionInactiveError vs. InvalidStateError"
+    //   cases) still need this grace period here.
+    workerCtx.setTimeout = function (cb, ms) {
+        return global.setTimeout(cb, (ms || 0) + 500);
+    };
 
     // `indexeddbshim(workerCtx, ...)` below installs `IDBKeyRange`/
     //   `IDBObjectStore`/etc. using THIS process's own `src/DOMException.js`/

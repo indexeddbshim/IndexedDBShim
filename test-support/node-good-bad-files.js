@@ -125,14 +125,21 @@ IndexedDB's own internal request queue. So the remaining "transactions
 don't finish before the next task" gap is a deliberate JS-level
 scheduling choice made for that specific, already-solved reason, not a
 synchronous-vs-asynchronous driver limitation -- switching drivers
-wouldn't change this on its own. Tried tightening the deferral itself
+wouldn't change this on its own. Tightening the deferral itself
 (swapping the prior `setTimeout(..., 0)` for `setImmediate`, which
-fires sooner in Node's event loop while still being a macrotask): safe
-(no regressions in a full sweep) but didn't fix any of the timing
-failures below, confirming they come from the other, already-diagnosed
-issues (microtask-between-listeners, whole-database locking, cursor
-positional tracking), not from this deferral's timing. Kept anyway as
-a minor, low-risk tightening.
+fires sooner in Node's event loop while still being a macrotask) turned
+out to genuinely fix a real class of timing failures in the window
+context: several `*-exception-order.any.js` tests (e.g.
+`idbcursor-advance-exception-order.any.js`,
+`idbobjectstore-add-put-exception-order.any.js`) used to need our test
+harness's own `setTimeout` wrapped with an extra +500ms padding to
+reliably observe a transaction as finished by the time it fired;
+`setImmediate` closes that gap on its own, so the padding was removed
+from `node-idb-test.js`'s window-context setup. The worker context
+still needs it, though (see `webworker-child.js`): a worker's script
+runs in a real, separate child process reached over a socket, and that
+round-trip adds latency `setImmediate`'s tighter deferral doesn't
+cover.
 
 These are still failing:
 - `idbcursor_update_index.any.js`/`idbcursor_update_index.any.worker.js`:
