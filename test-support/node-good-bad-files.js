@@ -290,10 +290,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 window-context `.any.js` counterpart's status, but some fail
 differently:
 
-- `idbfactory_cmp.any.worker.js` throws a `TypeError` from the wrong
-  realm (fails an `instanceof` check against the worker's own
-  `TypeError`) where the window-context test passes that particular
-  assertion.
 - `transaction-abort-index-metadata-revert.any.worker.js`,
   `transaction-abort-multiple-metadata-revert.any.worker.js`,
   `upgrade-transaction-lifecycle-backend-aborted.any.worker.js`, and
