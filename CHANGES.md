@@ -1,6 +1,6 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 17.3.3
 
 - fix: give async upgradeneeded/versionchange continuations enough
 microtask grace before deactivating
