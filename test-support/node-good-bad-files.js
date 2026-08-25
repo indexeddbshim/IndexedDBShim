@@ -72,6 +72,32 @@ KNOWN ISSUES (INHERENT LIMITATIONS)
     it exists to provide, for every normal use of `dispatchEvent()` --
     not an acceptable trade for one test.
 
+4. DEADLOCKING (REQUIRING SOLUTION OF SEPARATE DATABASES PER STORE)
+
+- `idb-explicit-commit.any.js`: 9 of 12 tests pass -- `commit()` itself
+  (committing, going inactive immediately, throwing on double-commit or
+  abort-after-commit, etc.) is fully implemented and correct. The 10th
+  test, "Transactions with same scope should stay in program order, even
+  if one calls commit", deadlocks (and permanently blocks the remaining
+  2 tests in the file, which testharness.js never gets to run): it starts
+  a `readwrite` transaction on `books` kept artificially alive by
+  continuously re-queuing `get()` requests, then expects a *different*,
+  non-overlapping-scope `readonly` transaction on `not_books` to run
+  concurrently and complete -- which is exactly what `IDBDatabase.js`'s
+  own `transaction()` comment already documents as unsupported: the
+  WebSQL/SQLite backend locks the *whole* database per transaction, not
+  per-scope, so non-overlapping transactions still serialize behind each
+  other. The `not_books` transaction can never run until the `books` one
+  finishes, but the `books` one is only released by the `not_books`
+  transaction completing -- a genuine deadlock from this pre-existing
+  whole-database-locking limitation, not a `commit()` bug. Fixing it for
+  real would mean the same "save the stores in separate databases"
+  change already called out as needed in `IDBDatabase.js`. However, doing
+  this would mean not easily being able to span multiple stores atomically
+  in a single transaction (it might be doable with ATTACH DATABASE), and
+  in any case would suffer from unduly proliferating the number of databases
+  that get created.
+
 KNOWN TESTING ISSUES
 
 (The following list remaining test failures/blockers for Node; the remaining browser
@@ -122,27 +148,6 @@ https://github.com/web-platform-tests/wpt/commit/57aa2ac737eec9526ad6c4ace61e590
 - `idbobjectstore-query-exception-order.any.js`
 
 These are still failing regardless:
-- `idb-explicit-commit.any.js`: 9 of 12 tests pass -- `commit()` itself
-  (committing, going inactive immediately, throwing on double-commit or
-  abort-after-commit, etc.) is fully implemented and correct. The 10th
-  test, "Transactions with same scope should stay in program order, even
-  if one calls commit", deadlocks (and permanently blocks the remaining
-  2 tests in the file, which testharness.js never gets to run): it starts
-  a `readwrite` transaction on `books` kept artificially alive by
-  continuously re-queuing `get()` requests, then expects a *different*,
-  non-overlapping-scope `readonly` transaction on `not_books` to run
-  concurrently and complete -- which is exactly what `IDBDatabase.js`'s
-  own `transaction()` comment already documents as unsupported: the
-  WebSQL/SQLite backend locks the *whole* database per transaction, not
-  per-scope, so non-overlapping transactions still serialize behind each
-  other. The `not_books` transaction can never run until the `books` one
-  finishes, but the `books` one is only released by the `not_books`
-  transaction completing -- a genuine deadlock from this pre-existing
-  whole-database-locking limitation, not a `commit()` bug. Fixing it for
-  real would mean the same "save the stores in separate databases"
-  change already called out as needed in `IDBDatabase.js`. However, doing
-  this would mean not easily being able to span multiple stores atomically
-  in a single transaction (it might be doable with ATTACH DATABASE).
 - `idbcursor_update_index.any.js`/`idbcursor_update_index.any.worker.js`:
   8 of 9 tests pass.
   The one failure, "Modify records during cursor iteration and verify
@@ -179,8 +184,6 @@ These are still failing regardless:
   cache-invalidation rule can't satisfy both, so this needs the
   positional continuation rewrite mentioned above, not a cache-lifetime
   tweak.
-
-See <https://github.com/axemclion/IndexedDBShim/issues/296>.
 
 2. SERVICE WORKERS
 
