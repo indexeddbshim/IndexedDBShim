@@ -860,9 +860,15 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         me.__error = err;
     }
 
-    if (me.__requestsFinished) {
+    if (me.__requestsFinished && err !== null) {
         // The transaction has already completed, so we can't call "onerror" or "onabort".
-        // So throw the error instead.
+        // So throw the error instead. `err` is only ever `null` here via
+        //   `IDBTransaction.prototype.abort`'s own `__abortTransaction(null)`
+        //   call, which now checks `__requestsFinished` itself first and
+        //   throws `InvalidStateError` synchronously before ever reaching
+        //   this point -- so this guard is just defense in depth against
+        //   `err` somehow being `null` some other way, not something this
+        //   path should see in practice.
         setTimeout(() => {
             throw err;
         }, 0);
@@ -969,6 +975,14 @@ IDBTransaction.prototype.abort = function () {
     IDBTransaction.__assertNotFinished(me);
     if (me.__committed) {
         throw createDOMException('InvalidStateError', 'The transaction has already been committed');
+    }
+    if (me.__requestsFinished) {
+        // All requests have already finished and the transaction is
+        //   auto-committing (the async SQL commit round trip just hasn't
+        //   resolved yet) -- too late to abort per spec, even though
+        //   `__committed` itself isn't set until that round trip actually
+        //   finishes.
+        throw createDOMException('InvalidStateError', 'The transaction is already committing');
     }
     me.__abortTransaction(null);
 };
