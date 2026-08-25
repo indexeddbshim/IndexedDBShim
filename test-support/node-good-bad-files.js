@@ -152,6 +152,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 - 'idbindex_tombstones.any.js' - Timing out
 - `abort-in-initial-upgradeneeded.any.js` - Timing out
+- 'abort-in-initial-upgradeneeded.any.worker.js', - Timing out
 
 - `request-abort-ordering.any.js` - This times out sometimes (when run with full tests); possibly due to what it is following?
 - 'idbobjectstore_getAllKeys.any.js' - Failing sometimes (when run full tests)
@@ -323,6 +324,7 @@ const goodBad = {
         //   as part of the full sweep, so this is a real `timeout` entry,
         //   not merely a full-sweep-only flake.
         'abort-in-initial-upgradeneeded.any.js',
+        'abort-in-initial-upgradeneeded.any.worker.js',
         'database-names-by-origin.js',
         'idb-explicit-commit.any.js',
         'idb-partitioned-basic.sub.js',
@@ -627,7 +629,6 @@ const goodBad = {
         'writer-starvation.any.js',
         // `.any.worker.js` dedicated-worker-context variants (run via the
         //   `any-workers` mode, not the default corpus).
-        'abort-in-initial-upgradeneeded.any.worker.js',
         'close-in-upgradeneeded.any.worker.js',
         'cursor-overloads.any.worker.js',
         'delete-request-queue.any.worker.js',
