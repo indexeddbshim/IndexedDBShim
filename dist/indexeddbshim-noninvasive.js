@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.0 - 8/24/2026 */
+/*! indexeddbshim - v17.3.1 - 8/24/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -11472,7 +11472,22 @@
                   //   open/close the transaction's active-handler window itself.
                   req.transaction.__handlerActive = true;
                   req.dispatchEvent(e);
-                  req.transaction.__handlerActive = false;
+                  // Give any same-tick microtask scheduled from within the
+                  //   `upgradeneeded` handler (e.g. a plain
+                  //   `Promise.resolve().then(...)`) a chance to run -- and still
+                  //   observe the transaction as active -- before we deactivate it
+                  //   again, per https://github.com/w3c/IndexedDB/issues/87. Only
+                  //   the flag reset itself is deferred here -- unlike
+                  //   `IDBTransaction.js`'s `advanceAfterDispatch`, `finished()`
+                  //   (this transaction's own queue-advancement/completion signal)
+                  //   still runs synchronously, at exactly its previous timing: an
+                  //   earlier attempt at deferring `finished()` too raced against
+                  //   unrelated test setup that assumed a freshly deleted/created
+                  //   database's upgrade transaction had already fully completed by
+                  //   the time this function returns.
+                  queueMicrotask(function () {
+                    req.transaction.__handlerActive = false;
+                  });
                   if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', /** @type {Error} */e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
@@ -13546,8 +13561,24 @@
             Object.setPrototypeOf(IDBRequest, EventTarget);
             Object.setPrototypeOf(IDBTransaction, EventTarget);
             Object.setPrototypeOf(IDBVersionChangeEvent, ShimEvent);
-            Object.setPrototypeOf(ShimDOMException, Error);
-            Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
+            // `ShimDOMException` is the real native `DOMException` when one
+            //   is available (see `DOMException.js`'s `useNativeDOMException`)
+            //   -- which, unlike the shim classes above, is a single,
+            //   process-wide singleton shared by reference across every
+            //   sandbox this library gets installed into (see
+            //   `node-idb-test.js`'s `sandboxObj`). A native `DOMException`
+            //   already has the correct prototype chain out of the box
+            //   (`Object.getPrototypeOf(DOMException) === Function.prototype`,
+            //   not `Error`), so forcing it here isn't just unneeded but
+            //   actively wrong -- and, because it's shared, permanently
+            //   wrong for every later use of `DOMException` in the same
+            //   process (e.g. a later WPT test file's own idlharness-style
+            //   check that `DOMException` does *not* inherit from `Error`
+            //   on the class side), not just this one shim install.
+            if (typeof DOMException === 'undefined' || ShimDOMException !== DOMException) {
+              Object.setPrototypeOf(ShimDOMException, Error);
+              Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
+            }
           }
           if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
             if (CFG.addNonIDBGlobals) {
