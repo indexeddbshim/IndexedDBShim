@@ -93,7 +93,10 @@ self.parent = self;
     //   `Object.prototype`) automatically, since `CustomEvent` is a real
     //   `class CustomEvent extends Event` in eventtargeter -- re-pointing
     //   it here would overwrite that link.
-    ['Event', 'EventTarget'].forEach((name) => {
+    [
+        'Event', 'EventTarget', 'IDBKeyRange', 'IDBCursor',
+        'IDBObjectStore', 'IDBIndex', 'IDBFactory', 'IDBRecord'
+    ].forEach((name) => {
         const ctor = shimNS.window[name];
         if (ctor && ctor.prototype) {
             Object.setPrototypeOf(ctor.prototype, Object.prototype);

@@ -791,6 +791,7 @@ const goodBad = {
     //   in `node-idb-test.js`.
     fullIDLSupportFiles: [
         'idlharness.any.js',
+        'idlharness.any.worker.js',
         '../non-indexedDB/exceptions.js',
         '../non-indexedDB/__event-interface.js'
     ],

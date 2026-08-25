@@ -679,7 +679,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     },
                                     function (sqlErr) {
                                         isRevertingSysdb = false;
-                                        cb(sqlErr);
+                                        cb(sqlErr); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                                     },
                                     function () {
                                         isRevertingSysdb = false;
@@ -693,7 +693,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     'ROLLBACK',
                                     [],
                                     function () {
-                                        cb();
+                                        cb(); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                                     },
                                     function (tx, sqlErr) {
                                         // Browser/Node may fail with expired transaction, so manually revert
@@ -918,7 +918,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                             },
                                             function (sqlErr) {
                                                 isRevertingSysdb = false;
-                                                cb(sqlErr);
+                                                cb(sqlErr); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                                             },
                                             function () {
                                                 isRevertingSysdb = false;
