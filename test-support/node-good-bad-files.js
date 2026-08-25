@@ -23,7 +23,7 @@ KNOWN TESTING ISSUES
 failures are listed below but are not categorized. Nevertheless, they may
 well relate to many of the same issues.)
 
-0. MISSING APIS
+0. MISSING/NEW APIS
 
 - `IDBTransaction.prototype.commit` (newly added)
     - `idb-explicit-commit.any.js`
