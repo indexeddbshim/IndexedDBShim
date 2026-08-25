@@ -122,13 +122,6 @@ https://github.com/web-platform-tests/wpt/commit/57aa2ac737eec9526ad6c4ace61e590
 - `idbobjectstore-query-exception-order.any.js`
 
 These are still failing regardless:
-- `get-databases.any.js` (not sure if it is transaction timing): 1 of 5
-  tests fails -- `IDBFactory.databases()` should only report databases
-  whose creation has actually *committed*, not ones still mid-flight in an
-  uncommitted `versionchange` transaction. This needs `IDBFactory.js`'s
-  database registry to track a real "committed" flag per database (a
-  separate feature gap, unrelated to the event/microtask timing issue
-  above).
 - `idb-explicit-commit.any.js`: 9 of 12 tests pass -- `commit()` itself
   (committing, going inactive immediately, throwing on double-commit or
   abort-after-commit, etc.) is fully implemented and correct. The 10th
@@ -186,23 +179,6 @@ These are still failing regardless:
   cache-invalidation rule can't satisfy both, so this needs the
   positional continuation rewrite mentioned above, not a cache-lifetime
   tweak.
-- `abort-in-initial-upgradeneeded.any.js`/`.any.worker.js`: its
-  `open_rq.onerror` assertions (and the trailing bare
-  `indexedDB.databases().then(...)`) are not wrapped in `t.step_func`,
-  so a failing assertion there never gets attributed to the running
-  test; `t.done()` is then never called, and the test hangs until
-  testharness.js's own internal per-test timeout force-completes it --
-  a path our jsdom environment doesn't tolerate well (see the `#rerun`
-  comment in `node-idb-test.js`), which is also why
-  `custom-reporter.js`'s `reportResults` throws trying to read
-  `document.querySelectorAll` from the already-torn-down window by the
-  time it runs. The underlying assertion (`dbs.length === 0` after an
-  aborted initial upgrade) hits the same undocumented
-  `IDBFactory.databases()` gap as `get-databases.any.js` above -- it
-  does not yet track a real "committed" flag per database, so an
-  aborted-but-registered database still shows up. Reliably times out
-  both alone and as part of the full sweep, so this is a real `timeout`
-  entry, not merely a full-sweep-only flake.
 - `transaction-scheduling-within-database.any.js`: same whole-database
   SQLite-locking limitation as `idb-explicit-commit.any.js` above: two
   same-scope `readonly` transactions each spin `get()` requests waiting
@@ -437,8 +413,6 @@ const goodBad = {
         'idbfactory-deleteDatabase-opaque-origin.js'
     ],
     timeout: [
-        'abort-in-initial-upgradeneeded.any.js',
-        'abort-in-initial-upgradeneeded.any.worker.js',
         'database-names-by-origin.js',
         'idb-explicit-commit.any.js',
         'idb-partitioned-basic.sub.js',
@@ -453,7 +427,6 @@ const goodBad = {
         'bindings-inject-keys-bypass.any.js',
         'bindings-inject-values-bypass.any.js',
         'file_support.sub.js',
-        'get-databases.any.js',
         'idb-partitioned-persistence.sub.js',
         'idbcursor_update_index.any.js',
         'idbfactory-origin-isolation.js',
@@ -492,6 +465,8 @@ const goodBad = {
         '_interface-objects-002.worker.js',
         '_interface-objects-003.js',
         '_interface-objects-004.js',
+        'abort-in-initial-upgradeneeded.any.js',
+        'abort-in-initial-upgradeneeded.any.worker.js',
         'blob-composite-blob-reads.any.js',
         'blob-contenttype.any.js',
         'blob-delete-objectstore-db.any.js',
@@ -512,6 +487,7 @@ const goodBad = {
         'fire-error-event-exception.any.js',
         'fire-success-event-exception.any.js',
         'fire-upgradeneeded-event-exception.any.js',
+        'get-databases.any.js',
         'globalscope-indexedDB-SameObject.any.js',
         'historical.any.js',
         'idb-binary-key-detached.any.js',

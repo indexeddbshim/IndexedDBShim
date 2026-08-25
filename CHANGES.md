@@ -4,6 +4,7 @@
 
 - fix: give async upgradeneeded/versionchange continuations enough
 microtask grace before deactivating
+- fix: don't let databases() see uncommitted creates/upgrades
 
 ## 17.3.2
 

@@ -236,6 +236,23 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
  */
 const websqlDBCache = {};
 
+/**
+ * Tracks databases with a creation/upgrade currently in flight but not yet
+ *   committed or aborted -- keyed by (unescaped) database name. The
+ *   `dbVersions` row in `sysdb` these entries shadow is written *before*
+ *   `upgradeneeded` is even dispatched to user code (as the success
+ *   callback of that very `INSERT`/`UPDATE`), on the same shared `sysdb`
+ *   connection `databases()` itself reads from -- so, absent this, a
+ *   `databases()` call made while an upgrade is still pending would see
+ *   the new row (or new version) immediately, rather than only once the
+ *   corresponding `versionchange` transaction has genuinely committed, as
+ *   required by `get-databases.any.js`'s "doesn't pick up changes that
+ *   haven't committed" test. `IDBFactory.prototype.databases` filters
+ *   its SQL results against this map.
+ * @type {Map<string, {oldVersion: Integer, newVersion: Integer}>}
+ */
+const pendingVersionChanges = new Map();
+
 /** @type {import('websql-configurable/lib/websql/WebSQLDatabase.js').default} */
 let sysdb;
 let nameCounter = 0;
@@ -571,6 +588,19 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if (calledDbCreateError) {
             return false;
         }
+        // Defensive cleanup: `pendingVersionChanges.set(name, ...)` (see
+        //   below) runs *before* the `dbVersions` `INSERT`/`UPDATE` it
+        //   guards is even attempted, but only `versionSet`'s own
+        //   `on__beforecomplete`/`on__preabort` handlers ever clear it --
+        //   and `versionSet` never runs at all if that `INSERT`/`UPDATE`,
+        //   or an earlier step in this same `open()` flow, fails first.
+        //   Without this, such a failure would leave the entry orphaned
+        //   forever, silently corrupting `databases()` for any *other*,
+        //   unrelated later `open()` call that happens to reuse the same
+        //   database name (common in WPT tests, e.g. generic names like
+        //   "DB1"/"TestDatabase" reused across different test files in
+        //   the same process). A no-op if no entry was ever set.
+        pendingVersionChanges.delete(name);
         const er = err ? webSQLErrback(err) : /** @type {Error} */ (tx);
         calledDbCreateError = true;
         // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
@@ -744,6 +774,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                  * @returns {void}
                                  */
                                 function (ev) {
+                                    pendingVersionChanges.delete(name);
                                     connection.__upgradeTransaction = null;
                                     /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */ (
                                         req.__result
@@ -759,6 +790,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
                             // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__preabort = function () {
+                                pendingVersionChanges.delete(name);
                                 connection.__upgradeTransaction = null;
                                 // We ensure any cache is deleted before any request error events fire and try to reopen
                                 if (useDatabaseCache) {
@@ -832,6 +864,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             };
                         }
 
+                        pendingVersionChanges.set(name, {oldVersion, newVersion: version});
                         if (oldVersion === 0) {
                             systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
                         } else {
@@ -1145,6 +1178,15 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 IDBFactory.prototype.databases = function () {
     const me = this;
     let calledDbCreateError = false;
+    // Snapshotted *now*, synchronously, at call time -- not read later
+    // from inside the SQL query's callback below, which runs on a
+    //   deferred macrotask (see `nodeSQLiteDatabase.js`'s `exec`) and so
+    //   could otherwise race against (and lose to) an in-flight upgrade's
+    //   own commit/abort handler clearing its `pendingVersionChanges`
+    //   entry in the meantime -- which would make this method incorrectly
+    //   reflect a since-committed change that hadn't committed yet when
+    //   it was actually called.
+    const pendingVersionChangesSnapshot = new Map(pendingVersionChanges);
     return new Promise(function (resolve, reject) { // eslint-disable-line promise/avoid-new -- Own polyfill
         if (!(me instanceof IDBFactory)) {
             throw new TypeError('Illegal invocation');
@@ -1172,11 +1214,24 @@ IDBFactory.prototype.databases = function () {
                 sysReadTx.executeSql('SELECT "name", "version" FROM dbVersions', [], function (sysReadTx, data) {
                     const dbNames = [];
                     for (let i = 0; i < data.rows.length; i++) {
-                        const {name, version} = /** @type {{name: string, version: Integer}} */ (data.rows.item(i));
-                        dbNames.push({
-                            name: util.unescapeSQLiteResponse(name),
-                            version
-                        });
+                        const {name: encodedName, version} = /** @type {{name: string, version: Integer}} */ (data.rows.item(i));
+                        const name = util.unescapeSQLiteResponse(encodedName);
+                        // A row for a database whose creation/upgrade hasn't
+                        //   committed yet (see `pendingVersionChanges`) must
+                        //   not reflect that in-flight change: a brand new
+                        //   database (`oldVersion === 0`) isn't reported at
+                        //   all until its creation commits, and an existing
+                        //   database being upgraded is still reported, but
+                        //   with its pre-upgrade version.
+                        const pending = pendingVersionChangesSnapshot.get(name);
+                        if (pending) {
+                            if (pending.oldVersion === 0) {
+                                continue;
+                            }
+                            dbNames.push({name, version: pending.oldVersion});
+                            continue;
+                        }
+                        dbNames.push({name, version});
                     }
                     resolve(dbNames);
                 }, dbGetDatabaseNamesError);
