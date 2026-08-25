@@ -204,13 +204,15 @@ SQLiteDatabase.prototype.exec = function exec (queries, readOnly, callback) {
             }
         }
     }
-    // A real timer (not `queueMicrotask`) so this yields to the macrotask
-    //   queue: code that synchronously issues a new request from within
-    //   each request's callback (e.g. to keep a transaction alive) would
+    // A real macrotask (not `queueMicrotask`) so this yields properly:
+    //   code that synchronously issues a new request from within each
+    //   request's callback (e.g. to keep a transaction alive) would
     //   otherwise chain microtask to microtask forever, starving out any
     //   `setTimeout`-based code (including IndexedDB's own internal request
-    //   scheduling) that never gets a turn to run.
-    setTimeout(() => {
+    //   scheduling) that never gets a turn to run. `setImmediate` (Node's
+    //   "check" phase) still yields the same way `setTimeout(..., 0)` did,
+    //   but runs sooner in Node's event loop.
+    setImmediate(() => {
         // Release the file lock (if held) and hand it to the next waiting
         //   connection, if any, only once this transaction has genuinely
         //   finished -- and only here, on its own turn, so a resumed
@@ -233,7 +235,7 @@ SQLiteDatabase.prototype.exec = function exec (queries, readOnly, callback) {
             }
         }
         callback(null, results);
-    }, 0);
+    });
 };
 
 export default SQLiteDatabase;

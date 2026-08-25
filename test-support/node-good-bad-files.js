@@ -47,16 +47,23 @@ Our actual SQLite driver (`better-sqlite3`, wired in via
 `src/nodeSQLiteDatabase.js`) is already fully synchronous --
 `stmt.run()`/`stmt.all()` execute directly, no callbacks. But
 `SQLiteDatabase.prototype.exec` there deliberately wraps its callback in
-a real `setTimeout(..., 0)` (not a microtask) before invoking it: without
-that deferral, code that synchronously re-issues a new request from
-within a request's own callback (e.g. to keep a transaction alive, a
-pattern several WPT tests use) would chain microtask to microtask
+a real macrotask (`setImmediate`, not a microtask) before invoking it:
+without that deferral, code that synchronously re-issues a new request
+from within a request's own callback (e.g. to keep a transaction alive,
+a pattern several WPT tests use) would chain microtask to microtask
 forever and starve out any `setTimeout`-based scheduling, including
 IndexedDB's own internal request queue. So the remaining "transactions
 don't finish before the next task" gap is a deliberate JS-level
 scheduling choice made for that specific, already-solved reason, not a
 synchronous-vs-asynchronous driver limitation -- switching drivers
-wouldn't change this on its own.
+wouldn't change this on its own. Tried tightening the deferral itself
+(swapping the prior `setTimeout(..., 0)` for `setImmediate`, which
+fires sooner in Node's event loop while still being a macrotask): safe
+(no regressions in a full sweep) but didn't fix any of the timing
+failures below, confirming they come from the other, already-diagnosed
+issues (microtask-between-listeners, whole-database locking, cursor
+positional tracking), not from this deferral's timing. Kept anyway as
+a minor, low-risk tightening.
 
 Besides at least the following tests which would otherwise fail if our tests did not override `setTimeout` to
 increase the timeout to ensure the transaction has expired in our implementation, for an idea
