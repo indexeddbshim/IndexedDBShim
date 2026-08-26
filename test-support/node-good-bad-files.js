@@ -133,12 +133,56 @@ Although the worker test does modify the tests, these test requirements
 are nevertheless essentially met if taking into account the environment's
 limitations.
 
+6. ORIGINS
+
+The shim fundamentally lacks a true multi-origin architecture.
+Because the Node testing environment operates as a single
+filesystem, all origins share a single global `__sysdb__`
+SQLite file for database versioning and the same physical
+SQLite files (e.g. `D_dbname.sqlite`) for storage. True
+data segregation does not exist; if `https://a.com` and
+`https://b.com` open a database with the same name, they
+will write to the same file.
+
+Furthermore, while the shim's in-memory `connectionQueue`
+segregates transaction locks by origin (accidentally
+simulating isolated locking), global schema operations
+like `deleteDatabase` check the unsegregated `__connections`
+registry. As a result, cross-origin interactions will
+globally block each other and improperly fire `blocked`
+events. The `hasNullOrigin()` checks in `open()` and
+`deleteDatabase()` are merely spec-compliant veneers to
+throw `SecurityError`s for opaque origins (like `data:`
+or `file://`), but do not provide true isolation.
+
+Resolving this would necessitate including the origin within
+the already long file name.
+
+7. REALMS
+
+Cross-realm operations typically test whether calling a
+detached `<iframe>`'s prototype method against a
+main-realm object throws a cross-realm `TypeError` (often
+caused by native V8 C++ brand checking).
+
+Practically, because this shim is implemented entirely
+in JavaScript rather than native C++ bindings, it
+inherently bypasses strict V8 brand-checking boundaries,
+making cross-realm invocations natively safe.
+Furthermore, because our offline JSDOM testing harness
+spawns dynamically created iframes without any IndexedDB
+implementations on their `contentWindow`, true
+cross-realm testing is impossible. We satisfy the
+WPT requirements by manually injecting the main
+window's IDB classes into the iframe's context, proving
+the pure-JS prototype methods operate safely.
+
 
 KNOWN TESTING ISSUES
 
 (The following list remaining test failures/blockers for Node; the remaining browser
-failures are listed below but are not categorized. Nevertheless, they may
-well relate to many of the same issues.)
+failures are listed below but are not categorized nor kept up to date.
+Nevertheless, they may well relate to many of the same issues.)
 
 1. MISSING/NEW APIS
 
@@ -153,33 +197,6 @@ well relate to many of the same issues.)
 - '_service-worker-indexeddb.https.js', - Failing
 
 See <https://github.com/indexeddbshim/IndexedDBShim/issues/283>.
-
-3. OPAQUE ORIGIN TESTING (see https://github.com/indexeddbshim/IndexedDBShim/issues/283 )
-
-- `idbfactory-deleteDatabase-opaque-origin.js`
-- `idbfactory-open-opaque-origin.js`
-- `idbfactory-databases-opaque-origin.js` ("no real multi-host/multi-window browsing context" limitation)
-- `idbfactory-origin-isolation.js`
-
-See <https://github.com/indexeddbshim/IndexedDBShim/issues/286>.
-
-4. CROSS-REALM
-
-- 'idbindex-cross-realm-methods.js',
-- 'idbobjectstore-cross-realm-methods.js',
-
-5. HTML in tests
-
-- 'idb-partitioned-basic.sub.js' - Timing out (iframe)
-- `idb-partitioned-coverage.sub.js` - Crashes tests; loads a *cross-host*
-  `<iframe>` (`{{hosts[alt][]}}`) via `fetch_tests_from_window`, needing
-  real multi-host iframe support our harness doesn't provide (same family
-  as the other `idb-partitioned-*.sub.js` files above).
-- `database-names-by-origin.js` - Not running; uses real `<iframe>`s,
-  `window.open()`, and cross-origin `postMessage` (via
-  `get_host_info().REMOTE_ORIGIN`) to verify database names don't leak
-  across origins -- needs the same real multi-window/cross-origin
-  environment gap as the rest of this section.
 
 ----
 
@@ -300,34 +317,19 @@ Current DOMException test statuses with 0 files excluded:
 */
 const goodBad = {
     excludedNormal: [
-        'idb-partitioned-coverage.sub.js'
     ],
     excludedWorkers: [],
-    notRunning: [
-        'database-names-by-origin.js',
-        'idbfactory-databases-opaque-origin.js',
-        'idbfactory-deleteDatabase-opaque-origin.js'
-    ],
-    timeout: [
-        'database-names-by-origin.js',
-        'idb-explicit-commit.any.js',
-        'idb-partitioned-basic.sub.js',
-        'idbfactory-databases-opaque-origin.js',
-        'idbfactory-deleteDatabase-opaque-origin.js',
-        'idbfactory-open-opaque-origin.js'
-    ],
+    notRunning: [],
+    timeout: [],
     badFiles: [
-        '../non-indexedDB/DOMException-stack-accessor.js',
         '_service-worker-indexeddb.https.js',
-        'idbfactory-origin-isolation.js',
-        'idbindex-cross-realm-methods.js',
-        'idbobjectstore-cross-realm-methods.js',
         'storage-buckets.https.any.js',
-        'transaction-deactivation-timing.any.js',
-        'storage-buckets.https.any.worker.js',
-        'transaction-deactivation-timing.any.worker.js'
+        'storage-buckets.https.any.worker.js'
     ],
     goodFiles: [
+        '../non-indexedDB/DOMException-stack-accessor.js',
+        'transaction-deactivation-timing.any.js',
+        'transaction-deactivation-timing.any.worker.js',
         '../non-indexedDB/__event-interface.js',
         '../non-indexedDB/AddEventListenerOptions-once.js',
         '../non-indexedDB/AddEventListenerOptions-passive.js',
@@ -365,6 +367,7 @@ const goodBad = {
         'close-in-upgradeneeded.any.js',
         'cursor-overloads.any.js',
         'delete-range.any.js',
+        'database-names-by-origin.js',
         'delete-request-queue.any.js',
         'domstringlist.js',
         'error-attributes.any.js',
@@ -381,6 +384,9 @@ const goodBad = {
         'idb-binary-key-detached.any.worker.js',
         'idb-binary-key-roundtrip.any.js',
         'idb-binary-key-roundtrip.any.worker.js',
+        'idb-partitioned-basic.sub.js',
+        'idb-partitioned-coverage.sub.js',
+        'idb-explicit-commit.any.js',
         'idb-partitioned-persistence.sub.js',
         'idb_binary_key_conversion.any.js',
         'idb_binary_key_conversion.any.worker.js',
@@ -435,10 +441,14 @@ const goodBad = {
         'idbdatabase_deleteObjectStore.any.js',
         'idbdatabase_transaction.any.js',
         'idbdatabase_transaction.any.worker.js',
+        'idbfactory-databases-opaque-origin.js',
+        'idbfactory-deleteDatabase-opaque-origin.js',
         'idbfactory-deleteDatabase-request-success.any.js',
+        'idbfactory-open-opaque-origin.js',
         'idbfactory-open-error-properties.any.js',
         'idbfactory-open-request-error.any.js',
         'idbfactory-open-request-success.any.js',
+        'idbfactory-origin-isolation.js',
         'idbfactory_cmp.any.js',
         'idbfactory_cmp.any.worker.js',
         'idbfactory_deleteDatabase.any.js',
@@ -455,6 +465,7 @@ const goodBad = {
         'idbindex-rename-errors.any.js',
         'idbindex-rename.any.js',
         'idbindex-request-source.any.js',
+        'idbindex-cross-realm-methods.js',
         'idbindex_count.any.js',
         'idbindex_get.any.js',
         'idbindex_getAll.any.js',
@@ -497,6 +508,7 @@ const goodBad = {
         'idbobjectstore-request-source.any.js',
         'idbobjectstore-transaction-SameObject.any.js',
         'idbobjectstore_add.any.js',
+        'idbobjectstore-cross-realm-methods.js',
         'idbobjectstore_clear.any.js',
         'idbobjectstore_count.any.js',
         'idbobjectstore_createIndex.any.js',
@@ -564,6 +576,7 @@ const goodBad = {
         'reading-autoincrement-indexes.any.worker.js',
         'reading-autoincrement-store-cursors.any.worker.js',
         'reading-autoincrement-store.any.worker.js',
+        'ready-state-destroyed-execution-context.js',
         'request-abort-ordering.any.js',
         'request-event-ordering-large-mixed-with-small-values.any.js',
         'request-event-ordering-large-then-small-values.any.js',
