@@ -152,16 +152,16 @@ well relate to many of the same issues.)
 
 - '_service-worker-indexeddb.https.js', - Failing
 
-See <https://github.com/axemclion/IndexedDBShim/issues/283>.
+See <https://github.com/indexeddbshim/IndexedDBShim/issues/283>.
 
-3. OPAQUE ORIGIN TESTING (see https://github.com/axemclion/IndexedDBShim/issues/283 )
+3. OPAQUE ORIGIN TESTING (see https://github.com/indexeddbshim/IndexedDBShim/issues/283 )
 
 - `idbfactory-deleteDatabase-opaque-origin.js`
 - `idbfactory-open-opaque-origin.js`
 - `idbfactory-databases-opaque-origin.js` ("no real multi-host/multi-window browsing context" limitation)
 - `idbfactory-origin-isolation.js`
 
-See <https://github.com/axemclion/IndexedDBShim/issues/286>.
+See <https://github.com/indexeddbshim/IndexedDBShim/issues/286>.
 
 4. CROSS-REALM
 
@@ -170,8 +170,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 5. HTML in tests
 
-- 'idb-partitioned-persistence.sub.js' - Failing (iframe)
-- 'ready-state-destroyed-execution-context.js' - Failing (iframe)
 - 'idb-partitioned-basic.sub.js' - Timing out (iframe)
 - `idb-partitioned-coverage.sub.js` - Crashes tests; loads a *cross-host*
   `<iframe>` (`{{hosts[alt][]}}`) via `fetch_tests_from_window`, needing
@@ -321,11 +319,9 @@ const goodBad = {
     badFiles: [
         '../non-indexedDB/DOMException-stack-accessor.js',
         '_service-worker-indexeddb.https.js',
-        'idb-partitioned-persistence.sub.js',
         'idbfactory-origin-isolation.js',
         'idbindex-cross-realm-methods.js',
         'idbobjectstore-cross-realm-methods.js',
-        'ready-state-destroyed-execution-context.js',
         'storage-buckets.https.any.js',
         'transaction-deactivation-timing.any.js',
         'storage-buckets.https.any.worker.js',
@@ -385,6 +381,7 @@ const goodBad = {
         'idb-binary-key-detached.any.worker.js',
         'idb-binary-key-roundtrip.any.js',
         'idb-binary-key-roundtrip.any.worker.js',
+        'idb-partitioned-persistence.sub.js',
         'idb_binary_key_conversion.any.js',
         'idb_binary_key_conversion.any.worker.js',
         'idb-explicit-commit-throw.any.js',

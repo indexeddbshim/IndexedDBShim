@@ -30,7 +30,7 @@
          * The IndexedDB instance that is being used (may be native, or the shim).
          * HACK: We can't use window.indexedDB directly in our tests, because of
          * Safari on iOS.
-         * @see https://github.com/axemclion/IndexedDBShim/issues/167
+         * @see https://github.com/indexeddbshim/IndexedDBShim/issues/167
          */
         indexedDB: window.indexedDB,
 

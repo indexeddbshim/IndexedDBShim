@@ -24,7 +24,7 @@ self.parent = self;
         //   produces -- see `node-idb-test.js`'s `sandboxObj` comment.
         'BigInt', 'FileReader', 'Promise', 'AbortController', 'AbortSignal'
     ).forEach((prop) => {
-        // Isn't working for 'indexedDB' and its getter; see <https://github.com/axemclion/IndexedDBShim/issues/280>
+        // Isn't working for 'indexedDB' and its getter; see <https://github.com/indexeddbshim/IndexedDBShim/issues/280>
         const desc = Object.getOwnPropertyDescriptor(shimNS.window, prop);
         // Todo: This doesn't seem to work for Event, EventTarget, CustomEvent, DOMStringList as still enumerable
         if (desc) {

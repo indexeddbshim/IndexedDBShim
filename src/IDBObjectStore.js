@@ -322,7 +322,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
                     encodedKeyPath,
                     // For why converting here, see comment and following
                     //  discussion at:
-                    //  https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
+                    //  https://github.com/indexeddbshim/IndexedDBShim/issues/313#issuecomment-590086778
                     Number(store.autoIncrement),
                     '{}',
                     1

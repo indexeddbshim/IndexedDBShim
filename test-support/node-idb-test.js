@@ -616,7 +616,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             if (shimNS.fileName !== 'bindings-inject-values-bypass.any.js' && shimNS.fileName !== 'bindings-inject-values-bypass.any.worker.js') { window.Object = Object; }
         }
 
-        // See <https://github.com/axemclion/IndexedDBShim/issues/280>
+        // See <https://github.com/indexeddbshim/IndexedDBShim/issues/280>
         /*
         ['DOMStringList', 'Event', 'CustomEvent', 'EventTarget' // These were having no effect due to https://github.com/jsdom/jsdom/issues/1720#issuecomment-279665105
         ].forEach((prop) => {

@@ -141,7 +141,7 @@ const nodeEnvironment = ({input, name, output: file}) => {
                 sourcemap: true
                 // Notes when using browserify:
                 // Could try for consistency with any relative paths if still
-                //  seeing https://github.com/axemclion/IndexedDBShim/issues/291 ;
+                //  seeing https://github.com/indexeddbshim/IndexedDBShim/issues/291 ;
                 //  see also https://stackoverflow.com/a/33124979/271577
                 // basedir: __dirname,
             },

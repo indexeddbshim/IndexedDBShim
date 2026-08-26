@@ -368,7 +368,7 @@ function setGlobalVars (idb, initialConfig) {
                 !navigator.userAgent.includes('Chrome')
             ) ||
             (
-                // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
+                // Bad non-Safari iOS9 support (see <https://github.com/indexeddbshim/IndexedDBShim/issues/252>)
                 (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) && // Exclude genuine Safari: https://stackoverflow.com/a/7768006/271577
                 // Detect iOS: https://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
                 // and detect version 9: https://stackoverflow.com/a/26363560/271577
@@ -381,8 +381,8 @@ function setGlobalVars (idb, initialConfig) {
     if (!CFG.DEFAULT_DB_SIZE) {
         CFG.DEFAULT_DB_SIZE = (
             ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
-                // https://github.com/axemclion/IndexedDBShim/issues/41
-                // https://github.com/axemclion/IndexedDBShim/issues/115
+                // https://github.com/indexeddbshim/IndexedDBShim/issues/41
+                // https://github.com/indexeddbshim/IndexedDBShim/issues/115
                 typeof navigator !== 'undefined' &&
                 // React Native
                 navigator.userAgent &&

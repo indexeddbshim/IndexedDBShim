@@ -379,7 +379,7 @@ The available properties relevant to browser or Node are:
     `readTransaction` calls in our `node-websql` fork to allow it to prolong
     the transaction (to last through our IndexedDB transaction) and to provide
     rollback functionality. (See
-    <https://github.com/axemclion/IndexedDBShim/issues/296>, however, for
+    <https://github.com/indexeddbshim/IndexedDBShim/issues/296>, however, for
     a remaining issue this fix does not currently overcome.)
 - __cursorPreloadPackSize__ - Number indicating how many records to preload for
     caching of `IDBCursor.continue` calls. Defaults to 100.
@@ -487,7 +487,7 @@ Node-only config:
     `deleteDatabase` (instead of merely emptying). Defaults to `true`.
     Does not currently delete the database for tracking available
     databases and versions, `__sys__`, if emptied; see
-    [#278](https://github.com/axemclion/IndexedDBShim/issues/278).
+    [#278](https://github.com/indexeddbshim/IndexedDBShim/issues/278).
 - __memoryDatabase__ - String config to cause all opening, deleting, and
     listing to be of SQLite in-memory databases; name supplied
     by user is still used (including to automatically build a cache since
@@ -532,12 +532,12 @@ please [let us know about it](https://github.com/indexeddbshim/indexeddbshim/iss
 Or better yet, [send us a fix](https://github.com/indexeddbshim/indexeddbshim/pulls)!
 Please make sure someone else hasn't already reported the same bug though.
 
-Here is a summary of main [known issues](https://github.com/axemclion/IndexedDBShim/issues/262#issuecomment-254413002)
+Here is a summary of main [known issues](https://github.com/indexeddbshim/IndexedDBShim/issues/262#issuecomment-254413002)
 to resolve:
 
-1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/axemclion/IndexedDBShim/issues/2) and [#273](https://github.com/axemclion/IndexedDBShim/issues/273)) across
+1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/indexeddbshim/IndexedDBShim/issues/2) and [#273](https://github.com/indexeddbshim/IndexedDBShim/issues/273)) across
 processes/browser windows
-1. Some issues related to [task/micro-task timing](https://github.com/axemclion/IndexedDBShim/issues/296)
+1. Some issues related to [task/micro-task timing](https://github.com/indexeddbshim/IndexedDBShim/issues/296)
 in Node (for inherent limitations in the browser, see below).
 1. [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData/ImageData) storage on Node 14 when used with `node-canvas` - due to [this issue](https://github.com/Automattic/node-canvas/issues/1646)
 
@@ -614,7 +614,7 @@ limitations regarding cloning:
     to change the default reporting of a given "class".
 1. Although they are currently working, we were only able to resolve `Blob`,
     `File`, and `FileList` objects synchronously (as
-    [required per spec](https://github.com/axemclion/IndexedDBShim/issues/285))
+    [required per spec](https://github.com/indexeddbshim/IndexedDBShim/issues/285))
     using the now-deprecated `XMLHttpRequest` synchronous API.
 1. Without a means of transferring `ArrayBuffer` objects in Node, we cannot
     meet the requirement to fail upon encountering detached binary objects.

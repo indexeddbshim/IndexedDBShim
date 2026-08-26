@@ -3,7 +3,7 @@
 There are currently three folders for tests, `test-support`,
 `tests-mocha` and `tests-polyfill` (the latter are also Mocha-based
 tests, but at present its W3C tests
-[only work in Node](https://github.com/axemclion/IndexedDBShim/issues/249)).
+[only work in Node](https://github.com/indexeddbshim/IndexedDBShim/issues/249)).
 
 They can be run through a variety of means as described below.
 
@@ -20,7 +20,7 @@ you wish to delete them all manually, run `npm run clean`.
 ### Browser testing
 
 All Mocha-based browser tests should pass except for one test having
-a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
+a [problem in Firefox](https://github.com/indexeddbshim/IndexedDBShim/issues/250).
 
 #### Automated browser unit testing
 
@@ -29,7 +29,7 @@ to run the unit tests.
 
 Although it is possible to get the W3C `web-platform-tests` runner
 working via patches as per
-<https://github.com/axemclion/IndexedDBShim/issues/249>,
+<https://github.com/indexeddbshim/IndexedDBShim/issues/249>,
 allowing tests to be run from the runner without
 obtrusive changes to the repository is not yet refined (see also
 <https://github.com/web-platform-tests/wpt/issues/5133#issuecomment-293465747>).
