@@ -5,78 +5,81 @@ please [let us know about it](https://github.com/indexeddbshim/indexeddbshim/iss
 Or better yet, [send us a fix](https://github.com/indexeddbshim/indexeddbshim/pulls)!
 Please make sure someone else hasn't already reported the same bug though.
 
-Here is a summary of main [known issues](https://github.com/indexeddbshim/IndexedDBShim/issues/262#issuecomment-254413002)
-to resolve:
+The following are the known issues that are thorny or impossible for us to realistically resolve.
 
-1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/indexeddbshim/IndexedDBShim/issues/2) and [#273](https://github.com/indexeddbshim/IndexedDBShim/issues/273)) across
-processes/browser windows
-1. Some issues related to [task/micro-task timing](https://github.com/indexeddbshim/IndexedDBShim/issues/296)
-in Node (for inherent limitations in the browser, see below).
-1. [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData/ImageData) storage on Node 14 when used with `node-canvas` - due to [this issue](https://github.com/Automattic/node-canvas/issues/1646)
+For browser or environment-specific bugs, see the final section.
 
-There are a few bugs that are outside of our power to fix.  Namely:
+### `blocked` and `versionchange` `IDBVersionChangeEvent` event support across processes/windows
 
-### Task/micro-task timing
+`blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/indexeddbshim/IndexedDBShim/issues/2 across processes/browser windows
 
-IndexedDB transactions [will timeout](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#Adding_data_to_the_database)
-so long as there are no detected active requests.
+### Task/micro-task timing (lifetime of database transaction)
+
+One micro-task issue is about the lifetime of a database transaction. With a standard WebSQL backend, the transaction is automatically committed (closes) transaction as soon as the current synchronous code finishes and the SQL queue is empty. If you use a Promise (a microtask) to do some work before your next database call, the standard WebSQL transaction closes before the Promise resolves (i.e., IndexedDB transactions [will timeout](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#Adding_data_to_the_database)
+so long as there are no detected active requests).
 
 While a single promise delay (a "microtask") is not supposed to be
 long enough to cause a transaction timeout (and they do not in Node
-where we have control over extending the transaction), it could possibly
-occur in our browser implementation.
+where we have control over extending the transaction in a non-standard fashion), it could possibly
+occur in our browser implementation. Note that with WebSQL being deprecated and removed from modern browsers, it may still apply to older browsers, Cordova/PhoneGap plugins (like cordova-plugin-sqlite-2) or environments where a standard WebSQL interface is being polyfilled over something else.
 
 (Note that chaining multiple promises or having a long-resolving
 promise will likely cause a transaction to expire even in compliant
 implementations.)
 
-[This test](https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/transaction-deactivation-timing.html) and
-[this one](https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/upgrade-transaction-deactivation-timing.html)
-demonstrate the *expected* timeout behavior with regard to `setTimeout`
-or promises and transaction expiration.
+The relevant web-platform-tests (WPT) tests are:
 
-3. MICROTASK CHECKPOINT BETWEEN LISTENERS OF THE SAME EVENT
+- `transaction-deactivation-timing`
+- `upgrade-transaction-deactivation-timing`
 
-- `transaction-deactivation-timing.any.js`: 4 of 5 tests pass. The one
-    failure, "Deactivation of new transactions happens at end of
-    invocation," registers *two* listeners on the same request's
-    `success` event. The first listener schedules a microtask (e.g.
-    `Promise.resolve().then(...)`); per spec, that microtask must run to
-    completion *before* the second listener is invoked -- dispatching an
-    event to multiple listeners isn't a tight synchronous loop, each
-    listener invocation is its own callback-completion boundary, and the
-    browser drains the microtask queue between them. `eventtargeter`'s
-    `invokeCurrentListeners` (its dispatch loop) instead invokes
-    same-type listeners back to back synchronously, with no yield point
-    in between, so a microtask scheduled by the first listener hasn't
-    run yet by the time the second one executes.
+These tests demonstrate the *expected* timeout behavior with
+regard to `setTimeout` or promises and transaction expiration.
 
-    This can't be fixed without breaking a real spec guarantee, not just
-    "a lot of code to change": a real browser achieves the microtask
-    interleaving using native (non-JS) access to the microtask queue,
-    while `dispatchEvent()` itself still returns synchronously, with a
-    plain `boolean`, only once *every* listener and everything it
-    scheduled has fully settled. There is no JS/Node API that lets a
-    still-executing synchronous function force the microtask queue to
-    drain and resume -- draining only happens when the call stack
-    actually unwinds. (V8 itself does expose exactly this as a native
-    intrinsic, `%RunMicrotasks()`, but only under the `--allow-natives-
-    syntax` flag, which is not something production code can rely on
-    being enabled -- Node deliberately keeps V8 native syntax
-    unavailable outside of V8's own test suite.) So replicating the
-    interleaving in pure JS would
-    require `dispatchEvent()` to become genuinely asynchronous (return a
-    `Promise<boolean>`, or otherwise require the caller to `await` it).
-    But `dispatchEvent()`'s synchronous, `boolean`-returning signature is
-    the literal DOM `EventTarget` spec contract -- the exact thing this
-    library exists to accurately emulate. Any real consumer code using
-    the universal `if (target.dispatchEvent(evt)) { ... }` pattern to
-    check whether an event was cancelled would silently break, since a
-    `Promise` object is always truthy regardless of whether
-    `preventDefault()` was called. So the fix for this one WPT edge case
-    would make the polyfill non-compliant with the exact spec behavior
-    it exists to provide, for every normal use of `dispatchEvent()` --
-    not an acceptable trade for one test.
+For `transaction-deactivation-timing`, 4 of 5 tests pass naturally. The one that fails without our rewriting it, "Deactivation of new transactions happens at end of
+invocation," registers *two* listeners on the same request's
+`success` event. The first listener schedules a microtask (e.g.
+`Promise.resolve().then(...)`); per spec, that microtask must run to
+completion *before* the second listener is invoked -- dispatching an
+event to multiple listeners isn't a tight synchronous loop, each
+listener invocation is its own callback-completion boundary, and the
+browser drains the microtask queue between them. `eventtargeter`'s
+`invokeCurrentListeners` (its dispatch loop) instead invokes
+same-type listeners back to back synchronously, with no yield point
+in between, so a microtask scheduled by the first listener hasn't
+run yet by the time the second one executes.
+
+This can't be fixed without breaking a real spec guarantee, not just
+"a lot of code to change": a real browser achieves the microtask
+interleaving using native (non-JS) access to the microtask queue,
+while `dispatchEvent()` itself still returns synchronously, with a
+plain `boolean`, only once *every* listener and everything it
+scheduled has fully settled. There is no JS/Node API that lets a
+still-executing synchronous function force the microtask queue to
+drain and resume -- draining only happens when the call stack
+actually unwinds. (V8 itself does expose exactly this as a native
+intrinsic, `%RunMicrotasks()`, but only under the `--allow-natives-
+syntax` flag, which is not something production code can rely on
+being enabled -- Node deliberately keeps V8 native syntax
+unavailable outside of V8's own test suite.) So replicating the
+interleaving in pure JS would
+require `dispatchEvent()` to become genuinely asynchronous (return a
+`Promise<boolean>`, or otherwise require the caller to `await` it).
+But `dispatchEvent()`'s synchronous, `boolean`-returning signature is
+the literal DOM `EventTarget` spec contract -- the exact thing this
+library exists to accurately emulate. Any real consumer code using
+the universal `if (target.dispatchEvent(evt)) { ... }` pattern to
+check whether an event was cancelled would silently break, since a
+`Promise` object is always truthy regardless of whether
+`preventDefault()` was called. So the fix for this one web-platform-tests (WPT) edge case
+would make the polyfill non-compliant with the exact spec behavior
+it exists to provide, for every normal use of `dispatchEvent()` --
+not an acceptable trade for one test.
+
+### Task/micro-task timing (Checkpoint between listeners of the same event)
+
+Another micro-task issue is in regard to a microtask checkpoint between listeners of the same event. This relates to the event dispatching loop (specifically, `dispatchEvent`). In a real browser, if you have two onsuccess listeners attached to the same request, the browser will execute Listener A, then pause and drain the microtask queue, and then execute Listener B.
+
+Because this shim is written in pure JavaScript, its `dispatchEvent` function must be fully synchronous to match the DOM spec (returning a simple boolean). Pure JavaScript cannot pause a synchronous function midway to let the microtask queue drain and then resume. Therefore, the shim executes Listener A and Listener B back-to-back immediately, and any microtasks they queue won't run until both listeners have completely finished.
 
 ### [Structured Cloning Algorithm](https://html.spec.whatwg.org/multipage/infrastructure.html#safe-passing-of-structured-data)
 
@@ -88,32 +91,34 @@ able to work around.
 
 #### Proxies
 
-1. We cannot properly detect `Proxy` to throw upon encountering such
-    non-cloneable objects. The same limitation applies to key validation --
-    a `Proxy` wrapping an otherwise-valid key (e.g., `new Proxy([1, 2, 3],
-    {})`) is indistinguishable from a real key, so it is accepted rather
-    than rejected as invalid; the corresponding WPT test case is live-edited
-    out of `key_invalid.any.js` by our own test harness (see
-    `test-support/node-replacement-hacks.js`) rather than left failing
+We cannot properly detect `Proxy` to throw upon encountering such
+non-cloneable objects. The same limitation applies to key validation --
+a `Proxy` wrapping an otherwise-valid key (e.g., `new Proxy([1, 2, 3],
+{})`) is indistinguishable from a real key, so it is accepted rather
+than rejected as invalid.
 
-- 'key_invalid.any.js'/'key_invalid.any.worker.js' - We can't detect proxies
+The relevant WPT tests are:
+
+- 'key_invalid.any.js' - the corresponding WPT test case is
+   live-edited out of `key_invalid.any.js` by our own test harness (see
+   `test-support/node-replacement-hacks.js`) rather than left failing.
+- 'key_invalid.any.worker.js' - We can't detect proxies
     from JS, so a `Proxy`-wrapped array is indistinguishable from a real one
     and can't be rejected as an invalid key; that one WPT test case is
     live-removed at load time via `node-replacement-hacks.js` rather than
-    left failing (see README's Known Issues)
+    left failing.
 
 #### Overriding globals
 
-1. Our reliance on `Object.prototype.toString` to detect uncloneable objects
-    can fail if that method is overridden or if `Symbol.toStringTag` is used
-    to change the default reporting of a given "class".
+Our reliance on `Object.prototype.toString` to detect uncloneable objects
+can fail if that method is overridden or if `Symbol.toStringTag` is used
+to change the default reporting of a given "class".
 
 #### Deprecated specs for synchronous resolution of Blobs and Files
 
-1. Although they are currently working, we were only able to resolve `Blob`,
-    `File`, and `FileList` objects synchronously (as
-    [required per spec](https://github.com/indexeddbshim/IndexedDBShim/issues/285))
-    using the now-deprecated `XMLHttpRequest` synchronous API.
+Although they are currently working, we were only able to resolve `Blob`, `File`, and `FileList` objects synchronously (as
+[required per spec](https://github.com/indexeddbshim/IndexedDBShim/issues/285))
+using the now-deprecated `XMLHttpRequest` synchronous API.
 
 We also have limitations in creating certain objects synchronously, namely, the
 one method for creating an image bitmap, `createImageBitmap`, returns a
@@ -123,19 +128,25 @@ cloning.
 
 ### Error.prototype.stack Accessor
 
-- `../non-indexedDB/DOMException-stack-accessor.js`: 3 of 9 tests pass.
-    All 6 failures are about `Error.prototype.stack`'s own property
-    descriptor (`Object.getOwnPropertyDescriptor(Error.prototype, 'stack')`
-    returns `undefined` in this Node/V8 environment, where the WPT test
-    expects an accessor property with `get`/`set`). Looks like a genuine
-    Node/V8-vs-browser-V8 engine difference in how `Error.stack` is
-    exposed (per-instance vs. an `Error.prototype`-level accessor), not
-    something `DOMException`'s shim controls or can polyfill without
-    reaching into `Error.prototype` itself.
+The relevant WPT tests:
+
+- `../non-indexedDB/DOMException-stack-accessor.js`: 3 of 9 tests
+  pass without fudging the results. All 6 failures are about
+  `Error.prototype.stack`'s own property descriptor
+  (`Object.getOwnPropertyDescriptor(Error.prototype, 'stack')`
+  returns `undefined` in this Node/V8 environment, where the
+  WPT test expects an accessor property with `get`/`set`).
+  It appears to be a genuine Node/V8-vs-browser-V8 engine
+  difference in how `Error.stack` is exposed (per-instance vs.
+  an `Error.prototype`-level accessor), not something
+  `DOMException`'s shim controls or can polyfill without
+  reaching into `Error.prototype` itself.
 
 ### Deadlocking (requiring solution of separate databases per store)
 
-- `idb-explicit-commit.any.js`: 9 of 12 tests pass -- `commit()` itself
+The relevant WPT tests:
+
+- `idb-explicit-commit.any.js`: 9 of 12 tests pass without fudging results -- `commit()` itself
   (committing, going inactive immediately, throwing on double-commit or
   abort-after-commit, etc.) is fully implemented and correct. The 10th
   test, "Transactions with same scope should stay in program order, even
@@ -144,22 +155,21 @@ cloning.
   a `readwrite` transaction on `books` kept artificially alive by
   continuously re-queuing `get()` requests, then expects a *different*,
   non-overlapping-scope `readonly` transaction on `not_books` to run
-  concurrently and complete -- which is exactly what `IDBDatabase.js`'s
-  own `transaction()` comment already documents as unsupported: the
+  concurrently and complete -- which is unsupported: the
   WebSQL/SQLite backend locks the *whole* database per transaction, not
   per-scope, so non-overlapping transactions still serialize behind each
   other. The `not_books` transaction can never run until the `books` one
   finishes, but the `books` one is only released by the `not_books`
   transaction completing -- a genuine deadlock from this pre-existing
   whole-database-locking limitation, not a `commit()` bug. Fixing it for
-  real would mean the same "save the stores in separate databases"
-  change already called out as needed in `IDBDatabase.js`. However, doing
-  this would mean not easily being able to span multiple stores atomically
-  in a single transaction (it might be doable with ATTACH DATABASE), and
-  in any case would suffer from unduly proliferating the number of databases
-  that get created.
+  real would mean a "save the stores in separate databases"
+  change. However, doing this would mean not easily being able
+  to span multiple stores atomically in a single transaction
+  (it might be doable with `ATTACH DATABASE`), and
+  in any case would suffer from unduly proliferating the number
+  of databases that get created.
 
-### TIming/Transaction Finished Timing
+### Timing/Transaction finished timing
 
 Our actual SQLite driver (`better-sqlite3`, wired in via
 `src/nodeSQLiteDatabase.js`) is already fully synchronous --
@@ -187,10 +197,10 @@ reliably observe a transaction as finished by the time it fired;
 from `node-idb-test.js`'s window-context setup. The worker context
 still needs it, though (see `webworker-child.js`): a worker's script
 runs in a real, separate child process reached over a socket, and that
-round-trip adds latency `setImmediate`'s tighter deferral doesn't
+round-trip adds latency which `setImmediate`'s tighter deferral doesn't
 cover.
 
-Although the worker test does modify the tests, these test requirements
+Although the worker tests differ in actually modifying the tests (so as to allow them to pass there too), these test requirements
 are nevertheless essentially met if taking into account the environment's
 limitations.
 
