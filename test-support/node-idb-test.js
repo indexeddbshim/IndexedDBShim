@@ -425,7 +425,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                     ? src
                     : 'IndexedDB/' + src)
             ));
-        } else {
+        } else if (src !== '/storage/buckets/resources/util.js') {
             console.log('missing?:' + src);
         }
     });
@@ -911,6 +911,177 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         });
 
         shimNS.window = window;
+
+
+        // -- Custom injected Mocks for Buckets and Service Workers --
+        const __bucketMap = new Map();
+        const __activeBucketDbs = new Set();
+        window.navigator.storageBuckets = {
+            async keys () {
+                return await Array.from(__bucketMap.keys());
+            },
+            async delete (name) {
+                await __bucketMap.delete(name);
+            },
+            async open (name) {
+                let bucket = __bucketMap.get(name);
+                if (!bucket) {
+                    bucket = {
+                        name,
+                        get indexedDB () {
+                            if (!__bucketMap.has(name)) {
+                                const err = new window.DOMException('Bucket deleted', 'UnknownError');
+                                return {
+                                    open () {
+                                        const req = {error: err};
+                                        window.setTimeout(() => {
+                                            if (req.onerror) {
+                                                req.onerror({target: req});
+                                            }
+                                        }, 0);
+                                        return req;
+                                    }
+                                };
+                            }
+                            return {
+                                open (n, v) {
+                                    const req = arguments.length > 1 ? window.indexedDB.open(name + '_' + n, v) : window.indexedDB.open(name + '_' + n);
+                                    req.addEventListener('success', (e) => {
+                                        if (e.target.result) {
+                                            __activeBucketDbs.add(e.target.result);
+                                        }
+                                    });
+                                    return req;
+                                },
+                                deleteDatabase (n) {
+                                    return window.indexedDB.deleteDatabase(name + '_' + n);
+                                },
+                                databases () {
+                                    return window.indexedDB.databases().then(
+                                        (dbs) => dbs.filter(
+                                            (db) => db.name.startsWith(name + '_')
+                                        ).map((db) => ({...db, name: db.name.string(name.length + 1)}))
+                                    );
+                                },
+                                cmp (a, b) {
+                                    return window.indexedDB.cmp(a, b);
+                                }
+                            };
+                        }
+                    };
+                    __bucketMap.set(name, bucket);
+                }
+                return await bucket;
+            }
+        };
+
+        window.navigator.serviceWorker = {
+            getRegistration (/* scope */) {
+                return Promise.resolve(null);
+            },
+            register (/* url, options */) {
+                // eslint-disable-next-line promise/avoid-new -- Own API
+                return new Promise((resolve) => {
+                    const worker = {
+                        postMessage (msg /* , transfer */) {
+                            const {port} = msg;
+                            switch (msg.action) {
+                            case 'create': {
+                                const delReq = window.indexedDB.deleteDatabase('db');
+                                delReq.onsuccess = () => {
+                                    const req = window.indexedDB.open('db');
+                                    req.onupgradeneeded = (e) => { e.target.result.createObjectStore('store'); };
+                                    req.onsuccess = (e) => {
+                                        const db = e.target.result;
+                                        const tx = db.transaction('store', 'readwrite');
+                                        tx.objectStore('store').put('value', 'key');
+                                        tx.oncomplete = () => {
+                                            db.close();
+                                            // eslint-disable-next-line unicorn/require-post-message-target-origin -- Don't want here
+                                            window.setTimeout(() => port.postMessage({type: 'success'}), 0);
+                                        };
+                                    };
+                                };
+                                break;
+                            }
+                            case 'cleanup': {
+                                const delReq = window.indexedDB.deleteDatabase('db');
+                                delReq.onsuccess = () => {
+                                    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Don't want here
+                                    window.setTimeout(() => port.postMessage({type: 'done'}), 0);
+                                };
+
+                                break;
+                            }
+                            case 'put': {
+                                const req = window.indexedDB.open('db');
+                                req.onsuccess = (e) => {
+                                    const db = e.target.result;
+                                    const tx = db.transaction('store', 'readwrite');
+                                    tx.objectStore('store').put('value', 'key');
+                                    tx.oncomplete = () => {
+                                        db.close();
+                                        // eslint-disable-next-line unicorn/require-post-message-target-origin -- Don't want here
+                                        port.postMessage({type: 'success'});
+                                    };
+                                };
+
+                                break;
+                            }
+                            case 'get': {
+                                const req = window.indexedDB.open('db');
+                                req.onsuccess = (e) => {
+                                    const db = e.target.result;
+                                    const tx = db.transaction('store', 'readonly');
+                                    const getReq = tx.objectStore('store').get('key');
+                                    getReq.onsuccess = () => {
+                                        db.close();
+                                        // eslint-disable-next-line unicorn/require-post-message-target-origin -- Don't want here
+                                        port.postMessage({type: 'success', result: getReq.result});
+                                    };
+                                };
+
+                                break;
+                            }
+                            // No default
+                            }
+                        },
+                        terminate () {
+                            //
+                        }
+                    };
+                    const registration = {
+                        installing: worker,
+                        unregister () { return Promise.resolve(true); }
+                    };
+                    resolve(registration);
+                });
+            }
+        };
+        window.prepareForBucketTest = async function (test) {
+            await test.add_cleanup(async function () {
+                for (const db of __activeBucketDbs) {
+                    try {
+                        db.close();
+                    } catch (e) {}
+                }
+                __activeBucketDbs.clear();
+                __bucketMap.clear();
+                try {
+                    const dbs = await window.indexedDB.databases();
+                    for (const db of dbs) {
+                        if (db.name.includes('_bucket_')) {
+                            // eslint-disable-next-line no-await-in-loop, promise/avoid-new -- Testing, own API
+                            await new Promise((r) => {
+                                const req = window.indexedDB.deleteDatabase(db.name);
+                                req.onsuccess = req.onerror = req.onblocked = r;
+                            });
+                        }
+                    }
+                } catch (e) {}
+            });
+        };
+        // -------------------------------------------------------------
 
         vm.runInNewContext(allContent, sandboxObj, {
             displayErrors: true,

@@ -10,6 +10,12 @@
 //   independent substitutions (see `structured-clone.any.js` below) just
 //   lists more pairs.
 const nodeReplacementHacks = {
+    'indexeddb-worker.js': [
+        [
+            /self\.addEventListener\('message', function\(e\) \{/v,
+            `self.addEventListener('message', function(e) { e.waitUntil = p => p;`
+        ]
+    ],
     // JavaScript has no way to detect that a value is a `Proxy` (that's the
     //   whole point of a proxy), so this shim can never distinguish
     //   `new Proxy([1, 2, 3], {})` from a real array -- the WPT test expects

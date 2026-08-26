@@ -375,6 +375,98 @@ if (isSharedWorker) {
 }
 
 workerCtx.location = scriptLoc;
+
+
+// -- Custom injected Mocks for Buckets and Service Workers --
+if (typeof workerCtx.navigator === 'undefined') { workerCtx.navigator = {}; }
+const __bucketMap = new Map();
+const __activeBucketDbs = new Set();
+workerCtx.navigator.storageBuckets = {
+    async keys () {
+        return await Array.from(__bucketMap.keys());
+    },
+    async delete (name) {
+        await __bucketMap.delete(name);
+    },
+    async open (name) {
+        let bucket = __bucketMap.get(name);
+        if (!bucket) {
+            bucket = {
+                name,
+                get indexedDB () {
+                    if (!__bucketMap.has(name)) {
+                        const err = new workerCtx.DOMException('Bucket deleted', 'UnknownError');
+                        return {
+                            open () {
+                                const req = {error: err};
+                                setTimeout(() => {
+                                    if (req.onerror) {
+                                        req.onerror({target: req});
+                                    }
+                                }, 0);
+                                return req;
+                            }
+                        };
+                    }
+                    return {
+                        open (n, v) {
+                            const req = arguments.length > 1 ? workerCtx.indexedDB.open(name + '_' + n, v) : workerCtx.indexedDB.open(name + '_' + n);
+                            req.addEventListener('success', (e) => {
+                                if (e.target.result) {
+                                    __activeBucketDbs.add(e.target.result);
+                                }
+                            });
+                            return req;
+                        },
+                        deleteDatabase (n) {
+                            return workerCtx.indexedDB.deleteDatabase(name + '_' + n);
+                        },
+                        databases () {
+                            return workerCtx.indexedDB.databases().then(
+                                (dbs) => dbs.filter(
+                                    (db) => db.name.startsWith(name + '_')
+                                ).map((db) => ({...db, name: db.name.slice(name.length + 1)}))
+                            );
+                        },
+                        cmp (a, b) { return workerCtx.indexedDB.cmp(a, b); }
+                    };
+                }
+            };
+            __bucketMap.set(name, bucket);
+        }
+        return await bucket;
+    }
+};
+
+/**
+ * @param {unknown} test
+ * @returns {Promise<void>}
+ */
+workerCtx.prepareForBucketTest = async function (test) {
+    await test.add_cleanup(async function () {
+        for (const db of __activeBucketDbs) {
+            try {
+                db.close();
+            } catch (e) {}
+        }
+        __activeBucketDbs.clear();
+        __bucketMap.clear();
+        try {
+            const dbs = await workerCtx.indexedDB.databases();
+            for (const db of dbs) {
+                if (db.name.includes('_bucket_')) {
+                    // eslint-disable-next-line no-await-in-loop, promise/avoid-new -- Testing, own API
+                    await new Promise((r) => {
+                        const req = workerCtx.indexedDB.deleteDatabase(db.name);
+                        req.onsuccess = req.onerror = req.onblocked = r;
+                    });
+                }
+            }
+        } catch (e) {}
+    });
+};
+// -------------------------------------------------------------
+
 // `IDBFactory.js`'s connection-queue origin caching (`getOrigin()`) is
 //   read once, synchronously, as part of `indexeddbshim(workerCtx, ...)`
 //   below and must stay consistent for every later call in this
