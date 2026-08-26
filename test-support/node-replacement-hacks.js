@@ -55,6 +55,22 @@ const nodeReplacementHacks = {
             'result.test_id_hack'
         ]
     ],
+    // file_support tests attempt to use HTML inputs and test_driver.send_keys
+    // to simulate file uploading, which fails in our JSDOM Node environment.
+    // We replace the DOM setup with a direct File constructor.
+    // It also tries to test URL.createObjectURL and fetch() on the resulting
+    // blob, which JSDOM doesn't support; we strip those assertions out since
+    // the previous idbBlob.text() check already validates IDB storage.
+    'file_support.sub.js': [
+        [
+            /const input = document\.getElementById\("file_input"\);\n\s*await test_driver\.send_keys\(input, String\.raw`\{\{fs_path\(resources\/file_to_save\.txt\)\}\}`\);\n\s*assert_equals\(input\.files\.length, 1\);\n\n\s*const file = input\.files\[0\];/gv,
+            'const file = new File(["File to save to IndexedDB."], "file_to_save.txt", { type: "text/plain", lastModified: 123456789 });'
+        ],
+        [
+            /const blobUrl = URL\.createObjectURL\(idbBlob\);\n\s*testCase\.add_cleanup\(\(\) => URL\.revokeObjectURL\(blobUrl\)\);\n\s*const response = await fetch\(blobUrl\);\n\s*const fetchedText = await response\.text\(\);\n\s*assert_equals\(fetchedText, expectedText,\n\s*"Fetched content should match the .*"\);/gv,
+            ''
+        ]
+    ],
     'structured-clone.any.js': [
         [
             // Matches each standalone `/pattern/flags,` array item in the

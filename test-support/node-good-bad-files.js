@@ -169,8 +169,6 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
 5. HTML in tests
 
-- `file_support.sub.js` - Looks for an Element though we are not creating HTML as
-   in tests (could try polyfilling `document.getElementById()`)
 - 'idb-partitioned-persistence.sub.js' - Failing (iframe)
 - 'ready-state-destroyed-execution-context.js' - Failing (iframe)
 - 'idb-partitioned-basic.sub.js' - Timing out (iframe)
@@ -322,9 +320,6 @@ const goodBad = {
     badFiles: [
         '../non-indexedDB/DOMException-stack-accessor.js',
         '_service-worker-indexeddb.https.js',
-        'bindings-inject-keys-bypass.any.js',
-        'bindings-inject-values-bypass.any.js',
-        'file_support.sub.js',
         'idb-partitioned-persistence.sub.js',
         'idbfactory-origin-isolation.js',
         'idbindex-cross-realm-methods.js',
@@ -332,8 +327,6 @@ const goodBad = {
         'ready-state-destroyed-execution-context.js',
         'storage-buckets.https.any.js',
         'transaction-deactivation-timing.any.js',
-        'bindings-inject-keys-bypass.any.worker.js',
-        'bindings-inject-values-bypass.any.worker.js',
         'storage-buckets.https.any.worker.js',
         'transaction-deactivation-timing.any.worker.js'
     ],
@@ -359,6 +352,10 @@ const goodBad = {
         '_interface-objects-004.js',
         'abort-in-initial-upgradeneeded.any.js',
         'abort-in-initial-upgradeneeded.any.worker.js',
+        'bindings-inject-keys-bypass.any.js',
+        'bindings-inject-keys-bypass.any.worker.js',
+        'bindings-inject-values-bypass.any.js',
+        'bindings-inject-values-bypass.any.worker.js',
         'blob-composite-blob-reads.any.js',
         'blob-contenttype.any.js',
         'blob-delete-objectstore-db.any.js',
@@ -376,6 +373,7 @@ const goodBad = {
         'error-attributes.any.js',
         'event-dispatch-active-flag.any.js',
         'event-dispatch-active-flag.any.worker.js',
+        'file_support.sub.js',
         'fire-error-event-exception.any.js',
         'fire-success-event-exception.any.js',
         'fire-upgradeneeded-event-exception.any.js',
@@ -765,7 +763,6 @@ const goodBad = {
     ],
     // Files needing the `getElementById('file_input')` patch in `node-idb-test.js`.
     fileInputElementFiles: [
-        'file_support.sub.js'
     ],
     // Files needing the `appendChild`/`DOMException` hierarchy-request-error
     //   patches in `node-idb-test.js`.
