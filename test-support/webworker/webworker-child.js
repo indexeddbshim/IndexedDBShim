@@ -171,8 +171,8 @@ case 'file':
     }
     break;
 
-case 'http:':
-case 'https:':
+case 'http':
+case 'https':
     prom = fetch(workerURL).then((res) => res.text());
     break;
 
