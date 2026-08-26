@@ -167,16 +167,7 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 - 'idbindex-cross-realm-methods.js',
 - 'idbobjectstore-cross-realm-methods.js',
 
-5. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS; if so, add to known issues)
-    Uncaught exceptions have required their complete exclusion for now:
-    - `bindings-inject-keys-bypass.any.js` - Failing
-    - 'bindings-inject-keys-bypass.any.worker.js', - Failing
-    - `bindings-inject-values-bypass.any.js` - Failing
-    - 'bindings-inject-values-bypass.any.worker.js', - Failing
-
-See <https://github.com/axemclion/IndexedDBShim/issues/286>.
-
-6. HTML in tests
+5. HTML in tests
 
 - `file_support.sub.js` - Looks for an Element though we are not creating HTML as
    in tests (could try polyfilling `document.getElementById()`)

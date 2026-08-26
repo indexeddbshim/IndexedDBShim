@@ -34,6 +34,27 @@ const nodeReplacementHacks = {
     //   equivalent constructor call routes it through the (also rebound, see
     //   `sandboxObj`) global instead, so it picks up the same prototype the
     //   decoded clone does.
+    // Node's internal `setTimeout` uses `node:internal/timers` which assigns
+    // an `id` property to timer instances. Because this shim runs in Node and
+    // its dependencies execute Node internals while sharing prototypes with the
+    // sandbox context in certain setups, defining a setter on
+    // `Object.prototype['id']` breaks Node's timer queue (and triggers the
+    // setter randomly in the background). We rename the test's target property
+    // to `test_id_hack` to prevent Node from imploding.
+    'bindings-inject-values-bypass.any.js': [
+        [
+            /keyPath: 'id'/gv,
+            "keyPath: 'test_id_hack'"
+        ],
+        [
+            /'id'/gv,
+            "'test_id_hack'"
+        ],
+        [
+            /result\.id/gv,
+            'result.test_id_hack'
+        ]
+    ],
     'structured-clone.any.js': [
         [
             // Matches each standalone `/pattern/flags,` array item in the

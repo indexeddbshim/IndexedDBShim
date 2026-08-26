@@ -4,6 +4,7 @@
 
 - fix: resolve structured-clone FileList cloning
 - fix: correct dbVersions cleanup in sysdb when initial upgrade transaction aborts
+- fix: bypass prototype setters for key and value injection
 
 ## 17.3.3
 

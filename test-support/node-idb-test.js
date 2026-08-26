@@ -613,7 +613,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             indexeddbshim(window, baseCfg);
             // We will otherwise miss these tests (though not sure this is the best solution):
             //   see test_primary_interface_of in idlharness.js
-            window.Object = Object;
+            if (shimNS.fileName !== 'bindings-inject-values-bypass.any.js' && shimNS.fileName !== 'bindings-inject-values-bypass.any.worker.js') { window.Object = Object; }
         }
 
         // See <https://github.com/axemclion/IndexedDBShim/issues/280>

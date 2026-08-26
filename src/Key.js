@@ -1,3 +1,11 @@
+const setArrayValue = (arr, index, val) => {
+    if (Reflect.has(Array.prototype, index)) {
+        Object.defineProperty(arr, index, {value: val, enumerable: true, writable: true, configurable: true});
+    } else {
+        arr[index] = val;
+    }
+};
+const safePush = (arr, val) => setArrayValue(arr, arr.length, val);
 import {createDOMException} from './DOMException.js';
 import * as util from './util.js';
 import cmp from './cmp.js';
@@ -284,9 +292,9 @@ const types = {
             const encoded = [];
             for (const [i, item] of key.entries()) {
                 const encodedItem = encode(item, true); // encode the array item
-                encoded[i] = encodedItem;
+                setArrayValue(encoded, i, encodedItem);
             }
-            encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
+            safePush(encoded, keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
             let encodedKey = JSON.stringify(encoded);
             if (CFG.escapeNULForSQLiteStatements === false) {
                 encodedKey = encodedKey.replaceAll(String.raw`\u0000`, '\0');
@@ -307,7 +315,7 @@ const types = {
             for (let i = 0; i < decoded.length; i++) {
                 const item = decoded[i];
                 const decodedItem = decode(item, true); // decode the item
-                decoded[i] = decodedItem;
+                setArrayValue(decoded, i, decodedItem);
             }
             return decoded;
         }
@@ -577,7 +585,7 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
     } case 'array': { // May throw (from binary)
         const arr = /** @type {Array<any>} */ (input);
         const len = arr.length;
-        seen.push(input);
+        safePush(seen, input);
 
         /** @type {(KeyValueObject|Value)[]} */
         const keys = [];
@@ -598,7 +606,7 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
                     (!fullKeys && keys.every((k) => cmp(k, key.value) !== 0)) ||
                     (fullKeys && keys.every((k) => cmp(k, key) !== 0))
                 ) {
-                    keys.push(fullKeys ? key : key.value);
+                    safePush(keys, fullKeys ? key : key.value);
                 }
             } catch (err) {
                 if (!multiEntry) {
@@ -732,7 +740,7 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
             if (key.failure) {
                 return true;
             }
-            result.push(key.value);
+            safePush(result, key.value);
             return false;
         })
             ? {failure: true}
@@ -793,11 +801,11 @@ function injectKeyIntoValueUsingKeyPath (value, key, keyPath) {
     identifiers.forEach((identifier) => {
         const hop = Object.hasOwn(value, identifier);
         if (!hop) {
-            value[identifier] = {};
+            Object.defineProperty(value, identifier, {value: {}, enumerable: true, writable: true, configurable: true});
         }
         value = value[identifier];
     });
-    value[/** @type {string} */ (last)] = key; // key is already a `keyValue` in our processing so no need to convert
+    Object.defineProperty(value, /** @type {string} */ (last), {value: key, enumerable: true, writable: true, configurable: true}); // key is already a `keyValue` in our processing so no need to convert
 }
 
 /**
@@ -896,18 +904,18 @@ function findMultiEntryMatches (keyEntry, range) {
                 } else {
                     const nested = findMultiEntryMatches(key, range);
                     if (nested.length > 0) {
-                        matches.push(key);
+                        safePush(matches, key);
                     }
                     continue;
                 }
             }
 
             if (util.isNullish(range) || isKeyInRange(key, range, true)) {
-                matches.push(key);
+                safePush(matches, key);
             }
         }
     } else if (util.isNullish(range) || isKeyInRange(keyEntry, range, true)) {
-        matches.push(keyEntry);
+        safePush(matches, keyEntry);
     }
     return matches;
 }
@@ -929,7 +937,7 @@ function convertKeyToValue (key) {
         let index = 0;
         while (index < len) {
             const entry = convertKeyToValue(value[index]);
-            array[index] = entry;
+            setArrayValue(array, index, entry);
             index++;
         }
         return array;
