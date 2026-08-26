@@ -1,6 +1,6 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 17.3.4
 
 - fix: resolve structured-clone FileList cloning
 - fix: correct dbVersions cleanup in sysdb when initial upgrade transaction aborts
