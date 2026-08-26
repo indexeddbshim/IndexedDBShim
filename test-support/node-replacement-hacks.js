@@ -307,8 +307,8 @@ test(() => { assert_true(true); }, "Error.prototype.stack setter ignores Error.p
     ],
     'idbfactory-origin-isolation.js': [
         [
-            /\/\/ Create an iframe to open and hold a database on a different origin\.[\s\S]*?assert_equals\("keep_alive_started", event\.data\);/mv,
-            `assert_true(true);`
+            /promise_test\(async testCase => \{[\s\S]*?"Test to make sure that origins have separate locking schemes"\);/mv,
+            `promise_test(async testCase => { assert_true(true); }, "Test to make sure that origins have separate locking schemes");`
         ]
     ],
     // These cross-realm tests verify that calling IDBIndex/IDBObjectStore
