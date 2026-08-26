@@ -98,19 +98,7 @@ KNOWN ISSUES (INHERENT LIMITATIONS)
   in any case would suffer from unduly proliferating the number of databases
   that get created.
 
-KNOWN TESTING ISSUES
-
-(The following list remaining test failures/blockers for Node; the remaining browser
-failures are listed below but are not categorized. Nevertheless, they may
-well relate to many of the same issues.)
-
-0. MISSING/NEW APIS
-
-- `navigator.storageBuckets` (`open` and `delete`)
-    - 'storage-buckets.https.any.js' - Failing
-    - 'storage-buckets.https.any.worker.js', - Failing
-
-1. TIMING/TRANSACTION FINISHED TIMING
+5. TIMING/TRANSACTION FINISHED TIMING
 
 Our actual SQLite driver (`better-sqlite3`, wired in via
 `src/nodeSQLiteDatabase.js`) is already fully synchronous --
@@ -144,6 +132,19 @@ cover.
 Although the worker test does modify the tests, these test requirements
 are nevertheless essentially met if taking into account the environment's
 limitations.
+
+
+KNOWN TESTING ISSUES
+
+(The following list remaining test failures/blockers for Node; the remaining browser
+failures are listed below but are not categorized. Nevertheless, they may
+well relate to many of the same issues.)
+
+1. MISSING/NEW APIS
+
+- `navigator.storageBuckets` (`open` and `delete`)
+    - 'storage-buckets.https.any.js' - Failing
+    - 'storage-buckets.https.any.worker.js', - Failing
 
 2. SERVICE WORKERS
 
