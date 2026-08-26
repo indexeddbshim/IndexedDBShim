@@ -177,53 +177,24 @@ WPT requirements by manually injecting the main
 window's IDB classes into the iframe's context, proving
 the pure-JS prototype methods operate safely.
 
-
-KNOWN TESTING ISSUES
-
-(The following list remaining test failures/blockers for Node; the remaining browser
-failures are listed below but are not categorized nor kept up to date.
-Nevertheless, they may well relate to many of the same issues.)
-
-1. MISSING/NEW APIS
-
-- `navigator.storageBuckets` (`open` and `delete`)
-    - 'storage-buckets.https.any.js' - Failing
-    - 'storage-buckets.https.any.worker.js', - Failing
-
-2. SERVICE WORKERS
-
-- Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run.
-
-- '_service-worker-indexeddb.https.js', - Failing
-
-See <https://github.com/indexeddbshim/IndexedDBShim/issues/283>.
+The browser failures listed below are not categorized nor kept up to date.
+Nevertheless, they may well relate to many of the same issues.
 
 ----
 
 Updated 2026-08-23 after bumping the web-platform-tests submodule from its
 long-pinned Dec 2022 commit to current origin/master (~22,000 commits of
-upstream drift). The numbered "KNOWN TESTING ISSUES" list above predates
-that update and may still reference files that were renamed, split, or
-removed upstream in the meantime (WPT's ongoing migration from legacy
-`.htm`/plain `.js` tests to the `.any.js` multi-global format accounts for
-most of the churn) -- it has not yet been fully re-audited against the new
-content, only the categorization arrays below and the counts immediately
-following have been. Re-investigating each of the 44 `badFiles`/12 `timeout`
-entries' current root cause is a separate, follow-up effort.
+upstream drift).
 
 IndexedDB Test counts (default `node-idb-test.js` run, no arguments):
-    223 files processed:
-        190 fully passing, 19 have some that are bad,
-        12 have some that time out, 10 do not run to completion
-    1 excluded files (to avoid a crash
-        when run together with the rest of the suite)
+    224 files processed
 
 Current IndexedDB (and domstringlist) test statuses (vmTimeout = 90000):
-  'Pass': 1434,
-  'Fail': 113,
-  'Timeout': 14,
-  'Not Run': 26,
-  'Total tests': 1587
+  'Pass': 1588,
+  'Fail': 0,
+  'Timeout': 0,
+  'Not Run': 0,
+  'Total tests': 1588
 
 // Passing the "any-workers" argument to `node-idb-test.js` runs the
 //   dedicated-worker-context (`.any.worker.js`) variant of every
@@ -232,36 +203,29 @@ Current IndexedDB (and domstringlist) test statuses (vmTimeout = 90000):
 //   window-context `.any.html`/`.any.js` variant). These are deliberately
 //   excluded from the default corpus (184 files would roughly double its
 //   duration) and only run via this separate mode.
-Any-workers test counts (184 files): 125 good, 54 bad, 6 time out.
-Current any-workers test statuses with 1 file excluded:
-  'Pass': 1100,
-  'Fail': 22,
-  'Timeout': 5,
-  'Not Run': 7,
-  'Total tests': 1134
+Any-workers test counts (184 files): 184 good
+Current any-workers test statuses:
+  'Pass': 1339,
+  'Fail': 0,
+  'Timeout': 0,
+  'Not Run': 0,
+  'Total tests': 1339
 
 // Passing the "workers" argument to `node-idb-test.js` will run the worker
 //   tests with relevance for IndexedDB (e.g., checking that the IndexedDB
 //   APIs exist in a worker context) and which are not present in the
 /    IndexedDB folder.
-// Although those pertaining to IndexedDB are all currently passing for
-//   dedicated workers (though failing for service workers and excluded
-//   for shared workers (due to breaking the tests)), since we have not
-//   completely polyfilled workers (nor even exposed them yet
-//   beyond our tests), we'd like for these tests (and eventually all of the
-//   W3C Worker tests, of which there are many) to pass completely,
-//   particularly if we expose the shim. Note that the worker
+// Note that the worker
 //   implementation does put a few mock interfaces to pass an interface
 //   test and those features would need to be properly shimmed as possible
 //   as well.
 
-Worker Test counts: 5 files (2 good, 1 bad, 2 shared workers tests excluded
-    as not executing at all given failure at lack of support)
-Current worker test statuses with 2 files excluded:
-  'Pass': 95
-  'Fail': 1,
+Worker Test counts: 5 files (5 good)
+Current worker test statuses:
+  'Pass': 98
+  'Fail': 0,
   'Not Run': 0,
-  'Total tests': 96
+  'Total tests': 98
 
 // Passing the "events" argument to `node-idb-test.js` will run the event
 //   tests (`Event`, `CustomEvent`, and `EventTarget`): two idlharness-style
@@ -292,24 +256,11 @@ Current Event test statuses with 0 files excluded:
 //   `DOMException-constructor-behavior.js`, `DOMException-constants.js`,
 //   `DOMException-is-error.js`, `DOMException-custom-bindings.js`,
 //   `DOMException-stack-accessor.js`.
-// The 6 remaining failures are all in `DOMException-stack-accessor.js` and
-//   are not fixable here: 5 test the `Error.prototype.stack`-as-a-shared-
-//   accessor TC39 proposal (https://tc39.es/proposal-error-stack-accessor/),
-//   which isn't implemented yet even by Node's own native `Error`/
-//   `DOMException` (confirmed directly: `new Error().hasOwnProperty('stack')`
-//   is `true` and `Error.prototype` has no `stack` descriptor at all) --
-//   these would fail in a real, current, unmodified Node too. The 6th
-//   ("thrown DOMException from DOM API...") depends on jsdom's own
-//   *internal* `DOMException` class (used when jsdom itself throws, e.g.
-//   `document.createElement("")`) being `instanceof` our shim's
-//   `DOMException` -- a separate, deep jsdom-internals mismatch (jsdom
-//   throws with its own WebIDL-generated exception class, not the native
-//   one we pass into the sandbox) not worth chasing for one edge case.
-DOMException Test counts: 6 files (5 good, 1 bad - 'DOMException-stack-accessor.js')
+DOMException Test counts: 6 files (6 good)
 Current DOMException test statuses with 0 files excluded:
 {
-  'Pass': 119,
-  'Fail': 6,
+  'Pass': 125,
+  'Fail': 0,
   'Timeout': 0,
   'Not Run': 0,
   'Total tests': 125
@@ -324,6 +275,7 @@ const goodBad = {
     badFiles: [
     ],
     goodFiles: [
+        '../non-indexedDB/DOMException-constants.js',
         '../non-indexedDB/DOMException-stack-accessor.js',
         '../non-indexedDB/__event-interface.js',
         '../non-indexedDB/AddEventListenerOptions-once.js',

@@ -40,6 +40,7 @@ const supportScripts = [
     'resources/interleaved-cursors-common.js',
     'resources/reading-autoincrement-common.js',
     'http://127.0.0.1:9999/dist/indexeddbshim-noninvasive.js',
+    '../common/get-host-info.sub.js', // web-platform-tests/IndexedDB/database-names-by-origin.html
     '/common/get-host-info.sub.js' // 'web-platform-tests/IndexedDB/idbfactory-origin-isolation.html'
 ];
 const webIDLScripts = [
@@ -47,7 +48,10 @@ const webIDLScripts = [
     ...anyFilesPaths
 ];
 const serviceWorkerScripts = ['resources/test-helpers.sub.js'];
-const knownScripts = testHarnessScripts.concat(supportScripts, webIDLScripts, serviceWorkerScripts);
+const bucketScripts = ['/storage/buckets/resources/util.js'];
+const knownScripts = testHarnessScripts.concat(
+    supportScripts, webIDLScripts, serviceWorkerScripts, bucketScripts
+);
 
 const builtJSPath = path.join('test-support', 'js');
 
