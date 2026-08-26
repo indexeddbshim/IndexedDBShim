@@ -280,41 +280,43 @@ declare namespace IDBTransaction {
      * @param {string} [durability]
      * @returns {IDBTransactionFull}
      */
-    function __createInstance(db: import("./IDBDatabase.js").IDBDatabaseFull, storeNames: import("./DOMStringList.js").DOMStringListFull, mode: string, durability?: string): IDBTransactionFull;
+    export function __createInstance(db: import("./IDBDatabase.js").IDBDatabaseFull, storeNames: import("./DOMStringList.js").DOMStringListFull, mode: string, durability?: string): IDBTransactionFull;
     /**
      *
      * @param {IDBTransactionFull|null|undefined} tx
      * @returns {void}
      */
-    function __assertVersionChange(tx: IDBTransactionFull | null | undefined): void;
+    export function __assertVersionChange(tx: IDBTransactionFull | null | undefined): void;
     /**
      *
      * @param {IDBTransactionFull|null} tx
      * @throws {DOMException}
      * @returns {void}
      */
-    function __assertNotVersionChange(tx: IDBTransactionFull | null): void;
+    export function __assertNotVersionChange(tx: IDBTransactionFull | null): void;
     /**
      *
      * @param {IDBTransactionFull|null|undefined} tx
      * @throws {DOMException}
      * @returns {void}
      */
-    function __assertNotFinished(tx: IDBTransactionFull | null | undefined): void;
+    export function __assertNotFinished(tx: IDBTransactionFull | null | undefined): void;
     /**
      *
      * @param {IDBTransactionFull} tx
      * @returns {void}
      */
-    function __assertNotFinishedObjectStoreMethod(tx: IDBTransactionFull): void;
+    export function __assertNotFinishedObjectStoreMethod(tx: IDBTransactionFull): void;
     /**
      *
      * @param {IDBTransactionFull|null|undefined} tx
      * @throws {DOMException}
      * @returns {void}
      */
-    function __assertActive(tx: IDBTransactionFull | null | undefined): void;
+    export function __assertActive(tx: IDBTransactionFull | null | undefined): void;
+    export { activeTransactions };
 }
 import { IDBRequest } from './IDBRequest.js';
 import IDBObjectStore from './IDBObjectStore.js';
+declare const activeTransactions: Set<any>;
 //# sourceMappingURL=IDBTransaction.d.ts.map

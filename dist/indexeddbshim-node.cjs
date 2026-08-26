@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.3 - 8/25/2026 */
+/*! indexeddbshim - v17.3.4 - 8/25/2026 */
 
 'use strict';
 
@@ -3160,6 +3160,31 @@ function cmp(first, second) {
 }
 
 /**
+ * @param {unknown[]} arr
+ * @param {number} index
+ * @param {unknown} val
+ * @returns {void}
+ */
+const setArrayValue = (arr, index, val) => {
+  if (Reflect.has(Array.prototype, index)) {
+    Object.defineProperty(arr, index, {
+      value: val,
+      enumerable: true,
+      writable: true,
+      configurable: true
+    });
+  } else {
+    arr[index] = val;
+  }
+};
+/**
+ * @param {unknown[]} arr
+ * @param {unknown} val
+ * @returns {void}
+ */
+const safePush = (arr, val) => setArrayValue(arr, arr.length, val);
+
+/**
  * @typedef {NodeJS.TypedArray|DataView} ArrayBufferView
  */
 
@@ -3421,12 +3446,13 @@ const types = {
      * @returns {string}
      */
     encode(key) {
+      /** @type {(string|null)[]} */
       const encoded = [];
       for (const [i, item] of key.entries()) {
         const encodedItem = encode$1(item, true); // encode the array item
-        encoded[i] = encodedItem;
+        setArrayValue(encoded, i, encodedItem);
       }
-      encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
+      safePush(encoded, keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
       let encodedKey = JSON.stringify(encoded);
       if (CFG.escapeNULForSQLiteStatements === false) {
         encodedKey = encodedKey.replaceAll(String.raw`\u0000`, '\0');
@@ -3447,7 +3473,7 @@ const types = {
       for (let i = 0; i < decoded.length; i++) {
         const item = decoded[i];
         const decodedItem = decode$1(item, true); // decode the item
-        decoded[i] = decodedItem;
+        setArrayValue(decoded, i, decodedItem);
       }
       return decoded;
     }
@@ -3733,7 +3759,7 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
         // May throw (from binary)
         const arr = /** @type {Array<any>} */input;
         const len = arr.length;
-        seen.push(input);
+        safePush(seen, input);
 
         /** @type {(KeyValueObject|Value)[]} */
         const keys = [];
@@ -3760,7 +3786,7 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
               };
             }
             if (!multiEntry || !fullKeys && keys.every(k => cmp(k, key.value) !== 0) || fullKeys && keys.every(k => cmp(k, key) !== 0)) {
-              keys.push(fullKeys ? key : key.value);
+              safePush(keys, fullKeys ? key : key.value);
             }
           } catch (err) {
             if (!multiEntry) {
@@ -3914,7 +3940,7 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
       if (key.failure) {
         return true;
       }
-      result.push(key.value);
+      safePush(result, key.value);
       return false;
     }) ? {
       failure: true
@@ -3975,11 +4001,21 @@ function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
   identifiers.forEach(identifier => {
     const hop = Object.hasOwn(value, identifier);
     if (!hop) {
-      value[identifier] = {};
+      Object.defineProperty(value, identifier, {
+        value: {},
+        enumerable: true,
+        writable: true,
+        configurable: true
+      });
     }
     value = value[identifier];
   });
-  value[(/** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
+  Object.defineProperty(value, /** @type {string} */last, {
+    value: key,
+    enumerable: true,
+    writable: true,
+    configurable: true
+  }); // key is already a `keyValue` in our processing so no need to convert
 }
 
 /**
@@ -4048,6 +4084,7 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
  * @returns {Key[]}
  */
 function findMultiEntryMatches(keyEntry, range) {
+  /** @type {unknown[]} */
   const matches = [];
   if (Array.isArray(keyEntry)) {
     for (let key of keyEntry) {
@@ -4060,17 +4097,17 @@ function findMultiEntryMatches(keyEntry, range) {
         } else {
           const nested = findMultiEntryMatches(key, range);
           if (nested.length > 0) {
-            matches.push(key);
+            safePush(matches, key);
           }
           continue;
         }
       }
       if (isNullish(range) || isKeyInRange(key, range, true)) {
-        matches.push(key);
+        safePush(matches, key);
       }
     }
   } else if (isNullish(range) || isKeyInRange(keyEntry, range, true)) {
-    matches.push(keyEntry);
+    safePush(matches, keyEntry);
   }
   return matches;
 }
@@ -4094,12 +4131,13 @@ function convertKeyToValue(key) {
       }
     case 'array':
       {
+        /** @type {ValueType[]} */
         const array = [];
         const len = value.length;
         let index = 0;
         while (index < len) {
           const entry = convertKeyToValue(value[index]);
-          array[index] = entry;
+          setArrayValue(array, index, entry);
           index++;
         }
         return array;
@@ -4862,6 +4900,7 @@ if (cleanInterface) {
 }
 
 let uniqueID = 0;
+const activeTransactions = new Set();
 const listeners$1 = ['onabort', 'oncomplete', 'onerror'];
 const readonlyProperties$4 = ['objectStoreNames', 'mode', 'durability', 'db', 'error'];
 
@@ -4991,6 +5030,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode, durability = '
     me.__mode = mode;
     me.__durability = durability;
     me.__db = db;
+    activeTransactions.add(me);
     me.__error = null;
     // @ts-expect-error Part of `ShimEventTarget`
     me.__setOptions({
@@ -5498,6 +5538,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         me.__errored = true;
         throw e;
       } finally {
+        activeTransactions.delete(me);
         me.__storeHandles = {};
       }
     }
@@ -5704,7 +5745,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     });
   }
   me.__active = false; // Setting here and in requestsFinished for https://github.com/w3c/IndexedDB/issues/87
-
+  activeTransactions.delete(me);
   if (err !== null) {
     me.__error = err;
   }
@@ -5923,7 +5964,7 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
  * @returns {void}
  */
 IDBTransaction.__assertActive = function (tx) {
-  if (!tx || !tx.__active || tx.__committed) {
+  if (!tx || !tx.__active || !tx.__handlerActive || tx.__committed) {
     throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
   }
 };
@@ -5950,6 +5991,9 @@ Object.defineProperty(IDBTransaction.prototype, 'constructor', {
 Object.defineProperty(IDBTransaction, 'prototype', {
   writable: false
 });
+/* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
+
+IDBTransaction.activeTransactions = activeTransactions;
 
 class TypesonPromise {
   constructor(e) {
@@ -10604,7 +10648,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                   }
                 }, function (sqlErr) {
                   isRevertingSysdb = false;
-                  cb(sqlErr);
+                  cb(sqlErr); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                 }, function () {
                   isRevertingSysdb = false;
                   cb(errorToShow || reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
@@ -10612,7 +10656,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
               };
               try {
                 systx.executeSql('ROLLBACK', [], function () {
-                  cb();
+                  cb(); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                 }, function (tx, sqlErr) {
                   // Browser/Node may fail with expired transaction, so manually revert
                   manualRevert(sqlErr);
@@ -10816,7 +10860,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                     }
                   }, function (sqlErr) {
                     isRevertingSysdb = false;
-                    cb(sqlErr);
+                    cb(sqlErr); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                   }, function () {
                     isRevertingSysdb = false;
                     cb(reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient

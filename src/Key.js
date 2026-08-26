@@ -1,3 +1,9 @@
+/**
+ * @param {unknown[]} arr
+ * @param {number} index
+ * @param {unknown} val
+ * @returns {void}
+ */
 const setArrayValue = (arr, index, val) => {
     if (Reflect.has(Array.prototype, index)) {
         Object.defineProperty(arr, index, {value: val, enumerable: true, writable: true, configurable: true});
@@ -5,6 +11,11 @@ const setArrayValue = (arr, index, val) => {
         arr[index] = val;
     }
 };
+/**
+ * @param {unknown[]} arr
+ * @param {unknown} val
+ * @returns {void}
+ */
 const safePush = (arr, val) => setArrayValue(arr, arr.length, val);
 import {createDOMException} from './DOMException.js';
 import * as util from './util.js';
@@ -289,6 +300,7 @@ const types = {
          * @returns {string}
          */
         encode (key) {
+            /** @type {(string|null)[]} */
             const encoded = [];
             for (const [i, item] of key.entries()) {
                 const encodedItem = encode(item, true); // encode the array item
@@ -891,6 +903,7 @@ function isMultiEntryMatch (encodedEntry, encodedKey) {
  * @returns {Key[]}
  */
 function findMultiEntryMatches (keyEntry, range) {
+    /** @type {unknown[]} */
     const matches = [];
 
     if (Array.isArray(keyEntry)) {
@@ -932,6 +945,7 @@ function convertKeyToValue (key) {
     case 'number': case 'string': {
         return value;
     } case 'array': {
+        /** @type {ValueType[]} */
         const array = [];
         const len = value.length;
         let index = 0;
