@@ -14,7 +14,8 @@ import {
     DOMRect, DOMRectReadOnly, DOMQuad
 } from 'typeson-registry/polyfills';
 
-// Todo: Check if exported from /polyfills once typeson-registry updates
+// Exported separately from /polyfills in typeson-registry because
+//   `FileList` expects HTMLInputElement to be available
 import {FileList} from 'typeson-registry/polyfills/FileList.js';
 
 Object.assign(globalThis, {
