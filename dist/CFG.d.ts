@@ -38,6 +38,7 @@ export type ConfigValues = {
     sqlBusyTimeout: number;
     sqlTrace: () => void;
     sqlProfile: () => void;
+    sqlMemoryQuota: number;
     escapeNULForSQLiteStatements: boolean;
     createIndexes: boolean;
 };

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.4 - 8/27/2026 */
+/*! indexeddbshim - v17.4.0 - 8/27/2026 */
 
 'use strict';
 
@@ -1389,6 +1389,7 @@ EventTarget.EventTargetFactory = EventTargetFactory;
  *   sqlBusyTimeout: number,
  *   sqlTrace: () => void,
  *   sqlProfile: () => void,
+ *   sqlMemoryQuota: number,
  *   escapeNULForSQLiteStatements: boolean,
  *   createIndexes: boolean
  * }} ConfigValues
@@ -1545,7 +1546,7 @@ val => {
 'sqlProfile',
 // Callback not used by default
 // Defaults to true except in Node builds where we can preserve literal NUL with better-sqlite3
-'escapeNULForSQLiteStatements', 'createIndexes'].forEach(prop => {
+'escapeNULForSQLiteStatements', 'sqlMemoryQuota', 'createIndexes'].forEach(prop => {
   /** @type {(val: any) => void} */
   let validator;
   if (Array.isArray(prop)) {
@@ -2564,41 +2565,40 @@ function findError(args) {
  *   optional here and, in practice, always `undefined` today (the `case 4`/
  *   `case 7` branches below are effectively unreachable pending upstream
  *   support for surfacing a real error code).
- * @param {Error & {code?: number}} webSQLErr
+ * @param {Error & {code?: number|string}} webSQLErr
  * @returns {(DOMException|Error) & {
- *   sqlError: Error & {code?: number}
+ *   sqlError: Error & {code?: number|string}
  * }|QuotaExceededError}
  */
 function webSQLErrback(webSQLErr) {
   let name,
     message,
     useQuotaExceededError = false;
-  switch (webSQLErr.code) {
-    case 4:
-      {
-        // SQLError.QUOTA_ERR
-        name = 'QuotaExceededError';
-        message = 'The operation failed because there was not enough ' + 'remaining storage space, or the storage quota was reached ' + 'and the user declined to give more space to the database.';
-        if (typeof QuotaExceededError !== 'undefined') {
-          useQuotaExceededError = true;
-        }
-        break;
-      }
-    /*
-    // Should a WebSQL timeout treat as IndexedDB `TransactionInactiveError` or `UnknownError`?
-    case 7: { // SQLError.TIMEOUT_ERR
-        // All transaction errors abort later, so no need to mark inactive
-        name = 'TransactionInactiveError';
-        message = 'A request was placed against a transaction which is currently not active, or which is finished (Internal SQL Timeout).';
-        break;
+  if (webSQLErr.code === 4 || webSQLErr.code === 'SQLITE_FULL') {
+    // SQLError.QUOTA_ERR or better-sqlite3 SQLITE_FULL
+    name = 'QuotaExceededError';
+    message = 'The operation failed because there was not enough ' + 'remaining storage space, or the storage quota was reached ' + 'and the user declined to give more space to the database.';
+    if (typeof QuotaExceededError !== 'undefined') {
+      useQuotaExceededError = true;
     }
-    */
-    default:
-      {
-        name = 'UnknownError';
-        message = 'The operation failed for reasons unrelated to the database itself and not covered by any other errors.';
-        break;
+  } else {
+    switch (webSQLErr.code) {
+      /*
+      // Should a WebSQL timeout treat as IndexedDB `TransactionInactiveError` or `UnknownError`?
+      case 7: { // SQLError.TIMEOUT_ERR
+          // All transaction errors abort later, so no need to mark inactive
+          name = 'TransactionInactiveError';
+          message = 'A request was placed against a transaction which is currently not active, or which is finished (Internal SQL Timeout).';
+          break;
       }
+      */
+      default:
+        {
+          name = 'UnknownError';
+          message = 'The operation failed for reasons unrelated to the database itself and not covered by any other errors.';
+          break;
+        }
+    }
   }
   message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
   if (useQuotaExceededError) {
@@ -2607,7 +2607,7 @@ function webSQLErrback(webSQLErr) {
   const err =
   /**
    * @type {(Error | DOMException) & {
-   *   sqlError: Error & {code?: number}
+   *   sqlError: Error & {code?: number|string}
    * }}
    */
   createDOMException(name, message);
@@ -14742,7 +14742,7 @@ function SQLiteDatabase(name, opts = {}) {
     _db: db,
     /**
      * Compatibility with node-sqlite3's configure API.
-     * @param {'busyTimeout'|'trace'|'profile'} option
+     * @param {'busyTimeout'|'trace'|'profile'|'memoryQuota'} option
      * @param {number|((sql: string, duration?: number) => void)} value
      * @returns {void}
      */
@@ -14757,6 +14757,17 @@ function SQLiteDatabase(name, opts = {}) {
       }
       if (option === 'profile') {
         profile = /** @type {SQLProfileCallback} */value;
+        return;
+      }
+      if (option === 'memoryQuota') {
+        const bytes = Number(value);
+        // `better-sqlite3` doesn't have a direct `sqlite3_quota_set` binding,
+        // but we can limit the max pages:
+        const pageSizeObj = db.pragma('page_size', {
+          simple: true
+        });
+        const pageSize = Number(pageSizeObj);
+        db.pragma('max_page_count = ' + Math.ceil(bytes / pageSize));
       }
     },
     /**
@@ -14990,6 +15001,9 @@ function wrappedSQLiteDatabase(name) {
   }
   if (CFG.sqlProfile) {
     db._db.configure('profile', CFG.sqlProfile);
+  }
+  if (CFG.sqlMemoryQuota) {
+    db._db.configure('memoryQuota', /** @type {number} */CFG.sqlMemoryQuota);
   }
   return db;
 }

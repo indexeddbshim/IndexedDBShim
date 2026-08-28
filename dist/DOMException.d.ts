@@ -70,16 +70,16 @@ export const createDOMException: ((name: string, message: string, error?: ErrorL
  *   optional here and, in practice, always `undefined` today (the `case 4`/
  *   `case 7` branches below are effectively unreachable pending upstream
  *   support for surfacing a real error code).
- * @param {Error & {code?: number}} webSQLErr
+ * @param {Error & {code?: number|string}} webSQLErr
  * @returns {(DOMException|Error) & {
- *   sqlError: Error & {code?: number}
+ *   sqlError: Error & {code?: number|string}
  * }|QuotaExceededError}
  */
 export function webSQLErrback(webSQLErr: Error & {
-    code?: number;
+    code?: number | string;
 }): ((DOMException | Error) & {
     sqlError: Error & {
-        code?: number;
+        code?: number | string;
     };
 }) | QuotaExceededError;
 //# sourceMappingURL=DOMException.d.ts.map

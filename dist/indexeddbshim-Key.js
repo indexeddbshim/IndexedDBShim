@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.4 - 8/27/2026 */
+/*! indexeddbshim - v17.4.0 - 8/27/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -173,6 +173,7 @@
    *   sqlBusyTimeout: number,
    *   sqlTrace: () => void,
    *   sqlProfile: () => void,
+   *   sqlMemoryQuota: number,
    *   escapeNULForSQLiteStatements: boolean,
    *   createIndexes: boolean
    * }} ConfigValues
@@ -329,7 +330,7 @@
   'sqlProfile',
   // Callback not used by default
   // Defaults to true except in Node builds where we can preserve literal NUL with better-sqlite3
-  'escapeNULForSQLiteStatements', 'createIndexes'].forEach(function (prop) {
+  'escapeNULForSQLiteStatements', 'sqlMemoryQuota', 'createIndexes'].forEach(function (prop) {
     /** @type {(val: any) => void} */
     var validator;
     if (Array.isArray(prop)) {
