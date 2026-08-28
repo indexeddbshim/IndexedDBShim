@@ -69,6 +69,7 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Co
         'IDBDatabase/createObjectStore-spec.js',
         'IDBDatabase/deleteObjectStore-spec.js',
         'IDBDatabase/transaction-spec.js',
+        'IDBDatabase/quota-spec.js',
         'IDBIndex/count-spec.js',
         'IDBIndex/get-spec.js',
         'IDBIndex/getKey-spec.js',

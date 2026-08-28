@@ -37,6 +37,9 @@ function wrappedSQLiteDatabase (name) {
     if (CFG.sqlProfile) {
         db._db.configure('profile', CFG.sqlProfile);
     }
+    if (CFG.sqlMemoryQuota) {
+        db._db.configure('memoryQuota', /** @type {number} */ (CFG.sqlMemoryQuota));
+    }
     return db;
 }
 

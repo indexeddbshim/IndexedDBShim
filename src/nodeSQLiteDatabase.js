@@ -91,7 +91,7 @@ function SQLiteDatabase (name, opts = {}) {
         _db: db,
         /**
          * Compatibility with node-sqlite3's configure API.
-         * @param {'busyTimeout'|'trace'|'profile'} option
+         * @param {'busyTimeout'|'trace'|'profile'|'memoryQuota'} option
          * @param {number|((sql: string, duration?: number) => void)} value
          * @returns {void}
          */
@@ -106,6 +106,15 @@ function SQLiteDatabase (name, opts = {}) {
             }
             if (option === 'profile') {
                 profile = /** @type {SQLProfileCallback} */ (value);
+                return;
+            }
+            if (option === 'memoryQuota') {
+                const bytes = Number(value);
+                // `better-sqlite3` doesn't have a direct `sqlite3_quota_set` binding,
+                // but we can limit the max pages:
+                const pageSizeObj = db.pragma('page_size', {simple: true});
+                const pageSize = Number(pageSizeObj);
+                db.pragma('max_page_count = ' + Math.ceil(bytes / pageSize));
             }
         },
         /**

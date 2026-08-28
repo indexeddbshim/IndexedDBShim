@@ -43,6 +43,7 @@
  *   sqlBusyTimeout: number,
  *   sqlTrace: () => void,
  *   sqlProfile: () => void,
+ *   sqlMemoryQuota: number,
  *   escapeNULForSQLiteStatements: boolean,
  *   createIndexes: boolean
  * }} ConfigValues
@@ -220,6 +221,7 @@ const CFG = /** @type {ConfigValues} */ ({});
     // Defaults to true except in Node builds where we can preserve literal NUL with better-sqlite3
     'escapeNULForSQLiteStatements',
 
+    'sqlMemoryQuota',
     'createIndexes'
 ]).forEach((prop) => {
     /** @type {(val: any) => void} */

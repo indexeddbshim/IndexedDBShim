@@ -1,9 +1,14 @@
 # CHANGES for indexeddbshim
 
+## 17.4.0
+
+- feat: add `sqlMemoryQuota` config for controlling quota size in Node
+- fix: handle better-sqlite3's memory quota
+
 ## 17.3.4
 
-- fix: resolve structured-clone FileList cloning
-- fix: correct dbVersions cleanup in sysdb when initial upgrade transaction aborts
+- fix: resolve structured-clone `FileList` cloning
+- fix: correct `dbVersions` cleanup in `sysdb` when initial upgrade transaction aborts
 - fix: bypass prototype setters for key and value injection
 
 ## 17.3.3

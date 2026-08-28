@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "17.3.4",
+  "version": "17.4.0",
   "type": "module",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
@@ -53,7 +53,7 @@
     "copy": "copyup node_modules/source-map-support/browser-source-map-support.js node_modules/mocha/mocha.css node_modules/mocha/mocha.js node_modules/chai/chai.js node_modules/sinon/pkg/sinon-no-sourcemaps.js test-support",
     "fix-permissions": "chmod +x node_modules/npm-run-all/bin/*/index.js",
     "lint": "eslint .",
-    "eslint": "npm run lint",
+    "eslint": "npm run lint --",
     "sqlite-rebuild": "cd node_modules/sqlite3 && npm i",
     "w3c-build-only": "node test-support/node-buildjs",
     "w3c-build": "run-s clean-w3c clean-w3c-built w3c-build-only",

@@ -330,15 +330,14 @@ function findError (args) {
  *   optional here and, in practice, always `undefined` today (the `case 4`/
  *   `case 7` branches below are effectively unreachable pending upstream
  *   support for surfacing a real error code).
- * @param {Error & {code?: number}} webSQLErr
+ * @param {Error & {code?: number|string}} webSQLErr
  * @returns {(DOMException|Error) & {
- *   sqlError: Error & {code?: number}
+ *   sqlError: Error & {code?: number|string}
  * }|QuotaExceededError}
  */
 function webSQLErrback (webSQLErr) {
     let name, message, useQuotaExceededError = false;
-    switch (webSQLErr.code) {
-    case 4: { // SQLError.QUOTA_ERR
+    if (webSQLErr.code === 4 || webSQLErr.code === 'SQLITE_FULL') { // SQLError.QUOTA_ERR or better-sqlite3 SQLITE_FULL
         name = 'QuotaExceededError';
         message = 'The operation failed because there was not enough ' +
             'remaining storage space, or the storage quota was reached ' +
@@ -346,22 +345,23 @@ function webSQLErrback (webSQLErr) {
         if (typeof QuotaExceededError !== 'undefined') {
             useQuotaExceededError = true;
         }
-        break;
-    }
-    /*
-    // Should a WebSQL timeout treat as IndexedDB `TransactionInactiveError` or `UnknownError`?
-    case 7: { // SQLError.TIMEOUT_ERR
-        // All transaction errors abort later, so no need to mark inactive
-        name = 'TransactionInactiveError';
-        message = 'A request was placed against a transaction which is currently not active, or which is finished (Internal SQL Timeout).';
-        break;
-    }
-    */
-    default: {
-        name = 'UnknownError';
-        message = 'The operation failed for reasons unrelated to the database itself and not covered by any other errors.';
-        break;
-    }
+    } else {
+        switch (webSQLErr.code) {
+        /*
+        // Should a WebSQL timeout treat as IndexedDB `TransactionInactiveError` or `UnknownError`?
+        case 7: { // SQLError.TIMEOUT_ERR
+            // All transaction errors abort later, so no need to mark inactive
+            name = 'TransactionInactiveError';
+            message = 'A request was placed against a transaction which is currently not active, or which is finished (Internal SQL Timeout).';
+            break;
+        }
+        */
+        default: {
+            name = 'UnknownError';
+            message = 'The operation failed for reasons unrelated to the database itself and not covered by any other errors.';
+            break;
+        }
+        }
     }
     message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
 
@@ -372,7 +372,7 @@ function webSQLErrback (webSQLErr) {
     const err =
         /**
          * @type {(Error | DOMException) & {
-         *   sqlError: Error & {code?: number}
+         *   sqlError: Error & {code?: number|string}
          * }}
          */
         (createDOMException(name, message));
