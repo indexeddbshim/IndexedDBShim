@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.3.4 - 8/25/2026 */
+/*! indexeddbshim - v17.3.4 - 8/27/2026 */
 
 'use strict';
 
@@ -8762,7 +8762,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [escapeSQLiteStatement(storeName), encodedKeyPath,
         // For why converting here, see comment and following
         //  discussion at:
-        //  https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
+        //  https://github.com/indexeddbshim/IndexedDBShim/issues/313#issuecomment-590086778
         Number(store.autoIncrement), '{}', 1], function () {
           delete store.__pendingCreate;
           delete store.__deleted;
@@ -12945,7 +12945,7 @@ function setGlobalVars(idb, initialConfig) {
   // Ignore Node or other environments
   // Bad non-Chrome Android support
   /Android (?:2|3|4\.[0-3])/u.test(navigator.userAgent) && !navigator.userAgent.includes('Chrome') ||
-  // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
+  // Bad non-Safari iOS9 support (see <https://github.com/indexeddbshim/IndexedDBShim/issues/252>)
   (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) &&
   // Exclude genuine Safari: https://stackoverflow.com/a/7768006/271577
   // Detect iOS: https://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
@@ -12955,8 +12955,8 @@ function setGlobalVars(idb, initialConfig) {
   if (!CFG.DEFAULT_DB_SIZE) {
     CFG.DEFAULT_DB_SIZE = (
     // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
-    // https://github.com/axemclion/IndexedDBShim/issues/41
-    // https://github.com/axemclion/IndexedDBShim/issues/115
+    // https://github.com/indexeddbshim/IndexedDBShim/issues/41
+    // https://github.com/indexeddbshim/IndexedDBShim/issues/115
     typeof navigator !== 'undefined' &&
     // React Native
     navigator.userAgent && navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 25 : 4) * 1024 * 1024;

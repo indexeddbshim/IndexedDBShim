@@ -20,7 +20,7 @@ import jsdom from 'jsdom';
 import {ImageData} from 'canvas';
 import colors from 'colors/safe.js';
 
-import CY from 'cyclonejs'; // Todo: Replace this with Sca (but need to make requireable)
+import {clone} from '../src/SCA.js';
 import xmlHttpRequestConstr from 'local-xmlhttprequest';
 import isDateObject from 'is-date-object';
 import fetch from 'isomorphic-fetch';
@@ -865,9 +865,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         // Todo: Submit this as PR to jsdom
         window.postMessage = function (...args) {
             try {
-                CY.clone(args[0]);
+                clone(args[0]);
             } catch (cloneErr) {
-                // Todo: Submit the likes of this as a PR to cyclonejs
                 throw createDOMException('DataCloneError', 'Could not clone the message.');
             }
             _postMessage(...args);
