@@ -851,15 +851,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         });
         window.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
-        // Not deleting per https://github.com/jsdom/jsdom/issues/1720#issuecomment-279665105
-        // Needed for avoiding test non-completion in '../non-indexedDB/interface-objects.js'
-        Object.defineProperty(window, 'TreeWalker', {
-            enumerable: false,
-            writable: true,
-            configurable: true,
-            value () { /* */ }
-        });
-
         // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
         const _postMessage = window.postMessage.bind(window);
         // Todo: Submit this as PR to jsdom
