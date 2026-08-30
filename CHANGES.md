@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- fix(types): Make arguments to `setGlobalVars()` optional
+
 ## 17.4.0
 
 - feat: add `sqlMemoryQuota` config for controlling quota size in Node

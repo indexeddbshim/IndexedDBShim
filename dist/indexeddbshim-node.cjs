@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.4.0 - 8/27/2026 */
+/*! indexeddbshim - v17.4.0 - 8/29/2026 */
 
 'use strict';
 
@@ -15026,8 +15026,8 @@ CFG.win = {
 };
 
 /**
- * @param {import('./setGlobalVars.js').ShimmedObject} idb
- * @param {Partial<import('./CFG.js').ConfigValues>} initialConfig
+ * @param {import('./setGlobalVars.js').ShimmedObject} [idb]
+ * @param {Partial<import('./CFG.js').ConfigValues>} [initialConfig]
  * @returns {import('./setGlobalVars.js').ShimmedObject|Window}
  */
 const __setGlobalVars = function (idb, initialConfig = {}) {
