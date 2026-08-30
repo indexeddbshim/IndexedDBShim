@@ -8,7 +8,7 @@ import * as UnicodeIdentifiers from './UnicodeIdentifiers.js';
 CFG.win = {openDatabase: nodeWebSQL};
 
 /**
- * @param {import('./setGlobalVars.js').ShimmedObject} [idb]
+ * @param {typeof globalThis | Record<string, unknown>} [idb]
  * @param {Partial<import('./CFG.js').ConfigValues>} [initialConfig]
  * @returns {import('./setGlobalVars.js').ShimmedObject|Window}
  */

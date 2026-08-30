@@ -1,1 +1,1 @@
-{"version":3,"file":"node-UnicodeIdentifiers.d.ts","sourceRoot":"","sources":["../src/node-UnicodeIdentifiers.js"],"names":[],"mappings":";AASA;;;;GAIG;AACH,uCAJW,OAAO,oBAAoB,EAAE,aAAa,kBAC1C,OAAO,CAAC,OAAO,UAAU,EAAE,YAAY,CAAC,GACtC,OAAO,oBAAoB,EAAE,aAAa,GAAC,MAAM,CAe7D"}
+{"version":3,"file":"node-UnicodeIdentifiers.d.ts","sourceRoot":"","sources":["../src/node-UnicodeIdentifiers.js"],"names":[],"mappings":";AASA;;;;GAIG;AACH,uCAJW,OAAO,UAAU,GAAG,MAAM,CAAC,MAAM,EAAE,OAAO,CAAC,kBAC3C,OAAO,CAAC,OAAO,UAAU,EAAE,YAAY,CAAC,GACtC,OAAO,oBAAoB,EAAE,aAAa,GAAC,MAAM,CAe7D"}

@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 17.4.3
+
+- fix(types): further compatibility of `setGlobalVars` with `globalThis`
+
 ## 17.4.2
 
 - fix(types): compatibility of `setGlobalVars` with `globalThis`
