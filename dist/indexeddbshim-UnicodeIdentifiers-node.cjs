@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.4.0 - 8/29/2026 */
+/*! indexeddbshim - v17.4.1 - 8/29/2026 */
 
 'use strict';
 
@@ -11150,8 +11150,8 @@ IDBFactory.prototype.cmp = function (key1, key2) {
  * @see https://github.com/w3c/IndexedDB/pull/240/files
  * @this {IDBFactoryFull}
  * @returns {Promise<{
- *   name: string,
- *   version: Integer
+ *   name?: string,
+ *   version?: Integer
  * }[]>}
  */
 IDBFactory.prototype.databases = function () {

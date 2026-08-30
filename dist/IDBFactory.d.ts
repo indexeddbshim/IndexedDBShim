@@ -56,13 +56,13 @@ export class IDBFactory {
      * @see https://github.com/w3c/IndexedDB/pull/240/files
      * @this {IDBFactoryFull}
      * @returns {Promise<{
-     *   name: string,
-     *   version: Integer
+     *   name?: string,
+     *   version?: Integer
      * }[]>}
      */
     databases(this: IDBFactoryFull): Promise<{
-        name: string;
-        version: Integer;
+        name?: string;
+        version?: Integer;
     }[]>;
     /**
      * @todo forceClose: Test

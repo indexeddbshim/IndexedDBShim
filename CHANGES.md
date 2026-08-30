@@ -1,8 +1,9 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 17.4.1
 
 - fix(types): Make arguments to `setGlobalVars()` optional
+- fix(types): make compliant with standard IndexedDB definition of `databases`
 
 ## 17.4.0
 
