@@ -1,5 +1,5 @@
 import customOpenDatabase from 'websql-configurable/custom/index.js';
-import SQLiteDatabase from './nodeSQLiteDatabase.js';
+import SQLiteDatabase from 'websql-configurable/lib/sqlite/SQLiteDatabase.js';
 import CFG from './CFG.js';
 
 /**
@@ -29,16 +29,16 @@ function wrappedSQLiteDatabase (name) {
     // @ts-ignore It's ok; needed under some TS versions
     const db = new SQLiteDatabase(name, {});
     if (CFG.sqlBusyTimeout) {
-        db._db.configure('busyTimeout', /** @type {number} */ (CFG.sqlBusyTimeout)); // Default is 1000
+        db.configure('busyTimeout', /** @type {number} */ (CFG.sqlBusyTimeout)); // Default is 1000
     }
     if (CFG.sqlTrace) {
-        db._db.configure('trace', CFG.sqlTrace);
+        db.configure('trace', CFG.sqlTrace);
     }
     if (CFG.sqlProfile) {
-        db._db.configure('profile', CFG.sqlProfile);
+        db.configure('profile', CFG.sqlProfile);
     }
     if (CFG.sqlMemoryQuota) {
-        db._db.configure('memoryQuota', /** @type {number} */ (CFG.sqlMemoryQuota));
+        db.configure('memoryQuota', /** @type {number} */ (CFG.sqlMemoryQuota));
     }
     return db;
 }

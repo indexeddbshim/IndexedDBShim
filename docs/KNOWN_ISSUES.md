@@ -172,10 +172,11 @@ The relevant WPT tests:
 ### Timing/Transaction finished timing
 
 Our actual SQLite driver (`better-sqlite3`, wired in via
-`src/nodeSQLiteDatabase.js`) is already fully synchronous --
-`stmt.run()`/`stmt.all()` execute directly, no callbacks. But
-`SQLiteDatabase.prototype.exec` there deliberately wraps its callback in
-a real macrotask (`setImmediate`, not a microtask) before invoking it:
+`websql-configurable`'s `SQLiteDatabase` -- see `src/nodeWebSQL.js`) is
+already fully synchronous -- `stmt.run()`/`stmt.all()` execute directly,
+no callbacks. But `SQLiteDatabase.prototype.exec` there deliberately
+wraps its callback in a real macrotask (`setImmediate`, not a microtask)
+before invoking it:
 without that deferral, code that synchronously re-issues a new request
 from within a request's own callback (e.g. to keep a transaction alive,
 a pattern several WPT tests use) would chain microtask to microtask

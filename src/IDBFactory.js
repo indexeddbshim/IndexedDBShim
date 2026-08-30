@@ -220,9 +220,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
 /**
  * @typedef {import('websql-configurable/lib/websql/WebSQLDatabase.js').default & {
  *   _db: {
- *     _db: {
- *       close: (errBack: (err: Error) => void) => void
- *     }
+ *     close: (errBack: (err: Error) => void) => void
  *   }
  * }} DatabaseFull
  */
@@ -304,7 +302,7 @@ function closeCachedWebSQLConnections (name, cb) {
         return;
     }
     dbs.forEach((db) => {
-        const sqliteDB = db._db && db._db._db;
+        const sqliteDB = db._db;
         if (!sqliteDB || !sqliteDB.close) {
             remaining--;
             if (remaining === 0) {
@@ -347,9 +345,9 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
             databaseDeleted();
             return;
         }
-        const sqliteDB = latestSQLiteDBCached._db && latestSQLiteDBCached._db._db;
+        const sqliteDB = latestSQLiteDBCached._db;
         if (!sqliteDB || !sqliteDB.close) {
-            console.error('The `openDatabase` implementation does not have the expected `._db._db.close` method for closing the database');
+            console.error('The `openDatabase` implementation does not have the expected `._db.close` method for closing the database');
             return;
         }
         sqliteDB.close(
@@ -1229,7 +1227,7 @@ IDBFactory.prototype.databases = function () {
     let calledDbCreateError = false;
     // Snapshotted *now*, synchronously, at call time -- not read later
     // from inside the SQL query's callback below, which runs on a
-    //   deferred macrotask (see `nodeSQLiteDatabase.js`'s `exec`) and so
+    //   deferred macrotask (see `websql-configurable`'s `SQLiteDatabase#exec`) and so
     //   could otherwise race against (and lose to) an in-flight upgrade's
     //   own commit/abort handler clearing its `pendingVersionChanges`
     //   entry in the meantime -- which would make this method incorrectly

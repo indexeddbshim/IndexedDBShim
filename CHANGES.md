@@ -1,5 +1,14 @@
 # CHANGES for indexeddbshim
 
+## 17.5.0
+
+- refactor: move the `better-sqlite3` SQL driver upstream into
+  `websql-configurable` (v4); drop the local `src/nodeSQLiteDatabase.js`
+  and consume `websql-configurable/lib/sqlite/SQLiteDatabase.js` directly
+- chore: require `websql-configurable@^4.0.0`; drop the direct
+  `better-sqlite3` / `@types/better-sqlite3` dependencies (now transitive)
+  and the obsolete `sqlite3` `allowScripts`/`sqlite-rebuild` remnants
+
 ## 17.4.3
 
 - fix(types): further compatibility of `setGlobalVars` with `globalThis`

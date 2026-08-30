@@ -317,8 +317,8 @@ workerCtx.console = console;
     workerCtx[prop] = global[prop];
 });
 // Unlike the window context (`node-idb-test.js`, which no longer needs
-//   this now that `nodeSQLiteDatabase.js` defers its SQL callback via
-//   `setImmediate` rather than `setTimeout(..., 0)`), a worker's script
+//   this now that `websql-configurable`'s `SQLiteDatabase` defers its SQL
+//   callback via `setImmediate` rather than `setTimeout(..., 0)`), a worker's script
 //   runs in a real, separate child process reached over a Unix-domain-
 //   socket-wrapped WebSocket (see `webworker.js`) -- that round-trip
 //   adds real latency `setImmediate`'s tighter deferral doesn't cover,

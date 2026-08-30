@@ -65,7 +65,7 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => 
         commonJS({
             // Gets issue with dynamic requires and we aren't
             //  "importing" anyways
-            ignore: ['sqlite3']
+            ignore: ['better-sqlite3']
         }),
         babel(babelOptions),
         filesize({
@@ -125,7 +125,10 @@ const nodeEnvironment = ({input, name, output: file}) => {
             input,
             external: [
                 ...builtins,
-                'websql/custom/index.js', 'websql/lib/sqlite/SQLiteDatabase',
+                'websql-configurable/custom/index.js',
+                // Keeps the native `better-sqlite3` dependency (pulled in by
+                //  this module) out of the bundle -- it's `require`d at runtime.
+                'websql-configurable/lib/sqlite/SQLiteDatabase.js',
                 // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
                 'readable-stream', 'readable-stream/transform'
             ],
