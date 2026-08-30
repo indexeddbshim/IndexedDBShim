@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.4.2 - 8/29/2026 */
+/*! indexeddbshim - v17.4.3 - 8/29/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
