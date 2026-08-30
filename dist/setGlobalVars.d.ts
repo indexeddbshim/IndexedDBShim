@@ -16,7 +16,7 @@ export type ShimIndexedDB = (IDBFactory | object) & {
     __setConnectionQueueOrigin: (origin?: string) => void;
 };
 export type Integer = number;
-export type ShimmedObject = (typeof globalThis | object) & {
+export type ShimmedObject = (typeof globalThis | Record<string, unknown>) & {
     indexedDB?: Partial<IDBFactory>;
     IDBFactory: typeof IDBFactory;
     IDBOpenDBRequest: typeof IDBOpenDBRequest;
@@ -54,7 +54,7 @@ import { createDOMException } from './DOMException.js';
  * @typedef {number} Integer
  */
 /**
- * @typedef {(typeof globalThis|object) & {
+ * @typedef {(typeof globalThis|Record<string, unknown>) & {
  *   indexedDB?: Partial<IDBFactory>,
  *   IDBFactory: typeof IDBFactory,
  *   IDBOpenDBRequest: typeof IDBOpenDBRequest,
@@ -69,10 +69,10 @@ import { createDOMException } from './DOMException.js';
  */
 /**
  *
- * @param {ShimmedObject} [idb]
+ * @param {typeof globalThis | Record<string, unknown>} [idb]
  * @param {Partial<import('./CFG.js').ConfigValues>} [initialConfig]
  * @returns {ShimmedObject}
  */
-declare function setGlobalVars(idb?: ShimmedObject, initialConfig?: Partial<import("./CFG.js").ConfigValues>): ShimmedObject;
+declare function setGlobalVars(idb?: typeof globalThis | Record<string, unknown>, initialConfig?: Partial<import("./CFG.js").ConfigValues>): ShimmedObject;
 import { IDBFactory } from './IDBFactory.js';
 //# sourceMappingURL=setGlobalVars.d.ts.map

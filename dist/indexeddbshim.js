@@ -13754,7 +13754,7 @@
    */
 
   /**
-   * @typedef {(typeof globalThis|object) & {
+   * @typedef {(typeof globalThis|Record<string, unknown>) & {
    *   indexedDB?: Partial<IDBFactory>,
    *   IDBFactory: typeof IDBFactory,
    *   IDBOpenDBRequest: typeof IDBOpenDBRequest,
@@ -13770,12 +13770,13 @@
 
   /**
    *
-   * @param {ShimmedObject} [idb]
+   * @param {typeof globalThis | Record<string, unknown>} [idb]
    * @param {Partial<import('./CFG.js').ConfigValues>} [initialConfig]
    * @returns {ShimmedObject}
    */
   function setGlobalVars(idb, initialConfig) {
-    var IDB = globalThis || {};
+    var IDB = /** @type {ShimmedObject & {[key: string]: unknown}} */
+    /** @type {unknown} */globalThis || {};
     /**
      * @typedef {any} AnyClass
      */
@@ -13797,15 +13798,12 @@
       if (!propDesc || !Object.defineProperty) {
         try {
           // Try setting the property. This will fail if the property is read-only.
-          // @ts-expect-error It's ok
           IDB[name] = value;
         } catch (e) {
           console.log(e);
         }
       }
-      if (
-      // @ts-expect-error It's ok
-      IDB[name] !== value && Object.defineProperty) {
+      if (IDB[name] !== value && Object.defineProperty) {
         // Setting a read-only property failed, so try re-defining the property
         try {
           var desc = propDesc || {};
@@ -13830,8 +13828,6 @@
           //  get here since no WebSQL to use for shimming)
         }
       }
-
-      // @ts-expect-error It's ok
       if (IDB[name] !== value) {
         if (typeof console !== 'undefined' && console.warn) {
           console.warn('Unable to shim ' + name);
