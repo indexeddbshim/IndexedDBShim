@@ -15,5 +15,5 @@ export type SQLiteDatabaseInstance = {
  */
 export type SQLiteDatabaseConstructor = new (name: string, opts?: any) => SQLiteDatabaseInstance;
 declare const nodeWebSQL: (...args: unknown[]) => import("websql-configurable/lib/websql/WebSQLDatabase.js").default;
-import SQLiteDatabase from './nodeSQLiteDatabase.js';
+import SQLiteDatabase from 'websql-configurable/lib/sqlite/SQLiteDatabase.js';
 //# sourceMappingURL=nodeWebSQL.d.ts.map

@@ -6,9 +6,7 @@ export type WebSQLResultSet = import("websql-configurable/lib/websql/WebSQLResul
 export type DatabaseDeleted = () => void;
 export type DatabaseFull = import("websql-configurable/lib/websql/WebSQLDatabase.js").default & {
     _db: {
-        _db: {
-            close: (errBack: (err: Error) => void) => void;
-        };
+        close: (errBack: (err: Error) => void) => void;
     };
 };
 export type OpenDatabase = (name: string, version: string, displayName: string, estimatedSize: number) => import("websql-configurable/lib/websql/WebSQLDatabase.js").default;

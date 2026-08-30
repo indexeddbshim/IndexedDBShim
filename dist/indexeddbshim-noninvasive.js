@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.4.3 - 8/29/2026 */
+/*! indexeddbshim - v17.5.0 - 8/30/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -11262,9 +11262,7 @@
   /**
    * @typedef {import('websql-configurable/lib/websql/WebSQLDatabase.js').default & {
    *   _db: {
-   *     _db: {
-   *       close: (errBack: (err: Error) => void) => void
-   *     }
+   *     close: (errBack: (err: Error) => void) => void
    *   }
    * }} DatabaseFull
    */
@@ -11342,7 +11340,7 @@
       return;
     }
     dbs.forEach(function (db) {
-      var sqliteDB = db._db && db._db._db;
+      var sqliteDB = db._db;
       if (!sqliteDB || !sqliteDB.close) {
         remaining--;
         if (remaining === 0) {
@@ -11384,9 +11382,9 @@
         databaseDeleted();
         return;
       }
-      var _sqliteDB = latestSQLiteDBCached._db && latestSQLiteDBCached._db._db;
+      var _sqliteDB = latestSQLiteDBCached._db;
       if (!_sqliteDB || !_sqliteDB.close) {
-        console.error('The `openDatabase` implementation does not have the expected `._db._db.close` method for closing the database');
+        console.error('The `openDatabase` implementation does not have the expected `._db.close` method for closing the database');
         return;
       }
       _sqliteDB.close(
@@ -12191,7 +12189,7 @@
     var calledDbCreateError = false;
     // Snapshotted *now*, synchronously, at call time -- not read later
     // from inside the SQL query's callback below, which runs on a
-    //   deferred macrotask (see `nodeSQLiteDatabase.js`'s `exec`) and so
+    //   deferred macrotask (see `websql-configurable`'s `SQLiteDatabase#exec`) and so
     //   could otherwise race against (and lose to) an in-flight upgrade's
     //   own commit/abort handler clearing its `pendingVersionChanges`
     //   entry in the meantime -- which would make this method incorrectly
