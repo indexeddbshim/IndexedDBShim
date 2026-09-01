@@ -94,7 +94,8 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Co
         'IDBObjectStore/getAll-direction-spec.js',
         'IDBTransaction/objectStore-spec.js',
         'IDBTransaction/events-spec.js',
-        'IDBTransaction/durability-spec.js'
+        'IDBTransaction/durability-spec.js',
+        'IDBTransaction/retention-spec.js'
     ];
 }
 await Promise.all(tests.map(async function (path) {
