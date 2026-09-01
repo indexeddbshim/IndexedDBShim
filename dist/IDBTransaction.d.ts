@@ -36,7 +36,7 @@ export type IDBTransactionFull = EventTarget & {
     __requestsFinished: boolean;
     __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void;
     __callTransFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void;
-    __transactionEndCallback: () => void;
+    __transactionEndCallback: (() => void) | undefined;
     __transactionFinished: boolean;
     __completed: boolean;
     __transFinishedCbFired: boolean;
@@ -53,82 +53,6 @@ export type IDBTransactionFull = EventTarget & {
 export type SQLCallback = (tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default, args: ObjectArray, success: (result?: any, req?: import("./IDBRequest.js").IDBRequestFull) => void, error: (tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default | Error | DOMException, err?: Error & {
     code?: number;
 }) => void, executeNextRequest?: () => void) => void;
-/**
- * @typedef {number} Integer
- */
-/**
- * @typedef {{
- *   op: SQLCallback,
- *   args: ObjectArray,
- *   req: import('./IDBRequest.js').IDBRequestFull|null
- * }} RequestInfo
- */
-/**
- * @typedef {EventTarget & {
- *   mode: "readonly"|"readwrite"|"versionchange",
- *   durability: "default"|"strict"|"relaxed",
- *   db: import('./IDBDatabase.js').IDBDatabaseFull,
- *   on__abort: () => void,
- *   on__complete: () => void,
- *   on__beforecomplete: (ev: Event & {
- *     complete: () => void
- *   }) => void,
- *   on__preabort: () => void,
- *   __abortTransaction: (err: Error|DOMException|null) => void,
- *   __executeRequests: () => void,
- *   __tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
- *   __id: Integer,
- *   __active: boolean,
- *   __handlerActive: boolean,
- *   __running: boolean,
- *   __errored: boolean,
- *   __committed: boolean,
- *   __requests: RequestInfo[],
- *   __db: import('./IDBDatabase.js').IDBDatabaseFull,
- *   __mode: string,
- *   __durability: string,
- *   __error: null|DOMException|Error,
- *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
- *   __storeHandles: {
- *     [key: string]: import('./IDBObjectStore.js').IDBObjectStoreFull
- *   },
- *   __requestsFinished: boolean,
- *   __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
- *   __callTransFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
- *   __transactionEndCallback: () => void,
- *   __transactionFinished: boolean,
- *   __completed: boolean,
- *   __transFinishedCbFired: boolean,
- *   __internal: boolean,
- *   __abortFinished: boolean,
- *   __createRequest: (
- *     source: import('./IDBDatabase.js').IDBDatabaseFull|
- *       import('./IDBObjectStore.js').IDBObjectStoreFull|
- *       import('./IDBIndex.js').IDBIndexFull|
- *       import('./IDBCursor.js').IDBCursorFull
- *   ) => import('./IDBRequest.js').IDBRequestFull,
- *   __pushToQueue: (
- *     request: import('./IDBRequest.js').IDBRequestFull|null,
- *     callback: SQLCallback,
- *     args?: ObjectArray
- *   ) => void,
- *   __assertActive: () => void,
- *   commit: () => void,
- *   __addNonRequestToTransactionQueue: (
- *     callback: SQLCallback,
- *     args?: ObjectArray
- *   ) => void
- *   __addToTransactionQueue: (
- *     callback: SQLCallback,
- *     args: ObjectArray|undefined,
- *     source: import('./IDBDatabase.js').IDBDatabaseFull|
- *       import('./IDBObjectStore.js').IDBObjectStoreFull|
- *       import('./IDBIndex.js').IDBIndexFull|
- *       import('./IDBCursor.js').IDBCursorFull
- *   ) => import('./IDBRequest.js').IDBRequestFull
- *   __assertWritable: () => void,
- * }} IDBTransactionFull
- */
 /**
  * The IndexedDB Transaction.
  * @see https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v17.5.0 - 8/30/2026 */
+/*! indexeddbshim - v17.6.0 - 9/1/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -5390,7 +5390,7 @@
    *   __requestsFinished: boolean,
    *   __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
    *   __callTransFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
-   *   __transactionEndCallback: () => void,
+   *   __transactionEndCallback: (() => void)|undefined,
    *   __transactionFinished: boolean,
    *   __completed: boolean,
    *   __transFinishedCbFired: boolean,
@@ -5424,6 +5424,19 @@
    *   __assertWritable: () => void,
    * }} IDBTransactionFull
    */
+
+  /**
+   * @param {IDBTransactionFull} tx
+   * @returns {void}
+   */
+  function releaseFinishedTransaction(tx) {
+    var pos = tx.db.__transactions.indexOf(tx);
+    if (pos !== -1) {
+      tx.db.__transactions.splice(pos, 1);
+    }
+    tx.__transactionEndCallback = undefined;
+    tx.__requests = [];
+  }
 
   /**
    * The IndexedDB Transaction.
@@ -5989,6 +6002,7 @@
         } finally {
           activeTransactions.delete(me);
           me.__storeHandles = {};
+          releaseFinishedTransaction(me);
         }
       }
       if (me.mode === 'readwrite' || me.mode === 'readonly') {
@@ -6275,6 +6289,7 @@
           me.dispatchEvent(evt);
           me.__storeHandles = {};
           me.dispatchEvent(createEvent('__abort'));
+          releaseFinishedTransaction(me);
         }, 0);
         return undefined;
       }).catch(function (err) {

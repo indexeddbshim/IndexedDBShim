@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 17.6.0
+
+- fix: release finished transactions from `IDBDatabase.__transactions` (@theblang)
+
 ## 17.5.0
 
 - refactor: move the `better-sqlite3` SQL driver upstream into
