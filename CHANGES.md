@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 17.7.0
+
+- chore: update typeson, typeson-registry, devDeps
+
 ## 17.6.0
 
 - fix: release finished transactions from `IDBDatabase.__transactions` (@theblang)

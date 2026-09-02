@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "17.6.0",
+  "version": "17.7.0",
   "type": "module",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
@@ -170,8 +170,8 @@
     "canvas": "^3.2.3",
     "eventtargeter": "0.12.0",
     "sync-promise-expanded": "^2.0.0",
-    "typeson": "10.2.0",
-    "typeson-registry": "14.3.0",
+    "typeson": "10.3.0",
+    "typeson-registry": "14.5.0",
     "websql-configurable": "^4.0.0"
   },
   "devDependencies": {
@@ -185,7 +185,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^1.0.0",
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.4.1",
     "@types/websql": "^0.0.30",
     "@unicode/unicode-17.0.0": "^2.0.2",
     "babel-plugin-add-module-exports": "1.0.4",
@@ -199,8 +199,8 @@
     "coveradge": "^0.8.2",
     "delay-cli": "^3.0.0",
     "eslint": "^10.9.1",
-    "eslint-config-ash-nazg": "^43.1.0",
-    "globals": "^17.11.0",
+    "eslint-config-ash-nazg": "^43.1.6",
+    "globals": "^17.12.0",
     "is-date-object": "1.1.0",
     "isomorphic-fetch": "^3.0.0",
     "jsdom": "^30.0.1",
