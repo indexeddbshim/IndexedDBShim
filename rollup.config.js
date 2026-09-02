@@ -44,7 +44,7 @@ const babelNodeOptions = {...babelBrowserOptions,
 };
 
 // `rollup-plugin-node-polyfills` only recognizes bare builtin specifiers
-//   (e.g., "path"), not the "node:"-prefixed form used in `src/IDBFactory.js`,
+//   (e.g., "path"), not the "node:"-prefixed form,
 //   so without this, browser bundles get "Unresolved dependencies"/"Missing
 //   shims" warnings for `node:path` instead of being polyfilled.
 const stripNodeProtocol = () => ({

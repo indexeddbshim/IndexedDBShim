@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-invariant-returns -- Convenient here */
-// eslint-disable-next-line no-restricted-imports -- Can be polyfilled
-import path from 'node:path';
+// eslint-disable-next-line no-restricted-imports, unicorn/prefer-node-protocol -- Can be polyfilled
+import path from 'path';
 import SyncPromise from 'sync-promise-expanded';
 
 import {createEvent} from './Event.js';
