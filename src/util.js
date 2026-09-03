@@ -230,6 +230,28 @@ function sqlLIKEEscape (str) {
 }
 
 /**
+ * Minimal replacement for `path.join(base, name)` covering our only use case:
+ *   `name` is always a bare file name (no separators and no `.`/`..`), and
+ *   `base` is a directory path expected to be absolute and normalized (an
+ *   empty string means the current working directory). Unlike `path.join`,
+ *   this performs no `.`/`..` resolution. It reuses the separator style of
+ *   `base` (backslash only when `base` uses backslashes and no forward
+ *   slashes, i.e. a Windows path), otherwise `/`; Node's `fs`, SQLite, and
+ *   `websql-configurable` accept either separator on Windows regardless.
+ *   Avoiding `node:path` keeps browser bundles free of a path polyfill.
+ * @param {string} base
+ * @param {string} name
+ * @returns {string}
+ */
+function joinPath (base, name) {
+    if (!base) {
+        return name;
+    }
+    const sep = base.includes('\\') && !base.includes('/') ? '\\' : '/';
+    return base.replace(/[/\\]+$/u, '') + sep + name;
+}
+
+/**
  * @typedef {Function} AnyClass
  */
 
@@ -637,7 +659,7 @@ function runContinuationSafely (fn) {
 export {escapeSQLiteStatement, unescapeSQLiteResponse,
     escapeDatabaseNameForSQLAndFiles, unescapeDatabaseNameForSQLAndFiles,
     escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForSQLKeyColumn,
-    sqlLIKEEscape, sqlQuote,
+    sqlLIKEEscape, sqlQuote, joinPath,
     instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, isBinary, isIterable,
     defineOuterInterface, defineReadonlyOuterInterface,

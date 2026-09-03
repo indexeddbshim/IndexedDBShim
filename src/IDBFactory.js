@@ -1,6 +1,4 @@
 /* eslint-disable sonarjs/no-invariant-returns -- Convenient here */
-// eslint-disable-next-line no-restricted-imports -- Can be polyfilled
-import path from 'node:path';
 import SyncPromise from 'sync-promise-expanded';
 
 import {createEvent} from './Event.js';
@@ -367,7 +365,7 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
     }
     if (fs && CFG.deleteDatabaseFiles !== false) {
         closeCachedWebSQLConnections(name, () => {
-            fs.unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), (err) => {
+            fs.unlink(util.joinPath(CFG.databaseBasePath || '', escapedDatabaseName), (err) => {
                 if (err && err.code !== 'ENOENT') { // Ignore if file is already deleted
                     const removalError = /** @type {Error & {code?: number}} */ (
                         new Error('Error removing database file: ' + escapedDatabaseName + ' ' + err)
@@ -383,7 +381,7 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
     }
 
     const sqliteDB = __openDatabase(
-        path.join(CFG.databaseBasePath || '', escapedDatabaseName),
+        util.joinPath(CFG.databaseBasePath || '', escapedDatabaseName),
         '1',
         name,
         CFG.DEFAULT_DB_SIZE
@@ -451,7 +449,7 @@ function createSysDB (__openDatabase, success, failure) {
         sysdb = __openDatabase(
             typeof CFG.memoryDatabase === 'string'
                 ? CFG.memoryDatabase
-                : path.join(
+                : util.joinPath(
                     (typeof CFG.sysDatabaseBasePath === 'string'
                         ? CFG.sysDatabaseBasePath
                         : (CFG.databaseBasePath || '')),
@@ -963,7 +961,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
             db = websqlDBCache[name][version];
         } else {
             db = /** @type {DatabaseFull} */ (me.__openDatabase(
-                useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName),
+                useMemoryDatabase ? CFG.memoryDatabase : util.joinPath(CFG.databaseBasePath || '', escapedDatabaseName),
                 '1',
                 name,
                 CFG.DEFAULT_DB_SIZE

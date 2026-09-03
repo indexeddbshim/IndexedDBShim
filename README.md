@@ -479,10 +479,20 @@ browser, particularly if one changes the defaults.
 Node-only config:
 
 - __sysDatabaseBasePath__ - Base path for the `__sysdb__(.sqlite)` database
-    file; defaults to `__databaseBasePath` unless another value (including
-    the empty string) is given; otherwise is the empty string
+    file; defaults to `databaseBasePath` unless another value (including
+    the empty string) is given; otherwise is the empty string. The same
+    path requirements as `databaseBasePath` (below) apply.
 - __databaseBasePath__ - Base path for user database files; defaults to the
-    empty string
+    empty string (i.e., the current working directory). IndexedDBShim no
+    longer depends on Node's `path` module, so this value is joined to the
+    (escaped) database file name by plain string concatenation rather than
+    by `path.join`. It should therefore be an __absolute, already-normalized
+    path__: `.`/`..` segments and repeated separators are not resolved or
+    collapsed. A single trailing separator (`/` or `\`) is optional and is
+    stripped before joining, and the base's separator style is reused (a
+    backslash is used to join only when the base contains backslashes and
+    no forward slashes, i.e., a Windows path); Node's `fs` and SQLite
+    accept `/` on Windows regardless.
 - __deleteDatabaseFiles__ - Deletes physical database file upon
     `deleteDatabase` (instead of merely emptying). Defaults to `true`.
     Does not currently delete the database for tracking available

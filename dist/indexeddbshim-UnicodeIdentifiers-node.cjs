@@ -1,9 +1,8 @@
-/*! indexeddbshim - v17.7.0 - 9/2/2026 */
+/*! indexeddbshim - v17.7.0 - 9/3/2026 */
 
 'use strict';
 
 var fs$1 = require('node:fs');
-var path = require('node:path');
 var customOpenDatabase = require('websql-configurable/custom/index.js');
 var SQLiteDatabase = require('websql-configurable/lib/sqlite/SQLiteDatabase.js');
 
@@ -1742,6 +1741,28 @@ function escapeIndexNameForSQLKeyColumn(index) {
 function sqlLIKEEscape(str) {
   // https://www.sqlite.org/lang_expr.html#like
   return str.replaceAll('^', '^^');
+}
+
+/**
+ * Minimal replacement for `path.join(base, name)` covering our only use case:
+ *   `name` is always a bare file name (no separators and no `.`/`..`), and
+ *   `base` is a directory path expected to be absolute and normalized (an
+ *   empty string means the current working directory). Unlike `path.join`,
+ *   this performs no `.`/`..` resolution. It reuses the separator style of
+ *   `base` (backslash only when `base` uses backslashes and no forward
+ *   slashes, i.e. a Windows path), otherwise `/`; Node's `fs`, SQLite, and
+ *   `websql-configurable` accept either separator on Windows regardless.
+ *   Avoiding `node:path` keeps browser bundles free of a path polyfill.
+ * @param {string} base
+ * @param {string} name
+ * @returns {string}
+ */
+function joinPath(base, name) {
+  if (!base) {
+    return name;
+  }
+  const sep = base.includes('\\') && !base.includes('/') ? '\\' : '/';
+  return base.replace(/[/\\]+$/u, '') + sep + name;
 }
 
 /**
@@ -10128,7 +10149,6 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 });
 
 /* eslint-disable sonarjs/no-invariant-returns -- Convenient here */
-// eslint-disable-next-line no-restricted-imports -- Can be polyfilled
 
 /**
  * @typedef {number} Integer
@@ -10488,7 +10508,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
   }
   if (fs && CFG.deleteDatabaseFiles !== false) {
     closeCachedWebSQLConnections(name, () => {
-      fs.unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), err => {
+      fs.unlink(joinPath(CFG.databaseBasePath || '', escapedDatabaseName), err => {
         if (err && err.code !== 'ENOENT') {
           // Ignore if file is already deleted
           const removalError = /** @type {Error & {code?: number}} */
@@ -10502,7 +10522,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
     });
     return;
   }
-  const sqliteDB = __openDatabase(path.join(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
+  const sqliteDB = __openDatabase(joinPath(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
   sqliteDB.transaction(function (tx) {
     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
       const tables = data.rows;
@@ -10563,7 +10583,7 @@ function createSysDB(__openDatabase, success, failure) {
     success();
   } else {
     // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
-    sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : path.join(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), '1', 'System Database', CFG.DEFAULT_DB_SIZE);
+    sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : joinPath(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), '1', 'System Database', CFG.DEFAULT_DB_SIZE);
     sysdb.transaction(function (systx) {
       systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], function (systx) {
         if (!CFG.useSQLiteIndexes) {
@@ -11019,7 +11039,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     if ((useMemoryDatabase || useDatabaseCache) && Object.hasOwn(websqlDBCache, name) && Object.hasOwn(websqlDBCache[name], version)) {
       db = websqlDBCache[name][version];
     } else {
-      db = /** @type {DatabaseFull} */me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
+      db = /** @type {DatabaseFull} */me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : joinPath(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
       if (useDatabaseCache) {
         if (!Object.hasOwn(websqlDBCache, name)) {
           websqlDBCache[name] = {};

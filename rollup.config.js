@@ -1,15 +1,9 @@
-// /* eslint-disable import-x/no-deprecated, import-x/namespace,
-//     import-x/default, import-x/no-named-as-default,
-//     import-x/no-named-as-default-member -- Problems with JSON import */
 import {readFile} from 'node:fs/promises';
 
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import commonJS from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
 
 import {babel} from '@rollup/plugin-babel';
-import inject from '@rollup/plugin-inject';
-import nodePolyfills from 'rollup-plugin-node-polyfills';
 import filesize from 'rollup-plugin-filesize';
 import terser from '@rollup/plugin-terser';
 
@@ -37,24 +31,11 @@ const babelNodeOptions = {...babelBrowserOptions,
     presets: [
         ['@babel/env', {
             targets: {
-                node: '16'
+                node: '22'
             }
         }]
     ]
 };
-
-// `rollup-plugin-node-polyfills` only recognizes bare builtin specifiers
-//   (e.g., "path"), not the "node:"-prefixed form used in `src/IDBFactory.js`,
-//   so without this, browser bundles get "Unresolved dependencies"/"Missing
-//   shims" warnings for `node:path` instead of being polyfilled.
-const stripNodeProtocol = () => ({
-    name: 'strip-node-protocol',
-    resolveId (source, importer, options) {
-        return source.startsWith('node:')
-            ? this.resolve(source.slice(5), importer, {...options, skipSelf: true})
-            : null;
-    }
-});
 
 const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => {
     const ret = [
@@ -69,22 +50,10 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => 
         }),
         babel(babelOptions),
         filesize({
-            showBeforeSizes: 'build'
+            // showBeforeSizes: 'build'
+            showBeforeSizes: 'release'
         })
     ];
-    if (addBuiltins) {
-        ret.unshift(
-            stripNodeProtocol(),
-            inject({
-                Buffer: ['buffer', 'Buffer'],
-                process: 'process/browser',
-                global: ['rollup-plugin-node-polyfills/polyfills/global', 'global']
-            }),
-            nodePolyfills()
-        );
-    } else {
-        ret.unshift(json());
-    }
     if (min) {
         ret.push(terser({
             // // Not apparently working per https://github.com/TrySound/rollup-plugin-terser/issues/68
