@@ -7,14 +7,10 @@
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
-    "declaration": true,
-    "declarationMap": true,
-    "allowSyntheticDefaultImports": true,
     "strict": true,
     "target": "es2017",
     "outDir": "dist",
-    "rootDir": "src",
-    "skipLibCheck": true
+    "rootDir": "src"
   },
   // , "test-support/**/*.js", "tests-mocha/**/*.js", "tests-polyfill/**/*.js"
   "include": ["src/**/*.js", "typings/shimIndexedDB.d.ts"],

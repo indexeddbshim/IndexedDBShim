@@ -1,21 +1,10 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "lib": ["DOM", "es2023"],
-    "types": ["node", "websql"],
-    "moduleResolution": "nodenext",
-    "module": "nodenext",
-    "allowJs": true,
-    "checkJs": true,
     "noEmit": false,
     "emitDeclarationOnly": true,
     "declaration": true,
-    "declarationMap": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "target": "es2017",
-    "rootDir": "src",
-    "outDir": "dist"
+    "declarationMap": true
   },
-  "include": ["src/**/*.js", "typings/shimIndexedDB.d.ts"],
-  "exclude": ["node_modules", "web-platform-tests", "test-support/js"]
+  "include": ["src/**/*.js", "typings/shimIndexedDB.d.ts"]
 }
