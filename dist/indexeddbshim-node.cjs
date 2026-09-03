@@ -2516,7 +2516,7 @@ function createNonNativeDOMException(name, message) {
 
 /**
  * @typedef {{
- *   message: string|DOMString
+ *   message: string
  * }} ErrorLike
  */
 
@@ -4931,7 +4931,7 @@ const readonlyProperties$4 = ['objectStoreNames', 'mode', 'durability', 'db', 'e
 /**
  * @typedef {{
  *   op: SQLCallback,
- *   args: ObjectArray,
+ *   args: any[],
  *   req: import('./IDBRequest.js').IDBRequestFull|null
  * }} RequestInfo
  */
@@ -4983,17 +4983,17 @@ const readonlyProperties$4 = ['objectStoreNames', 'mode', 'durability', 'db', 'e
  *   __pushToQueue: (
  *     request: import('./IDBRequest.js').IDBRequestFull|null,
  *     callback: SQLCallback,
- *     args?: ObjectArray
+ *     args?: any[]
  *   ) => void,
  *   __assertActive: () => void,
  *   commit: () => void,
  *   __addNonRequestToTransactionQueue: (
  *     callback: SQLCallback,
- *     args?: ObjectArray
+ *     args?: any[]
  *   ) => void
  *   __addToTransactionQueue: (
  *     callback: SQLCallback,
- *     args: ObjectArray|undefined,
+ *     args: any[]|undefined,
  *     source: import('./IDBDatabase.js').IDBDatabaseFull|
  *       import('./IDBObjectStore.js').IDBObjectStoreFull|
  *       import('./IDBIndex.js').IDBIndexFull|
@@ -5624,7 +5624,7 @@ IDBTransaction.prototype.__createRequest = function (source) {
 /**
  * @typedef {(
  *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
- *   args: ObjectArray,
+ *   args: any[],
  *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
  *   error: (
  *     tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|Error|DOMException,
@@ -5637,7 +5637,7 @@ IDBTransaction.prototype.__createRequest = function (source) {
 /**
  * Adds a callback function to the transaction queue.
  * @param {SQLCallback} callback
- * @param {ObjectArray} args
+ * @param {any[]} args
  * @param {import('./IDBDatabase.js').IDBDatabaseFull|
  *   import('./IDBObjectStore.js').IDBObjectStoreFull|
  *   import('./IDBIndex.js').IDBIndexFull} source
@@ -5654,7 +5654,7 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
  * Adds a callback function to the transaction queue without generating a
  *   request.
  * @param {SQLCallback} callback
- * @param {ObjectArray} args
+ * @param {any[]} args
  * @this {IDBTransactionFull}
  * @returns {void}
  */
@@ -5666,7 +5666,7 @@ IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback,
  * Adds an IDBRequest to the transaction queue.
  * @param {import('./IDBRequest.js').IDBRequestFull|null} request
  * @param {SQLCallback} callback
- * @param {ObjectArray} args
+ * @param {any[]} args
  * @this {IDBTransactionFull}
  * @returns {void}
  */
@@ -10825,7 +10825,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
               req.transaction.__addNonRequestToTransactionQueue(
               /**
                * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} tx
-               * @param {ObjectArray} args
+               * @param {any[]} args
                * @param {(result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
                * @returns {void}
                */
@@ -11554,7 +11554,10 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  *   },
  *   __count: boolean,
  *   __prefetchedIndex: Integer,
- *   __prefetchedData: null|SQLResultSetRowList|{
+ *   __prefetchedData: null|{
+ *     length: number;
+ *     item(index: number): any;
+ *   }|{
  *     data: RowItemNonNull[],
  *     length: Integer,
  *     item: (index: Integer) => RowItemNonNull

@@ -1,5 +1,13 @@
 # CHANGES for indexeddbshim
 
+## 18.0.0
+
+BREAKING CHANGES:
+- Now requires absolute (directory) paths for `CFG.databaseBasePath` and `CFG.sysDatabaseBasePath`
+
+- fix: drop node:path dependency; fixes #389
+- fix(types): avoid unbundled deps.
+
 ## 17.7.0
 
 - chore: update typeson, typeson-registry, devDeps

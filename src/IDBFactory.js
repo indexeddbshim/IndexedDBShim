@@ -724,7 +724,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             req.transaction.__addNonRequestToTransactionQueue(
                                 /**
                                  * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} tx
-                                 * @param {ObjectArray} args
+                                 * @param {any[]} args
                                  * @param {(result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
                                  * @returns {void}
                                  */

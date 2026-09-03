@@ -602,7 +602,7 @@
 
   /**
    * @typedef {{
-   *   message: string|DOMString
+   *   message: string
    * }} ErrorLike
    */
 

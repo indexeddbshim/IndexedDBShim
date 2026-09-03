@@ -260,7 +260,7 @@ function createNonNativeDOMException (name, message) {
 
 /**
  * @typedef {{
- *   message: string|DOMString
+ *   message: string
  * }} ErrorLike
  */
 

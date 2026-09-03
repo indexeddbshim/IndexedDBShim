@@ -21,7 +21,10 @@ export type IDBCursorFull = IDBCursor & {
     };
     __count: boolean;
     __prefetchedIndex: Integer;
-    __prefetchedData: null | SQLResultSetRowList | {
+    __prefetchedData: null | {
+        length: number;
+        item(index: number): any;
+    } | {
         data: RowItemNonNull[];
         length: Integer;
         item: (index: Integer) => RowItemNonNull;
@@ -95,7 +98,10 @@ export type AnyValue = any;
  *   },
  *   __count: boolean,
  *   __prefetchedIndex: Integer,
- *   __prefetchedData: null|SQLResultSetRowList|{
+ *   __prefetchedData: null|{
+ *     length: number;
+ *     item(index: number): any;
+ *   }|{
  *     data: RowItemNonNull[],
  *     length: Integer,
  *     item: (index: Integer) => RowItemNonNull
