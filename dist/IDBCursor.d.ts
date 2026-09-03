@@ -73,9 +73,9 @@ export type RowItemNonNull = {
  *   `getAll`/`getAllKeys`/`getAllRecords`.
  */
 export type GetAllOptions = {
-    query?: import("./Key.js").Value;
+    query?: import("./IDBIndex.js").Query | null;
     count?: Integer;
-    direction?: string;
+    direction?: IDBCursorDirection;
 };
 /**
  * @typedef {number} Integer
@@ -324,9 +324,9 @@ export class IDBCursor {
      * The `{query, count, direction}` options shape shared by
      *   `getAll`/`getAllKeys`/`getAllRecords`.
      * @typedef {{
-     *   query?: import('./Key.js').Value,
+     *   query?: import('./IDBIndex.js').Query|null,
      *   count?: Integer,
-     *   direction?: string
+     *   direction?: IDBCursorDirection
      * }} GetAllOptions
      */
     /**
@@ -409,13 +409,13 @@ export namespace IDBCursorWithValue {
  * @param {IArguments} args
  * @throws {TypeError}
  * @returns {{
- *   query: import('./Key.js').Value|undefined,
+ *   query: import('./IDBIndex.js').Query|null|undefined,
  *   count: Integer|undefined,
  *   direction: string
  * }}
  */
 export function parseGetAllArgs(args: IArguments): {
-    query: import("./Key.js").Value | undefined;
+    query: import("./IDBIndex.js").Query | null | undefined;
     count: Integer | undefined;
     direction: string;
 };
@@ -426,13 +426,13 @@ export function parseGetAllArgs(args: IArguments): {
  * @param {IArguments} args
  * @throws {TypeError}
  * @returns {{
- *   query: import('./Key.js').Value|undefined,
+ *   query: import('./IDBIndex.js').Query|null|undefined,
  *   count: Integer|undefined,
  *   direction: string
  * }}
  */
 export function parseGetAllRecordsArgs(args: IArguments): {
-    query: import("./Key.js").Value | undefined;
+    query: import("./IDBIndex.js").Query | null | undefined;
     count: Integer | undefined;
     direction: string;
 };

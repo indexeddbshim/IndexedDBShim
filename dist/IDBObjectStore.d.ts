@@ -34,7 +34,7 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     __overwrite: (tx: WebSQLTransaction, key: import("./Key.js").Key, cb: (tx: WebSQLTransaction) => void, error: (err: (Error & {
         code?: number;
     })) => void) => void;
-    __get: (query: import("./Key.js").Value, getKey?: boolean, getAll?: boolean, count?: Integer) => import("./IDBRequest.js").IDBRequestFull;
+    __get: (query: import("./IDBIndex.js").Query, getKey?: boolean, getAll?: boolean, count?: Integer) => import("./IDBRequest.js").IDBRequestFull;
 };
 export type KeyValueArray = [import("./Key.js").Key | undefined, import("./Key.js").Value];
 /**
@@ -145,27 +145,27 @@ declare class IDBObjectStore {
     })) => void): void;
     /**
      *
-     * @param {import('./Key.js').Value} query
+     * @param {import('./IDBIndex.js').Query} query
      * @param {boolean} [getKey]
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    __get(this: IDBObjectStoreFull, query: import("./Key.js").Value, getKey?: boolean): import("./IDBRequest.js").IDBRequestFull;
+    __get(this: IDBObjectStoreFull, query: import("./IDBIndex.js").Query, getKey?: boolean): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
-     * @param {import('./Key.js').Value} query
+     * @param {import('./IDBIndex.js').Query} query
      * @throws {TypeError}
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    get(this: IDBObjectStoreFull, query: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
+    get(this: IDBObjectStoreFull, query: import("./IDBIndex.js").Query, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
-     * @param {import('./Key.js').Value} query
+     * @param {import('./IDBIndex.js').Query} query
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    getKey(this: IDBObjectStoreFull, query: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
+    getKey(this: IDBObjectStoreFull, query: import("./IDBIndex.js").Query, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -183,12 +183,12 @@ declare class IDBObjectStore {
     getAllRecords(this: IDBObjectStoreFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
-     * @param {import('./Key.js').Value} query
+     * @param {import('./IDBIndex.js').Query} query
      * @throws {TypeError}
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    delete(this: IDBObjectStoreFull, query: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
+    delete(this: IDBObjectStoreFull, query: import("./IDBIndex.js").Query, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -292,7 +292,7 @@ declare namespace IDBObjectStore {
      *     error: (err: (Error & {code?: number})) => void
      *   ) => void,
      *   __get: (
-     *     query: import('./Key.js').Value,
+     *     query: import('./IDBIndex.js').Query,
      *     getKey?: boolean,
      *     getAll?: boolean,
      *     count?: Integer

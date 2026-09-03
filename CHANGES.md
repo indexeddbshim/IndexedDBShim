@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 19.0.1
+
+- fix(types): further tweaks
+
 ## 19.0.0
 
 BREAKING CHANGES:

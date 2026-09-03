@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.0 - 9/3/2026 */
+/*! indexeddbshim - v19.0.1 - 9/3/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -8910,7 +8910,7 @@
   };
 
   /**
-   * @typedef {import('./Key.js').Value|IDBKeyRange} Query
+   * @typedef {IDBValidKey|IDBKeyRange} Query
    */
 
   /**
@@ -9473,7 +9473,7 @@
    *     error: (err: (Error & {code?: number})) => void
    *   ) => void,
    *   __get: (
-   *     query: import('./Key.js').Value,
+   *     query: import('./IDBIndex.js').Query,
    *     getKey?: boolean,
    *     getAll?: boolean,
    *     count?: Integer
@@ -10235,7 +10235,7 @@
 
   /**
    *
-   * @param {import('./Key.js').Value} query
+   * @param {import('./IDBIndex.js').Query} query
    * @param {boolean} [getKey]
    * @this {IDBObjectStoreFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -10287,7 +10287,7 @@
 
   /**
    *
-   * @param {import('./Key.js').Value} query
+   * @param {import('./IDBIndex.js').Query} query
    * @throws {TypeError}
    * @this {IDBObjectStoreFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -10301,7 +10301,7 @@
 
   /**
    *
-   * @param {import('./Key.js').Value} query
+   * @param {import('./IDBIndex.js').Query} query
    * @this {IDBObjectStoreFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
    */
@@ -10356,7 +10356,7 @@
 
   /**
    *
-   * @param {import('./Key.js').Value} query
+   * @param {import('./IDBIndex.js').Query} query
    * @throws {TypeError}
    * @this {IDBObjectStoreFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -13209,9 +13209,9 @@
    * The `{query, count, direction}` options shape shared by
    *   `getAll`/`getAllKeys`/`getAllRecords`.
    * @typedef {{
-   *   query?: import('./Key.js').Value,
+   *   query?: import('./IDBIndex.js').Query|null,
    *   count?: Integer,
-   *   direction?: string
+   *   direction?: IDBCursorDirection
    * }} GetAllOptions
    */
 
@@ -13384,7 +13384,7 @@
    * @param {unknown} options
    * @throws {TypeError}
    * @returns {{
-   *   query: import('./Key.js').Value|undefined,
+   *   query: import('./IDBIndex.js').Query|null|undefined,
    *   count: Integer|undefined,
    *   direction: string
    * }}
@@ -13420,7 +13420,7 @@
    * @param {IArguments} args
    * @throws {TypeError}
    * @returns {{
-   *   query: import('./Key.js').Value|undefined,
+   *   query: import('./IDBIndex.js').Query|null|undefined,
    *   count: Integer|undefined,
    *   direction: string
    * }}
@@ -13447,7 +13447,7 @@
    * @param {IArguments} args
    * @throws {TypeError}
    * @returns {{
-   *   query: import('./Key.js').Value|undefined,
+   *   query: import('./IDBIndex.js').Query|null|undefined,
    *   count: Integer|undefined,
    *   direction: string
    * }}

@@ -931,9 +931,9 @@ IDBCursor.prototype.advance = function (count) {
  * The `{query, count, direction}` options shape shared by
  *   `getAll`/`getAllKeys`/`getAllRecords`.
  * @typedef {{
- *   query?: import('./Key.js').Value,
+ *   query?: import('./IDBIndex.js').Query|null,
  *   count?: Integer,
- *   direction?: string
+ *   direction?: IDBCursorDirection
  * }} GetAllOptions
  */
 
@@ -1120,7 +1120,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
  * @param {unknown} options
  * @throws {TypeError}
  * @returns {{
- *   query: import('./Key.js').Value|undefined,
+ *   query: import('./IDBIndex.js').Query|null|undefined,
  *   count: Integer|undefined,
  *   direction: string
  * }}
@@ -1148,7 +1148,7 @@ function normalizeGetAllOptions (options) {
  * @param {IArguments} args
  * @throws {TypeError}
  * @returns {{
- *   query: import('./Key.js').Value|undefined,
+ *   query: import('./IDBIndex.js').Query|null|undefined,
  *   count: Integer|undefined,
  *   direction: string
  * }}
@@ -1172,7 +1172,7 @@ function parseGetAllArgs (args) {
  * @param {IArguments} args
  * @throws {TypeError}
  * @returns {{
- *   query: import('./Key.js').Value|undefined,
+ *   query: import('./IDBIndex.js').Query|null|undefined,
  *   count: Integer|undefined,
  *   direction: string
  * }}

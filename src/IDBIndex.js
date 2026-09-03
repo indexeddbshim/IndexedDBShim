@@ -497,7 +497,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
 };
 
 /**
- * @typedef {import('./Key.js').Value|IDBKeyRange} Query
+ * @typedef {IDBValidKey|IDBKeyRange} Query
  */
 
 /**

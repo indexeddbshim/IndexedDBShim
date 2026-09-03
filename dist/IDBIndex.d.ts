@@ -36,7 +36,7 @@ export type IDBIndexFull = IDBIndex & {
 export type IndexList = {
     [key: string]: IDBIndexProperties;
 };
-export type Query = import("./Key.js").Value | IDBKeyRange;
+export type Query = IDBValidKey | IDBKeyRange;
 /**
  * @param {boolean} nullDisallowed
  * @param {IDBIndexFull} index
@@ -107,7 +107,7 @@ export function executeFetchIndexData(count: number | null, unboundedDisallowed:
 export function IDBIndex(): void;
 export class IDBIndex {
     /**
-     * @typedef {import('./Key.js').Value|IDBKeyRange} Query
+     * @typedef {IDBValidKey|IDBKeyRange} Query
      */
     /**
      * Retrieves index data for the given key.

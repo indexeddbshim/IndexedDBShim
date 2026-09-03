@@ -91,7 +91,7 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     error: (err: (Error & {code?: number})) => void
  *   ) => void,
  *   __get: (
- *     query: import('./Key.js').Value,
+ *     query: import('./IDBIndex.js').Query,
  *     getKey?: boolean,
  *     getAll?: boolean,
  *     count?: Integer
@@ -912,7 +912,7 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
 
 /**
  *
- * @param {import('./Key.js').Value} query
+ * @param {import('./IDBIndex.js').Query} query
  * @param {boolean} [getKey]
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -964,7 +964,7 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
 
 /**
  *
- * @param {import('./Key.js').Value} query
+ * @param {import('./IDBIndex.js').Query} query
  * @throws {TypeError}
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -978,7 +978,7 @@ IDBObjectStore.prototype.get = function (query) {
 
 /**
  *
- * @param {import('./Key.js').Value} query
+ * @param {import('./IDBIndex.js').Query} query
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
@@ -1021,7 +1021,7 @@ IDBObjectStore.prototype.getAllRecords = function (/* options */) {
 
 /**
  *
- * @param {import('./Key.js').Value} query
+ * @param {import('./IDBIndex.js').Query} query
  * @throws {TypeError}
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}

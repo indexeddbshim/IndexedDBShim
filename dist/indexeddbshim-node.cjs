@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.0 - 9/3/2026 */
+/*! indexeddbshim - v19.0.1 - 9/3/2026 */
 
 'use strict';
 
@@ -8120,7 +8120,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
 };
 
 /**
- * @typedef {import('./Key.js').Value|IDBKeyRange} Query
+ * @typedef {IDBValidKey|IDBKeyRange} Query
  */
 
 /**
@@ -8666,7 +8666,7 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *     error: (err: (Error & {code?: number})) => void
  *   ) => void,
  *   __get: (
- *     query: import('./Key.js').Value,
+ *     query: import('./IDBIndex.js').Query,
  *     getKey?: boolean,
  *     getAll?: boolean,
  *     count?: Integer
@@ -9421,7 +9421,7 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
 
 /**
  *
- * @param {import('./Key.js').Value} query
+ * @param {import('./IDBIndex.js').Query} query
  * @param {boolean} [getKey]
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -9473,7 +9473,7 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
 
 /**
  *
- * @param {import('./Key.js').Value} query
+ * @param {import('./IDBIndex.js').Query} query
  * @throws {TypeError}
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -9487,7 +9487,7 @@ IDBObjectStore.prototype.get = function (query) {
 
 /**
  *
- * @param {import('./Key.js').Value} query
+ * @param {import('./IDBIndex.js').Query} query
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
@@ -9545,7 +9545,7 @@ IDBObjectStore.prototype.getAllRecords = function /* options */
 
 /**
  *
- * @param {import('./Key.js').Value} query
+ * @param {import('./IDBIndex.js').Query} query
  * @throws {TypeError}
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
@@ -12376,9 +12376,9 @@ IDBCursor.prototype.advance = function (count) {
  * The `{query, count, direction}` options shape shared by
  *   `getAll`/`getAllKeys`/`getAllRecords`.
  * @typedef {{
- *   query?: import('./Key.js').Value,
+ *   query?: import('./IDBIndex.js').Query|null,
  *   count?: Integer,
- *   direction?: string
+ *   direction?: IDBCursorDirection
  * }} GetAllOptions
  */
 
@@ -12548,7 +12548,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
  * @param {unknown} options
  * @throws {TypeError}
  * @returns {{
- *   query: import('./Key.js').Value|undefined,
+ *   query: import('./IDBIndex.js').Query|null|undefined,
  *   count: Integer|undefined,
  *   direction: string
  * }}
@@ -12584,7 +12584,7 @@ function normalizeGetAllOptions(options) {
  * @param {IArguments} args
  * @throws {TypeError}
  * @returns {{
- *   query: import('./Key.js').Value|undefined,
+ *   query: import('./IDBIndex.js').Query|null|undefined,
  *   count: Integer|undefined,
  *   direction: string
  * }}
@@ -12609,7 +12609,7 @@ function parseGetAllArgs(args) {
  * @param {IArguments} args
  * @throws {TypeError}
  * @returns {{
- *   query: import('./Key.js').Value|undefined,
+ *   query: import('./IDBIndex.js').Query|null|undefined,
  *   count: Integer|undefined,
  *   direction: string
  * }}
