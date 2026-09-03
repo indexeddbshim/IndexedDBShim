@@ -19,8 +19,8 @@ export type ArrayBufferView = NodeJS.TypedArray | DataView;
 export type BufferSource = ArrayBufferView | ArrayBuffer;
 export type KeyType = "number" | "date" | "string" | "binary" | "array";
 export type WebSQLTransaction = import("websql-configurable/lib/websql/WebSQLTransaction.js").default;
-export type Value = any;
-export type Key = any;
+export type Value = unknown;
+export type Key = IDBValidKey | null | undefined;
 export type KeyPathArray = KeyPath[];
 export type KeyPath = string | KeyPathArray;
 export type KeyValueObject = {
@@ -35,36 +35,35 @@ export type KeyValueObject = {
 export type ValueTypePrimitive = number | string | Date | ArrayBuffer;
 export type ValueTypeArray = ValueType[];
 export type ValueType = ValueTypePrimitive | ValueTypeArray;
-export type AnyValue = any;
 /**
  *
- * @param {Key} key
+ * @param {Value} key
  * @param {boolean} [inArray]
  * @returns {string|null}
  */
-export function encode(key: Key, inArray?: boolean): string | null;
+export function encode(key: Value, inArray?: boolean): string | null;
 /**
  *
- * @param {Key} key
+ * @param {string|null} key
  * @param {boolean} [inArray]
  * @throws {Error} Invalid number
  * @returns {undefined|ValueType}
  */
-export function decode(key: Key, inArray?: boolean): undefined | ValueType;
+export function decode(key: string | null, inArray?: boolean): undefined | ValueType;
 /**
  *
- * @param {Key} key
+ * @param {Value} key
  * @param {boolean} [inArray]
  * @returns {undefined|ValueType}
  */
-export function roundTrip(key: Key, inArray?: boolean): undefined | ValueType;
+export function roundTrip(key: Value, inArray?: boolean): undefined | ValueType;
 /**
  * Not currently in use but keeping for spec parity.
- * @param {Key} key
+ * @param {KeyValueObject} key
  * @throws {Error} Upon a "bad key"
  * @returns {ValueType}
  */
-export function convertKeyToValue(key: Key): ValueType;
+export function convertKeyToValue(key: KeyValueObject): ValueType;
 /**
  * Shortcut utility to avoid returning full keys from `convertValueToKey`
  *   and subsequent need to process in calling code unless `fullKeys` is
@@ -80,12 +79,12 @@ export function convertKeyToValue(key: Key): ValueType;
 export function convertValueToKeyValueDecoded(input: Value, seen?: Value[] | null, multiEntry?: boolean, fullKeys?: boolean): KeyValueObject;
 /**
  *
- * @param {Key} key
+ * @param {Value} key
  * @param {boolean} [fullKeys]
  * @returns {KeyValueObject}
  * @todo Document other allowable `key`?
  */
-export function convertValueToMultiEntryKeyDecoded(key: Key, fullKeys?: boolean): KeyValueObject;
+export function convertValueToMultiEntryKeyDecoded(key: Value, fullKeys?: boolean): KeyValueObject;
 /**
  * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
  *   `NaN`), binary objects or Arrays.
@@ -138,13 +137,13 @@ export function evaluateKeyPathOnValue(value: Value, keyPath: KeyPath, multiEntr
 export function extractKeyValueDecodedFromValueUsingKeyPath(value: Value, keyPath: KeyPath, multiEntry?: boolean, fullKeys?: boolean): KeyValueObject | KeyPathEvaluateValue;
 /**
  * Sets the inline key value.
- * @param {{[key: string]: AnyValue}} value
+ * @param {{[key: string]: Value}} value
  * @param {Key} key
  * @param {string} keyPath
  * @returns {void}
  */
 export function injectKeyIntoValueUsingKeyPath(value: {
-    [key: string]: AnyValue;
+    [key: string]: Value;
 }, key: Key, keyPath: string): void;
 /**
  *

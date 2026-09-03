@@ -1,6 +1,8 @@
 export type Integer = number;
-export type AnyClass = Function;
-export type AnyValue = any;
+export type AnyClass = {
+    [Symbol.hasInstance]: (value: unknown) => boolean;
+};
+export type AnyValue = unknown;
 /**
  * The escaping of unmatched surrogates was needed by Chrome but not Node.
  * @param {string} arg
@@ -66,7 +68,7 @@ export function sqlQuote(arg: string): string;
  */
 export function joinPath(base: string, name: string): string;
 /**
- * @typedef {Function} AnyClass
+ * @typedef {{[Symbol.hasInstance]: (value: unknown) => boolean}} AnyClass
  */
 /**
  *
@@ -83,28 +85,28 @@ export function instanceOf(obj: AnyValue, Clss: AnyClass): boolean;
 export function isObj(obj: AnyValue): obj is object;
 /**
  *
- * @param {object} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
-export function isDate(obj: object): boolean;
+export function isDate(obj: AnyValue): boolean;
 /**
  *
- * @param {object} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
-export function isBlob(obj: object): boolean;
+export function isBlob(obj: AnyValue): boolean;
 /**
  *
- * @param {object} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
-export function isRegExp(obj: object): boolean;
+export function isRegExp(obj: AnyValue): boolean;
 /**
  *
- * @param {object} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
-export function isFile(obj: object): boolean;
+export function isFile(obj: AnyValue): boolean;
 /**
  *
  * @param {AnyValue} obj
@@ -114,9 +116,9 @@ export function isBinary(obj: AnyValue): boolean;
 /**
  *
  * @param {AnyValue} obj
- * @returns {boolean}
+ * @returns {obj is Iterable<unknown>}
  */
-export function isIterable(obj: AnyValue): boolean;
+export function isIterable(obj: AnyValue): obj is Iterable<unknown>;
 /**
  *
  * @param {object} obj
@@ -133,26 +135,22 @@ export function defineOuterInterface(obj: object, props: string[]): void;
 export function defineReadonlyOuterInterface(obj: object, props: string[]): void;
 /**
  *
- * @param {object & {
- *   [key: string]: any
- * }} obj
+ * @param {object} obj
  * @param {string[]} listeners
  * @returns {void}
  */
-export function defineListenerProperties(obj: object & {
-    [key: string]: any;
-}, listeners: string[]): void;
+export function defineListenerProperties(obj: object, listeners: string[]): void;
 /**
  *
  * @param {object} obj
  * @param {string|string[]} props
  * @param {null|{
- *   [key: string]: any
+ *   [key: string]: unknown
  * }} getter
  * @returns {void}
  */
 export function defineReadonlyProperties(obj: object, props: string | string[], getter?: null | {
-    [key: string]: any;
+    [key: string]: unknown;
 }): void;
 /**
  * `X.prototype.method = function (...) {}` (an assignment to a
@@ -183,7 +181,7 @@ export function isValidKeyPath(keyPath: string | string[]): boolean;
  */
 export function enforceRange(number: number, type: "unsigned long long" | "unsigned long"): number;
 /**
- * @typedef {any} AnyValue
+ * @typedef {unknown} AnyValue
  */
 /**
  * @param {AnyValue} v

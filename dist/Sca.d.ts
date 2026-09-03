@@ -1,4 +1,4 @@
-export type AnyValue = any;
+export type AnyValue = import("./Key.js").Value;
 /**
  * We are keeping the callback approach for now in case we wish to reexpose
  * `Blob`, `File`, `FileList` asynchronously (though in such a case, we
@@ -10,7 +10,7 @@ export type AnyValue = any;
  */
 export function encode(obj: AnyValue, func?: (str: string) => void): string;
 /**
- * @typedef {any} AnyValue
+ * @typedef {import('./Key.js').Value} AnyValue
  */
 /**
  * @param {string} obj

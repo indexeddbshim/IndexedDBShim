@@ -30,14 +30,13 @@ export type IDBIndexFull = IDBIndex & {
     __objectStore: import("./IDBObjectStore.js").IDBObjectStoreFull;
     __keyPath: import("./Key.js").KeyPath;
     __recreated?: boolean;
-    __fetchIndexData: (range: any, opType: "value" | "key" | "count", nullDisallowed: boolean, count?: number) => import("./IDBRequest.js").IDBRequestFull;
+    __fetchIndexData: (range: Query, opType: "value" | "key" | "count", nullDisallowed: boolean, count?: number) => import("./IDBRequest.js").IDBRequestFull;
     __renameIndex: (store: import("./IDBObjectStore.js").IDBObjectStoreFull, oldName: string, newName: string, colInfoToPreserveArr?: string[][], cb?: null | ((tx: WebSQLTransaction, success: ((store: IDBObjectStore) => void)) => void)) => void;
 };
 export type IndexList = {
     [key: string]: IDBIndexProperties;
 };
-export type Query = any | IDBKeyRange;
-export type AnyValue = any;
+export type Query = import("./Key.js").Value | IDBKeyRange;
 /**
  * @param {boolean} nullDisallowed
  * @param {IDBIndexFull} index
@@ -68,11 +67,13 @@ export function buildFetchIndexDataSQL(nullDisallowed: boolean, index: IDBIndexF
  * @param {string[]} sqlValues
  * @param {WebSQLTransaction} tx
  * @param {null|undefined} args
- * @param {(result: number|undefined|[]|AnyValue|AnyValue[]) => void} success
+ * @param {(
+ *   result: number|undefined|[]|import('./Key.js').Value|import('./Key.js').Value[]
+ * ) => void} success
  * @param {(tx: WebSQLTransaction, err: (Error & {code?: number})) => void} error
  * @returns {void}
  */
-export function executeFetchIndexData(count: number | null, unboundedDisallowed: boolean, index: IDBIndexFull, hasKey: boolean, range: import("./Key.js").Value | import("./Key.js").Key, opType: "value" | "key" | "count", multiChecks: boolean, sql: string[], sqlValues: string[], tx: WebSQLTransaction, args: null | undefined, success: (result: number | undefined | [] | AnyValue | AnyValue[]) => void, error: (tx: WebSQLTransaction, err: (Error & {
+export function executeFetchIndexData(count: number | null, unboundedDisallowed: boolean, index: IDBIndexFull, hasKey: boolean, range: import("./Key.js").Value | import("./Key.js").Key, opType: "value" | "key" | "count", multiChecks: boolean, sql: string[], sqlValues: string[], tx: WebSQLTransaction, args: null | undefined, success: (result: number | undefined | [] | import("./Key.js").Value | import("./Key.js").Value[]) => void, error: (tx: WebSQLTransaction, err: (Error & {
     code?: number;
 })) => void): void;
 /**
@@ -106,7 +107,7 @@ export function executeFetchIndexData(count: number | null, unboundedDisallowed:
 export function IDBIndex(): void;
 export class IDBIndex {
     /**
-     * @typedef {any|IDBKeyRange} Query
+     * @typedef {import('./Key.js').Value|IDBKeyRange} Query
      */
     /**
      * Retrieves index data for the given key.
@@ -202,7 +203,7 @@ export namespace IDBIndex {
      *   __keyPath: import('./Key.js').KeyPath,
      *   __recreated?: boolean,
      *   __fetchIndexData: (
-     *     range: any,
+     *     range: Query,
      *     opType: "value"|"key"|"count",
      *     nullDisallowed: boolean,
      *     count?: number

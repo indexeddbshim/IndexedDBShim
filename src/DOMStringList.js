@@ -13,7 +13,7 @@
  *   clone: () => DOMStringListFull,
  *   contains: (str: string) => boolean,
  *   indexOf: (str: string) => Integer,
- *   splice: (index: Integer, howmany: Integer, ...args: any) => void
+ *   splice: (index: Integer, howmany: Integer, ...args: string[]) => void
  *   length: Integer
  * }} DOMStringListFull
  */
@@ -129,9 +129,10 @@ DOMStringList.prototype = {
     },
     /**
      * @this {DOMStringListFull}
-     * @param {(value: string, i: Integer, arr: string[]) => any[]} cb
+     * @template T
+     * @param {(value: string, i: Integer, arr: string[]) => T} cb
      * @param {object} thisArg
-     * @returns {any[]}
+     * @returns {T[]}
      */
     map (cb, thisArg) {
         // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument -- Convenient
@@ -156,10 +157,7 @@ DOMStringList.prototype = {
         this.sortList();
     },
     /**
-     * @typedef {any} AnyArgs
-     */
-    /**
-     * @param {[index: Integer, howmany: Integer, ...args: any]} args
+     * @param {[index: Integer, howmany: Integer, ...args: string[]]} args
      * @this {DOMStringListFull}
      * @returns {void}
      */
@@ -193,12 +191,9 @@ DOMStringList.prototype = {
 };
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
-/**
- * @typedef {any} AnyValue
- */
 Object.defineProperty(DOMStringList, Symbol.hasInstance, {
     /**
-     * @param {AnyValue} obj
+     * @param {unknown} obj
      * @returns {boolean}
      */
     value (obj) {

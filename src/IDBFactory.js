@@ -645,7 +645,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                     let sysdbFinishedCb = function (systx, err, cb) {
                         if (err) {
                             /**
-                             * @param {any} [errorToShow]
+                             * @param {unknown} [errorToShow]
                              * @returns {void}
                              */
                             const manualRevert = function (errorToShow) {
@@ -679,7 +679,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     },
                                     function () {
                                         isRevertingSysdb = false;
-                                        cb(errorToShow || reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
+                                        // eslint-disable-next-line promise/no-callback-in-promise -- Convenient
+                                        cb(/** @type {(Error & {code?: number})|undefined} */ (
+                                            errorToShow || reportError
+                                        ));
                                     }
                                 );
                             };
@@ -718,14 +721,14 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version})
                             );
                             req.__result = connection;
-                            connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
+                            connection.__upgradeTransaction = req.__transaction = connection.__versionTransaction = IDBTransaction.__createInstance(connection, connection.objectStoreNames, 'versionchange');
                             req.__done = true;
 
                             req.transaction.__addNonRequestToTransactionQueue(
                                 /**
                                  * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} tx
-                                 * @param {any[]} args
-                                 * @param {(result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
+                                 * @param {unknown[]} args
+                                 * @param {(result?: unknown, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
                                  * @returns {void}
                                  */
                                 function onupgradeneeded (tx, args, finished /* , error */) {

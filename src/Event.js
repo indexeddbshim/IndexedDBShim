@@ -30,12 +30,9 @@ function createEvent (type, debug, evInit) {
 // We don't add within polyfill repo as might not always be the desired implementation
 Object.defineProperty(ShimEvent, Symbol.hasInstance, {
     /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
-    /**
-     * @typedef {any} AnyValue
-     */
     value:
         /**
-         * @param {AnyValue} obj
+         * @param {unknown} obj
          * @returns {boolean}
          */
         (obj) => util.isObj(obj) && 'target' in obj && 'bubbles' in obj && typeof obj.bubbles === 'boolean'

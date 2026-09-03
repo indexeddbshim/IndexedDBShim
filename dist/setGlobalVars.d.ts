@@ -1,7 +1,6 @@
 export { createDOMException };
 export default setGlobalVars;
-export type AnyValue = any;
-export type SetConfig = (prop: import("./CFG.js").KeyofConfigValues | Partial<import("./CFG.js").ConfigValues>, val?: AnyValue) => any;
+export type SetConfig = (prop: import("./CFG.js").KeyofConfigValues | Partial<import("./CFG.js").ConfigValues>, val?: import("./CFG.js").ConfigValue | undefined) => any;
 export type GetConfig = (prop: import("./CFG.js").KeyofConfigValues) => import("./CFG.js").ConfigValue;
 export type SetUnicodeIdentifiers = (cfg: {
     UnicodeIDStart: string;

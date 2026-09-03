@@ -186,10 +186,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
          */
         async function finishedCheck () {
             /**
-             * @typedef {any} JSONValue
-             */
-            /**
-             * @param {JSONValue} value
+             * @param {unknown} value
              * @param {null} [replacer]
              * @param {string|number|undefined} [space]
              * @returns {string}

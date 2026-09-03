@@ -102,7 +102,7 @@ function encode (obj, func) {
 }
 
 /**
- * @typedef {any} AnyValue
+ * @typedef {import('./Key.js').Value} AnyValue
  */
 
 /**

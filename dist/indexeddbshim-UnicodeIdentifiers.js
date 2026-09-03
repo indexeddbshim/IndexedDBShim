@@ -1,4 +1,4 @@
-/*! indexeddbshim - v18.0.0 - 9/3/2026 */
+/*! indexeddbshim - v19.0.0 - 9/3/2026 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -50,13 +50,6 @@
   }
   function _classCallCheck(a, n) {
     if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
-  }
-  function _construct(t, e, r) {
-    if (_isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
-    var o = [null];
-    o.push.apply(o, e);
-    var p = new (t.bind.apply(t, o))();
-    return p;
   }
   function _defineProperties(e, r) {
     for (var t = 0; t < r.length; t++) {
@@ -1925,7 +1918,7 @@
   // Callback not used by default
   // Defaults to true except in Node builds where we can preserve literal NUL with better-sqlite3
   'escapeNULForSQLiteStatements', 'sqlMemoryQuota', 'createIndexes'].forEach(function (prop) {
-    /** @type {(val: any) => void} */
+    /** @type {(val: ConfigValue) => void} */
     var validator;
     if (Array.isArray(prop)) {
       var _prop = prop;
@@ -2146,9 +2139,11 @@
     return base.replace(/[\/\\]+$/, '') + sep + name;
   }
 
+  /* eslint-disable jsdoc/valid-types -- Bug */
   /**
-   * @typedef {Function} AnyClass
+   * @typedef {{[Symbol.hasInstance]: (value: unknown) => boolean}} AnyClass
    */
+  /* eslint-enable jsdoc/valid-types -- Bug */
 
   // Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
   /**
@@ -2172,7 +2167,7 @@
 
   /**
    *
-   * @param {object} obj
+   * @param {AnyValue} obj
    * @returns {boolean}
    */
   function isDate(obj) {
@@ -2181,7 +2176,7 @@
 
   /**
    *
-   * @param {object} obj
+   * @param {AnyValue} obj
    * @returns {boolean}
    */
   function isBlob(obj) {
@@ -2190,7 +2185,7 @@
 
   /**
    *
-   * @param {object} obj
+   * @param {AnyValue} obj
    * @returns {boolean}
    */
   function isFile(obj) {
@@ -2212,7 +2207,7 @@
   /**
    *
    * @param {AnyValue} obj
-   * @returns {boolean}
+   * @returns {obj is Iterable<unknown>}
    */
   function isIterable(obj) {
     return isObj(obj) &&
@@ -2258,9 +2253,7 @@
 
   /**
    *
-   * @param {object & {
-   *   [key: string]: any
-   * }} obj
+   * @param {object} obj
    * @param {string[]} listeners
    * @returns {void}
    */
@@ -2268,9 +2261,9 @@
     listeners = typeof listeners === 'string' ? [listeners] : listeners;
     listeners.forEach(function (listener) {
       var o = _defineAccessor("set", _defineAccessor("get", {}, listener, function () {
-        return obj['__' + listener];
+        return Reflect.get(obj, '__' + listener);
       }), listener, function (val) {
-        obj['__' + listener] = val;
+        Reflect.set(obj, '__' + listener, val);
       });
       var desc = /** @type {PropertyDescriptor} */
       Object.getOwnPropertyDescriptor(o, listener);
@@ -2279,7 +2272,7 @@
       Object.defineProperty(obj, listener, desc);
     });
     listeners.forEach(function (l) {
-      obj[l] = null;
+      Reflect.set(obj, l, null);
     });
   }
 
@@ -2288,7 +2281,7 @@
    * @param {object} obj
    * @param {string|string[]} props
    * @param {null|{
-   *   [key: string]: any
+   *   [key: string]: unknown
    * }} getter
    * @returns {void}
    */
@@ -2424,7 +2417,7 @@
   }
 
   /**
-   * @typedef {any} AnyValue
+   * @typedef {unknown} AnyValue
    */
 
   /**
@@ -2442,8 +2435,11 @@
    */
   function ToString(o) {
     // Todo: See `es-abstract/es7`
-    // `String()` will not throw with Symbols
-    return '' + o; // eslint-disable-line no-implicit-coercion -- Need to throw with symbols
+    // `String()` will not throw with Symbols, but the unchecked `+ ''`
+    //   coercion deliberately does (Web IDL requires converting a symbol
+    //   to `DOMString` to throw a `TypeError`); the assertion only tells
+    //   the compiler to allow the coercion it cannot model.
+    return '' + (/** @type {string} */o); // eslint-disable-line no-implicit-coercion -- Need to throw with symbols
   }
 
   /**
@@ -2550,12 +2546,9 @@
   // We don't add within polyfill repo as might not always be the desired implementation
   Object.defineProperty(ShimEvent, Symbol.hasInstance, {
     /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
-    /**
-     * @typedef {any} AnyValue
-     */
     value:
     /**
-     * @param {AnyValue} obj
+     * @param {unknown} obj
      * @returns {boolean}
      */
     function value(obj) {
@@ -2626,12 +2619,9 @@
     Object.defineProperty(IDBVersionChangeEvent.prototype, prop, desc);
   });
   Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
-    /**
-     * @typedef {any} AnyValue
-     */
     value:
     /**
-     * @param {AnyValue} obj
+     * @param {unknown} obj
      * @returns {boolean}
      */
     function value(obj) {
@@ -2913,25 +2903,20 @@
   }
 
   /**
-   * @typedef {any} ArbitraryValue
-   */
-
-  /**
-   * @param {ArbitraryValue} obj
+   * @param {unknown} obj
    * @returns {boolean}
    */
   function isErrorOrDOMErrorOrDOMException(obj) {
-    return obj && _typeof(obj) === 'object' &&
     // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
-    typeof obj.name === 'string';
+    return _typeof(obj) === 'object' && obj !== null && 'name' in obj && typeof obj.name === 'string';
   }
 
   /**
    * Finds the error argument.  This is useful because some WebSQL callbacks
    * pass the error as the first argument, and some pass it as the second
    * argument.
-   * @param {(Error|{message?: string, name?: string}|any)[]} args
-   * @returns {Error|DOMException|undefined}
+   * @param {unknown[]} args
+   * @returns {unknown}
    */
   function findError(args) {
     var err;
@@ -2947,7 +2932,7 @@
           if (isErrorOrDOMErrorOrDOMException(arg)) {
             return arg;
           }
-          if (arg && typeof arg.message === 'string') {
+          if (_typeof(arg) === 'object' && arg !== null && 'message' in arg && typeof arg.message === 'string') {
             err = arg;
           }
         }
@@ -3072,7 +3057,7 @@
    * @typedef {IDBRequest & EventTarget & import('eventtargeter').EventTargetInstance & {
    *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
    *   __done: boolean,
-   *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,
+   *   __result: unknown,
    *   __error: null|DOMException|Error,
    *   __source: null|import('./IDBDatabase.js').IDBDatabaseFull|
    *     import('./IDBObjectStore.js').IDBObjectStoreFull|
@@ -3620,12 +3605,11 @@
    */
 
   /**
-   * @typedef {any} Value
+   * @typedef {unknown} Value
    */
 
   /**
-   * @typedef {any} Key
-   * @todo Specify possible value more precisely
+   * @typedef {IDBValidKey|null|undefined} Key
    */
 
   /**
@@ -3693,14 +3677,10 @@
   var signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
 
   /**
-   * @typedef {any} AnyValue
-   */
-
-  /**
    * @type {{
    *   [key: string]: {
-   *     encode: (param: any, inArray?: boolean) => string,
-   *     decode: (param: string, inArray?: boolean) => any
+   *     encode(param: unknown, inArray?: boolean): string,
+   *     decode(param: string, inArray?: boolean): ValueType|undefined
    *   }
    * }}
    */
@@ -4055,7 +4035,7 @@
   }
 
   /**
-   * @param {Key} key
+   * @param {Value} key
    * @returns {KeyType|"invalid"}
    */
   function getKeyType(key) {
@@ -4199,7 +4179,7 @@
       case 'array':
         {
           // May throw (from binary)
-          var arr = /** @type {Array<any>} */input;
+          var arr = /** @type {unknown[]} */input;
           var len = arr.length;
           safePush(seen, input);
 
@@ -4232,9 +4212,9 @@
                   };
                 }
                 if (!multiEntry || !fullKeys && keys.every(function (k) {
-                  return cmp(k, key.value) !== 0;
+                  return cmp(/** @type {Key} */k, /** @type {Key} */key.value) !== 0;
                 }) || fullKeys && keys.every(function (k) {
-                  return cmp(k, key) !== 0;
+                  return cmp(/** @type {Key} */k, /** @type {Key} */ /** @type {unknown} */key) !== 0;
                 })) {
                   safePush(keys, fullKeys ? key : key.value);
                 }
@@ -4291,7 +4271,7 @@
 
   /**
    *
-   * @param {Key} key
+   * @param {Value} key
    * @param {boolean} [fullKeys]
    * @returns {KeyValueObject}
    * @todo Document other allowable `key`?
@@ -4406,7 +4386,7 @@
     }
     if (keyPath === '') {
       return {
-        value: value
+        value: (/** @type {KeyPathEvaluateValueValue} */value)
       };
     }
     var identifiers = keyPath.split('.');
@@ -4440,13 +4420,13 @@
     }) ? {
       failure: true
     } : {
-      value: value
+      value: (/** @type {KeyPathEvaluateValueValue} */value)
     };
   }
 
   /**
    * Sets the inline key value.
-   * @param {{[key: string]: AnyValue}} value
+   * @param {{[key: string]: Value}} value
    * @param {Key} key
    * @param {string} keyPath
    * @returns {void}
@@ -4464,7 +4444,7 @@
           configurable: true
         });
       }
-      value = value[identifier];
+      value = /** @type {{[key: string]: Value}} */value[identifier];
     });
     Object.defineProperty(value, /** @type {string} */last, {
       value: key,
@@ -4549,7 +4529,7 @@
    * @returns {Key[]}
    */
   function findMultiEntryMatches(keyEntry, range) {
-    /** @type {unknown[]} */
+    /** @type {Key[]} */
     var matches = [];
     if (Array.isArray(keyEntry)) {
       var _iterator4 = _createForOfIteratorHelper(keyEntry),
@@ -4588,7 +4568,7 @@
 
   /**
    * Not currently in use but keeping for spec parity.
-   * @param {Key} key
+   * @param {KeyValueObject} key
    * @throws {Error} Upon a "bad key"
    * @returns {ValueType}
    */
@@ -4599,16 +4579,17 @@
       case 'number':
       case 'string':
         {
-          return value;
+          return /** @type {number|string} */value;
         }
       case 'array':
         {
           /** @type {ValueType[]} */
           var array = [];
-          var len = value.length;
+          var arrValue = /** @type {KeyValueObject[]} */value;
+          var len = arrValue.length;
           var index = 0;
           while (index < len) {
-            var entry = convertKeyToValue(value[index]);
+            var entry = convertKeyToValue(arrValue[index]);
             setArrayValue(array, index, entry);
             index++;
           }
@@ -4616,18 +4597,18 @@
         }
       case 'date':
         {
-          return new Date(value);
+          return new Date(/** @type {number} */value);
         }
       case 'binary':
         {
-          var _len = value.length;
+          var binValue = /** @type {Uint8Array} */value;
+          var _len = binValue.length;
           var buffer = new ArrayBuffer(_len);
           // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
-          var uint8 = new Uint8Array(buffer, value.byteOffset || 0, value.byteLength);
-          uint8.set(value);
+          var uint8 = new Uint8Array(buffer, binValue.byteOffset || 0, binValue.byteLength);
+          uint8.set(binValue);
           return buffer;
         }
-      case 'invalid':
       default:
         throw new Error('Bad key');
     }
@@ -4635,7 +4616,7 @@
 
   /**
    *
-   * @param {Key} key
+   * @param {Value} key
    * @param {boolean} [inArray]
    * @returns {string|null}
    */
@@ -4650,7 +4631,7 @@
 
   /**
    *
-   * @param {Key} key
+   * @param {string|null} key
    * @param {boolean} [inArray]
    * @throws {Error} Invalid number
    * @returns {undefined|ValueType}
@@ -4664,7 +4645,7 @@
 
   /**
    *
-   * @param {Key} key
+   * @param {Value} key
    * @param {boolean} [inArray]
    * @returns {undefined|ValueType}
    */
@@ -4882,8 +4863,8 @@
   var IDBKeyRangeAlias = IDBKeyRange;
 
   /**
-   * @param {import('./Key.js').Key|null} lower
-   * @param {import('./Key.js').Key|null} upper
+   * @param {import('./Key.js').Value} lower
+   * @param {import('./Key.js').Value} upper
    * @param {boolean} lowerOpen
    * @param {boolean} upperOpen
    * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}
@@ -5080,10 +5061,11 @@
   function convertValueToKeyRange(value, nullDisallowed) {
     if (instanceOf(value, IDBKeyRange)) {
       // We still need to validate IDBKeyRange-like objects (the above check is based on loose duck-typing)
-      if (value.toString() !== '[object IDBKeyRange]') {
-        return IDBKeyRange.__createInstance(value.lower, value.upper, value.lowerOpen, value.upperOpen);
+      var range = /** @type {IDBKeyRangeFull} */value;
+      if (range.toString() !== '[object IDBKeyRange]') {
+        return IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
       }
-      return value;
+      return range;
     }
     if (isNullish(value)) {
       if (nullDisallowed) {
@@ -5110,7 +5092,7 @@
    *   clone: () => DOMStringListFull,
    *   contains: (str: string) => boolean,
    *   indexOf: (str: string) => Integer,
-   *   splice: (index: Integer, howmany: Integer, ...args: any) => void
+   *   splice: (index: Integer, howmany: Integer, ...args: string[]) => void
    *   length: Integer
    * }} DOMStringListFull
    */
@@ -5226,9 +5208,10 @@
     },
     /**
      * @this {DOMStringListFull}
-     * @param {(value: string, i: Integer, arr: string[]) => any[]} cb
+     * @template T
+     * @param {(value: string, i: Integer, arr: string[]) => T} cb
      * @param {object} thisArg
-     * @returns {any[]}
+     * @returns {T[]}
      */
     map: function map(cb, thisArg) {
       // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument -- Convenient
@@ -5253,10 +5236,7 @@
       this.sortList();
     },
     /**
-     * @typedef {any} AnyArgs
-     */
-    /**
-     * @param {[index: Integer, howmany: Integer, ...args: any]} args
+     * @param {[index: Integer, howmany: Integer, ...args: string[]]} args
      * @this {DOMStringListFull}
      * @returns {void}
      */
@@ -5294,12 +5274,9 @@
   }));
 
   /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
-  /**
-   * @typedef {any} AnyValue
-   */
   Object.defineProperty(DOMStringList, Symbol.hasInstance, {
     /**
-     * @param {AnyValue} obj
+     * @param {unknown} obj
      * @returns {boolean}
      */
     value: function value(obj) {
@@ -5380,7 +5357,7 @@
   /**
    * @typedef {{
    *   op: SQLCallback,
-   *   args: any[],
+   *   args: unknown[],
    *   req: import('./IDBRequest.js').IDBRequestFull|null
    * }} RequestInfo
    */
@@ -5432,17 +5409,17 @@
    *   __pushToQueue: (
    *     request: import('./IDBRequest.js').IDBRequestFull|null,
    *     callback: SQLCallback,
-   *     args?: any[]
+   *     args?: unknown[]
    *   ) => void,
    *   __assertActive: () => void,
    *   commit: () => void,
    *   __addNonRequestToTransactionQueue: (
    *     callback: SQLCallback,
-   *     args?: any[]
+   *     args?: unknown[]
    *   ) => void
    *   __addToTransactionQueue: (
    *     callback: SQLCallback,
-   *     args: any[]|undefined,
+   *     args: unknown[]|undefined,
    *     source: import('./IDBDatabase.js').IDBDatabaseFull|
    *       import('./IDBObjectStore.js').IDBObjectStoreFull|
    *       import('./IDBIndex.js').IDBIndexFull|
@@ -5644,7 +5621,7 @@
         i = -1;
 
       /**
-       * @typedef {any} IDBRequestResult
+       * @typedef {unknown} IDBRequestResult
        */
 
       /**
@@ -6080,8 +6057,8 @@
   /**
    * @typedef {(
    *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
-   *   args: any[],
-   *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
+   *   args: unknown[],
+   *   success: (result?: unknown, req?: import('./IDBRequest.js').IDBRequestFull) => void,
    *   error: (
    *     tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|Error|DOMException,
    *     err?: Error & {code?: number}
@@ -6093,7 +6070,7 @@
   /**
    * Adds a callback function to the transaction queue.
    * @param {SQLCallback} callback
-   * @param {any[]} args
+   * @param {unknown[]} args
    * @param {import('./IDBDatabase.js').IDBDatabaseFull|
    *   import('./IDBObjectStore.js').IDBObjectStoreFull|
    *   import('./IDBIndex.js').IDBIndexFull} source
@@ -6110,7 +6087,7 @@
    * Adds a callback function to the transaction queue without generating a
    *   request.
    * @param {SQLCallback} callback
-   * @param {any[]} args
+   * @param {unknown[]} args
    * @this {IDBTransactionFull}
    * @returns {void}
    */
@@ -6122,7 +6099,7 @@
    * Adds an IDBRequest to the transaction queue.
    * @param {import('./IDBRequest.js').IDBRequestFull|null} request
    * @param {SQLCallback} callback
-   * @param {any[]} args
+   * @param {unknown[]} args
    * @this {IDBTransactionFull}
    * @returns {void}
    */
@@ -6293,7 +6270,7 @@
             bubbles: true,
             cancelable: true
           });
-          return new SyncPromise(/** @type {(resolve: (value?: any) => void) => void} */
+          return new SyncPromise(/** @type {(resolve: (value?: unknown) => void) => void} */
           function (resolve) {
             setTimeout(function () {
               if (!q.req) {
@@ -8456,7 +8433,7 @@
   }
 
   /**
-   * @typedef {any} AnyValue
+   * @typedef {import('./Key.js').Value} AnyValue
    */
 
   /**
@@ -8566,7 +8543,7 @@
    *   __keyPath: import('./Key.js').KeyPath,
    *   __recreated?: boolean,
    *   __fetchIndexData: (
-   *     range: any,
+   *     range: Query,
    *     opType: "value"|"key"|"count",
    *     nullDisallowed: boolean,
    *     count?: number
@@ -8938,7 +8915,7 @@
   };
 
   /**
-   * @typedef {any|IDBKeyRange} Query
+   * @typedef {import('./Key.js').Value|IDBKeyRange} Query
    */
 
   /**
@@ -9221,7 +9198,7 @@
                   reject(err);
                 });
               }));
-              SyncPromise.all(indexCreations).then(finish).catch(/** @type {(reason: any) => PromiseLike<never>} */
+              SyncPromise.all(indexCreations).then(finish).catch(/** @type {(reason: unknown) => PromiseLike<never>} */
               error).catch(function (err) {
                 console.log('Index rename error');
                 throw err;
@@ -9233,14 +9210,10 @@
     });
   };
 
-  /**
-   * @typedef {any} AnyValue
-   */
-
   /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     /**
-     * @param {AnyValue} obj
+     * @param {unknown} obj
      * @returns {boolean}
      */
     value: function value(obj) {
@@ -9268,7 +9241,9 @@
    * @param {string[]} sqlValues
    * @param {WebSQLTransaction} tx
    * @param {null|undefined} args
-   * @param {(result: number|undefined|[]|AnyValue|AnyValue[]) => void} success
+   * @param {(
+   *   result: number|undefined|[]|import('./Key.js').Value|import('./Key.js').Value[]
+   * ) => void} success
    * @param {(tx: WebSQLTransaction, err: (Error & {code?: number})) => void} error
    * @returns {void}
    */
@@ -9305,7 +9280,7 @@
        * @param {{
        *   value: string
        * }} record
-       * @returns {AnyValue}
+       * @returns {import('./Key.js').Value}
        */
       function (record) {
         // when opType is value
@@ -9319,9 +9294,9 @@
           var rowKey = /** @type {import('./Key.js').ValueTypeArray} */
           _decode(row[escapedIndexNameForKeyCol]);
           var record;
-          if (hasKey && (multiChecks && range.some(
+          if (hasKey && (multiChecks && /** @type {import('./Key.js').ValueType[]} */range.some(
           /**
-           * @param {string} check
+           * @param {import('./Key.js').ValueType} check
            * @returns {boolean}
            */
           function (check) {
@@ -9478,8 +9453,8 @@
    *   __deriveKey: (
    *     tx: WebSQLTransaction,
    *     value: import('./Key.js').Value,
-   *     key: import('./Key.js').Key,
-   *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
+   *     key: import('./Key.js').Key|undefined,
+   *     success: (key: import('./Key.js').Value, cn?: Integer) => void,
    *     failCb: import('./Key.js').SQLFailureCallback
    *   ) => void,
    *   __checkIndexConstraints: (
@@ -9788,7 +9763,7 @@
   };
 
   /**
-   * @typedef {[import('./Key.js').Key, import('./Key.js').Value]} KeyValueArray
+   * @typedef {[import('./Key.js').Key|undefined, import('./Key.js').Value]} KeyValueArray
    */
 
   // Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
@@ -9803,7 +9778,7 @@
    * Determines whether the given inline or out-of-line key is valid,
    *   according to the object store's schema.
    * @param {import('./Key.js').Value} value Used for inline keys
-   * @param {import('./Key.js').Key} key Used for out-of-line keys
+   * @param {import('./Key.js').Key|undefined} key Used for out-of-line keys
    * @param {boolean} cursorUpdate
    * @throws {DOMException}
    * @this {IDBObjectStoreFull}
@@ -9819,11 +9794,11 @@
       //   occurs sync; then can make cloning and this method without callbacks (except where ok
       //   to be async)
       var _clonedValue = cloneWithInactiveTransaction(/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction, value);
-      key = extractKeyValueDecodedFromValueUsingKeyPath(_clonedValue, me.keyPath); // May throw so "rethrow"
-      if (key.invalid) {
+      var extractedKey = extractKeyValueDecodedFromValueUsingKeyPath(_clonedValue, me.keyPath); // May throw so "rethrow"
+      if ('invalid' in extractedKey && extractedKey.invalid) {
         throw createDOMException('DataError', 'KeyPath was specified, but key was invalid.');
       }
-      if (key.failure) {
+      if ('failure' in extractedKey && extractedKey.failure) {
         if (!cursorUpdate) {
           if (!me.autoIncrement) {
             throw createDOMException('DataError', 'Could not evaluate a key from keyPath and there is no key generator');
@@ -9838,14 +9813,13 @@
         throw createDOMException('DataError', 'Could not evaluate a key from keyPath');
       }
       // An `IDBCursor.update` call will also throw if not equal to the cursor’s effective key
-      return [key.value, _clonedValue];
+      return [(/** @type {import('./Key.js').Key} */extractedKey.value), _clonedValue];
     }
     if (key === undefined) {
       if (!me.autoIncrement) {
         throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided.');
       }
       // A key will be generated
-      key = undefined;
     } else {
       convertValueToKeyRethrowingAndIfInvalid(key);
     }
@@ -9860,8 +9834,8 @@
    *   a keyPath leading to a valid but non-numeric or < 1 key).
    * @param {WebSQLTransaction} tx
    * @param {import('./Key.js').Value} value
-   * @param {import('./Key.js').Key} key
-   * @param {(key: import('./Key.js').Key, cn?: Integer) => void} success
+   * @param {import('./Key.js').Key|undefined} key
+   * @param {(key: import('./Key.js').Value, cn?: Integer) => void} success
    * @param {import('./Key.js').SQLFailureCallback} failCb
    * @this {IDBObjectStoreFull}
    * @returns {void}
@@ -9876,9 +9850,8 @@
      */
     function keyCloneThenSuccess(oldCn) {
       // We want to return the original key, so we don't need to accept an argument here
-      encode(key, function (key) {
-        key = decode(key);
-        success(key, oldCn);
+      encode(key, function (encodedKey) {
+        success(decode(encodedKey), oldCn);
       });
     }
     if (me.autoIncrement) {
@@ -9892,7 +9865,7 @@
           if (me.keyPath !== null) {
             // Should not throw now as checked earlier
             // Todo: Could this not be an array here?
-            injectKeyIntoValueUsingKeyPath(value, key, /** @type {string} */me.keyPath);
+            injectKeyIntoValueUsingKeyPath(/** @type {{[key: string]: import('./Key.js').Value}} */value, /** @type {import('./Key.js').Key} */key, /** @type {string} */me.keyPath);
           }
           success(key, oldCn);
         }, failCb);
@@ -9949,15 +9922,15 @@
           resolve(undefined);
           return;
         }
-        indexKey = indexKey.value;
-        if (indexKey === undefined) {
+        var indexKeyValue = indexKey.value;
+        if (indexKeyValue === undefined) {
           resolve(undefined);
           return;
         }
-        var multiCheck = index.multiEntry && Array.isArray(indexKey);
-        var fetchArgs = buildFetchIndexDataSQL(true, index, indexKey, 'key', multiCheck);
+        var multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
+        var fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
         executeFetchIndexData.apply(void 0, [null].concat(_toConsumableArray(fetchArgs), [tx, null, function success(key) {
-          if (key === undefined || excludeKey !== undefined && cmp(key, excludeKey) === 0) {
+          if (key === undefined || excludeKey !== undefined && cmp(/** @type {import('./Key.js').Key} */key, excludeKey) === 0) {
             resolve(undefined);
             return;
           }
@@ -10030,21 +10003,21 @@
           resolve(undefined);
           return;
         }
-        indexKey = indexKey.value;
+        var indexKeyValue = indexKey.value;
         /**
          * @param {import('./IDBIndex.js').IDBIndexFull} index
          * @returns {void}
          */
         function setIndexInfo(index) {
-          if (indexKey === undefined) {
+          if (indexKeyValue === undefined) {
             return;
           }
           paramMap[index.__currentName] = /** @type {string} */
-          _encode(indexKey, index.multiEntry);
+          _encode(indexKeyValue, index.multiEntry);
         }
         if (index.unique) {
-          var multiCheck = index.multiEntry && Array.isArray(indexKey);
-          var fetchArgs = buildFetchIndexDataSQL(true, index, indexKey, 'key', multiCheck);
+          var multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
+          var fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
           executeFetchIndexData.apply(void 0, [null].concat(_toConsumableArray(fetchArgs), [tx, null, function success(key) {
             if (key === undefined) {
               setIndexInfo(index);
@@ -10212,7 +10185,9 @@
     var key = arguments[5];
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
-      store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
+      store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumberRaw, oldCn) {
+        var clonedKeyOrCurrentNumber = /** @type {import('./Key.js').Key|Integer} */
+        clonedKeyOrCurrentNumberRaw;
         encode(value, function (encoded) {
           /**
            * @param {WebSQLTransaction} tx
@@ -11598,7 +11573,7 @@
             var sysdbFinishedCb = function sysdbFinishedCb(systx, err, cb) {
               if (err) {
                 /**
-                 * @param {any} [errorToShow]
+                 * @param {unknown} [errorToShow]
                  * @returns {void}
                  */
                 var manualRevert = function manualRevert(errorToShow) {
@@ -11622,7 +11597,9 @@
                     cb(sqlErr); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                   }, function () {
                     isRevertingSysdb = false;
-                    cb(errorToShow || reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
+                    // eslint-disable-next-line promise/no-callback-in-promise -- Convenient
+                    cb(/** @type {(Error & {code?: number})|undefined} */
+                    errorToShow || reportError);
                   });
                 };
                 try {
@@ -11655,13 +11632,13 @@
                   newVersion: version
                 });
                 req.__result = connection;
-                connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
+                connection.__upgradeTransaction = req.__transaction = connection.__versionTransaction = IDBTransaction.__createInstance(connection, connection.objectStoreNames, 'versionchange');
                 req.__done = true;
                 req.transaction.__addNonRequestToTransactionQueue(
                 /**
                  * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default} tx
-                 * @param {any[]} args
-                 * @param {(result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
+                 * @param {unknown[]} args
+                 * @param {(result?: unknown, req?: import('./IDBRequest.js').IDBRequestFull) => void} finished
                  * @returns {void}
                  */
                 function onupgradeneeded(tx, args, finished /* , error */) {
@@ -12362,16 +12339,16 @@
 
   /**
    * @typedef {IDBCursor & {
-   *   primaryKey: import('./Key.js').Key,
-   *   key:  import('./Key.js').Key,
+   *   primaryKey: import('./Key.js').Key|undefined,
+   *   key:  import('./Key.js').Key|undefined,
    *   direction: string,
    *   source: import('./IDBObjectStore.js').IDBObjectStoreFull|
    *     import('./IDBIndex.js').IDBIndexFull,
    *   __request: import('./IDBRequest.js').IDBRequestFull,
    *   __advanceCount: Integer|undefined,
    *   __indexSource: boolean,
-   *   __key: import('./Key.js').Key,
-   *   __primaryKey: import('./Key.js').Key,
+   *   __key: import('./Key.js').Key|undefined,
+   *   __primaryKey: import('./Key.js').Key|undefined,
    *   __value: import('./Key.js').Value,
    *   __store: import('./IDBObjectStore.js').IDBObjectStoreFull,
    *   __range: import('./IDBKeyRange.js').IDBKeyRangeFull|undefined,
@@ -12379,13 +12356,13 @@
    *   __valueColumnName: string,
    *   __keyOnly: boolean,
    *   __valueDecoder: {
-   *     decode: (str: string) => any,
+   *     decode: (str: string) => import('./Key.js').Value,
    *   },
    *   __count: boolean,
    *   __prefetchedIndex: Integer,
    *   __prefetchedData: null|{
    *     length: number;
-   *     item(index: number): any;
+   *     item(index: number): unknown;
    *   }|{
    *     data: RowItemNonNull[],
    *     length: Integer,
@@ -12400,7 +12377,14 @@
    *   __multiEntryExhausted: boolean,
    *   __invalidateCache: () => void,
    *   __gotValue: boolean,
-   *   __find: (...args: any[]) => void,
+   *   __find: (
+   *     key: import('./Key.js').Key|undefined,
+   *     primaryKey: import('./Key.js').Key|undefined,
+   *     tx: WebSQLTransaction,
+   *     success: KeySuccess,
+   *     error: FindError,
+   *     recordsToLoad?: Integer
+   *   ) => void,
    *   __findBasic: (
    *     key: import('./Key.js').Key|undefined,
    *     primaryKey: import('./Key.js').Key|undefined,
@@ -12464,7 +12448,7 @@
    *   import('./IDBIndex.js').IDBIndexFull} source
    * @param {string} keyColumnName
    * @param {string} valueColumnName
-   * @param {boolean} count
+   * @param {boolean} [count]
    * @this {IDBCursorFull}
    * @returns {void}
    */
@@ -12505,7 +12489,7 @@
     this.__valueColumnName = valueColumnName;
     this.__keyOnly = valueColumnName === 'key';
     this.__valueDecoder = this.__keyOnly ? Key : Sca;
-    this.__count = count;
+    this.__count = Boolean(count);
     this.__prefetchedIndex = -1;
     this.__continuationKey = undefined;
     this.__continuationPrimaryKey = undefined;
@@ -12524,36 +12508,36 @@
 
   /**
    *
-   * @param {...any} args
+   * @param {IDBKeyRange} query
+   * @param {string} direction
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
+   *   import('./IDBIndex.js').IDBIndexFull} source
+   * @param {string} keyColumnName
+   * @param {string} valueColumnName
+   * @param {boolean} [count]
    * @returns {IDBCursorFull}
    */
-  IDBCursor.__createInstance = function () {
+  IDBCursor.__createInstance = function (query, direction, store, source, keyColumnName, valueColumnName, count) {
     var IDBCursor = IDBCursorAlias.__super;
     IDBCursor.prototype = IDBCursorAlias.prototype;
 
     // @ts-expect-error It's ok
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-    return _construct(IDBCursor, args);
+    return new IDBCursor(query, direction, store, source, keyColumnName, valueColumnName, count);
   };
 
   /**
    *
-   * @param {...any} args
+   * @param {import('./Key.js').Key|undefined} key
+   * @param {import('./Key.js').Key|undefined} primaryKey
+   * @param {WebSQLTransaction} tx
+   * @param {KeySuccess} success
+   * @param {FindError} error
+   * @param {Integer} [recordsToLoad]
    * @this {IDBCursorFull}
    * @returns {void}
    */
-  IDBCursor.prototype.__find = function () {
-    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      args[_key2] = arguments[_key2];
-    }
-    var key = args[0],
-      primaryKey = args[1],
-      tx = args[2],
-      success = args[3],
-      error = args[4],
-      recordsToLoad = args[5];
+  IDBCursor.prototype.__find = function (key, primaryKey, tx, success, error, recordsToLoad) {
     if (this.__multiEntryIndex) {
       this.__findMultiEntry(key, primaryKey, tx, success, error, recordsToLoad);
     } else {
@@ -12662,7 +12646,7 @@
         me.__prefetchedIndex = 0;
         me.__prefetchedData = data.rows;
         if (CFG.DEBUG) {
-          console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
+          console.log('Preloaded ' + data.rows.length + ' records for cursor');
         }
         me.__decode(/** @type {RowItemNonNull} */data.rows.item(0), success);
       } else if (data.rows.length === 1) {
@@ -12888,11 +12872,11 @@
   };
 
   /**
-   * @typedef {any} StructuredCloneValue
+   * @typedef {import('./Key.js').Value} StructuredCloneValue
    */
 
   /**
-   * @typedef {any} IndexedDBKey
+   * @typedef {import('./Key.js').Key} IndexedDBKey
    */
 
   /**
@@ -13082,7 +13066,7 @@
         // We have pre-loaded data for the cursor
         me.__prefetchedIndex++;
         if (me.__prefetchedIndex < me.__prefetchedData.length) {
-          me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey, encKey) {
+          me.__decode(/** @type {RowItemNonNull} */me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey, encKey) {
             /**
              * @returns {void}
              */
@@ -13140,8 +13124,8 @@
       me.__find(key, primaryKey, tx, triggerSuccess, /** @type {FindError} */
       function () {
         me.__advanceCount = undefined;
-        for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-          args[_key3] = arguments[_key3];
+        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+          args[_key] = arguments[_key];
         }
         var t = args[0],
           err = args[1];
@@ -13227,12 +13211,18 @@
   };
 
   /**
-   * @typedef {any} AnyValue
+   * The `{query, count, direction}` options shape shared by
+   *   `getAll`/`getAllKeys`/`getAllRecords`.
+   * @typedef {{
+   *   query?: import('./Key.js').Value,
+   *   count?: Integer,
+   *   direction?: string
+   * }} GetAllOptions
    */
 
   /**
    *
-   * @param {AnyValue} valueToUpdate
+   * @param {import('./Key.js').Value} valueToUpdate
    * @this {IDBCursorFull}
    * @returns {IDBRequest}
    */
@@ -13358,25 +13348,22 @@
   var IDBCursorWithValueAlias = IDBCursorWithValue;
   /**
    *
-   * @param {...any} args
+   * @param {IDBKeyRange} query
+   * @param {string} direction
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
+   *   import('./IDBIndex.js').IDBIndexFull} source
+   * @param {string} keyColumnName
+   * @param {string} valueColumnName
+   * @param {boolean} [count]
    * @returns {IDBCursorWithValueFull}
    */
-  IDBCursorWithValue.__createInstance = function () {
-    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-      args[_key4] = arguments[_key4];
-    }
+  IDBCursorWithValue.__createInstance = function (query, direction, store, source, keyColumnName, valueColumnName, count) {
     /**
      * @class
      * @this {IDBCursorWithValueFull}
      */
     function IDBCursorWithValue() {
-      var query = args[0],
-        direction = args[1],
-        store = args[2],
-        source = args[3],
-        keyColumnName = args[4],
-        valueColumnName = args[5],
-        count = args[6];
       IDBCursor.__super.call(this, query, direction, store, source, keyColumnName, valueColumnName, count);
       // @ts-expect-error It's ok
       this[Symbol.toStringTag] = 'IDBCursorWithValue';
@@ -13399,12 +13386,16 @@
   /**
    * Validates `direction` and fills in defaults for the `{query, count,
    *   direction}` shape shared by `getAll`/`getAllKeys`/`getAllRecords`.
-   * @param {AnyValue} options
+   * @param {unknown} options
    * @throws {TypeError}
-   * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+   * @returns {{
+   *   query: import('./Key.js').Value|undefined,
+   *   count: Integer|undefined,
+   *   direction: string
+   * }}
    */
   function normalizeGetAllOptions(options) {
-    var _ref = /** @type {AnyValue} */options !== null && options !== void 0 ? options : {},
+    var _ref = /** @type {GetAllOptions} */options !== null && options !== void 0 ? options : {},
       query = _ref.query,
       count = _ref.count,
       _ref$direction = _ref.direction,
@@ -13433,7 +13424,11 @@
    *   first argument wins regardless of how many arguments were actually passed.
    * @param {IArguments} args
    * @throws {TypeError}
-   * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+   * @returns {{
+   *   query: import('./Key.js').Value|undefined,
+   *   count: Integer|undefined,
+   *   direction: string
+   * }}
    */
   function parseGetAllArgs(args) {
     var arg0 = args[0];
@@ -13456,7 +13451,11 @@
    *   form to disambiguate against.
    * @param {IArguments} args
    * @throws {TypeError}
-   * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+   * @returns {{
+   *   query: import('./Key.js').Value|undefined,
+   *   count: Integer|undefined,
+   *   direction: string
+   * }}
    */
   function parseGetAllRecordsArgs(args) {
     return normalizeGetAllOptions(args[0]);
@@ -13563,7 +13562,7 @@
       value: direction
     });
     return tx.__addToTransactionQueue(function collectAllOp(sqlTx, args, success, error) {
-      /** @type {AnyValue[]} */
+      /** @type {unknown[]} */
       var results = [];
       var recordsToLoad = count || CFG.cursorPreloadPackSize || 100;
 
@@ -13603,7 +13602,7 @@
         if (state.__prefetchedData) {
           state.__prefetchedIndex++;
           if (state.__prefetchedIndex < state.__prefetchedData.length) {
-            IDBCursor.prototype.__decode.call(state, state.__prefetchedData.item(state.__prefetchedIndex),
+            IDBCursor.prototype.__decode.call(state, /** @type {RowItemNonNull} */state.__prefetchedData.item(state.__prefetchedIndex),
             /**
              * @param {import('./Key.js').Key} k
              * @param {import('./Key.js').Value} val
@@ -13634,14 +13633,10 @@
   }
 
   /**
-   * @typedef {any} AnyValue
-   */
-
-  /**
    * @callback SetConfig
    * @param {import('./CFG.js').KeyofConfigValues|
    *   Partial<import('./CFG.js').ConfigValues>} prop
-   * @param {AnyValue} [val]
+   * @param {import('./CFG.js').ConfigValue} [val]
    * @throws {Error}
    * @returns {void}
    */
@@ -13727,17 +13722,8 @@
     var IDB = /** @type {ShimmedObject & {[key: string]: unknown}} */
     /** @type {unknown} */globalThis || {};
     /**
-     * @typedef {any} AnyClass
-     */
-    /**
-     * @typedef {any} AnyValue
-     */
-    /**
-     * @typedef {Function} AnyFunction
-     */
-    /**
      * @param {string} name
-     * @param {AnyClass} value
+     * @param {unknown} value
      * @param {PropertyDescriptor & {
      *   shimNS?: object
      * }|undefined} [propDesc]
@@ -13765,7 +13751,7 @@
             }
           } else {
             var o = _defineAccessor("get", {}, name, function () {
-              return /** @type {AnyFunction} */(/** @type {PropertyDescriptor} */propDesc.get).call(this);
+              return /** @type {() => unknown} */(/** @type {PropertyDescriptor} */propDesc.get).call(this);
             });
             desc = /** @type {PropertyDescriptor} */
             Object.getOwnPropertyDescriptor(o, name);
@@ -13839,7 +13825,7 @@
               return shimIndexedDB$1;
             }
           });
-          /** @type {[string, any][]} */
+          /** @type {[string, unknown][]} */
           [['IDBFactory', shimIDBFactory], ['IDBDatabase', IDBDatabase], ['IDBObjectStore', IDBObjectStore], ['IDBIndex', IDBIndex], ['IDBTransaction', IDBTransaction], ['IDBCursor', IDBCursor], ['IDBCursorWithValue', IDBCursorWithValue], ['IDBRecord', IDBRecord], ['IDBKeyRange', IDBKeyRange], ['IDBRequest', IDBRequest], ['IDBOpenDBRequest', IDBOpenDBRequest], ['IDBVersionChangeEvent', IDBVersionChangeEvent]].forEach(function (_ref3) {
             var _ref4 = _slicedToArray(_ref3, 2),
               prop = _ref4[0],
@@ -13928,7 +13914,7 @@
       IDB.shimIndexedDB = /** @type {ShimIndexedDB} */{};
       /** @type {const} */
       ['__useShim', '__debug', '__setConfig', '__getConfig', '__setUnicodeIdentifiers'].forEach(function (prop) {
-        /** @type {ShimIndexedDB} */IDB.shimIndexedDB[prop] = /** @type {() => any} */function () {
+        /** @type {{[key: string]: () => void}} */(/** @type {unknown} */IDB.shimIndexedDB)[prop] = function () {
           console.warn('This browser does not have WebSQL to shim.');
         };
       });

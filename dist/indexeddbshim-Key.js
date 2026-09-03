@@ -1,4 +1,4 @@
-/*! indexeddbshim - v18.0.0 - 9/3/2026 */
+/*! indexeddbshim - v19.0.0 - 9/3/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -331,7 +331,7 @@
   // Callback not used by default
   // Defaults to true except in Node builds where we can preserve literal NUL with better-sqlite3
   'escapeNULForSQLiteStatements', 'sqlMemoryQuota', 'createIndexes'].forEach(function (prop) {
-    /** @type {(val: any) => void} */
+    /** @type {(val: ConfigValue) => void} */
     var validator;
     if (Array.isArray(prop)) {
       var _prop = prop;
@@ -626,17 +626,12 @@
   }
 
   /**
-   * @typedef {any} ArbitraryValue
-   */
-
-  /**
-   * @param {ArbitraryValue} obj
+   * @param {unknown} obj
    * @returns {boolean}
    */
   function isErrorOrDOMErrorOrDOMException(obj) {
-    return obj && _typeof(obj) === 'object' &&
     // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
-    typeof obj.name === 'string';
+    return _typeof(obj) === 'object' && obj !== null && 'name' in obj && typeof obj.name === 'string';
   }
   var test,
     useNativeDOMException = false;
@@ -716,7 +711,7 @@
 
   /**
    *
-   * @param {object} obj
+   * @param {AnyValue} obj
    * @returns {boolean}
    */
   function isDate(obj) {
@@ -725,7 +720,7 @@
 
   /**
    *
-   * @param {object} obj
+   * @param {AnyValue} obj
    * @returns {boolean}
    */
   function isBlob(obj) {
@@ -734,7 +729,7 @@
 
   /**
    *
-   * @param {object} obj
+   * @param {AnyValue} obj
    * @returns {boolean}
    */
   function isFile(obj) {
@@ -841,12 +836,11 @@
    */
 
   /**
-   * @typedef {any} Value
+   * @typedef {unknown} Value
    */
 
   /**
-   * @typedef {any} Key
-   * @todo Specify possible value more precisely
+   * @typedef {IDBValidKey|null|undefined} Key
    */
 
   /**
@@ -914,14 +908,10 @@
   var signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
 
   /**
-   * @typedef {any} AnyValue
-   */
-
-  /**
    * @type {{
    *   [key: string]: {
-   *     encode: (param: any, inArray?: boolean) => string,
-   *     decode: (param: string, inArray?: boolean) => any
+   *     encode(param: unknown, inArray?: boolean): string,
+   *     decode(param: string, inArray?: boolean): ValueType|undefined
    *   }
    * }}
    */
@@ -1276,7 +1266,7 @@
   }
 
   /**
-   * @param {Key} key
+   * @param {Value} key
    * @returns {KeyType|"invalid"}
    */
   function getKeyType(key) {
@@ -1420,7 +1410,7 @@
       case 'array':
         {
           // May throw (from binary)
-          var arr = /** @type {Array<any>} */input;
+          var arr = /** @type {unknown[]} */input;
           var len = arr.length;
           safePush(seen, input);
 
@@ -1453,9 +1443,9 @@
                   };
                 }
                 if (!multiEntry || !fullKeys && keys.every(function (k) {
-                  return cmp(k, key.value) !== 0;
+                  return cmp(/** @type {Key} */k, /** @type {Key} */key.value) !== 0;
                 }) || fullKeys && keys.every(function (k) {
-                  return cmp(k, key) !== 0;
+                  return cmp(/** @type {Key} */k, /** @type {Key} */ /** @type {unknown} */key) !== 0;
                 })) {
                   safePush(keys, fullKeys ? key : key.value);
                 }
@@ -1512,7 +1502,7 @@
 
   /**
    *
-   * @param {Key} key
+   * @param {Value} key
    * @param {boolean} [fullKeys]
    * @returns {KeyValueObject}
    * @todo Document other allowable `key`?
@@ -1627,7 +1617,7 @@
     }
     if (keyPath === '') {
       return {
-        value: value
+        value: (/** @type {KeyPathEvaluateValueValue} */value)
       };
     }
     var identifiers = keyPath.split('.');
@@ -1661,13 +1651,13 @@
     }) ? {
       failure: true
     } : {
-      value: value
+      value: (/** @type {KeyPathEvaluateValueValue} */value)
     };
   }
 
   /**
    * Sets the inline key value.
-   * @param {{[key: string]: AnyValue}} value
+   * @param {{[key: string]: Value}} value
    * @param {Key} key
    * @param {string} keyPath
    * @returns {void}
@@ -1685,7 +1675,7 @@
           configurable: true
         });
       }
-      value = value[identifier];
+      value = /** @type {{[key: string]: Value}} */value[identifier];
     });
     Object.defineProperty(value, /** @type {string} */last, {
       value: key,
@@ -1770,7 +1760,7 @@
    * @returns {Key[]}
    */
   function findMultiEntryMatches(keyEntry, range) {
-    /** @type {unknown[]} */
+    /** @type {Key[]} */
     var matches = [];
     if (Array.isArray(keyEntry)) {
       var _iterator4 = _createForOfIteratorHelper(keyEntry),
@@ -1809,7 +1799,7 @@
 
   /**
    * Not currently in use but keeping for spec parity.
-   * @param {Key} key
+   * @param {KeyValueObject} key
    * @throws {Error} Upon a "bad key"
    * @returns {ValueType}
    */
@@ -1820,16 +1810,17 @@
       case 'number':
       case 'string':
         {
-          return value;
+          return /** @type {number|string} */value;
         }
       case 'array':
         {
           /** @type {ValueType[]} */
           var array = [];
-          var len = value.length;
+          var arrValue = /** @type {KeyValueObject[]} */value;
+          var len = arrValue.length;
           var index = 0;
           while (index < len) {
-            var entry = convertKeyToValue(value[index]);
+            var entry = convertKeyToValue(arrValue[index]);
             setArrayValue(array, index, entry);
             index++;
           }
@@ -1837,18 +1828,18 @@
         }
       case 'date':
         {
-          return new Date(value);
+          return new Date(/** @type {number} */value);
         }
       case 'binary':
         {
-          var _len = value.length;
+          var binValue = /** @type {Uint8Array} */value;
+          var _len = binValue.length;
           var buffer = new ArrayBuffer(_len);
           // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
-          var uint8 = new Uint8Array(buffer, value.byteOffset || 0, value.byteLength);
-          uint8.set(value);
+          var uint8 = new Uint8Array(buffer, binValue.byteOffset || 0, binValue.byteLength);
+          uint8.set(binValue);
           return buffer;
         }
-      case 'invalid':
       default:
         throw new Error('Bad key');
     }
@@ -1856,7 +1847,7 @@
 
   /**
    *
-   * @param {Key} key
+   * @param {Value} key
    * @param {boolean} [inArray]
    * @returns {string|null}
    */
@@ -1871,7 +1862,7 @@
 
   /**
    *
-   * @param {Key} key
+   * @param {string|null} key
    * @param {boolean} [inArray]
    * @throws {Error} Invalid number
    * @returns {undefined|ValueType}
@@ -1885,7 +1876,7 @@
 
   /**
    *
-   * @param {Key} key
+   * @param {Value} key
    * @param {boolean} [inArray]
    * @returns {undefined|ValueType}
    */

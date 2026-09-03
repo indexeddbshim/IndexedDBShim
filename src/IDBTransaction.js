@@ -19,7 +19,7 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'durability', 'db', 'err
 /**
  * @typedef {{
  *   op: SQLCallback,
- *   args: any[],
+ *   args: unknown[],
  *   req: import('./IDBRequest.js').IDBRequestFull|null
  * }} RequestInfo
  */
@@ -71,17 +71,17 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'durability', 'db', 'err
  *   __pushToQueue: (
  *     request: import('./IDBRequest.js').IDBRequestFull|null,
  *     callback: SQLCallback,
- *     args?: any[]
+ *     args?: unknown[]
  *   ) => void,
  *   __assertActive: () => void,
  *   commit: () => void,
  *   __addNonRequestToTransactionQueue: (
  *     callback: SQLCallback,
- *     args?: any[]
+ *     args?: unknown[]
  *   ) => void
  *   __addToTransactionQueue: (
  *     callback: SQLCallback,
- *     args: any[]|undefined,
+ *     args: unknown[]|undefined,
  *     source: import('./IDBDatabase.js').IDBDatabaseFull|
  *       import('./IDBObjectStore.js').IDBObjectStoreFull|
  *       import('./IDBIndex.js').IDBIndexFull|
@@ -281,7 +281,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 i = -1;
 
             /**
-             * @typedef {any} IDBRequestResult
+             * @typedef {unknown} IDBRequestResult
              */
 
             /**
@@ -710,8 +710,8 @@ IDBTransaction.prototype.__createRequest = function (source) {
 /**
  * @typedef {(
  *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
- *   args: any[],
- *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
+ *   args: unknown[],
+ *   success: (result?: unknown, req?: import('./IDBRequest.js').IDBRequestFull) => void,
  *   error: (
  *     tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|Error|DOMException,
  *     err?: Error & {code?: number}
@@ -723,7 +723,7 @@ IDBTransaction.prototype.__createRequest = function (source) {
 /**
  * Adds a callback function to the transaction queue.
  * @param {SQLCallback} callback
- * @param {any[]} args
+ * @param {unknown[]} args
  * @param {import('./IDBDatabase.js').IDBDatabaseFull|
  *   import('./IDBObjectStore.js').IDBObjectStoreFull|
  *   import('./IDBIndex.js').IDBIndexFull} source
@@ -740,7 +740,7 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
  * Adds a callback function to the transaction queue without generating a
  *   request.
  * @param {SQLCallback} callback
- * @param {any[]} args
+ * @param {unknown[]} args
  * @this {IDBTransactionFull}
  * @returns {void}
  */
@@ -752,7 +752,7 @@ IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback,
  * Adds an IDBRequest to the transaction queue.
  * @param {import('./IDBRequest.js').IDBRequestFull|null} request
  * @param {SQLCallback} callback
- * @param {any[]} args
+ * @param {unknown[]} args
  * @this {IDBTransactionFull}
  * @returns {void}
  */
@@ -923,7 +923,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                 q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
                 const reqEvt = createEvent('error', q.req.__error, {bubbles: true, cancelable: true});
                 return new SyncPromise(
-                    /** @type {(resolve: (value?: any) => void) => void} */
+                    /** @type {(resolve: (value?: unknown) => void) => void} */
                     (resolve) => {
                         setTimeout(() => {
                             if (!q.req) { // TS guard

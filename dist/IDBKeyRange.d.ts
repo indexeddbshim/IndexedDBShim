@@ -43,13 +43,13 @@ export class IDBKeyRange {
 }
 export namespace IDBKeyRange {
     /**
-     * @param {import('./Key.js').Key|null} lower
-     * @param {import('./Key.js').Key|null} upper
+     * @param {import('./Key.js').Value} lower
+     * @param {import('./Key.js').Value} upper
      * @param {boolean} lowerOpen
      * @param {boolean} upperOpen
      * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}
      */
-    function __createInstance(lower: import("./Key.js").Key | null, upper: import("./Key.js").Key | null, lowerOpen: boolean, upperOpen: boolean): import("./IDBKeyRange.js").IDBKeyRangeFull;
+    function __createInstance(lower: import("./Key.js").Value, upper: import("./Key.js").Value, lowerOpen: boolean, upperOpen: boolean): import("./IDBKeyRange.js").IDBKeyRangeFull;
     /**
      * @param {import('./Key.js').Value} value
      * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}

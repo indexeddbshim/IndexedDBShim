@@ -1,6 +1,6 @@
 export default nodeWebSQL;
 export type SQLiteDatabaseInstance = {
-    _db: any;
+    _db: unknown;
     exec: (typeof SQLiteDatabase)["prototype"]["exec"];
 };
 /**
@@ -13,7 +13,7 @@ export type SQLiteDatabaseInstance = {
  *   the default "return `this`" behavior), not something TypeScript can
  *   verify structurally.
  */
-export type SQLiteDatabaseConstructor = new (name: string, opts?: any) => SQLiteDatabaseInstance;
+export type SQLiteDatabaseConstructor = new (name: string, opts?: import("websql-configurable/lib/sqlite/SQLiteDatabase.js").SQLiteDatabaseOptions) => SQLiteDatabaseInstance;
 declare const nodeWebSQL: (...args: unknown[]) => import("websql-configurable/lib/websql/WebSQLDatabase.js").default;
 import SQLiteDatabase from 'websql-configurable/lib/sqlite/SQLiteDatabase.js';
 //# sourceMappingURL=nodeWebSQL.d.ts.map

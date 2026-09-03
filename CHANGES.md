@@ -1,5 +1,12 @@
 # CHANGES for indexeddbshim
 
+## 19.0.0
+
+BREAKING CHANGES:
+- Tighter types
+
+fix(types): tighten
+
 ## 18.0.0
 
 BREAKING CHANGES:

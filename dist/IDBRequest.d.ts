@@ -2,7 +2,7 @@ export type IDBOpenDBRequestFull = IDBRequestFull & IDBOpenDBRequest;
 export type IDBRequestFull = IDBRequest & EventTarget & import("eventtargeter").EventTargetInstance & {
     transaction: import("./IDBTransaction.js").IDBTransactionFull;
     __done: boolean;
-    __result: import("./IDBDatabase.js").IDBDatabaseFull | undefined;
+    __result: unknown;
     __error: null | DOMException | Error;
     __source: null | import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull;
     __transaction: undefined | null | import("./IDBTransaction.js").IDBTransactionFull;
@@ -32,7 +32,7 @@ export namespace IDBRequest {
      * @typedef {IDBRequest & EventTarget & import('eventtargeter').EventTargetInstance & {
      *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
      *   __done: boolean,
-     *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,
+     *   __result: unknown,
      *   __error: null|DOMException|Error,
      *   __source: null|import('./IDBDatabase.js').IDBDatabaseFull|
      *     import('./IDBObjectStore.js').IDBObjectStoreFull|

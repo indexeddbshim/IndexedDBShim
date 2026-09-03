@@ -68,7 +68,7 @@ const IDBIndexAlias = IDBIndex;
  *   __keyPath: import('./Key.js').KeyPath,
  *   __recreated?: boolean,
  *   __fetchIndexData: (
- *     range: any,
+ *     range: Query,
  *     opType: "value"|"key"|"count",
  *     nullDisallowed: boolean,
  *     count?: number
@@ -497,7 +497,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
 };
 
 /**
- * @typedef {any|IDBKeyRange} Query
+ * @typedef {import('./Key.js').Value|IDBKeyRange} Query
  */
 
 /**
@@ -766,7 +766,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                             })
                         );
                         SyncPromise.all(indexCreations).then(finish).catch(
-                            /** @type {(reason: any) => PromiseLike<never>} */
+                            /** @type {(reason: unknown) => PromiseLike<never>} */
                             (error)
                         ).catch((err) => {
                             console.log('Index rename error');
@@ -779,14 +779,10 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     });
 };
 
-/**
- * @typedef {any} AnyValue
- */
-
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     /**
-     * @param {AnyValue} obj
+     * @param {unknown} obj
      * @returns {boolean}
      */
     value: (obj) => util.isObj(obj) &&
@@ -819,7 +815,9 @@ Object.defineProperty(IDBIndex, 'prototype', {
  * @param {string[]} sqlValues
  * @param {WebSQLTransaction} tx
  * @param {null|undefined} args
- * @param {(result: number|undefined|[]|AnyValue|AnyValue[]) => void} success
+ * @param {(
+ *   result: number|undefined|[]|import('./Key.js').Value|import('./Key.js').Value[]
+ * ) => void} success
  * @param {(tx: WebSQLTransaction, err: (Error & {code?: number})) => void} error
  * @returns {void}
  */
@@ -859,7 +857,7 @@ function executeFetchIndexData (
                  * @param {{
                  *   value: string
                  * }} record
-                 * @returns {AnyValue}
+                 * @returns {import('./Key.js').Value}
                  */
                 (record) => { // when opType is value
                     return Sca.decode(util.unescapeSQLiteResponse(record.value));
@@ -874,9 +872,9 @@ function executeFetchIndexData (
                 );
                 let record;
                 if (hasKey && (
-                    (multiChecks && range.some(
+                    (multiChecks && /** @type {import('./Key.js').ValueType[]} */ (range).some(
                         /**
-                         * @param {string} check
+                         * @param {import('./Key.js').ValueType} check
                          * @returns {boolean}
                          */
                         (check) => rowKey.includes(check)

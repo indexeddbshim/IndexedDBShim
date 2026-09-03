@@ -2,7 +2,7 @@ export default IDBTransaction;
 export type Integer = number;
 export type RequestInfo = {
     op: SQLCallback;
-    args: any[];
+    args: unknown[];
     req: import("./IDBRequest.js").IDBRequestFull | null;
 };
 export type IDBTransactionFull = EventTarget & {
@@ -43,14 +43,14 @@ export type IDBTransactionFull = EventTarget & {
     __internal: boolean;
     __abortFinished: boolean;
     __createRequest: (source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
-    __pushToQueue: (request: import("./IDBRequest.js").IDBRequestFull | null, callback: SQLCallback, args?: any[]) => void;
+    __pushToQueue: (request: import("./IDBRequest.js").IDBRequestFull | null, callback: SQLCallback, args?: unknown[]) => void;
     __assertActive: () => void;
     commit: () => void;
-    __addNonRequestToTransactionQueue: (callback: SQLCallback, args?: any[]) => void;
-    __addToTransactionQueue: (callback: SQLCallback, args: any[] | undefined, source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
+    __addNonRequestToTransactionQueue: (callback: SQLCallback, args?: unknown[]) => void;
+    __addToTransactionQueue: (callback: SQLCallback, args: unknown[] | undefined, source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
     __assertWritable: () => void;
 };
-export type SQLCallback = (tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default, args: any[], success: (result?: any, req?: import("./IDBRequest.js").IDBRequestFull) => void, error: (tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default | Error | DOMException, err?: Error & {
+export type SQLCallback = (tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default, args: unknown[], success: (result?: unknown, req?: import("./IDBRequest.js").IDBRequestFull) => void, error: (tx: import("websql-configurable/lib/websql/WebSQLTransaction.js").default | Error | DOMException, err?: Error & {
     code?: number;
 }) => void, executeNextRequest?: () => void) => void;
 /**
@@ -106,8 +106,8 @@ declare class IDBTransaction {
     /**
      * @typedef {(
      *   tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default,
-     *   args: any[],
-     *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
+     *   args: unknown[],
+     *   success: (result?: unknown, req?: import('./IDBRequest.js').IDBRequestFull) => void,
      *   error: (
      *     tx: import('websql-configurable/lib/websql/WebSQLTransaction.js').default|Error|DOMException,
      *     err?: Error & {code?: number}
@@ -118,32 +118,32 @@ declare class IDBTransaction {
     /**
      * Adds a callback function to the transaction queue.
      * @param {SQLCallback} callback
-     * @param {any[]} args
+     * @param {unknown[]} args
      * @param {import('./IDBDatabase.js').IDBDatabaseFull|
      *   import('./IDBObjectStore.js').IDBObjectStoreFull|
      *   import('./IDBIndex.js').IDBIndexFull} source
      * @this {IDBTransactionFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    __addToTransactionQueue(this: IDBTransactionFull, callback: SQLCallback, args: any[], source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull): import("./IDBRequest.js").IDBRequestFull;
+    __addToTransactionQueue(this: IDBTransactionFull, callback: SQLCallback, args: unknown[], source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull): import("./IDBRequest.js").IDBRequestFull;
     /**
      * Adds a callback function to the transaction queue without generating a
      *   request.
      * @param {SQLCallback} callback
-     * @param {any[]} args
+     * @param {unknown[]} args
      * @this {IDBTransactionFull}
      * @returns {void}
      */
-    __addNonRequestToTransactionQueue(this: IDBTransactionFull, callback: SQLCallback, args: any[]): void;
+    __addNonRequestToTransactionQueue(this: IDBTransactionFull, callback: SQLCallback, args: unknown[]): void;
     /**
      * Adds an IDBRequest to the transaction queue.
      * @param {import('./IDBRequest.js').IDBRequestFull|null} request
      * @param {SQLCallback} callback
-     * @param {any[]} args
+     * @param {unknown[]} args
      * @this {IDBTransactionFull}
      * @returns {void}
      */
-    __pushToQueue(this: IDBTransactionFull, request: import("./IDBRequest.js").IDBRequestFull | null, callback: SQLCallback, args: any[]): void;
+    __pushToQueue(this: IDBTransactionFull, request: import("./IDBRequest.js").IDBRequestFull | null, callback: SQLCallback, args: unknown[]): void;
     /**
      * @throws {DOMException}
      * @this {IDBTransactionFull}

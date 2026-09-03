@@ -286,24 +286,21 @@ function logError (name, message, error) {
 }
 
 /**
- * @typedef {any} ArbitraryValue
- */
-
-/**
- * @param {ArbitraryValue} obj
+ * @param {unknown} obj
  * @returns {boolean}
  */
 function isErrorOrDOMErrorOrDOMException (obj) {
-    return obj && typeof obj === 'object' && // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
-        typeof obj.name === 'string';
+    // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
+    return typeof obj === 'object' && obj !== null &&
+        'name' in obj && typeof obj.name === 'string';
 }
 
 /**
  * Finds the error argument.  This is useful because some WebSQL callbacks
  * pass the error as the first argument, and some pass it as the second
  * argument.
- * @param {(Error|{message?: string, name?: string}|any)[]} args
- * @returns {Error|DOMException|undefined}
+ * @param {unknown[]} args
+ * @returns {unknown}
  */
 function findError (args) {
     let err;
@@ -315,7 +312,8 @@ function findError (args) {
             if (isErrorOrDOMErrorOrDOMException(arg)) {
                 return arg;
             }
-            if (arg && typeof arg.message === 'string') {
+            if (typeof arg === 'object' && arg !== null &&
+                'message' in arg && typeof arg.message === 'string') {
                 err = arg;
             }
         }

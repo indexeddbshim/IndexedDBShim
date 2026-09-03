@@ -224,7 +224,7 @@ const CFG = /** @type {ConfigValues} */ ({});
     'sqlMemoryQuota',
     'createIndexes'
 ]).forEach((prop) => {
-    /** @type {(val: any) => void} */
+    /** @type {(val: ConfigValue) => void} */
     let validator;
     if (Array.isArray(prop)) {
         [prop, validator] = prop;

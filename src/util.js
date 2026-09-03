@@ -251,9 +251,11 @@ function joinPath (base, name) {
     return base.replace(/[/\\]+$/u, '') + sep + name;
 }
 
+/* eslint-disable jsdoc/valid-types -- Bug */
 /**
- * @typedef {Function} AnyClass
+ * @typedef {{[Symbol.hasInstance]: (value: unknown) => boolean}} AnyClass
  */
+/* eslint-enable jsdoc/valid-types -- Bug */
 
 // Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
 /**
@@ -277,7 +279,7 @@ function isObj (obj) {
 
 /**
  *
- * @param {object} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
 function isDate (obj) {
@@ -286,7 +288,7 @@ function isDate (obj) {
 
 /**
  *
- * @param {object} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
 function isBlob (obj) {
@@ -296,7 +298,7 @@ function isBlob (obj) {
 
 /**
  *
- * @param {object} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
 function isRegExp (obj) {
@@ -306,7 +308,7 @@ function isRegExp (obj) {
 
 /**
  *
- * @param {object} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
 function isFile (obj) {
@@ -329,7 +331,7 @@ function isBinary (obj) {
 /**
  *
  * @param {AnyValue} obj
- * @returns {boolean}
+ * @returns {obj is Iterable<unknown>}
  */
 function isIterable (obj) {
     return isObj(obj) &&
@@ -384,9 +386,7 @@ function defineReadonlyOuterInterface (obj, props) {
 
 /**
  *
- * @param {object & {
- *   [key: string]: any
- * }} obj
+ * @param {object} obj
  * @param {string[]} listeners
  * @returns {void}
  */
@@ -395,13 +395,13 @@ function defineListenerProperties (obj, listeners) {
     listeners.forEach((listener) => {
         const o = {
             get [listener] () {
-                return obj['__' + listener];
+                return Reflect.get(obj, '__' + listener);
             },
             /**
              * @param {AnyValue} val
              */
             set [listener] (val) {
-                obj['__' + listener] = val;
+                Reflect.set(obj, '__' + listener, val);
             }
         };
         const desc = /** @type {PropertyDescriptor} */ (
@@ -412,7 +412,7 @@ function defineListenerProperties (obj, listeners) {
         Object.defineProperty(obj, listener, desc);
     });
     listeners.forEach((l) => {
-        obj[l] = null;
+        Reflect.set(obj, l, null);
     });
 }
 
@@ -421,7 +421,7 @@ function defineListenerProperties (obj, listeners) {
  * @param {object} obj
  * @param {string|string[]} props
  * @param {null|{
- *   [key: string]: any
+ *   [key: string]: unknown
  * }} getter
  * @returns {void}
  */
@@ -561,7 +561,7 @@ function enforceRange (number, type) {
 }
 
 /**
- * @typedef {any} AnyValue
+ * @typedef {unknown} AnyValue
  */
 
 /**
@@ -578,8 +578,11 @@ function convertToDOMString (v, treatNullAs) {
  * @returns {string}
  */
 function ToString (o) { // Todo: See `es-abstract/es7`
-    // `String()` will not throw with Symbols
-    return '' + o; // eslint-disable-line no-implicit-coercion -- Need to throw with symbols
+    // `String()` will not throw with Symbols, but the unchecked `+ ''`
+    //   coercion deliberately does (Web IDL requires converting a symbol
+    //   to `DOMString` to throw a `TypeError`); the assertion only tells
+    //   the compiler to allow the coercion it cannot model.
+    return '' + /** @type {string} */ (o); // eslint-disable-line no-implicit-coercion -- Need to throw with symbols
 }
 
 /**

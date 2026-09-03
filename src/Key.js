@@ -39,12 +39,11 @@ import CFG from './CFG.js';
  */
 
 /**
- * @typedef {any} Value
+ * @typedef {unknown} Value
  */
 
 /**
- * @typedef {any} Key
- * @todo Specify possible value more precisely
+ * @typedef {IDBValidKey|null|undefined} Key
  */
 
 /**
@@ -114,14 +113,10 @@ const encodedCharToKeyType = keyTypes.reduce((o, k) => {
 const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
 
 /**
- * @typedef {any} AnyValue
- */
-
-/**
  * @type {{
  *   [key: string]: {
- *     encode: (param: any, inArray?: boolean) => string,
- *     decode: (param: string, inArray?: boolean) => any
+ *     encode(param: unknown, inArray?: boolean): string,
+ *     decode(param: string, inArray?: boolean): ValueType|undefined
  *   }
  * }}
  */
@@ -473,7 +468,7 @@ function negate (s) {
 }
 
 /**
- * @param {Key} key
+ * @param {Value} key
  * @returns {KeyType|"invalid"}
  */
 function getKeyType (key) {
@@ -595,7 +590,7 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
         }
         return {type: 'binary', value: octets};
     } case 'array': { // May throw (from binary)
-        const arr = /** @type {Array<any>} */ (input);
+        const arr = /** @type {unknown[]} */ (input);
         const len = arr.length;
         safePush(seen, input);
 
@@ -615,8 +610,12 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
                     return {type, invalid: true, message: 'Bad array entry value-to-key conversion'};
                 }
                 if (!multiEntry ||
-                    (!fullKeys && keys.every((k) => cmp(k, key.value) !== 0)) ||
-                    (fullKeys && keys.every((k) => cmp(k, key) !== 0))
+                    (!fullKeys && keys.every((k) => cmp(
+                        /** @type {Key} */ (k), /** @type {Key} */ (key.value)
+                    ) !== 0)) ||
+                    (fullKeys && keys.every((k) => cmp(
+                        /** @type {Key} */ (k), /** @type {Key} */ (/** @type {unknown} */ (key))
+                    ) !== 0))
                 ) {
                     safePush(keys, fullKeys ? key : key.value);
                 }
@@ -647,7 +646,7 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
 
 /**
  *
- * @param {Key} key
+ * @param {Value} key
  * @param {boolean} [fullKeys]
  * @returns {KeyValueObject}
  * @todo Document other allowable `key`?
@@ -759,7 +758,7 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
             : {value: result};
     }
     if (keyPath === '') {
-        return {value};
+        return {value: /** @type {KeyPathEvaluateValueValue} */ (value)};
     }
     const identifiers = keyPath.split('.');
     return identifiers.some((idntfr) => {
@@ -797,12 +796,12 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
         return false;
     })
         ? {failure: true}
-        : {value};
+        : {value: /** @type {KeyPathEvaluateValueValue} */ (value)};
 }
 
 /**
  * Sets the inline key value.
- * @param {{[key: string]: AnyValue}} value
+ * @param {{[key: string]: Value}} value
  * @param {Key} key
  * @param {string} keyPath
  * @returns {void}
@@ -815,7 +814,7 @@ function injectKeyIntoValueUsingKeyPath (value, key, keyPath) {
         if (!hop) {
             Object.defineProperty(value, identifier, {value: {}, enumerable: true, writable: true, configurable: true});
         }
-        value = value[identifier];
+        value = /** @type {{[key: string]: Value}} */ (value[identifier]);
     });
     Object.defineProperty(value, /** @type {string} */ (last), {value: key, enumerable: true, writable: true, configurable: true}); // key is already a `keyValue` in our processing so no need to convert
 }
@@ -903,7 +902,7 @@ function isMultiEntryMatch (encodedEntry, encodedKey) {
  * @returns {Key[]}
  */
 function findMultiEntryMatches (keyEntry, range) {
-    /** @type {unknown[]} */
+    /** @type {Key[]} */
     const matches = [];
 
     if (Array.isArray(keyEntry)) {
@@ -935,7 +934,7 @@ function findMultiEntryMatches (keyEntry, range) {
 
 /**
  * Not currently in use but keeping for spec parity.
- * @param {Key} key
+ * @param {KeyValueObject} key
  * @throws {Error} Upon a "bad key"
  * @returns {ValueType}
  */
@@ -943,35 +942,37 @@ function convertKeyToValue (key) {
     const {type, value} = key;
     switch (type) {
     case 'number': case 'string': {
-        return value;
+        return /** @type {number|string} */ (value);
     } case 'array': {
         /** @type {ValueType[]} */
         const array = [];
-        const len = value.length;
+        const arrValue = /** @type {KeyValueObject[]} */ (value);
+        const len = arrValue.length;
         let index = 0;
         while (index < len) {
-            const entry = convertKeyToValue(value[index]);
+            const entry = convertKeyToValue(arrValue[index]);
             setArrayValue(array, index, entry);
             index++;
         }
         return array;
     } case 'date': {
-        return new Date(value);
+        return new Date(/** @type {number} */ (value));
     } case 'binary': {
-        const len = value.length;
+        const binValue = /** @type {Uint8Array} */ (value);
+        const len = binValue.length;
         const buffer = new ArrayBuffer(len);
         // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
-        const uint8 = new Uint8Array(buffer, value.byteOffset || 0, value.byteLength);
-        uint8.set(value);
+        const uint8 = new Uint8Array(buffer, binValue.byteOffset || 0, binValue.byteLength);
+        uint8.set(binValue);
         return buffer;
-    } case 'invalid': default:
+    } default:
         throw new Error('Bad key');
     }
 }
 
 /**
  *
- * @param {Key} key
+ * @param {Value} key
  * @param {boolean} [inArray]
  * @returns {string|null}
  */
@@ -986,7 +987,7 @@ function encode (key, inArray) {
 
 /**
  *
- * @param {Key} key
+ * @param {string|null} key
  * @param {boolean} [inArray]
  * @throws {Error} Invalid number
  * @returns {undefined|ValueType}
@@ -1000,7 +1001,7 @@ function decode (key, inArray) {
 
 /**
  *
- * @param {Key} key
+ * @param {Value} key
  * @param {boolean} [inArray]
  * @returns {undefined|ValueType}
  */

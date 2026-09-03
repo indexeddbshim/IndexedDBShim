@@ -2,12 +2,8 @@ describe('IndexedDB API', function () {
     'use strict';
 
     /**
-     * @typedef {any} ArbitraryValue
-     */
-
-    /**
      * Determines whether the given thing is a class.
-     * @param {ArbitraryValue} thing
+     * @param {unknown} thing
      * @returns {boolean}
      */
     function isAClass (thing) {

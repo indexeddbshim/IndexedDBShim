@@ -66,12 +66,9 @@ readonlyProperties.forEach((prop) => {
 });
 
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
-    /**
-     * @typedef {any} AnyValue
-     */
     value:
         /**
-         * @param {AnyValue} obj
+         * @param {unknown} obj
          * @returns {boolean}
          */
         (obj) => util.isObj(obj) && 'oldVersion' in obj &&

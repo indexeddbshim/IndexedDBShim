@@ -515,7 +515,7 @@ workerCtx.removeEventListener = function (event, handler) {
 };
 /**
  *
- * @param {...any} args
+ * @param {...string} args
  * @throws {TypeError}
  * @returns {void}
  */
@@ -655,7 +655,7 @@ global.XMLHttpRequest.prototype.overrideMimeType = cou.xmlHttpRequestOverrideMim
 });
 /**
  *
- * @param {...any} args
+ * @param {[string, RequestInit?]} args
  * @returns {Promise<Response>}
  */
 workerCtx.fetch = function (...args) {
@@ -878,7 +878,7 @@ Object.defineProperty(vm.runInContext('ArrayBuffer', workerCtxObj), Symbol.hasIn
 });
 
 /**
- * @returns {Function}
+ * @returns {new () => void}
  */
 function globalScopeBrand () {
     /**

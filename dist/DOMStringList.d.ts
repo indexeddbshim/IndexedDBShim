@@ -10,10 +10,9 @@ export type DOMStringListFull = {
     clone: () => DOMStringListFull;
     contains: (str: string) => boolean;
     indexOf: (str: string) => Integer;
-    splice: (index: Integer, howmany: Integer, ...args: any) => void;
+    splice: (index: Integer, howmany: Integer, ...args: string[]) => void;
     length: Integer;
 };
-export type AnyValue = any;
 declare class DOMStringList {
     get length(): any;
 }

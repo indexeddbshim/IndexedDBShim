@@ -66,8 +66,8 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *   __deriveKey: (
  *     tx: WebSQLTransaction,
  *     value: import('./Key.js').Value,
- *     key: import('./Key.js').Key,
- *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
+ *     key: import('./Key.js').Key|undefined,
+ *     success: (key: import('./Key.js').Value, cn?: Integer) => void,
  *     failCb: import('./Key.js').SQLFailureCallback
  *   ) => void,
  *   __checkIndexConstraints: (
@@ -399,7 +399,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 };
 
 /**
- * @typedef {[import('./Key.js').Key, import('./Key.js').Value]} KeyValueArray
+ * @typedef {[import('./Key.js').Key|undefined, import('./Key.js').Value]} KeyValueArray
  */
 
 // Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
@@ -414,7 +414,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * Determines whether the given inline or out-of-line key is valid,
  *   according to the object store's schema.
  * @param {import('./Key.js').Value} value Used for inline keys
- * @param {import('./Key.js').Key} key Used for out-of-line keys
+ * @param {import('./Key.js').Key|undefined} key Used for out-of-line keys
  * @param {boolean} cursorUpdate
  * @throws {DOMException}
  * @this {IDBObjectStoreFull}
@@ -433,11 +433,11 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
             /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (me.transaction),
             value
         );
-        key = Key.extractKeyValueDecodedFromValueUsingKeyPath(clonedValue, me.keyPath); // May throw so "rethrow"
-        if (key.invalid) {
+        const extractedKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(clonedValue, me.keyPath); // May throw so "rethrow"
+        if ('invalid' in extractedKey && extractedKey.invalid) {
             throw createDOMException('DataError', 'KeyPath was specified, but key was invalid.');
         }
-        if (key.failure) {
+        if ('failure' in extractedKey && extractedKey.failure) {
             if (!cursorUpdate) {
                 if (!me.autoIncrement) {
                     throw createDOMException('DataError', 'Could not evaluate a key from keyPath and there is no key generator');
@@ -452,14 +452,13 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
             throw createDOMException('DataError', 'Could not evaluate a key from keyPath');
         }
         // An `IDBCursor.update` call will also throw if not equal to the cursor’s effective key
-        return [key.value, clonedValue];
+        return [(/** @type {import('./Key.js').Key} */ (extractedKey.value)), clonedValue];
     }
     if (key === undefined) {
         if (!me.autoIncrement) {
             throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided.');
         }
         // A key will be generated
-        key = undefined;
     } else {
         Key.convertValueToKeyRethrowingAndIfInvalid(key);
     }
@@ -477,8 +476,8 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
  *   a keyPath leading to a valid but non-numeric or < 1 key).
  * @param {WebSQLTransaction} tx
  * @param {import('./Key.js').Value} value
- * @param {import('./Key.js').Key} key
- * @param {(key: import('./Key.js').Key, cn?: Integer) => void} success
+ * @param {import('./Key.js').Key|undefined} key
+ * @param {(key: import('./Key.js').Value, cn?: Integer) => void} success
  * @param {import('./Key.js').SQLFailureCallback} failCb
  * @this {IDBObjectStoreFull}
  * @returns {void}
@@ -492,9 +491,8 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
      * @returns {void}
      */
     function keyCloneThenSuccess (oldCn) { // We want to return the original key, so we don't need to accept an argument here
-        Sca.encode(key, function (key) {
-            key = Sca.decode(key);
-            success(key, oldCn);
+        Sca.encode(key, function (encodedKey) {
+            success(Sca.decode(encodedKey), oldCn);
         });
     }
 
@@ -510,7 +508,9 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
                     // Should not throw now as checked earlier
                     // Todo: Could this not be an array here?
                     Key.injectKeyIntoValueUsingKeyPath(
-                        value, key, /** @type {string} */ (me.keyPath)
+                        /** @type {{[key: string]: import('./Key.js').Value}} */ (value),
+                        /** @type {import('./Key.js').Key} */ (key),
+                        /** @type {string} */ (me.keyPath)
                     );
                 }
                 success(key, oldCn);
@@ -571,15 +571,17 @@ IDBObjectStore.prototype.__checkIndexConstraints = function (tx, value, excludeK
                 resolve(undefined);
                 return;
             }
-            indexKey = indexKey.value;
-            if (indexKey === undefined) {
+            const indexKeyValue = indexKey.value;
+            if (indexKeyValue === undefined) {
                 resolve(undefined);
                 return;
             }
-            const multiCheck = index.multiEntry && Array.isArray(indexKey);
-            const fetchArgs = buildFetchIndexDataSQL(true, index, indexKey, 'key', multiCheck);
+            const multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
+            const fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
             executeFetchIndexData(null, ...fetchArgs, tx, null, function success (key) {
-                if (key === undefined || (excludeKey !== undefined && cmp(key, excludeKey) === 0)) {
+                if (key === undefined || (excludeKey !== undefined && cmp(
+                    /** @type {import('./Key.js').Key} */ (key), excludeKey
+                ) === 0)) {
                     resolve(undefined);
                     return;
                 }
@@ -662,22 +664,22 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
                 resolve(undefined);
                 return;
             }
-            indexKey = indexKey.value;
+            const indexKeyValue = indexKey.value;
             /**
              * @param {import('./IDBIndex.js').IDBIndexFull} index
              * @returns {void}
              */
             function setIndexInfo (index) {
-                if (indexKey === undefined) {
+                if (indexKeyValue === undefined) {
                     return;
                 }
                 paramMap[index.__currentName] = /** @type {string} */ (
-                    Key.encode(indexKey, index.multiEntry)
+                    Key.encode(indexKeyValue, index.multiEntry)
                 );
             }
             if (index.unique) {
-                const multiCheck = index.multiEntry && Array.isArray(indexKey);
-                const fetchArgs = buildFetchIndexDataSQL(true, index, indexKey, 'key', multiCheck);
+                const multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
+                const fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
                 executeFetchIndexData(null, ...fetchArgs, tx, null, function success (key) {
                     if (key === undefined) {
                         setIndexInfo(index);
@@ -854,7 +856,10 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         store.transaction
     ).__pushToQueue(request, function (tx, args, success, error) {
-        store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
+        store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumberRaw, oldCn) {
+            const clonedKeyOrCurrentNumber = /** @type {import('./Key.js').Key|Integer} */ (
+                clonedKeyOrCurrentNumberRaw
+            );
             Sca.encode(value, function (encoded) {
                 /**
                  * @param {WebSQLTransaction} tx

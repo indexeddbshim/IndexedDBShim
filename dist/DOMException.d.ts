@@ -6,7 +6,6 @@ export type DOMExceptionFull = globalThis.DOMException & {
 export type ErrorLike = {
     message: string;
 };
-export type ArbitraryValue = any;
 export type Code = "IndexSizeError" | "HierarchyRequestError" | "WrongDocumentError" | "InvalidCharacterError" | "NoModificationAllowedError" | "NotFoundError" | "NotSupportedError" | "InUseAttributeError" | "InvalidStateError" | "SyntaxError" | "InvalidModificationError" | "NamespaceError" | "InvalidAccessError" | "TypeMismatchError" | "SecurityError" | "NetworkError" | "AbortError" | "URLMismatchError" | "QuotaExceededError" | "TimeoutError" | "InvalidNodeTypeError" | "DataCloneError" | "EncodingError" | "NotReadableError" | "UnknownError" | "ConstraintError" | "DataError" | "TransactionInactiveError" | "ReadOnlyError" | "VersionError" | "OperationError" | "NotAllowedError";
 export type LegacyCode = "INDEX_SIZE_ERR" | "DOMSTRING_SIZE_ERR" | "HIERARCHY_REQUEST_ERR" | "WRONG_DOCUMENT_ERR" | "INVALID_CHARACTER_ERR" | "NO_DATA_ALLOWED_ERR" | "NO_MODIFICATION_ALLOWED_ERR" | "NOT_FOUND_ERR" | "NOT_SUPPORTED_ERR" | "INUSE_ATTRIBUTE_ERR" | "INVALID_STATE_ERR" | "SYNTAX_ERR" | "INVALID_MODIFICATION_ERR" | "NAMESPACE_ERR" | "INVALID_ACCESS_ERR" | "VALIDATION_ERR" | "TYPE_MISMATCH_ERR" | "SECURITY_ERR" | "NETWORK_ERR" | "ABORT_ERR" | "URL_MISMATCH_ERR" | "QUOTA_EXCEEDED_ERR" | "TIMEOUT_ERR" | "INVALID_NODE_TYPE_ERR" | "DATA_CLONE_ERR";
 /**
@@ -26,13 +25,10 @@ export function logError(name: string, message: string, error?: string | ErrorLi
  * Finds the error argument.  This is useful because some WebSQL callbacks
  * pass the error as the first argument, and some pass it as the second
  * argument.
- * @param {(Error|{message?: string, name?: string}|any)[]} args
- * @returns {Error|DOMException|undefined}
+ * @param {unknown[]} args
+ * @returns {unknown}
  */
-export function findError(args: (Error | {
-    message?: string;
-    name?: string;
-} | any)[]): Error | DOMException | undefined;
+export function findError(args: unknown[]): unknown;
 export const ShimDOMException: {
     new (message?: string, name?: string): DOMException;
     prototype: DOMException;

@@ -20,7 +20,7 @@ function IDBRequest () {
  * @typedef {IDBRequest & EventTarget & import('eventtargeter').EventTargetInstance & {
  *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
  *   __done: boolean,
- *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,
+ *   __result: unknown,
  *   __error: null|DOMException|Error,
  *   __source: null|import('./IDBDatabase.js').IDBDatabaseFull|
  *     import('./IDBObjectStore.js').IDBObjectStoreFull|

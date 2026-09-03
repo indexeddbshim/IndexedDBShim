@@ -28,7 +28,7 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     __cursors: (import("./IDBCursor.js").IDBCursorFull | import("./IDBCursor.js").IDBCursorWithValueFull)[];
     __idbdb: import("./IDBDatabase.js").IDBDatabaseFull;
     __validateKeyAndValueAndCloneValue: (value: import("./Key.js").Value, key: import("./Key.js").Key, cursorUpdate: boolean) => KeyValueArray;
-    __deriveKey: (tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback) => void;
+    __deriveKey: (tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key | undefined, success: (key: import("./Key.js").Value, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback) => void;
     __checkIndexConstraints: (tx: WebSQLTransaction, value: import("./Key.js").Value, excludeKey: import("./Key.js").Key | Integer | undefined) => SyncPromise;
     __insertData: (tx: WebSQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void) => SyncPromise;
     __overwrite: (tx: WebSQLTransaction, key: import("./Key.js").Key, cb: (tx: WebSQLTransaction) => void, error: (err: (Error & {
@@ -36,7 +36,7 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     })) => void) => void;
     __get: (query: import("./Key.js").Value, getKey?: boolean, getAll?: boolean, count?: Integer) => import("./IDBRequest.js").IDBRequestFull;
 };
-export type KeyValueArray = [import("./Key.js").Key, import("./Key.js").Value];
+export type KeyValueArray = [import("./Key.js").Key | undefined, import("./Key.js").Value];
 /**
  * @typedef {number} Integer
  */
@@ -52,19 +52,19 @@ export type KeyValueArray = [import("./Key.js").Key, import("./Key.js").Value];
 declare function IDBObjectStore(): void;
 declare class IDBObjectStore {
     /**
-     * @typedef {[import('./Key.js').Key, import('./Key.js').Value]} KeyValueArray
+     * @typedef {[import('./Key.js').Key|undefined, import('./Key.js').Value]} KeyValueArray
      */
     /**
      * Determines whether the given inline or out-of-line key is valid,
      *   according to the object store's schema.
      * @param {import('./Key.js').Value} value Used for inline keys
-     * @param {import('./Key.js').Key} key Used for out-of-line keys
+     * @param {import('./Key.js').Key|undefined} key Used for out-of-line keys
      * @param {boolean} cursorUpdate
      * @throws {DOMException}
      * @this {IDBObjectStoreFull}
      * @returns {KeyValueArray}
      */
-    __validateKeyAndValueAndCloneValue(this: IDBObjectStoreFull, value: import("./Key.js").Value, key: import("./Key.js").Key, cursorUpdate: boolean): KeyValueArray;
+    __validateKeyAndValueAndCloneValue(this: IDBObjectStoreFull, value: import("./Key.js").Value, key: import("./Key.js").Key | undefined, cursorUpdate: boolean): KeyValueArray;
     /**
      * From the store properties and object, extracts the value for the key in
      *   the object store
@@ -72,13 +72,13 @@ declare class IDBObjectStore {
      *   a keyPath leading to a valid but non-numeric or < 1 key).
      * @param {WebSQLTransaction} tx
      * @param {import('./Key.js').Value} value
-     * @param {import('./Key.js').Key} key
-     * @param {(key: import('./Key.js').Key, cn?: Integer) => void} success
+     * @param {import('./Key.js').Key|undefined} key
+     * @param {(key: import('./Key.js').Value, cn?: Integer) => void} success
      * @param {import('./Key.js').SQLFailureCallback} failCb
      * @this {IDBObjectStoreFull}
      * @returns {void}
      */
-    __deriveKey(this: IDBObjectStoreFull, tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback): void;
+    __deriveKey(this: IDBObjectStoreFull, tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key | undefined, success: (key: import("./Key.js").Value, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback): void;
     /**
      * Validates `value`'s unique index entries against the table's *current*
      *   state without mutating anything -- used by `__storingRecordObjectStore`
@@ -267,8 +267,8 @@ declare namespace IDBObjectStore {
      *   __deriveKey: (
      *     tx: WebSQLTransaction,
      *     value: import('./Key.js').Value,
-     *     key: import('./Key.js').Key,
-     *     success: (key: import('./Key.js').Key, cn?: Integer) => void,
+     *     key: import('./Key.js').Key|undefined,
+     *     success: (key: import('./Key.js').Value, cn?: Integer) => void,
      *     failCb: import('./Key.js').SQLFailureCallback
      *   ) => void,
      *   __checkIndexConstraints: (

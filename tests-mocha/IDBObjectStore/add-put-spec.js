@@ -435,11 +435,7 @@
                     }
 
                     /**
-                     * @typedef {any} BadArgument
-                     */
-
-                    /**
-                     * @param {BadArgument} key
+                     * @param {unknown} key
                      * @returns {void}
                      */
                     function tryToSaveKey (key) {

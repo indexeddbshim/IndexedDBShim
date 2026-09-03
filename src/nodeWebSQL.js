@@ -4,7 +4,7 @@ import CFG from './CFG.js';
 
 /**
  * @typedef {{
- *   _db: any,
+ *   _db: unknown,
  *   exec: typeof SQLiteDatabase['prototype']['exec']
  * }} SQLiteDatabaseInstance
  */
@@ -18,7 +18,10 @@ import CFG from './CFG.js';
  *   object yields that object as the `new` expression's result, overriding
  *   the default "return `this`" behavior), not something TypeScript can
  *   verify structurally.
- * @typedef {new (name: string, opts?: any) => SQLiteDatabaseInstance} SQLiteDatabaseConstructor
+ * @typedef {new (
+ *   name: string,
+ *   opts?: import('websql-configurable/lib/sqlite/SQLiteDatabase.js').SQLiteDatabaseOptions
+ * ) => SQLiteDatabaseInstance} SQLiteDatabaseConstructor
  */
 
 /**

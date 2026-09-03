@@ -23,16 +23,16 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
 
 /**
  * @typedef {IDBCursor & {
- *   primaryKey: import('./Key.js').Key,
- *   key:  import('./Key.js').Key,
+ *   primaryKey: import('./Key.js').Key|undefined,
+ *   key:  import('./Key.js').Key|undefined,
  *   direction: string,
  *   source: import('./IDBObjectStore.js').IDBObjectStoreFull|
  *     import('./IDBIndex.js').IDBIndexFull,
  *   __request: import('./IDBRequest.js').IDBRequestFull,
  *   __advanceCount: Integer|undefined,
  *   __indexSource: boolean,
- *   __key: import('./Key.js').Key,
- *   __primaryKey: import('./Key.js').Key,
+ *   __key: import('./Key.js').Key|undefined,
+ *   __primaryKey: import('./Key.js').Key|undefined,
  *   __value: import('./Key.js').Value,
  *   __store: import('./IDBObjectStore.js').IDBObjectStoreFull,
  *   __range: import('./IDBKeyRange.js').IDBKeyRangeFull|undefined,
@@ -40,13 +40,13 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  *   __valueColumnName: string,
  *   __keyOnly: boolean,
  *   __valueDecoder: {
- *     decode: (str: string) => any,
+ *     decode: (str: string) => import('./Key.js').Value,
  *   },
  *   __count: boolean,
  *   __prefetchedIndex: Integer,
  *   __prefetchedData: null|{
  *     length: number;
- *     item(index: number): any;
+ *     item(index: number): unknown;
  *   }|{
  *     data: RowItemNonNull[],
  *     length: Integer,
@@ -61,7 +61,14 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  *   __multiEntryExhausted: boolean,
  *   __invalidateCache: () => void,
  *   __gotValue: boolean,
- *   __find: (...args: any[]) => void,
+ *   __find: (
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
+ *     tx: WebSQLTransaction,
+ *     success: KeySuccess,
+ *     error: FindError,
+ *     recordsToLoad?: Integer
+ *   ) => void,
  *   __findBasic: (
  *     key: import('./Key.js').Key|undefined,
  *     primaryKey: import('./Key.js').Key|undefined,
@@ -125,7 +132,7 @@ const IDBCursorAlias = IDBCursor;
  *   import('./IDBIndex.js').IDBIndexFull} source
  * @param {string} keyColumnName
  * @param {string} valueColumnName
- * @param {boolean} count
+ * @param {boolean} [count]
  * @this {IDBCursorFull}
  * @returns {void}
  */
@@ -164,7 +171,7 @@ IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColu
     this.__valueColumnName = valueColumnName;
     this.__keyOnly = valueColumnName === 'key';
     this.__valueDecoder = this.__keyOnly ? Key : Sca;
-    this.__count = count;
+    this.__count = Boolean(count);
     this.__prefetchedIndex = -1;
     this.__continuationKey = undefined;
     this.__continuationPrimaryKey = undefined;
@@ -186,25 +193,38 @@ IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColu
 
 /**
  *
- * @param {...any} args
+ * @param {IDBKeyRange} query
+ * @param {string} direction
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *   import('./IDBIndex.js').IDBIndexFull} source
+ * @param {string} keyColumnName
+ * @param {string} valueColumnName
+ * @param {boolean} [count]
  * @returns {IDBCursorFull}
  */
-IDBCursor.__createInstance = function (...args) {
+IDBCursor.__createInstance = function (query, direction, store, source, keyColumnName, valueColumnName, count) {
     const IDBCursor = IDBCursorAlias.__super;
     IDBCursor.prototype = IDBCursorAlias.prototype;
 
     // @ts-expect-error It's ok
-    return new IDBCursor(...args);
+    return new IDBCursor(
+        query, direction, store, source, keyColumnName, valueColumnName, count
+    );
 };
 
 /**
  *
- * @param {...any} args
+ * @param {import('./Key.js').Key|undefined} key
+ * @param {import('./Key.js').Key|undefined} primaryKey
+ * @param {WebSQLTransaction} tx
+ * @param {KeySuccess} success
+ * @param {FindError} error
+ * @param {Integer} [recordsToLoad]
  * @this {IDBCursorFull}
  * @returns {void}
  */
-IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
-    const [key, primaryKey, tx, success, error, recordsToLoad] = args;
+IDBCursor.prototype.__find = function (key, primaryKey, tx, success, error, recordsToLoad) {
     if (this.__multiEntryIndex) {
         this.__findMultiEntry(key, primaryKey, tx, success, error, recordsToLoad);
     } else {
@@ -322,7 +342,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
         } else if (data.rows.length > 1) {
             me.__prefetchedIndex = 0;
             me.__prefetchedData = data.rows;
-            if (CFG.DEBUG) { console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor'); }
+            if (CFG.DEBUG) { console.log('Preloaded ' + data.rows.length + ' records for cursor'); }
             me.__decode(/** @type {RowItemNonNull} */ (data.rows.item(0)), success);
         } else if (data.rows.length === 1) {
             me.__decode(/** @type {RowItemNonNull} */ (data.rows.item(0)), success);
@@ -545,11 +565,11 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 };
 
 /**
- * @typedef {any} StructuredCloneValue
+ * @typedef {import('./Key.js').Value} StructuredCloneValue
  */
 
 /**
- * @typedef {any} IndexedDBKey
+ * @typedef {import('./Key.js').Key} IndexedDBKey
  */
 
 /**
@@ -755,7 +775,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
             // We have pre-loaded data for the cursor
             me.__prefetchedIndex++;
             if (me.__prefetchedIndex < me.__prefetchedData.length) {
-                me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey, encKey) {
+                me.__decode(/** @type {RowItemNonNull} */ (me.__prefetchedData.item(me.__prefetchedIndex)), function (k, val, primKey, encKey) {
                     /**
                      * @returns {void}
                      */
@@ -904,12 +924,18 @@ IDBCursor.prototype.advance = function (count) {
 };
 
 /**
- * @typedef {any} AnyValue
+ * The `{query, count, direction}` options shape shared by
+ *   `getAll`/`getAllKeys`/`getAllRecords`.
+ * @typedef {{
+ *   query?: import('./Key.js').Value,
+ *   count?: Integer,
+ *   direction?: string
+ * }} GetAllOptions
  */
 
 /**
  *
- * @param {AnyValue} valueToUpdate
+ * @param {import('./Key.js').Value} valueToUpdate
  * @this {IDBCursorFull}
  * @returns {IDBRequest}
  */
@@ -1048,16 +1074,22 @@ Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
 const IDBCursorWithValueAlias = IDBCursorWithValue;
 /**
  *
- * @param {...any} args
+ * @param {IDBKeyRange} query
+ * @param {string} direction
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *   import('./IDBIndex.js').IDBIndexFull} source
+ * @param {string} keyColumnName
+ * @param {string} valueColumnName
+ * @param {boolean} [count]
  * @returns {IDBCursorWithValueFull}
  */
-IDBCursorWithValue.__createInstance = function (...args) {
+IDBCursorWithValue.__createInstance = function (query, direction, store, source, keyColumnName, valueColumnName, count) {
     /**
      * @class
      * @this {IDBCursorWithValueFull}
      */
     function IDBCursorWithValue () {
-        const [query, direction, store, source, keyColumnName, valueColumnName, count] = args;
         IDBCursor.__super.call(this, query, direction, store, source, keyColumnName, valueColumnName, count);
         // @ts-expect-error It's ok
         this[Symbol.toStringTag] = 'IDBCursorWithValue';
@@ -1081,12 +1113,16 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 /**
  * Validates `direction` and fills in defaults for the `{query, count,
  *   direction}` shape shared by `getAll`/`getAllKeys`/`getAllRecords`.
- * @param {AnyValue} options
+ * @param {unknown} options
  * @throws {TypeError}
- * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+ * @returns {{
+ *   query: import('./Key.js').Value|undefined,
+ *   count: Integer|undefined,
+ *   direction: string
+ * }}
  */
 function normalizeGetAllOptions (options) {
-    const {query, count, direction = 'next'} = /** @type {AnyValue} */ (options ?? {});
+    const {query, count, direction = 'next'} = /** @type {GetAllOptions} */ (options ?? {});
     if (!cursorDirections.includes(direction)) {
         throw new TypeError('`' + direction + '` is not a valid direction');
     }
@@ -1107,7 +1143,11 @@ function normalizeGetAllOptions (options) {
  *   first argument wins regardless of how many arguments were actually passed.
  * @param {IArguments} args
  * @throws {TypeError}
- * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+ * @returns {{
+ *   query: import('./Key.js').Value|undefined,
+ *   count: Integer|undefined,
+ *   direction: string
+ * }}
  */
 function parseGetAllArgs (args) {
     const arg0 = args[0];
@@ -1127,7 +1167,11 @@ function parseGetAllArgs (args) {
  *   form to disambiguate against.
  * @param {IArguments} args
  * @throws {TypeError}
- * @returns {{query: AnyValue, count: Integer|undefined, direction: string}}
+ * @returns {{
+ *   query: import('./Key.js').Value|undefined,
+ *   count: Integer|undefined,
+ *   direction: string
+ * }}
  */
 function parseGetAllRecordsArgs (args) {
     return normalizeGetAllOptions(args[0]);
@@ -1234,7 +1278,7 @@ function collectAll (source, query, count, direction, mode) {
     Object.defineProperty(state, 'direction', {writable: false, value: direction});
 
     return tx.__addToTransactionQueue(function collectAllOp (sqlTx, args, success, error) {
-        /** @type {AnyValue[]} */
+        /** @type {unknown[]} */
         const results = [];
         const recordsToLoad = count || CFG.cursorPreloadPackSize || 100;
 
@@ -1275,7 +1319,7 @@ function collectAll (source, query, count, direction, mode) {
                 state.__prefetchedIndex++;
                 if (state.__prefetchedIndex < state.__prefetchedData.length) {
                     IDBCursor.prototype.__decode.call(
-                        state, state.__prefetchedData.item(state.__prefetchedIndex),
+                        state, /** @type {RowItemNonNull} */ (state.__prefetchedData.item(state.__prefetchedIndex)),
                         /**
                          * @param {import('./Key.js').Key} k
                          * @param {import('./Key.js').Value} val

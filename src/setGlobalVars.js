@@ -16,14 +16,10 @@ import CFG from './CFG.js';
 import {isNullish} from './util.js';
 
 /**
- * @typedef {any} AnyValue
- */
-
-/**
  * @callback SetConfig
  * @param {import('./CFG.js').KeyofConfigValues|
  *   Partial<import('./CFG.js').ConfigValues>} prop
- * @param {AnyValue} [val]
+ * @param {import('./CFG.js').ConfigValue} [val]
  * @throws {Error}
  * @returns {void}
  */
@@ -115,17 +111,8 @@ function setGlobalVars (idb, initialConfig) {
         /** @type {unknown} */ (idb || globalThis || {})
     );
     /**
-     * @typedef {any} AnyClass
-     */
-    /**
-     * @typedef {any} AnyValue
-     */
-    /**
-     * @typedef {Function} AnyFunction
-     */
-    /**
      * @param {string} name
-     * @param {AnyClass} value
+     * @param {unknown} value
      * @param {PropertyDescriptor & {
      *   shimNS?: object
      * }|undefined} [propDesc]
@@ -157,10 +144,10 @@ function setGlobalVars (idb, initialConfig) {
                 } else {
                     const o = {
                         /**
-                         * @returns {AnyValue}
+                         * @returns {unknown}
                          */
                         get [name] () {
-                            return /** @type {AnyFunction} */ (
+                            return /** @type {() => unknown} */ (
                                 /** @type {PropertyDescriptor} */ (
                                     propDesc
                                 ).get
@@ -239,7 +226,7 @@ function setGlobalVars (idb, initialConfig) {
                         return shimIndexedDB;
                     }
                 });
-                /** @type {[string, any][]} */
+                /** @type {[string, unknown][]} */
                 ([
                     ['IDBFactory', shimIDBFactory],
                     ['IDBDatabase', shimIDBDatabase],
@@ -339,7 +326,9 @@ function setGlobalVars (idb, initialConfig) {
             '__useShim', '__debug', '__setConfig',
             '__getConfig', '__setUnicodeIdentifiers'
         ]).forEach((prop) => {
-            /** @type {ShimIndexedDB} */ (IDB.shimIndexedDB)[prop] = /** @type {() => any} */ function () {
+            /** @type {{[key: string]: () => void}} */ (
+                /** @type {unknown} */ (IDB.shimIndexedDB)
+            )[prop] = function () {
                 console.warn('This browser does not have WebSQL to shim.');
             };
         });
