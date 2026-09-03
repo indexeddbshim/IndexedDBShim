@@ -3,8 +3,8 @@ import {encode as keyEncode, decode as keyDecode} from './Key.js';
 
 /**
  * Compares two keys.
- * @param {import('./Key.js').Key} first
- * @param {import('./Key.js').Key} second
+ * @param {import('./Key.js').Key|null|undefined} first
+ * @param {import('./Key.js').Key|null|undefined} second
  * @returns {0|1|-1}
  */
 function cmp (first, second) {

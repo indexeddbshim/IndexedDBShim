@@ -43,7 +43,7 @@ import CFG from './CFG.js';
  */
 
 /**
- * @typedef {IDBValidKey|null|undefined} Key
+ * @typedef {IDBValidKey} Key
  */
 
 /**

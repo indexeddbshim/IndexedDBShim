@@ -27,7 +27,7 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     __deleted?: boolean;
     __cursors: (import("./IDBCursor.js").IDBCursorFull | import("./IDBCursor.js").IDBCursorWithValueFull)[];
     __idbdb: import("./IDBDatabase.js").IDBDatabaseFull;
-    __validateKeyAndValueAndCloneValue: (value: import("./Key.js").Value, key: import("./Key.js").Key, cursorUpdate: boolean) => KeyValueArray;
+    __validateKeyAndValueAndCloneValue: (value: import("./Key.js").Value, key: import("./Key.js").Key | undefined, cursorUpdate: boolean) => KeyValueArray;
     __deriveKey: (tx: WebSQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key | undefined, success: (key: import("./Key.js").Value, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback) => void;
     __checkIndexConstraints: (tx: WebSQLTransaction, value: import("./Key.js").Value, excludeKey: import("./Key.js").Key | Integer | undefined) => SyncPromise;
     __insertData: (tx: WebSQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void) => SyncPromise;
@@ -261,7 +261,7 @@ declare namespace IDBObjectStore {
      *   __idbdb: import('./IDBDatabase.js').IDBDatabaseFull,
      *   __validateKeyAndValueAndCloneValue: (
      *     value: import('./Key.js').Value,
-     *     key: import('./Key.js').Key,
+     *     key: import('./Key.js').Key|undefined,
      *     cursorUpdate: boolean
      *   ) => KeyValueArray,
      *   __deriveKey: (

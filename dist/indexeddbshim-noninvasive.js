@@ -3522,8 +3522,8 @@
 
   /**
    * Compares two keys.
-   * @param {import('./Key.js').Key} first
-   * @param {import('./Key.js').Key} second
+   * @param {import('./Key.js').Key|null|undefined} first
+   * @param {import('./Key.js').Key|null|undefined} second
    * @returns {0|1|-1}
    */
   function cmp(first, second) {
@@ -3604,7 +3604,7 @@
    */
 
   /**
-   * @typedef {IDBValidKey|null|undefined} Key
+   * @typedef {IDBValidKey} Key
    */
 
   /**
@@ -9442,7 +9442,7 @@
    *   __idbdb: import('./IDBDatabase.js').IDBDatabaseFull,
    *   __validateKeyAndValueAndCloneValue: (
    *     value: import('./Key.js').Value,
-   *     key: import('./Key.js').Key,
+   *     key: import('./Key.js').Key|undefined,
    *     cursorUpdate: boolean
    *   ) => KeyValueArray,
    *   __deriveKey: (
@@ -12334,16 +12334,16 @@
 
   /**
    * @typedef {IDBCursor & {
-   *   primaryKey: import('./Key.js').Key|undefined,
-   *   key:  import('./Key.js').Key|undefined,
+   *   primaryKey: import('./Key.js').Key|null|undefined,
+   *   key:  import('./Key.js').Key|null|undefined,
    *   direction: string,
    *   source: import('./IDBObjectStore.js').IDBObjectStoreFull|
    *     import('./IDBIndex.js').IDBIndexFull,
    *   __request: import('./IDBRequest.js').IDBRequestFull,
    *   __advanceCount: Integer|undefined,
    *   __indexSource: boolean,
-   *   __key: import('./Key.js').Key|undefined,
-   *   __primaryKey: import('./Key.js').Key|undefined,
+   *   __key: import('./Key.js').Key|null|undefined,
+   *   __primaryKey: import('./Key.js').Key|null|undefined,
    *   __value: import('./Key.js').Value,
    *   __store: import('./IDBObjectStore.js').IDBObjectStoreFull,
    *   __range: import('./IDBKeyRange.js').IDBKeyRangeFull|undefined,
@@ -12400,17 +12400,17 @@
    *   __decode: (
    *     rowItem: RowItemNonNull,
    *     callback: (
-   *       key: import('./Key.js').Key,
+   *       key: import('./Key.js').Key|undefined,
    *       val: import('./Key.js').Value,
-   *       primaryKey: import('./Key.js').Key,
+   *       primaryKey: import('./Key.js').Key|undefined,
    *       encKey?: string
    *     ) => void
    *   ) => void,
    *   __sourceOrEffectiveObjStoreDeleted: () => void,
    *   __continue: (key?: import('./Key.js').Key, advanceContinue?: boolean) => void,
    *   __continueFinish: (
-   *     key: import('./Key.js').Key,
-   *     primaryKey: import('./Key.js').Key,
+   *     key: import('./Key.js').Key|undefined,
+   *     primaryKey: import('./Key.js').Key|undefined,
    *     advanceState: boolean
    *   ) => void
    * }} IDBCursorFull
@@ -12542,9 +12542,9 @@
 
   /**
    * @typedef {(
-   *   k: import('./Key.js').Key,
+   *   k: import('./Key.js').Key|undefined,
    *   val: import('./Key.js').Value,
-   *   primKey: import('./Key.js').Key
+   *   primKey: import('./Key.js').Key|undefined
    * ) => void} KeySuccess
    */
 
@@ -12766,7 +12766,7 @@
           for (var i = 0; i < data.rows.length; i++) {
             var rowItem = /** @type {RowItemNonNull} */data.rows.item(i);
             var rowKey = _decode(rowItem[me.__keyColumnName], true);
-            var matches = findMultiEntryMatches(rowKey, me.__range);
+            var matches = findMultiEntryMatches(/** @type {import('./Key.js').Key} */rowKey, me.__range);
             ct += matches.length;
           }
           success(undefined, ct, undefined);
@@ -12786,7 +12786,7 @@
         for (var _i = 0; _i < data.rows.length; _i++) {
           var _rowItem = /** @type {RowItemNonNull} */data.rows.item(_i);
           var _rowKey = _decode(_rowItem[me.__keyColumnName], true);
-          var _matches = findMultiEntryMatches(_rowKey, me.__range);
+          var _matches = findMultiEntryMatches(/** @type {import('./Key.js').Key} */_rowKey, me.__range);
           var _iterator = _createForOfIteratorHelper(_matches),
             _step;
           try {
@@ -12883,9 +12883,9 @@
 
   /**
    * @callback SuccessCallback
-   * @param {IndexedDBKey} key
+   * @param {IndexedDBKey|undefined} key
    * @param {StructuredCloneValue} value
-   * @param {IndexedDBKey} primaryKey
+   * @param {IndexedDBKey|undefined} primaryKey
    * @returns {void}
    */
 
@@ -12925,9 +12925,9 @@
    *
    * @param {RowItemNonNull} rowItem
    * @param {(
-   *   key: import('./Key.js').Key,
+   *   key: import('./Key.js').Key|undefined,
    *   val: import('./Key.js').Value,
-   *   primaryKey: import('./Key.js').Key,
+   *   primaryKey: import('./Key.js').Key|undefined,
    *   encKey?: string
    * ) => void} callback
    * @this {IDBCursorFull}
@@ -13002,8 +13002,8 @@
 
   /**
    *
-   * @param {import('./Key.js').Key} key
-   * @param {import('./Key.js').Key} primaryKey
+   * @param {import('./Key.js').Key|undefined} key
+   * @param {import('./Key.js').Key|undefined} primaryKey
    * @param {boolean} advanceState
    * @this {IDBCursorFull}
    * @returns {void}
@@ -13017,9 +13017,9 @@
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     me.__store.transaction.__pushToQueue(me.__request, function cursorContinue(tx, args, success, error, executeNextRequest) {
       /**
-       * @param {import('./Key.js').Key} k
+       * @param {import('./Key.js').Key|undefined} k
        * @param {import('./Key.js').Value} val
-       * @param {import('./Key.js').Key} primKey
+       * @param {import('./Key.js').Key|undefined} primKey
        * @returns {void}
        */
       function triggerSuccess(k, val, primKey) {

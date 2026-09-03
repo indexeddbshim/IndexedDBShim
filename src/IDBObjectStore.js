@@ -60,7 +60,7 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *   __idbdb: import('./IDBDatabase.js').IDBDatabaseFull,
  *   __validateKeyAndValueAndCloneValue: (
  *     value: import('./Key.js').Value,
- *     key: import('./Key.js').Key,
+ *     key: import('./Key.js').Key|undefined,
  *     cursorUpdate: boolean
  *   ) => KeyValueArray,
  *   __deriveKey: (

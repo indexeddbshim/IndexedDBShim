@@ -3138,8 +3138,8 @@ class SyncPromise {
 
 /**
  * Compares two keys.
- * @param {import('./Key.js').Key} first
- * @param {import('./Key.js').Key} second
+ * @param {import('./Key.js').Key|null|undefined} first
+ * @param {import('./Key.js').Key|null|undefined} second
  * @returns {0|1|-1}
  */
 function cmp(first, second) {
@@ -3217,7 +3217,7 @@ const safePush = (arr, val) => setArrayValue(arr, arr.length, val);
  */
 
 /**
- * @typedef {IDBValidKey|null|undefined} Key
+ * @typedef {IDBValidKey} Key
  */
 
 /**
@@ -8635,7 +8635,7 @@ const IDBObjectStoreAlias = IDBObjectStore;
  *   __idbdb: import('./IDBDatabase.js').IDBDatabaseFull,
  *   __validateKeyAndValueAndCloneValue: (
  *     value: import('./Key.js').Value,
- *     key: import('./Key.js').Key,
+ *     key: import('./Key.js').Key|undefined,
  *     cursorUpdate: boolean
  *   ) => KeyValueArray,
  *   __deriveKey: (
@@ -11517,16 +11517,16 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
 
 /**
  * @typedef {IDBCursor & {
- *   primaryKey: import('./Key.js').Key|undefined,
- *   key:  import('./Key.js').Key|undefined,
+ *   primaryKey: import('./Key.js').Key|null|undefined,
+ *   key:  import('./Key.js').Key|null|undefined,
  *   direction: string,
  *   source: import('./IDBObjectStore.js').IDBObjectStoreFull|
  *     import('./IDBIndex.js').IDBIndexFull,
  *   __request: import('./IDBRequest.js').IDBRequestFull,
  *   __advanceCount: Integer|undefined,
  *   __indexSource: boolean,
- *   __key: import('./Key.js').Key|undefined,
- *   __primaryKey: import('./Key.js').Key|undefined,
+ *   __key: import('./Key.js').Key|null|undefined,
+ *   __primaryKey: import('./Key.js').Key|null|undefined,
  *   __value: import('./Key.js').Value,
  *   __store: import('./IDBObjectStore.js').IDBObjectStoreFull,
  *   __range: import('./IDBKeyRange.js').IDBKeyRangeFull|undefined,
@@ -11583,17 +11583,17 @@ const cursorDirections = ['next', 'prev', 'nextunique', 'prevunique'];
  *   __decode: (
  *     rowItem: RowItemNonNull,
  *     callback: (
- *       key: import('./Key.js').Key,
+ *       key: import('./Key.js').Key|undefined,
  *       val: import('./Key.js').Value,
- *       primaryKey: import('./Key.js').Key,
+ *       primaryKey: import('./Key.js').Key|undefined,
  *       encKey?: string
  *     ) => void
  *   ) => void,
  *   __sourceOrEffectiveObjStoreDeleted: () => void,
  *   __continue: (key?: import('./Key.js').Key, advanceContinue?: boolean) => void,
  *   __continueFinish: (
- *     key: import('./Key.js').Key,
- *     primaryKey: import('./Key.js').Key,
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
  *     advanceState: boolean
  *   ) => void
  * }} IDBCursorFull
@@ -11725,9 +11725,9 @@ IDBCursor.prototype.__find = function (key, primaryKey, tx, success, error, reco
 
 /**
  * @typedef {(
- *   k: import('./Key.js').Key,
+ *   k: import('./Key.js').Key|undefined,
  *   val: import('./Key.js').Value,
- *   primKey: import('./Key.js').Key
+ *   primKey: import('./Key.js').Key|undefined
  * ) => void} KeySuccess
  */
 
@@ -11948,7 +11948,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         for (let i = 0; i < data.rows.length; i++) {
           const rowItem = /** @type {RowItemNonNull} */data.rows.item(i);
           const rowKey = decode$1(rowItem[me.__keyColumnName], true);
-          const matches = findMultiEntryMatches(rowKey, me.__range);
+          const matches = findMultiEntryMatches(/** @type {import('./Key.js').Key} */rowKey, me.__range);
           ct += matches.length;
         }
         success(undefined, ct, undefined);
@@ -11968,7 +11968,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
       for (let i = 0; i < data.rows.length; i++) {
         const rowItem = /** @type {RowItemNonNull} */data.rows.item(i);
         const rowKey = decode$1(rowItem[me.__keyColumnName], true);
-        const matches = findMultiEntryMatches(rowKey, me.__range);
+        const matches = findMultiEntryMatches(/** @type {import('./Key.js').Key} */rowKey, me.__range);
         for (const matchingKey of matches) {
           /**
            * @type {RowItemNonNull}
@@ -12058,9 +12058,9 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 
 /**
  * @callback SuccessCallback
- * @param {IndexedDBKey} key
+ * @param {IndexedDBKey|undefined} key
  * @param {StructuredCloneValue} value
- * @param {IndexedDBKey} primaryKey
+ * @param {IndexedDBKey|undefined} primaryKey
  * @returns {void}
  */
 
@@ -12100,9 +12100,9 @@ IDBCursor.prototype.__onsuccess = function (success) {
  *
  * @param {RowItemNonNull} rowItem
  * @param {(
- *   key: import('./Key.js').Key,
+ *   key: import('./Key.js').Key|undefined,
  *   val: import('./Key.js').Value,
- *   primaryKey: import('./Key.js').Key,
+ *   primaryKey: import('./Key.js').Key|undefined,
  *   encKey?: string
  * ) => void} callback
  * @this {IDBCursorFull}
@@ -12177,8 +12177,8 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
 
 /**
  *
- * @param {import('./Key.js').Key} key
- * @param {import('./Key.js').Key} primaryKey
+ * @param {import('./Key.js').Key|undefined} key
+ * @param {import('./Key.js').Key|undefined} primaryKey
  * @param {boolean} advanceState
  * @this {IDBCursorFull}
  * @returns {void}
@@ -12192,9 +12192,9 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
   /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.__store.transaction.__pushToQueue(me.__request, function cursorContinue(tx, args, success, error, executeNextRequest) {
     /**
-     * @param {import('./Key.js').Key} k
+     * @param {import('./Key.js').Key|undefined} k
      * @param {import('./Key.js').Value} val
-     * @param {import('./Key.js').Key} primKey
+     * @param {import('./Key.js').Key|undefined} primKey
      * @returns {void}
      */
     function triggerSuccess(k, val, primKey) {

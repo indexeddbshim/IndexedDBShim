@@ -1,15 +1,15 @@
 export type Integer = number;
 export type WebSQLTransaction = import("websql-configurable/lib/websql/WebSQLTransaction.js").default;
 export type IDBCursorFull = IDBCursor & {
-    primaryKey: import("./Key.js").Key | undefined;
-    key: import("./Key.js").Key | undefined;
+    primaryKey: import("./Key.js").Key | null | undefined;
+    key: import("./Key.js").Key | null | undefined;
     direction: string;
     source: import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull;
     __request: import("./IDBRequest.js").IDBRequestFull;
     __advanceCount: Integer | undefined;
     __indexSource: boolean;
-    __key: import("./Key.js").Key | undefined;
-    __primaryKey: import("./Key.js").Key | undefined;
+    __key: import("./Key.js").Key | null | undefined;
+    __primaryKey: import("./Key.js").Key | null | undefined;
     __value: import("./Key.js").Value;
     __store: import("./IDBObjectStore.js").IDBObjectStoreFull;
     __range: import("./IDBKeyRange.js").IDBKeyRangeFull | undefined;
@@ -44,16 +44,16 @@ export type IDBCursorFull = IDBCursor & {
     __findBasic: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: WebSQLTransaction, success: KeySuccess, error: FindError, recordsToLoad: Integer | undefined) => void;
     __findMultiEntry: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: WebSQLTransaction, success: KeySuccess, error: FindError, recordsToLoad?: Integer) => void;
     __onsuccess: (success: SuccessArg) => SuccessCallback;
-    __decode: (rowItem: RowItemNonNull, callback: (key: import("./Key.js").Key, val: import("./Key.js").Value, primaryKey: import("./Key.js").Key, encKey?: string) => void) => void;
+    __decode: (rowItem: RowItemNonNull, callback: (key: import("./Key.js").Key | undefined, val: import("./Key.js").Value, primaryKey: import("./Key.js").Key | undefined, encKey?: string) => void) => void;
     __sourceOrEffectiveObjStoreDeleted: () => void;
     __continue: (key?: import("./Key.js").Key, advanceContinue?: boolean) => void;
-    __continueFinish: (key: import("./Key.js").Key, primaryKey: import("./Key.js").Key, advanceState: boolean) => void;
+    __continueFinish: (key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, advanceState: boolean) => void;
 };
 export type IDBCursorWithValueFull = IDBCursorFull & {
     __request: import("./IDBRequest.js").IDBRequestFull;
     value: import("./Key.js").Value;
 };
-export type KeySuccess = (k: import("./Key.js").Key, val: import("./Key.js").Value, primKey: import("./Key.js").Key) => void;
+export type KeySuccess = (k: import("./Key.js").Key | undefined, val: import("./Key.js").Value, primKey: import("./Key.js").Key | undefined) => void;
 export type FindError = (tx: WebSQLTransaction | Error | DOMException | (Error & {
     code?: number;
 }), err?: (Error & {
@@ -62,7 +62,7 @@ export type FindError = (tx: WebSQLTransaction | Error | DOMException | (Error &
 export type StructuredCloneValue = import("./Key.js").Value;
 export type IndexedDBKey = import("./Key.js").Key;
 export type SuccessArg = (value: StructuredCloneValue, req: import("./IDBRequest.js").IDBRequestFull) => void;
-export type SuccessCallback = (key: IndexedDBKey, value: StructuredCloneValue, primaryKey: IndexedDBKey) => void;
+export type SuccessCallback = (key: IndexedDBKey | undefined, value: StructuredCloneValue, primaryKey: IndexedDBKey | undefined) => void;
 export type RowItemNonNull = {
     matchingKey: string;
     key: string;
@@ -85,16 +85,16 @@ export type GetAllOptions = {
  */
 /**
  * @typedef {IDBCursor & {
- *   primaryKey: import('./Key.js').Key|undefined,
- *   key:  import('./Key.js').Key|undefined,
+ *   primaryKey: import('./Key.js').Key|null|undefined,
+ *   key:  import('./Key.js').Key|null|undefined,
  *   direction: string,
  *   source: import('./IDBObjectStore.js').IDBObjectStoreFull|
  *     import('./IDBIndex.js').IDBIndexFull,
  *   __request: import('./IDBRequest.js').IDBRequestFull,
  *   __advanceCount: Integer|undefined,
  *   __indexSource: boolean,
- *   __key: import('./Key.js').Key|undefined,
- *   __primaryKey: import('./Key.js').Key|undefined,
+ *   __key: import('./Key.js').Key|null|undefined,
+ *   __primaryKey: import('./Key.js').Key|null|undefined,
  *   __value: import('./Key.js').Value,
  *   __store: import('./IDBObjectStore.js').IDBObjectStoreFull,
  *   __range: import('./IDBKeyRange.js').IDBKeyRangeFull|undefined,
@@ -151,17 +151,17 @@ export type GetAllOptions = {
  *   __decode: (
  *     rowItem: RowItemNonNull,
  *     callback: (
- *       key: import('./Key.js').Key,
+ *       key: import('./Key.js').Key|undefined,
  *       val: import('./Key.js').Value,
- *       primaryKey: import('./Key.js').Key,
+ *       primaryKey: import('./Key.js').Key|undefined,
  *       encKey?: string
  *     ) => void
  *   ) => void,
  *   __sourceOrEffectiveObjStoreDeleted: () => void,
  *   __continue: (key?: import('./Key.js').Key, advanceContinue?: boolean) => void,
  *   __continueFinish: (
- *     key: import('./Key.js').Key,
- *     primaryKey: import('./Key.js').Key,
+ *     key: import('./Key.js').Key|undefined,
+ *     primaryKey: import('./Key.js').Key|undefined,
  *     advanceState: boolean
  *   ) => void
  * }} IDBCursorFull
@@ -192,9 +192,9 @@ export class IDBCursor {
     __find(this: IDBCursorFull, key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, tx: WebSQLTransaction, success: KeySuccess, error: FindError, recordsToLoad?: Integer): void;
     /**
      * @typedef {(
-     *   k: import('./Key.js').Key,
+     *   k: import('./Key.js').Key|undefined,
      *   val: import('./Key.js').Value,
-     *   primKey: import('./Key.js').Key
+     *   primKey: import('./Key.js').Key|undefined
      * ) => void} KeySuccess
      */
     /**
@@ -238,9 +238,9 @@ export class IDBCursor {
      */
     /**
      * @callback SuccessCallback
-     * @param {IndexedDBKey} key
+     * @param {IndexedDBKey|undefined} key
      * @param {StructuredCloneValue} value
-     * @param {IndexedDBKey} primaryKey
+     * @param {IndexedDBKey|undefined} primaryKey
      * @returns {void}
      */
     /**
@@ -261,15 +261,15 @@ export class IDBCursor {
      *
      * @param {RowItemNonNull} rowItem
      * @param {(
-     *   key: import('./Key.js').Key,
+     *   key: import('./Key.js').Key|undefined,
      *   val: import('./Key.js').Value,
-     *   primaryKey: import('./Key.js').Key,
+     *   primaryKey: import('./Key.js').Key|undefined,
      *   encKey?: string
      * ) => void} callback
      * @this {IDBCursorFull}
      * @returns {void}
      */
-    __decode(this: IDBCursorFull, rowItem: RowItemNonNull, callback: (key: import("./Key.js").Key, val: import("./Key.js").Value, primaryKey: import("./Key.js").Key, encKey?: string) => void): void;
+    __decode(this: IDBCursorFull, rowItem: RowItemNonNull, callback: (key: import("./Key.js").Key | undefined, val: import("./Key.js").Value, primaryKey: import("./Key.js").Key | undefined, encKey?: string) => void): void;
     /**
      * @this {IDBCursorFull}
      * @returns {void}
@@ -292,13 +292,13 @@ export class IDBCursor {
     __continue(this: IDBCursorFull, key?: import("./Key.js").Key, advanceContinue?: boolean): void;
     /**
      *
-     * @param {import('./Key.js').Key} key
-     * @param {import('./Key.js').Key} primaryKey
+     * @param {import('./Key.js').Key|undefined} key
+     * @param {import('./Key.js').Key|undefined} primaryKey
      * @param {boolean} advanceState
      * @this {IDBCursorFull}
      * @returns {void}
      */
-    __continueFinish(this: IDBCursorFull, key: import("./Key.js").Key, primaryKey: import("./Key.js").Key, advanceState: boolean): void;
+    __continueFinish(this: IDBCursorFull, key: import("./Key.js").Key | undefined, primaryKey: import("./Key.js").Key | undefined, advanceState: boolean): void;
     __gotValue: boolean | undefined;
     /**
      * @this {IDBCursorFull}
