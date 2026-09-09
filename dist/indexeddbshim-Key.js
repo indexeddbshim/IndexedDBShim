@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.1 - 9/3/2026 */
+/*! indexeddbshim - v19.0.1 - 9/9/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -360,6 +360,7 @@
    */
   function createNativeDOMException(name, message) {
     // @ts-expect-error It's ok
+    // eslint-disable-next-line new-cap -- Ok
     return new DOMException.prototype.constructor(message, name || 'DOMException');
   }
 

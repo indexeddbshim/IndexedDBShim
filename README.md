@@ -105,6 +105,18 @@ globalThis.window = globalThis; // We'll allow ourselves to use `window.indexedD
 setGlobalVars(); // See signature below
 ```
 
+## Deno set-up
+
+The project works with Deno (and `idb`) according to a user.
+
+Be sure to call with `--location`.
+
+```shell
+deno --location http:foo -A main.ts
+```
+
+The location must start with http: or https: per Deno.
+
 ### Jest (or other test environments with a `jsdom`/`Window`-like global)
 
 If you call `setGlobalVars(global)` (or `setGlobalVars(window)`) inside a

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.1 - 9/3/2026 */
+/*! indexeddbshim - v19.0.1 - 9/9/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -2632,6 +2632,7 @@
    */
   function createNativeDOMException(name, message) {
     // @ts-expect-error It's ok
+    // eslint-disable-next-line new-cap -- Ok
     return new DOMException.prototype.constructor(message, name || 'DOMException');
   }
 
@@ -6685,8 +6686,8 @@
             sync: true
           }, this.options), i),
           l = c.sync,
-          y = {},
           u = {},
+          y = {},
           p = [],
           f = [],
           d = [],
@@ -6694,17 +6695,17 @@
           h = c.encapsulateObserver,
           b = c.encapsulateError,
           finish = function finish(e) {
-            var t = Object.values(y);
+            var t = Object.values(u);
             if (c.iterateNone) return t.length ? t[0] : getJSONType(e);
             if (c.returnTypeNames) return !!t.length && _toConsumableArray(new Set(t));
-            var r = Object.keys(u).length > 0,
+            var r = Object.keys(y).length > 0,
               o = isObject(e) && (n(e, "$types") || n(e, "$symbolKeys"));
-            return r || t.length ? (!o && e && isPlainObject(e) ? t.length && (e.$types = y) : e = {
+            return r || t.length ? (!o && e && isPlainObject(e) ? t.length && (e.$types = u) : e = {
               $: e,
               $types: {
-                $: y
+                $: u
               }
-            }, r && (e.$symbolKeys = u)) : o && (e = {
+            }, r && (e.$symbolKeys = y)) : o && (e = {
               $: e,
               $types: true
             }), e;
@@ -6724,11 +6725,11 @@
                     _context2.n = 2;
                     return Promise.all(r.map(/*#__PURE__*/function () {
                       var _ref3 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(r) {
-                        var n, _t$splice, _t$splice2, o, _o, a, s, i, c, l, y, u, p, _t, _t2, _t3, _t4;
+                        var n, _t$splice, _t$splice2, o, _o, a, s, i, c, l, u, y, p, _t, _t2, _t3, _t4;
                         return _regenerator().w(function (_context) {
                           while (1) switch (_context.n) {
                             case 0:
-                              n = [], _t$splice = t.splice(0, 1), _t$splice2 = _slicedToArray(_t$splice, 1), o = _t$splice2[0], _o = _slicedToArray(o, 7), a = _o[0], s = _o[2], i = _o[3], c = _o[4], l = _o[5], y = _o[6], u = _encapsulate2(a, r, s, i, n, true, y), p = hasConstructorOf(u, TypesonPromise);
+                              n = [], _t$splice = t.splice(0, 1), _t$splice2 = _slicedToArray(_t$splice, 1), o = _t$splice2[0], _o = _slicedToArray(o, 7), a = _o[0], s = _o[2], i = _o[3], c = _o[4], l = _o[5], u = _o[6], y = _encapsulate2(a, r, s, i, n, true, u), p = hasConstructorOf(y, TypesonPromise);
                               if (!(a && p)) {
                                 _context.n = 2;
                                 break;
@@ -6737,14 +6738,14 @@
                               _t3 = c;
                               _t4 = l;
                               _context.n = 1;
-                              return u.p;
+                              return y.p;
                             case 1:
                               _t2(_t3, _t4, _context.v);
                               _t = _checkPromises(e, n);
                               _context.n = 3;
                               break;
                             case 2:
-                              _t = (a ? setOwnEnumerable(c, l, u) : e = p ? u.p : u, _checkPromises(e, n));
+                              _t = (a ? setOwnEnumerable(c, l, y) : e = p ? y.p : y, _checkPromises(e, n));
                             case 3:
                               return _context.a(2, _t);
                           }
@@ -6824,7 +6825,7 @@
             if (null === t) return w && w(), t;
             if (a && t && "object" == _typeof(t) && !i.iterateIn && !i.iterateUnsetNumeric) {
               var _r2 = p.indexOf(t);
-              if (-1 !== _r2) return y[e] = "#", w && w({
+              if (-1 !== _r2) return u[e] = "#", w && w({
                 cyclicKeypath: f[_r2]
               }), "#" + f[_r2];
               true === a && (p.push(t), f.push(e));
@@ -6875,7 +6876,7 @@
             }), (i.iterateSymbols || c.iterateSymbols) && (Object.getOwnPropertySymbols(t).filter(function (e) {
               return Object.prototype.propertyIsEnumerable.call(t, e);
             }).forEach(function (r) {
-              var _u$e;
+              var _y$e;
               var n = function resolveSymbolIdentity(e, t) {
                 var r = Symbol.keyFor(e);
                 if (void 0 !== r) return {
@@ -6896,11 +6897,11 @@
                 if (c.throwOnUnregisteredSymbol) throw new TypeError("Cannot serialize a Symbol-keyed property whose Symbol has no portable identity (not global, not well-known, and not in the `symbols` option): " + String(r));
                 return;
               }
-              var o = (_u$e = u[e]) !== null && _u$e !== void 0 ? _u$e : u[e] = [],
-                y = {
+              var o = (_y$e = y[e]) !== null && _y$e !== void 0 ? _y$e : y[e] = [],
+                u = {
                   key: n
                 };
-              o.push(y);
+              o.push(u);
               var p = o.length - 1,
                 f = "$symbolKeys.".concat(escapeKeyPathComponent(e), ".").concat(String(p), ".value"),
                 d = {
@@ -6911,7 +6912,7 @@
               }, function () {
                 var e = getEncapsulatedValue(f, d, "value"),
                   t = e && e.value;
-                hasConstructorOf(t, TypesonPromise) ? l.push([f, t, Boolean(a), i, y, "value", i.type]) : e && (void 0 !== t || "substitute" in e) && setOwnEnumerable(y, "value", t);
+                hasConstructorOf(t, TypesonPromise) ? l.push([f, t, Boolean(a), i, u, "value", i.type]) : e && (void 0 !== t || "substitute" in e) && setOwnEnumerable(u, "value", t);
               });
             }), w && w({
               endIterateSymbols: true,
@@ -6947,8 +6948,8 @@
               if (_o3.test(t, r)) {
                 var _i2 = _o3.type;
                 if (Object.hasOwn(_this3.revivers, _i2)) {
-                  var _t5 = y[e];
-                  y[e] = _t5 ? [_i2].concat(_t5) : _i2;
+                  var _t5 = u[e];
+                  u[e] = _t5 ? [_i2].concat(_t5) : _i2;
                 }
                 if (Object.assign(r, {
                   type: _i2,
@@ -7010,16 +7011,16 @@
         var c = e.$types;
         if (true === c) return finishRevival(e.$);
         var l = e.$symbolKeys;
-        var y = void 0 !== l;
+        var u = void 0 !== l;
         if (!c || "object" != _typeof(c) || Array.isArray(c)) {
           if (!l) return finishRevival(e);
           c = {};
         }
-        var u = [],
+        var y = [],
           p = Object.create(null),
           f = {};
         var d = true;
-        c.$ && isPlainObject(c.$) && (e = e.$, c = c.$, d = false, y = false, void 0 !== l && isObject(e) && !n(e, "$symbolKeys") && (e.$symbolKeys = l, y = true));
+        c.$ && isPlainObject(c.$) && (e = e.$, c = c.$, d = false, u = false, void 0 !== l && isObject(e) && !n(e, "$symbolKeys") && (e.$symbolKeys = l, u = true));
         var executeReviver = function executeReviver(e, t) {
             var _this4$revivers$e;
             var _ref6 = (_this4$revivers$e = _this4.revivers[e]) !== null && _this4$revivers$e !== void 0 ? _this4$revivers$e : [],
@@ -7037,7 +7038,7 @@
         }
         var reHomeSymbolKeys = function reHomeSymbolKeys(e) {
             if (!isObject(e)) return;
-            var t = y ? e.$symbolKeys : l;
+            var t = u ? e.$symbolKeys : l;
             t && (Object.entries(t).forEach(function (_ref8) {
               var _ref9 = _slicedToArray(_ref8, 2),
                 t = _ref9[0],
@@ -7066,7 +7067,7 @@
                   value: r
                 })) : o[t] = r;
               });
-            }), y && delete e.$symbolKeys);
+            }), u && delete e.$symbolKeys);
           },
           h = function () {
             if (!c) throw new Error("Found bad `types`");
@@ -7108,7 +7109,7 @@
           return e;
         }) : (b = function _revive(e, t, a, s, l) {
           if (d && "$types" === e) return;
-          var y = m.length,
+          var u = m.length,
             f = n(c, e) ? c[e] : void 0,
             h = o(t);
           if (h || isPlainObject(t)) {
@@ -7121,16 +7122,16 @@
               hasConstructorOf(n, TypesonPromise) ? m.push(n.then(function (e) {
                 return set(e);
               })) : set(n);
-            }), t = _o4; u.length;) {
-              var _u$ = _slicedToArray(u[0], 4),
-                _e2 = _u$[0],
-                _t7 = _u$[1],
-                _r5 = _u$[2],
-                _o5 = _u$[3],
+            }), t = _o4; y.length;) {
+              var _y$ = _slicedToArray(y[0], 4),
+                _e2 = _y$[0],
+                _t7 = _y$[1],
+                _r5 = _y$[2],
+                _o5 = _y$[3],
                 _a2 = n(p, _t7),
                 _s = _a2 ? p[_t7] : getByKeyPath(_e2, _t7);
               if (!_a2 && void 0 === _s) break;
-              setOwnEnumerable(_r5, _o5, _s), u.shift();
+              setOwnEnumerable(_r5, _o5, _s), y.shift();
             }
           }
           if (!f) return p[e] = t, t;
@@ -7138,7 +7139,7 @@
             var _e3 = t.slice(1),
               _r6 = n(p, _e3),
               _o6 = _r6 ? p[_e3] : getByKeyPath(a, _e3);
-            return _r6 || void 0 !== _o6 || u.push([a, _e3, s, l]), _o6;
+            return _r6 || void 0 !== _o6 || y.push([a, _e3, s, l]), _o6;
           }
           var applyType = function applyType(t) {
             var r = [].concat(f).reduce(function reducer(e, t) {
@@ -7152,7 +7153,7 @@
               return p[e] = t, t;
             }) : (p[e] = r, r);
           };
-          return !i && m.length > y ? TypesonPromise.all(m.slice(y)).then(function () {
+          return !i && m.length > u ? TypesonPromise.all(m.slice(u)).then(function () {
             return applyType(t);
           }) : applyType(t);
         }("", e, null), m.length && (b = TypesonPromise.resolve(b).then(function (e) {
@@ -7257,8 +7258,8 @@
   });
   Undefined.__typeson__type__ = "TypesonUndefined";
   var i = ["null", "boolean", "number", "string", "array", "object"];
-  for (var c = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", l = new Uint8Array(256), y = 0; y < 64; y++) l[c.codePointAt(y)] = y;
-  var u = function encode(e, t, r) {
+  for (var c = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", l = new Uint8Array(256), u = 0; u < 64; u++) l[c.codePointAt(u)] = u;
+  var y = function encode(e, t, r) {
       null == r && (r = e.byteLength);
       for (var n = new Uint8Array(e, 0, r), o = n.length, a = "", s = 0; s < o; s += 3) a += c[n[s] >> 2], a += c[(3 & n[s]) << 4 | n[s + 1] >> 4], a += c[(15 & n[s + 1]) << 2 | n[s + 2] >> 6], a += c[63 & n[s + 2]];
       return o % 3 == 2 ? a = a.slice(0, -1) + "=" : o % 3 == 1 && (a = a.slice(0, -2) + "=="), a;
@@ -7273,8 +7274,8 @@
         i = .75 * e.length,
         c = 0;
       "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-      for (var y = new ArrayBuffer(i, t), u = new Uint8Array(y), p = 0; p < r; p += 4) n = l[e.codePointAt(p)], o = l[e.codePointAt(p + 1)], a = l[e.codePointAt(p + 2)], s = l[e.codePointAt(p + 3)], u[c++] = n << 2 | o >> 4, u[c++] = (15 & o) << 4 | a >> 2, u[c++] = (3 & a) << 6 | 63 & s;
-      return y;
+      for (var u = new ArrayBuffer(i, t), y = new Uint8Array(u), p = 0; p < r; p += 4) n = l[e.codePointAt(p)], o = l[e.codePointAt(p + 1)], a = l[e.codePointAt(p + 2)], s = l[e.codePointAt(p + 3)], y[c++] = n << 2 | o >> 4, y[c++] = (15 & o) << 4 | a >> 2, y[c++] = (3 & a) << 6 | 63 & s;
+      return u;
     };
   var f = {
       arraybuffer: {
@@ -7287,7 +7288,7 @@
           return -1 !== r ? {
             index: r
           } : (t.buffers.push(e), {
-            s: u(e),
+            s: y(e),
             maxByteLength: e.maxByteLength,
             resizable: e.resizable
           });
@@ -7322,12 +7323,12 @@
             i.push(_r0), c += _r0;
           }
           var l = new ArrayBuffer(c);
-          var y = 0;
+          var u = 0;
           for (var _t0 = 0; _t0 < s; _t0++) {
-            var _r1 = new Uint8Array(l, y, i[_t0]);
+            var _r1 = new Uint8Array(l, u, i[_t0]);
             e.copyTo(_r1, {
               planeIndex: _t0
-            }), y += i[_t0];
+            }), u += i[_t0];
           }
           return {
             format: t,
@@ -7486,7 +7487,7 @@
             byteOffset: t,
             byteLength: r
           } : (n.buffers.push(e), {
-            encoded: u(e),
+            encoded: y(e),
             maxByteLength: e.maxByteLength,
             resizable: e.resizable,
             byteOffset: t,
@@ -7625,9 +7626,9 @@
         }
       }
     },
-    x = {};
+    N = {};
   function create$3(e) {
-    x[e.name.toLowerCase()] = {
+    N[e.name.toLowerCase()] = {
       test: function test(t) {
         return toStringTag(t) === e.name;
       },
@@ -7649,7 +7650,7 @@
     };
   }
   "undefined" != typeof DOMRect && create$3(DOMRect), "undefined" != typeof DOMRectReadOnly && create$3(DOMRectReadOnly);
-  var j = {
+  var x = {
       encodedaudiochunk: {
         test: function test(e) {
           return "EncodedAudioChunk" === toStringTag(e);
@@ -7681,7 +7682,7 @@
         }
       }
     },
-    B = {
+    j = {
       encodedvideochunk: {
         test: function test(e) {
           return "EncodedVideoChunk" === toStringTag(e);
@@ -7713,7 +7714,7 @@
         }
       }
     },
-    N = {
+    B = {
       error: {
         test: function test(e) {
           return "Error" === toStringTag(e);
@@ -7852,7 +7853,7 @@
         }
       }
     },
-    _ = {
+    k = {
       imagebitmap: {
         test: function test(e) {
           return "ImageBitmap" === toStringTag(e) || e && e.dataset && "ImageBitmap" === e.dataset.toStringTag;
@@ -7880,7 +7881,7 @@
           return n.addEventListener("load", function () {
             r.drawImage(n, 0, 0);
           }), n.src = e.dataURL, new TypesonPromise(/*#__PURE__*/function () {
-            var _ref27 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(e, r) {
+            var _ref29 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(e, r) {
               var _t10, _t11;
               return _regenerator().w(function (_context4) {
                 while (1) switch (_context4.p = _context4.n) {
@@ -7903,13 +7904,13 @@
               }, _callee4, null, [[0, 2]]);
             }));
             return function (_x6, _x7) {
-              return _ref27.apply(this, arguments);
+              return _ref29.apply(this, arguments);
             };
           }());
         }
       }
     },
-    k = {
+    M = {
       imagedata: {
         test: function test(e) {
           return "ImageData" === toStringTag(e);
@@ -7940,7 +7941,7 @@
         }
       }
     },
-    M = {
+    D = {
       infinity: {
         test: function test(e) {
           return e === 1 / 0;
@@ -7953,7 +7954,7 @@
         }
       }
     },
-    L = {
+    F = {
       map: {
         test: function test(e) {
           return "Map" === toStringTag(e);
@@ -7966,7 +7967,7 @@
         }
       }
     },
-    F = {
+    K = {
       nan: {
         test: function test(e) {
           return Number.isNaN(e);
@@ -7979,7 +7980,7 @@
         }
       }
     },
-    K = {
+    $ = {
       negativeInfinity: {
         test: function test(e) {
           return e === -1 / 0;
@@ -7992,7 +7993,7 @@
         }
       }
     },
-    $ = {
+    q = {
       negativeZero: {
         test: function test(e) {
           return Object.is(e, -0);
@@ -8005,7 +8006,7 @@
         }
       }
     },
-    W = {
+    z = {
       StringObject: {
         test: function test(e) {
           return "String" === toStringTag(e) && "object" == _typeof(e);
@@ -8039,31 +8040,43 @@
         }
       }
     },
-    V = {
+    J = {
       quotaexceedederror: {
         test: function test(e) {
           return "QuotaExceededError" === toStringTag(e);
         },
-        replace: function replace(_ref29) {
-          var e = _ref29.message,
-            t = _ref29.quota,
-            r = _ref29.requested;
+        replace: function replace(_ref31) {
+          var e = _ref31.message,
+            t = _ref31.quota,
+            r = _ref31.requested,
+            n = _ref31.cause,
+            o = _ref31.stack,
+            a = _ref31.fileName,
+            s = _ref31.lineNumber,
+            i = _ref31.columnNumber;
           return {
             message: e,
             quota: t,
-            requested: r
+            requested: r,
+            cause: n,
+            stack: o,
+            fileName: a,
+            lineNumber: s,
+            columnNumber: i
           };
         },
-        revive: function revive(_ref30) {
-          var e = _ref30.message,
-            t = _ref30.quota,
-            r = _ref30.requested;
-          var n = {};
-          return null != t && (n.quota = t), null != r && (n.requested = r), new QuotaExceededError(e, n);
+        revive: function revive(e) {
+          var t = e.message,
+            r = e.quota,
+            n = e.requested,
+            o = {};
+          null != r && (o.quota = r), null != n && (o.requested = n);
+          var a = new QuotaExceededError(t, o);
+          return a.cause = e.cause, a.stack = e.stack, a.fileName = e.fileName, a.lineNumber = e.lineNumber, a.columnNumber = e.columnNumber, a;
         }
       }
     },
-    J = {
+    H = {
       regexp: {
         test: function test(e) {
           return "RegExp" === toStringTag(e);
@@ -8074,14 +8087,14 @@
             flags: (e.global ? "g" : "") + (e.ignoreCase ? "i" : "") + (e.multiline ? "m" : "") + (e.sticky ? "y" : "") + (e.unicode ? "u" : "") + (e.unicodeSets ? "v" : "") + (e.hasIndices ? "d" : "") + (e.dotAll ? "s" : "")
           };
         },
-        revive: function revive(_ref31) {
-          var e = _ref31.source,
-            t = _ref31.flags;
+        revive: function revive(_ref32) {
+          var e = _ref32.source,
+            t = _ref32.flags;
           return new RegExp(e, t);
         }
       }
     },
-    G = {
+    X = {
       set: {
         test: function test(e) {
           return "Set" === toStringTag(e);
@@ -8094,11 +8107,11 @@
         }
       }
     },
-    Y = {};
+    Z = {};
   "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].concat(_toConsumableArray("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : []), _toConsumableArray("function" == typeof Float16Array ? [Float16Array] : [])).forEach(function (e) {
     return function create$1(e) {
       var t = e.name;
-      Y[t.toLowerCase()] = {
+      Z[t.toLowerCase()] = {
         test: function test(e) {
           return toStringTag(e) === t;
         },
@@ -8111,18 +8124,18 @@
       };
     }(e);
   });
-  var Z = {};
+  var ee = {};
   "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].concat(_toConsumableArray("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : []), _toConsumableArray("function" == typeof Float16Array ? [Float16Array] : [])).forEach(function (e) {
     return function create(e) {
       var t = e.name;
-      Z[t.toLowerCase()] = {
+      ee[t.toLowerCase()] = {
         test: function test(e) {
           return toStringTag(e) === t;
         },
-        replace: function replace(_ref32, n) {
-          var e = _ref32.buffer,
-            t = _ref32.byteOffset,
-            r = _ref32.length;
+        replace: function replace(_ref33, n) {
+          var e = _ref33.buffer,
+            t = _ref33.byteOffset,
+            r = _ref33.length;
           n.buffers || (n.buffers = []);
           var o = n.buffers.indexOf(e);
           return -1 !== o ? {
@@ -8132,7 +8145,7 @@
           } : (n.buffers.push(e), {
             maxByteLength: e.maxByteLength,
             resizable: e.resizable,
-            encoded: u(e),
+            encoded: y(e),
             byteOffset: t,
             length: r
           });
@@ -8153,7 +8166,7 @@
       };
     }(e);
   });
-  var ee = {
+  var te = {
       undef: {
         test: function test(e, t) {
           return void 0 === e && (t.ownKeys || !("ownKeys" in t));
@@ -8166,7 +8179,7 @@
         }
       }
     },
-    te = {
+    re = {
       userObject: {
         test: function test(e) {
           return isUserObject(e);
@@ -8179,22 +8192,22 @@
         }
       }
     },
-    re = {
+    ne = {
       videoframe: {
         test: function test(e) {
           return "VideoFrame" === toStringTag(e);
         },
         replaceAsync: function replaceAsync(e) {
           return new TypesonPromise(/*#__PURE__*/function () {
-            var _ref33 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6(t, r) {
-              var _r12, _n3, _o7, _a3, _s2, _i3, _c2, _l, _y, _u, _t15;
+            var _ref34 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6(t, r) {
+              var _r12, _n3, _o7, _a3, _s2, _i3, _c2, _l, _u, _y, _t15;
               return _regenerator().w(function (_context6) {
                 while (1) switch (_context6.p = _context6.n) {
                   case 0:
                     _context6.p = 0;
-                    _r12 = e.format, _n3 = e.codedWidth, _o7 = e.codedHeight, _a3 = e.timestamp, _s2 = e.duration, _i3 = e.visibleRect, _c2 = e.displayWidth, _l = e.displayHeight, _y = e.colorSpace, _u = new ArrayBuffer(e.allocationSize());
+                    _r12 = e.format, _n3 = e.codedWidth, _o7 = e.codedHeight, _a3 = e.timestamp, _s2 = e.duration, _i3 = e.visibleRect, _c2 = e.displayWidth, _l = e.displayHeight, _u = e.colorSpace, _y = new ArrayBuffer(e.allocationSize());
                     _context6.n = 1;
-                    return e.copyTo(_u);
+                    return e.copyTo(_y);
                   case 1:
                     t({
                       format: _r12,
@@ -8211,12 +8224,12 @@
                       displayWidth: _c2,
                       displayHeight: _l,
                       colorSpace: {
-                        primaries: _y.primaries,
-                        transfer: _y.transfer,
-                        matrix: _y.matrix,
-                        fullRange: _y.fullRange
+                        primaries: _u.primaries,
+                        transfer: _u.transfer,
+                        matrix: _u.matrix,
+                        fullRange: _u.fullRange
                       },
-                      data: _u
+                      data: _y
                     });
                     _context6.n = 3;
                     break;
@@ -8230,22 +8243,22 @@
               }, _callee6, null, [[0, 2]]);
             }));
             return function (_x9, _x0) {
-              return _ref33.apply(this, arguments);
+              return _ref34.apply(this, arguments);
             };
           }());
         },
-        revive: function revive(_ref34) {
-          var e = _ref34.format,
-            t = _ref34.codedWidth,
-            r = _ref34.codedHeight,
-            n = _ref34.timestamp,
-            o = _ref34.duration,
-            a = _ref34.visibleRect,
-            s = _ref34.displayWidth,
-            i = _ref34.displayHeight,
-            c = _ref34.colorSpace,
-            l = _ref34.data;
-          var y = {
+        revive: function revive(_ref35) {
+          var e = _ref35.format,
+            t = _ref35.codedWidth,
+            r = _ref35.codedHeight,
+            n = _ref35.timestamp,
+            o = _ref35.duration,
+            a = _ref35.visibleRect,
+            s = _ref35.displayWidth,
+            i = _ref35.displayHeight,
+            c = _ref35.colorSpace,
+            l = _ref35.data;
+          var u = {
             format: e,
             codedWidth: t,
             codedHeight: r,
@@ -8255,34 +8268,45 @@
             displayHeight: i,
             colorSpace: c
           };
-          return null != o && (y.duration = o), new VideoFrame(new Uint8Array(l), y);
+          return null != o && (u.duration = o), new VideoFrame(new Uint8Array(l), u);
         }
       }
     },
-    ne = {
+    oe = {
       webtransporterror: {
         test: function test(e) {
           return "WebTransportError" === toStringTag(e);
         },
-        replace: function replace(_ref35) {
-          var e = _ref35.message,
-            t = _ref35.streamErrorCode;
+        replace: function replace(_ref36) {
+          var e = _ref36.message,
+            t = _ref36.streamErrorCode,
+            r = _ref36.cause,
+            n = _ref36.stack,
+            o = _ref36.fileName,
+            a = _ref36.lineNumber,
+            s = _ref36.columnNumber;
           return {
             message: e,
-            streamErrorCode: t
+            streamErrorCode: t,
+            cause: r,
+            stack: n,
+            fileName: o,
+            lineNumber: a,
+            columnNumber: s
           };
         },
-        revive: function revive(_ref36) {
-          var e = _ref36.message,
-            t = _ref36.streamErrorCode;
-          return new WebTransportError({
-            message: e,
-            streamErrorCode: t
-          });
+        revive: function revive(e) {
+          var t = e.message,
+            r = e.streamErrorCode,
+            n = new WebTransportError({
+              message: t,
+              streamErrorCode: r
+            });
+          return n.cause = e.cause, n.stack = e.stack, n.fileName = e.fileName, n.lineNumber = e.lineNumber, n.columnNumber = e.columnNumber, n;
         }
       }
     },
-    oe = [{
+    ae = [{
       arrayNonindexKeys: {
         testPlainObjects: true,
         test: function test(e, t) {
@@ -8315,9 +8339,9 @@
         revive: function revive() {}
       }
     }],
-    ae = [F, M, K, $],
-    ye = [te, ee, oe, W, ae, A, J, k, _, I, U, b, N, C].concat("function" == typeof Map ? L : [], "function" == typeof Set ? G : [], "function" == typeof ArrayBuffer ? f : [], "function" == typeof Uint8Array ? Z : [], "function" == typeof DataView ? O : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [h, m] : [], "undefined" != typeof DOMException ? T : [], "undefined" != typeof QuotaExceededError ? V : [], "undefined" != typeof WebTransportError ? ne : [], "undefined" != typeof DOMRect ? x : [], "undefined" != typeof DOMPoint ? P : [], "undefined" != typeof DOMQuad ? E : [], "undefined" != typeof DOMMatrix ? S : [], "undefined" != typeof AudioData ? d : [], "undefined" != typeof EncodedAudioChunk ? j : [], "undefined" != typeof EncodedVideoChunk ? B : [], "undefined" != typeof VideoFrame ? re : []);
-  var ue = ye.concat({
+    se = [K, D, $, q],
+    ye = [re, te, ae, z, se, A, H, M, k, I, U, b, B, C].concat("function" == typeof Map ? F : [], "function" == typeof Set ? X : [], "function" == typeof ArrayBuffer ? f : [], "function" == typeof Uint8Array ? ee : [], "function" == typeof DataView ? O : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [h, m] : [], "undefined" != typeof DOMException ? T : [], "undefined" != typeof QuotaExceededError ? J : [], "undefined" != typeof WebTransportError ? oe : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? P : [], "undefined" != typeof DOMQuad ? E : [], "undefined" != typeof DOMMatrix ? S : [], "undefined" != typeof AudioData ? d : [], "undefined" != typeof EncodedAudioChunk ? x : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ne : []);
+  var pe = ye.concat({
       checkDataCloneException: {
         test: function test(e) {
           var t = {}.toString.call(e).slice(8, -1);
@@ -8334,7 +8358,7 @@
         }
       }
     }),
-    pe = ue.concat({
+    fe = pe.concat({
       checkSharedArrayBufferException: {
         test: function test(e) {
           if ("SharedArrayBuffer" === {}.toString.call(e).slice(8, -1)) throw new DOMException("The object cannot be cloned.", "DataCloneError");
@@ -8348,7 +8372,7 @@
   // Although typeson-registry already has a FileList type in its structured cloning presets,
   //   we need to override it so it works with our tests
 
-  var specSet = pe.flatMap(function (preset) {
+  var specSet = fe.flatMap(function (preset) {
     return Array.isArray(preset) ? preset : [preset];
   }).find(function (preset) {
     return preset && !Array.isArray(preset) && 'filelist' in preset;
@@ -8380,7 +8404,7 @@
       return typeof origRevive === 'function' ? origRevive(x, state) : undefined;
     }
   }) : undefined;
-  var typeson = new Typeson().register([pe, customFileList ? {
+  var typeson = new Typeson().register([fe, customFileList ? {
     filelist: customFileList
   } : {}]);
 
@@ -8391,7 +8415,7 @@
    */
   function register(func) {
     // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Should be one-time cache
-    typeson = new Typeson().register(func(pe));
+    typeson = new Typeson().register(func(fe));
   }
 
   /**

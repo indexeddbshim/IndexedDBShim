@@ -8,6 +8,7 @@ import CFG from './CFG.js';
  */
 function createNativeDOMException (name, message) {
     // @ts-expect-error It's ok
+    // eslint-disable-next-line new-cap -- Ok
     return new DOMException.prototype.constructor(
         message,
         name || 'DOMException'

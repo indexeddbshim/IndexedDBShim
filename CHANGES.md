@@ -337,7 +337,7 @@ Negative zero will now be stored differently and distinctly (though not as a key
 - Build: Report compared to last build size
 - Linting: As per latest ash-nazg
 - Testing: Update tests to continue working per latest Node/jsdom
-- Testing: Switch to `cmrOutput`-supporting `cypres-multi-reporters` fork
+- Testing: Switch to `cmrOutput`-supporting `cypress-multi-reporters` fork
     (no need for Promise-based mocha-multi-reporters fork with proper
     implementation)
 - Docs: Switch to mocha-badge-generator fork for proper async behavior
