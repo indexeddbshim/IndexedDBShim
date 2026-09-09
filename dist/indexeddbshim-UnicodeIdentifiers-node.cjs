@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.1 - 9/9/2026 */
+/*! indexeddbshim - v19.0.2 - 9/9/2026 */
 
 'use strict';
 
