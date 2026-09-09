@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## 19.0.2
+
+- chore: update typeson-registry, devDeps.
+- docs: note for Deno usage
+
 ## 19.0.1
 
 - fix(types): further tweaks
