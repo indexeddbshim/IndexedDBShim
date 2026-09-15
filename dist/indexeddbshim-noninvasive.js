@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.2 - 9/9/2026 */
+/*! indexeddbshim - v19.0.3 - 9/15/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -1936,19 +1936,7 @@
 
   // @ts-nocheck
 
-  function getDefaultExportFromCjs(x) {
-    return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
-  }
-  var regex$1;
-  var hasRequiredRegex;
-  function requireRegex() {
-    if (hasRequiredRegex) return regex$1;
-    hasRequiredRegex = 1;
-    regex$1 = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD801[\uDDC9\uDDE4]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C\uDF83\uDF85\uDF8E\uDF91\uDFC5\uDFC7\uDFC8]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD818[\uDD21-\uDD28]|\uD81B[\uDD68-\uDD6A]|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
-    return regex$1;
-  }
-  var regexExports = requireRegex();
-  var regex = /*@__PURE__*/getDefaultExportFromCjs(regexExports);
+  var regex = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD801[\uDDC9\uDDE4]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C\uDF83\uDF85\uDF8E\uDF91\uDFC5\uDFC7\uDFC8]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD818[\uDD21-\uDD28]|\uD81B[\uDD68-\uDD6A]|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
 
   /**
    * @typedef {number} Integer
@@ -6690,8 +6678,8 @@
           y = {},
           p = [],
           f = [],
-          d = [],
-          m = !("cyclic" in c) || c.cyclic,
+          m = [],
+          d = !("cyclic" in c) || c.cyclic,
           h = c.encapsulateObserver,
           b = c.encapsulateError,
           finish = function finish(e) {
@@ -6775,19 +6763,19 @@
               e[t] = n[r];
             });
           },
-          _encapsulate2 = function _encapsulate(e, t, a, i, l, d, m) {
+          _encapsulate2 = function _encapsulate(e, t, a, i, l, m, d) {
             var g,
               v = {};
             var w = h ? function (r) {
                 var _ref4;
-                var n = (_ref4 = m !== null && m !== void 0 ? m : i.type) !== null && _ref4 !== void 0 ? _ref4 : getJSONType(t);
+                var n = (_ref4 = d !== null && d !== void 0 ? d : i.type) !== null && _ref4 !== void 0 ? _ref4 : getJSONType(t);
                 h(Object.assign(r !== null && r !== void 0 ? r : v, {
                   keypath: e,
                   value: t,
                   cyclic: a,
                   stateObj: i,
                   promisesData: l,
-                  resolvingTypesonPromise: d,
+                  resolvingTypesonPromise: m,
                   awaitingTypesonPromise: hasConstructorOf(t, TypesonPromise)
                 }, {
                   type: n
@@ -6796,12 +6784,12 @@
               getEncapsulatedValue = function getEncapsulatedValue(e, t, r) {
                 try {
                   return {
-                    value: _encapsulate2(e, t[r], Boolean(a), i, l, d)
+                    value: _encapsulate2(e, t[r], Boolean(a), i, l, m)
                   };
                 } catch (n) {
                   var _ref5;
                   if (!b) throw n;
-                  var _o2 = (_ref5 = m !== null && m !== void 0 ? m : i.type) !== null && _ref5 !== void 0 ? _ref5 : getJSONType(t),
+                  var _o2 = (_ref5 = d !== null && d !== void 0 ? d : i.type) !== null && _ref5 !== void 0 ? _ref5 : getJSONType(t),
                     _a = b({
                       keypath: e,
                       error: n,
@@ -6819,7 +6807,7 @@
                   throw n;
                 }
               };
-            if (["string", "boolean", "number", "undefined"].includes(_typeof(t))) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (g = i.replaced ? t : replace(e, t, i, l, false, d, w), g !== t && (v = {
+            if (["string", "boolean", "number", "undefined"].includes(_typeof(t))) return void 0 === t || t === 1 / 0 || 0 === t || t === -1 / 0 || Number.isNaN(t) ? (g = i.replaced ? t : replace(e, t, i, l, false, m, w), g !== t && (v = {
               replaced: g
             })) : g = t, w && w(), g;
             if (null === t) return w && w(), t;
@@ -6904,13 +6892,13 @@
               o.push(u);
               var p = o.length - 1,
                 f = "$symbolKeys.".concat(escapeKeyPathComponent(e), ".").concat(String(p), ".value"),
-                d = {
+                m = {
                   value: t[r]
                 };
               _adaptBuiltinStateObjectProperties(i, {
                 ownKeys: true
               }, function () {
-                var e = getEncapsulatedValue(f, d, "value"),
+                var e = getEncapsulatedValue(f, m, "value"),
                   t = e && e.value;
                 hasConstructorOf(t, TypesonPromise) ? l.push([f, t, Boolean(a), i, u, "value", i.type]) : e && (void 0 !== t || "substitute" in e) && setOwnEnumerable(u, "value", t);
               });
@@ -6926,7 +6914,7 @@
                 _adaptBuiltinStateObjectProperties(i, {
                   ownKeys: false
                 }, function () {
-                  var e = _encapsulate2(r, void 0, Boolean(a), i, l, d);
+                  var e = _encapsulate2(r, void 0, Boolean(a), i, l, m);
                   hasConstructorOf(e, TypesonPromise) ? l.push([r, e, Boolean(a), i, S, _n, i.type]) : void 0 !== e && setOwnEnumerable(S, _n, e);
                 });
               };
@@ -6956,7 +6944,7 @@
                   replaced: true
                 }), (l || !_o3.replaceAsync) && !_o3.replace) return s && s({
                   typeDetected: true
-                }), _encapsulate2(e, t, m && "readonly", r, n, a, _i2);
+                }), _encapsulate2(e, t, d && "readonly", r, n, a, _i2);
                 var _c = void 0;
                 if (s && s({
                   replacing: true
@@ -6964,15 +6952,15 @@
                   if (void 0 === _o3.replace) throw new TypeError("Missing replacer");
                   _c = _o3.replace(t, r);
                 } else _c = _o3.replaceAsync(t, r);
-                return _encapsulate2(e, _c, m && "readonly", r, n, a, _i2);
+                return _encapsulate2(e, _c, d && "readonly", r, n, a, _i2);
               }
             }
             return t;
           },
-          g = _encapsulate2("", e, m, t !== null && t !== void 0 ? t : {}, d);
-        if (d.length) return l && c.throwOnBadSyncType ? function () {
+          g = _encapsulate2("", e, d, t !== null && t !== void 0 ? t : {}, m);
+        if (m.length) return l && c.throwOnBadSyncType ? function () {
           throw new TypeError("Sync method requested but async result obtained");
-        }() : Promise.resolve(_checkPromises(g, d)).then(finish);
+        }() : Promise.resolve(_checkPromises(g, m)).then(finish);
         if (!l && c.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
         return l && c.stringification ? [finish(g)] : l ? finish(g) : Promise.resolve(finish(g));
       }
@@ -7019,8 +7007,8 @@
         var y = [],
           p = Object.create(null),
           f = {};
-        var d = true;
-        c.$ && isPlainObject(c.$) && (e = e.$, c = c.$, d = false, u = false, void 0 !== l && isObject(e) && !n(e, "$symbolKeys") && (e.$symbolKeys = l, u = true));
+        var m = true;
+        c.$ && isPlainObject(c.$) && (e = e.$, c = c.$, m = false, u = false, void 0 !== l && isObject(e) && !n(e, "$symbolKeys") && (e.$symbolKeys = l, u = true));
         var executeReviver = function executeReviver(e, t) {
             var _this4$revivers$e;
             var _ref6 = (_this4$revivers$e = _this4.revivers[e]) !== null && _this4$revivers$e !== void 0 ? _this4$revivers$e : [],
@@ -7032,7 +7020,7 @@
             if (r.revive) return r.revive(t, f);
             throw new Error("Missing reviver");
           },
-          m = [];
+          d = [];
         function checkUndefined(e) {
           return hasConstructorOf(e, Undefined) ? void 0 : e;
         }
@@ -7108,8 +7096,8 @@
         return hasConstructorOf(h, TypesonPromise) ? b = h.then(function () {
           return e;
         }) : (b = function _revive(e, t, a, s, l) {
-          if (d && "$types" === e) return;
-          var u = m.length,
+          if (m && "$types" === e) return;
+          var u = d.length,
             f = n(c, e) ? c[e] : void 0,
             h = o(t);
           if (h || isPlainObject(t)) {
@@ -7119,7 +7107,7 @@
                 set = function set(e) {
                   return hasConstructorOf(e, Undefined) ? setOwnEnumerable(_o4, r, void 0) : void 0 !== e && setOwnEnumerable(_o4, r, e), e;
                 };
-              hasConstructorOf(n, TypesonPromise) ? m.push(n.then(function (e) {
+              hasConstructorOf(n, TypesonPromise) ? d.push(n.then(function (e) {
                 return set(e);
               })) : set(n);
             }), t = _o4; y.length;) {
@@ -7153,11 +7141,11 @@
               return p[e] = t, t;
             }) : (p[e] = r, r);
           };
-          return !i && m.length > u ? TypesonPromise.all(m.slice(u)).then(function () {
+          return !i && d.length > u ? TypesonPromise.all(d.slice(u)).then(function () {
             return applyType(t);
           }) : applyType(t);
-        }("", e, null), m.length && (b = TypesonPromise.resolve(b).then(function (e) {
-          return TypesonPromise.all([e].concat(m));
+        }("", e, null), d.length && (b = TypesonPromise.resolve(b).then(function (e) {
+          return TypesonPromise.all([e].concat(d));
         }).then(function (_ref13) {
           var _ref14 = _slicedToArray(_ref13, 1),
             e = _ref14[0];
@@ -7302,7 +7290,7 @@
         }
       }
     },
-    d = {
+    m = {
       audiodata: {
         test: function test(e) {
           return "AudioData" === toStringTag(e);
@@ -7357,7 +7345,7 @@
         }
       }
     },
-    m = {
+    d = {
       bigintObject: {
         test: function test(e) {
           return "object" == _typeof(e) && hasConstructorOf(e, BigInt);
@@ -7714,7 +7702,7 @@
         }
       }
     },
-    B = {
+    I = {
       error: {
         test: function test(e) {
           return "Error" === toStringTag(e);
@@ -7743,9 +7731,9 @@
         }
       }
     },
-    C = {};
+    B = {};
   function create$2(e) {
-    C[e.name.toLowerCase()] = {
+    B[e.name.toLowerCase()] = {
       test: function test(t) {
         return hasConstructorOf(t, e);
       },
@@ -7778,7 +7766,7 @@
   [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(function (e) {
     return create$2(e);
   }), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
-  var I = {
+  var C = {
       file: {
         test: function test(e) {
           return "File" === toStringTag(e);
@@ -7821,7 +7809,7 @@
       }
     },
     U = {
-      file: I.file,
+      file: C.file,
       filelist: {
         test: function test(e) {
           return "FileList" === toStringTag(e);
@@ -7856,7 +7844,7 @@
     k = {
       imagebitmap: {
         test: function test(e) {
-          return "ImageBitmap" === toStringTag(e) || e && e.dataset && "ImageBitmap" === e.dataset.toStringTag;
+          return "ImageBitmap" === toStringTag(e);
         },
         replace: function replace(e) {
           var t = document.createElement("canvas");
@@ -7871,7 +7859,9 @@
             r = t.getContext("2d"),
             n = document.createElement("img");
           return n.addEventListener("load", function () {
-            r.drawImage(n, 0, 0);
+            try {
+              r.drawImage(n, 0, 0);
+            } catch (_unused) {}
           }), n.src = e.dataURL, "undefined" == typeof OffscreenCanvas ? t : t.transferToImageBitmap();
         },
         reviveAsync: function reviveAsync(e) {
@@ -7910,7 +7900,7 @@
         }
       }
     },
-    M = {
+    R = {
       imagedata: {
         test: function test(e) {
           return "ImageData" === toStringTag(e);
@@ -7941,7 +7931,7 @@
         }
       }
     },
-    D = {
+    M = {
       infinity: {
         test: function test(e) {
           return e === 1 / 0;
@@ -7954,7 +7944,7 @@
         }
       }
     },
-    F = {
+    L = {
       map: {
         test: function test(e) {
           return "Map" === toStringTag(e);
@@ -7993,7 +7983,7 @@
         }
       }
     },
-    q = {
+    W = {
       negativeZero: {
         test: function test(e) {
           return Object.is(e, -0);
@@ -8339,18 +8329,18 @@
         revive: function revive() {}
       }
     }],
-    se = [K, D, $, q],
-    ye = [re, te, ae, z, se, A, H, M, k, I, U, b, B, C].concat("function" == typeof Map ? F : [], "function" == typeof Set ? X : [], "function" == typeof ArrayBuffer ? f : [], "function" == typeof Uint8Array ? ee : [], "function" == typeof DataView ? O : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [h, m] : [], "undefined" != typeof DOMException ? T : [], "undefined" != typeof QuotaExceededError ? J : [], "undefined" != typeof WebTransportError ? oe : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? P : [], "undefined" != typeof DOMQuad ? E : [], "undefined" != typeof DOMMatrix ? S : [], "undefined" != typeof AudioData ? d : [], "undefined" != typeof EncodedAudioChunk ? x : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ne : []);
+    se = [K, M, $, W],
+    ye = [re, te, ae, z, se, A, H, R, k, C, U, b, I, B].concat("function" == typeof Map ? L : [], "function" == typeof Set ? X : [], "function" == typeof ArrayBuffer ? f : [], "function" == typeof Uint8Array ? ee : [], "function" == typeof DataView ? O : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [h, d] : [], "undefined" != typeof DOMException ? T : [], "undefined" != typeof QuotaExceededError ? J : [], "undefined" != typeof WebTransportError ? oe : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? P : [], "undefined" != typeof DOMQuad ? E : [], "undefined" != typeof DOMMatrix ? S : [], "undefined" != typeof AudioData ? m : [], "undefined" != typeof EncodedAudioChunk ? x : [], "undefined" != typeof EncodedVideoChunk ? j : [], "undefined" != typeof VideoFrame ? ne : []);
   var pe = ye.concat({
       checkDataCloneException: {
         test: function test(e) {
           var t = {}.toString.call(e).slice(8, -1);
-          if (["symbol", "function"].includes(_typeof(e)) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel", "MessagePort"].includes(t) || e && e.constructor && ["MessageChannel", "MessagePort"].includes(e.constructor.name) || ["ArrayBuffer", "DataView", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array"].includes(t) && function isBufferDetached(e) {
+          if (["symbol", "function"].includes(_typeof(e)) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "WeakRef", "FinalizationRegistry", "Generator", "AsyncGenerator", "String Iterator", "Array Iterator", "Map Iterator", "Set Iterator", "RegExp String Iterator", "Intl.Collator", "Intl.DateTimeFormat", "Intl.DisplayNames", "Intl.DurationFormat", "Intl.ListFormat", "Intl.Locale", "Intl.NumberFormat", "Intl.PluralRules", "Intl.RelativeTimeFormat", "Intl.Segmenter", "Event", "MessageChannel", "MessagePort", "ReadableStream", "WritableStream", "TransformStream", "OffscreenCanvas"].includes(t) || e && e.constructor && ["MessageChannel", "MessagePort"].includes(e.constructor.name) || ["ArrayBuffer", "DataView", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "BigInt64Array", "BigUint64Array"].includes(t) && function isBufferDetached(e) {
             if ("boolean" == typeof e.detached) return e.detached;
             if (0 !== e.byteLength) return false;
             try {
               return new Uint8Array(e), !1;
-            } catch (_unused) {
+            } catch (_unused2) {
               return true;
             }
           }(e) || e && "object" == _typeof(e) && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");

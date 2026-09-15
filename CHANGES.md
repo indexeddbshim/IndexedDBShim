@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 19.0.3
+
+- chore: update node-static, typeson-registry, devDeps
+
 ## 19.0.2
 
 - chore: update typeson-registry, devDeps.
