@@ -106,7 +106,7 @@ const CFG = /** @type {ConfigValues} */ ({});
     // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
     'UnicodeIDContinue',
 
-    // Used by SCA.js for optional restructuring of typeson-registry
+    // Used by Sca.js for optional restructuring of typeson-registry
     //   Structured Cloning Algorithm; should only be needed for ensuring data
     //   created in 3.* versions of IndexedDBShim continue to work; see the
     //   library `typeson-registry-sca-reverter` to get a function to do this

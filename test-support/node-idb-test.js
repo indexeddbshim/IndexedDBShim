@@ -20,7 +20,7 @@ import jsdom from 'jsdom';
 import {ImageData} from 'canvas';
 import colors from 'colors/safe.js';
 
-import {clone} from '../src/SCA.js';
+import {clone} from '../src/Sca.js';
 import xmlHttpRequestConstr from 'local-xmlhttprequest';
 import isDateObject from 'is-date-object';
 import fetch from 'isomorphic-fetch';
