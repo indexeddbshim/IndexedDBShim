@@ -1,17 +1,12 @@
 # IndexedDB Polyfill
 
-[![Build Status](https://img.shields.io/travis/indexeddbshim/IndexedDBShim.svg)](https://travis-ci.org/indexeddbshim/IndexedDBShim)
-[![Dependencies](https://img.shields.io/david/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim)
-[![devDependencies](https://img.shields.io/david/dev/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim?type=dev)
 [![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
-[![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/indexeddbshim)
 
 [![Tests badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)
 [![Coverage badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/coverage-badge.svg?sanitize=true)](badges/coverage-badge.svg)
 
 [![Known Vulnerabilities](https://snyk.io/test/github/indexeddbshim/indexeddbshim/badge.svg)](https://snyk.io/test/github/indexeddbshim/indexeddbshim)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/g/indexeddbshim/indexeddbshim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/indexeddbshim/indexeddbshim/alerts)
-[![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/indexeddbshim/indexeddbshim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/indexeddbshim/indexeddbshim/context:javascript)
+[![CodeQL Advanced](https://github.com/indexeddbshim/IndexedDBShim/actions/workflows/codeql.yml/badge.svg)](https://github.com/indexeddbshim/IndexedDBShim/actions/workflows/codeql.yml)
 
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
