@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.3 - 9/15/2026 */
+/*! indexeddbshim - v19.0.3 - 9/16/2026 */
 
 'use strict';
 
@@ -1446,7 +1446,7 @@ const CFG = /** @type {ConfigValues} */{};
 'UnicodeIDStart',
 // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
 'UnicodeIDContinue',
-// Used by SCA.js for optional restructuring of typeson-registry
+// Used by Sca.js for optional restructuring of typeson-registry
 //   Structured Cloning Algorithm; should only be needed for ensuring data
 //   created in 3.* versions of IndexedDBShim continue to work; see the
 //   library `typeson-registry-sca-reverter` to get a function to do this
@@ -13054,10 +13054,11 @@ function setGlobalVars(idb, initialConfig) {
             setNonIDBGlobals();
           }
         }
-        /* istanbul ignore next -- TS guard */
+        /* c8 ignore start -- TS guard */
         if (!IDB.shimIndexedDB) {
           return;
         }
+        /* c8 ignore stop -- TS guard */
         IDB.shimIndexedDB.__setConnectionQueueOrigin();
       }
     };
@@ -13224,10 +13225,11 @@ const __setGlobalVars = function (idb, initialConfig = {}) {
     escapeNULForSQLiteStatements: false,
     ...initialConfig
   });
-  /* istanbul ignore next -- TS guard */
+  /* c8 ignore start -- TS guard */
   if (!obj.shimIndexedDB) {
     return obj;
   }
+  /* c8 ignore stop -- TS guard */
   obj.shimIndexedDB.__setUnicodeIdentifiers(UnicodeIdentifiers);
   return obj;
 };

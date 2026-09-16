@@ -290,10 +290,11 @@ function setGlobalVars (idb, initialConfig) {
                         setNonIDBGlobals();
                     }
                 }
-                /* istanbul ignore next -- TS guard */
+                /* c8 ignore start -- TS guard */
                 if (!IDB.shimIndexedDB) {
                     return;
                 }
+                /* c8 ignore stop -- TS guard */
                 IDB.shimIndexedDB.__setConnectionQueueOrigin();
             }
         };

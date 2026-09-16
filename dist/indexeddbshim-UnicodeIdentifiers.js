@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.3 - 9/15/2026 */
+/*! indexeddbshim - v19.0.3 - 9/16/2026 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -1819,7 +1819,7 @@
   'UnicodeIDStart',
   // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
   'UnicodeIDContinue',
-  // Used by SCA.js for optional restructuring of typeson-registry
+  // Used by Sca.js for optional restructuring of typeson-registry
   //   Structured Cloning Algorithm; should only be needed for ensuring data
   //   created in 3.* versions of IndexedDBShim continue to work; see the
   //   library `typeson-registry-sca-reverter` to get a function to do this
@@ -13892,10 +13892,11 @@
               setNonIDBGlobals();
             }
           }
-          /* istanbul ignore next -- TS guard */
+          /* c8 ignore start -- TS guard */
           if (!IDB.shimIndexedDB) {
             return;
           }
+          /* c8 ignore stop -- TS guard */
           IDB.shimIndexedDB.__setConnectionQueueOrigin();
         }
       };

@@ -18,10 +18,11 @@ const __setGlobalVars = function (idb, initialConfig = {}) {
         escapeNULForSQLiteStatements: false,
         ...initialConfig
     });
-    /* istanbul ignore next -- TS guard */
+    /* c8 ignore start -- TS guard */
     if (!obj.shimIndexedDB) {
         return obj;
     }
+    /* c8 ignore stop -- TS guard */
     obj.shimIndexedDB.__setUnicodeIdentifiers(UnicodeIdentifiers);
 
     return obj;
