@@ -80,7 +80,7 @@
     "remove-results": "rimraf --glob test-support/results/file*.json",
     "coverage:polyfill": "run-s coverage:fake coverage:mock coverage:w3cOld",
     "tests-badge": "mbg --fileGlob \"./test-support/results/file*.json\" --badge_output badges/tests-badge.svg",
-    "coverage": "run-s -c stop clean coverage:empty remove-cache remove-cov remove-results coverage:fake coverage:mock coverage:mocha coverage:w3c clean tests-badge coverage-badge coverage:report",
+    "coverage": "run-s -c stop clean coverage:empty remove-cache remove-cov remove-results coverage:fake coverage:mock coverage:mocha coverage:w3c clean tests-badge coverage:report coverage-badge",
     "coverage:empty": "rimraf coverage/combined coverage/fake coverage/mock coverage/mocha coverage/w3c && mkdir -p coverage/combined",
     "open-coverage-only": "open http://127.0.0.1:9999/coverage/lcov-report/",
     "open-coverage": "run-p start open-coverage-only",
