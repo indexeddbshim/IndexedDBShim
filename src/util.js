@@ -301,16 +301,6 @@ function isBlob (obj) {
  * @param {AnyValue} obj
  * @returns {boolean}
  */
-function isRegExp (obj) {
-    return isObj(obj) && 'flags' in obj && typeof obj.flags === 'string' &&
-    'exec' in obj && typeof obj.exec === 'function';
-}
-
-/**
- *
- * @param {AnyValue} obj
- * @returns {boolean}
- */
 function isFile (obj) {
     return isObj(obj) && 'name' in obj && typeof obj.name === 'string' &&
     'slice' in obj && typeof obj.slice === 'function' && 'lastModified' in obj;
@@ -664,7 +654,7 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForSQLKeyColumn,
     sqlLIKEEscape, sqlQuote, joinPath,
     instanceOf,
-    isObj, isDate, isBlob, isRegExp, isFile, isBinary, isIterable,
+    isObj, isDate, isBlob, isFile, isBinary, isIterable,
     defineOuterInterface, defineReadonlyOuterInterface,
     defineListenerProperties, defineReadonlyProperties,
     setOperationNames,
