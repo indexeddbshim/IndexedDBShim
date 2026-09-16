@@ -44,75 +44,23 @@
 
     <!-- Test Environment -->
     <script src="../test-support/mocha/mocha.js"></script>
-    <script src="../test-support/chai/chai.js"></script>
     <script src="../test-support/sinon/pkg/sinon-no-sourcemaps.js"></script>
-    <script src="test-environment.js"></script>
-    <script src="test-utils.js"></script>
 
     <!-- IndexedDBShim -->
     <script src="../dist/indexeddbshim-noninvasive.js"></script>
-    <script>
+    <script type="module">
+    import * as chai from '../test-support/chai/chai.js';
     /* globals setGlobalVars */
     setGlobalVars(null, {
         addNonIDBGlobals: true
     });
-    </script>
-    <!--<script src="../src/Init.js"></script>-->
-    <!--<script src="../src/util.js"></script>-->
-    <!--<script src="../src/polyfill.js"></script>-->
-    <!--<script src="../src/Sca.js"></script>-->
-    <!--<script src="../src/Key.js"></script>-->
-    <!--<script src="../src/Event.js"></script>-->
-    <!--<script src="../src/DOMException.js"></script>-->
-    <!--<script src="../src/IDBRequest.js"></script>-->
-    <!--<script src="../src/IDBKeyRange.js"></script>-->
-    <!--<script src="../src/IDBCursor.js"></script>-->
-    <!--<script src="../src/IDBIndex.js"></script>-->
-    <!--<script src="../src/IDBObjectStore.js"></script>-->
-    <!--<script src="../src/IDBTransaction.js"></script>-->
-    <!--<script src="../src/IDBDatabase.js"></script>-->
-    <!--<script src="../src/IDBFactory.js"></script>-->
-    <!--<script src="../src/setGlobalVars.js"></script>-->
+    globalThis.chai = chai;
 
-    <!-- Unit Tests -->
-    <script src="api-spec.js"></script>
-    <script src="IDBCursor/delete-spec.js"></script>
-    <script src="IDBCursor/update-spec.js"></script>
-    <script src="IDBDatabase/close-spec.js"></script>
-    <script src="IDBDatabase/createObjectStore-spec.js"></script>
-    <script src="IDBDatabase/deleteObjectStore-spec.js"></script>
-    <script src="IDBDatabase/transaction-spec.js"></script>
-    <script src="IDBFactory/cmp-spec.js"></script>
-    <script src="IDBFactory/databases-spec.js"></script>
-    <script src="IDBFactory/deleteDatabase-spec.js"></script>
-    <script src="IDBFactory/open-spec.js"></script>
-    <script src="IDBIndex/count-spec.js"></script>
-    <script src="IDBIndex/get-spec.js"></script>
-    <script src="IDBIndex/getKey-spec.js"></script>
-    <script src="IDBIndex/openCursor-spec.js"></script>
-    <script src="IDBIndex/openKeyCursor-spec.js"></script>
-    <script src="IDBIndex/getAll-direction-spec.js"></script>
-    <script src="IDBKeyRange/includes-spec.js"></script>
-    <script src="IDBObjectStore/add-put-spec.js"></script>
-    <script src="IDBObjectStore/add-spec.js"></script>
-    <script src="IDBObjectStore/clear-spec.js"></script>
-    <script src="IDBObjectStore/count-spec.js"></script>
-    <script src="IDBObjectStore/createIndex-spec.js"></script>
-    <script src="IDBObjectStore/delete-spec.js"></script>
-    <script src="IDBObjectStore/deleteIndex-spec.js"></script>
-    <script src="IDBObjectStore/get-spec.js"></script>
-    <script src="IDBObjectStore/index-spec.js"></script>
-    <script src="IDBObjectStore/indexNames-spec.js"></script>
-    <script src="IDBObjectStore/openKeyCursor-spec.js"></script>
-    <script src="IDBObjectStore/put-spec.js"></script>
-    <script src="IDBObjectStore/getAll-direction-spec.js"></script>
-    <script src="IDBTransaction/events-spec.js"></script>
-    <script src="IDBTransaction/objectStore-spec.js"></script>
-    <script src="IDBTransaction/durability-spec.js"></script>
-    <script src="IDBTransaction/retention-spec.js"></script>
+    await import('./test-environment.js');
+    await import('./test-utils.js');
+    await import('./test-load.js');
 
-    <script>
-      mocha.run();
+    mocha.run();
     </script>
   </body>
 </html>

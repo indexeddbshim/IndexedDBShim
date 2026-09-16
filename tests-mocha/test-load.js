@@ -1,0 +1,54 @@
+let tests;
+
+if (typeof process !== 'undefined' && process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Convenient
+    tests = [process.env.npm_config_test]; // eslint-disable-line n/no-process-env -- Convenient
+    console.log('Running test: ' + process.env.npm_config_test); // eslint-disable-line n/no-process-env -- Convenient
+} else {
+    tests = [
+        'api-spec.js',
+        'util-spec.js',
+        ...(typeof process !== 'undefined' ? ['DOMException-spec.js'] : []),
+        'IDBCursor/delete-spec.js',
+        'IDBCursor/update-spec.js',
+        'IDBFactory/cmp-spec.js',
+        'IDBFactory/databases-spec.js',
+        'IDBFactory/deleteDatabase-spec.js',
+        'IDBFactory/open-spec.js',
+        'IDBFactory/issue383-standard-driver-spec.js',
+        'IDBDatabase/close-spec.js',
+        'IDBDatabase/createObjectStore-spec.js',
+        'IDBDatabase/deleteObjectStore-spec.js',
+        'IDBDatabase/transaction-spec.js',
+        'IDBDatabase/quota-spec.js',
+        'IDBIndex/count-spec.js',
+        'IDBIndex/get-spec.js',
+        'IDBIndex/getKey-spec.js',
+        'IDBIndex/openCursor-spec.js',
+        'IDBIndex/multi-entry-cursor-regression-spec.js',
+        'IDBIndex/openKeyCursor-spec.js',
+        'IDBIndex/getAll-direction-spec.js',
+        'IDBKeyRange/includes-spec.js',
+        'IDBObjectStore/add-put-spec.js',
+        'IDBObjectStore/add-spec.js',
+        'IDBObjectStore/clear-spec.js',
+        'IDBObjectStore/count-spec.js',
+        'IDBObjectStore/createIndex-spec.js',
+        'IDBObjectStore/delete-spec.js',
+        'IDBObjectStore/deleteIndex-spec.js',
+        'IDBObjectStore/get-spec.js',
+        'IDBObjectStore/index-spec.js',
+        'IDBObjectStore/indexNames-spec.js',
+        'IDBObjectStore/issue334-nul-range-spec.js',
+        'IDBObjectStore/openKeyCursor-spec.js',
+        'IDBObjectStore/put-spec.js',
+        'IDBObjectStore/getAll-direction-spec.js',
+        'IDBTransaction/objectStore-spec.js',
+        'IDBTransaction/events-spec.js',
+        'IDBTransaction/durability-spec.js',
+        ...(typeof process !== 'undefined' ? ['IDBTransaction/retention-spec.js'] : [])
+    ];
+}
+await Promise.all(tests.map(async function (path) {
+    // // eslint-disable-next-line no-unsanitized/method -- Safe env.
+    return await import('./' + path);
+}));

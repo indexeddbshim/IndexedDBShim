@@ -100,12 +100,6 @@ export function isBlob(obj: AnyValue): boolean;
  * @param {AnyValue} obj
  * @returns {boolean}
  */
-export function isRegExp(obj: AnyValue): boolean;
-/**
- *
- * @param {AnyValue} obj
- * @returns {boolean}
- */
 export function isFile(obj: AnyValue): boolean;
 /**
  *

@@ -1,4 +1,4 @@
-// mocha@12.0.0 in javascript ES2018
+// mocha@12.0.1 in javascript ES2018
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -739,12 +739,6 @@
     }
     return ret;
   }
-
-  var _polyfillNode_events = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    EventEmitter: EventEmitter,
-    default: EventEmitter
-  });
 
   var lookup = [];
   var revLookup = [];
@@ -2974,7 +2968,7 @@
 
     // IE doesn't make error fields non-enumerable
     // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
-    if (isError(value)
+    if (isError$1(value)
         && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
       return formatError(value);
     }
@@ -2991,7 +2985,7 @@
       if (isDate(value)) {
         return ctx.stylize(Date.prototype.toString.call(value), 'date');
       }
-      if (isError(value)) {
+      if (isError$1(value)) {
         return formatError(value);
       }
     }
@@ -3021,7 +3015,7 @@
     }
 
     // Make error with message first say the error
-    if (isError(value)) {
+    if (isError$1(value)) {
       base = ' ' + formatError(value);
     }
 
@@ -3222,7 +3216,7 @@
     return isObject(d) && objectToString(d) === '[object Date]';
   }
 
-  function isError(e) {
+  function isError$1(e) {
     return isObject(e) &&
         (objectToString(e) === '[object Error]' || e instanceof Error);
   }
@@ -3399,7 +3393,7 @@
     isBuffer: isBuffer,
     isPrimitive: isPrimitive,
     isFunction: isFunction,
-    isError: isError,
+    isError: isError$1,
     isDate: isDate,
     isObject: isObject,
     isRegExp: isRegExp,
@@ -3433,7 +3427,7 @@
     isBoolean: isBoolean,
     isBuffer: isBuffer,
     isDate: isDate,
-    isError: isError,
+    isError: isError$1,
     isFunction: isFunction,
     isNull: isNull,
     isNullOrUndefined: isNullOrUndefined,
@@ -3725,7 +3719,7 @@
 
   Readable.ReadableState = ReadableState;
 
-  var debug$2 = debuglog('stream');
+  var debug$3 = debuglog('stream');
   inherits(Readable, EventEmitter);
 
   function prependListener(emitter, event, fn) {
@@ -3964,7 +3958,7 @@
 
   // you can override either this method, or the async _read(n) below.
   Readable.prototype.read = function (n) {
-    debug$2('read', n);
+    debug$3('read', n);
     n = parseInt(n, 10);
     var state = this._readableState;
     var nOrig = n;
@@ -3975,7 +3969,7 @@
     // already have a bunch of data in the buffer, then just trigger
     // the 'readable' event and move on.
     if (n === 0 && state.needReadable && (state.length >= state.highWaterMark || state.ended)) {
-      debug$2('read: emitReadable', state.length, state.ended);
+      debug$3('read: emitReadable', state.length, state.ended);
       if (state.length === 0 && state.ended) endReadable(this);else emitReadable(this);
       return null;
     }
@@ -4012,21 +4006,21 @@
 
     // if we need a readable event, then we need to do some reading.
     var doRead = state.needReadable;
-    debug$2('need readable', doRead);
+    debug$3('need readable', doRead);
 
     // if we currently have less than the highWaterMark, then also read some
     if (state.length === 0 || state.length - n < state.highWaterMark) {
       doRead = true;
-      debug$2('length less than watermark', doRead);
+      debug$3('length less than watermark', doRead);
     }
 
     // however, if we've ended, then there's no point, and if we're already
     // reading, then it's unnecessary.
     if (state.ended || state.reading) {
       doRead = false;
-      debug$2('reading or ended', doRead);
+      debug$3('reading or ended', doRead);
     } else if (doRead) {
-      debug$2('do read');
+      debug$3('do read');
       state.reading = true;
       state.sync = true;
       // if the length is currently zero, then we *need* a readable event.
@@ -4093,14 +4087,14 @@
     var state = stream._readableState;
     state.needReadable = false;
     if (!state.emittedReadable) {
-      debug$2('emitReadable', state.flowing);
+      debug$3('emitReadable', state.flowing);
       state.emittedReadable = true;
       if (state.sync) nextTick(emitReadable_, stream);else emitReadable_(stream);
     }
   }
 
   function emitReadable_(stream) {
-    debug$2('emit readable');
+    debug$3('emit readable');
     stream.emit('readable');
     flow(stream);
   }
@@ -4121,7 +4115,7 @@
   function maybeReadMore_(stream, state) {
     var len = state.length;
     while (!state.reading && !state.flowing && !state.ended && state.length < state.highWaterMark) {
-      debug$2('maybeReadMore read 0');
+      debug$3('maybeReadMore read 0');
       stream.read(0);
       if (len === state.length)
         // didn't get any data, stop spinning.
@@ -4154,7 +4148,7 @@
         break;
     }
     state.pipesCount += 1;
-    debug$2('pipe count=%d opts=%j', state.pipesCount, pipeOpts);
+    debug$3('pipe count=%d opts=%j', state.pipesCount, pipeOpts);
 
     var doEnd = (!pipeOpts || pipeOpts.end !== false);
 
@@ -4163,14 +4157,14 @@
 
     dest.on('unpipe', onunpipe);
     function onunpipe(readable) {
-      debug$2('onunpipe');
+      debug$3('onunpipe');
       if (readable === src) {
         cleanup();
       }
     }
 
     function onend() {
-      debug$2('onend');
+      debug$3('onend');
       dest.end();
     }
 
@@ -4183,7 +4177,7 @@
 
     var cleanedUp = false;
     function cleanup() {
-      debug$2('cleanup');
+      debug$3('cleanup');
       // cleanup event handlers once the pipe is broken
       dest.removeListener('close', onclose);
       dest.removeListener('finish', onfinish);
@@ -4211,7 +4205,7 @@
     var increasedAwaitDrain = false;
     src.on('data', ondata);
     function ondata(chunk) {
-      debug$2('ondata');
+      debug$3('ondata');
       increasedAwaitDrain = false;
       var ret = dest.write(chunk);
       if (false === ret && !increasedAwaitDrain) {
@@ -4220,7 +4214,7 @@
         // also returned false.
         // => Check whether `dest` is still a piping destination.
         if ((state.pipesCount === 1 && state.pipes === dest || state.pipesCount > 1 && indexOf(state.pipes, dest) !== -1) && !cleanedUp) {
-          debug$2('false write response, pause', src._readableState.awaitDrain);
+          debug$3('false write response, pause', src._readableState.awaitDrain);
           src._readableState.awaitDrain++;
           increasedAwaitDrain = true;
         }
@@ -4231,7 +4225,7 @@
     // if the dest has an error, then stop piping into it.
     // however, don't suppress the throwing behavior for this.
     function onerror(er) {
-      debug$2('onerror', er);
+      debug$3('onerror', er);
       unpipe();
       dest.removeListener('error', onerror);
       if (listenerCount(dest, 'error') === 0) dest.emit('error', er);
@@ -4247,14 +4241,14 @@
     }
     dest.once('close', onclose);
     function onfinish() {
-      debug$2('onfinish');
+      debug$3('onfinish');
       dest.removeListener('close', onclose);
       unpipe();
     }
     dest.once('finish', onfinish);
 
     function unpipe() {
-      debug$2('unpipe');
+      debug$3('unpipe');
       src.unpipe(dest);
     }
 
@@ -4263,7 +4257,7 @@
 
     // start the flow if it hasn't been started already.
     if (!state.flowing) {
-      debug$2('pipe resume');
+      debug$3('pipe resume');
       src.resume();
     }
 
@@ -4273,7 +4267,7 @@
   function pipeOnDrain(src) {
     return function () {
       var state = src._readableState;
-      debug$2('pipeOnDrain', state.awaitDrain);
+      debug$3('pipeOnDrain', state.awaitDrain);
       if (state.awaitDrain) state.awaitDrain--;
       if (state.awaitDrain === 0 && src.listeners('data').length) {
         state.flowing = true;
@@ -4357,7 +4351,7 @@
   Readable.prototype.addListener = Readable.prototype.on;
 
   function nReadingNextTick(self) {
-    debug$2('readable nexttick read 0');
+    debug$3('readable nexttick read 0');
     self.read(0);
   }
 
@@ -4366,7 +4360,7 @@
   Readable.prototype.resume = function () {
     var state = this._readableState;
     if (!state.flowing) {
-      debug$2('resume');
+      debug$3('resume');
       state.flowing = true;
       resume(this, state);
     }
@@ -4382,7 +4376,7 @@
 
   function resume_(stream, state) {
     if (!state.reading) {
-      debug$2('resume read 0');
+      debug$3('resume read 0');
       stream.read(0);
     }
 
@@ -4394,9 +4388,9 @@
   }
 
   Readable.prototype.pause = function () {
-    debug$2('call pause flowing=%j', this._readableState.flowing);
+    debug$3('call pause flowing=%j', this._readableState.flowing);
     if (false !== this._readableState.flowing) {
-      debug$2('pause');
+      debug$3('pause');
       this._readableState.flowing = false;
       this.emit('pause');
     }
@@ -4405,7 +4399,7 @@
 
   function flow(stream) {
     var state = stream._readableState;
-    debug$2('flow', state.flowing);
+    debug$3('flow', state.flowing);
     while (state.flowing && stream.read() !== null) {}
   }
 
@@ -4418,7 +4412,7 @@
 
     var self = this;
     stream.on('end', function () {
-      debug$2('wrapped end');
+      debug$3('wrapped end');
       if (state.decoder && !state.ended) {
         var chunk = state.decoder.end();
         if (chunk && chunk.length) self.push(chunk);
@@ -4428,7 +4422,7 @@
     });
 
     stream.on('data', function (chunk) {
-      debug$2('wrapped data');
+      debug$3('wrapped data');
       if (state.decoder) chunk = state.decoder.write(chunk);
 
       // don't skip over falsy values in objectMode
@@ -4462,7 +4456,7 @@
     // when we try to consume some more bytes, simply unpause the
     // underlying stream.
     self._read = function (n) {
-      debug$2('wrapped _read', n);
+      debug$3('wrapped _read', n);
       if (paused) {
         paused = false;
         stream.resume();
@@ -5415,9 +5409,9 @@
     default: Stream
   });
 
-  var require$$0$3 = /*@__PURE__*/getAugmentedNamespace(_polyfillNode_stream);
+  var require$$0$2 = /*@__PURE__*/getAugmentedNamespace(_polyfillNode_stream);
 
-  var require$$1$3 = /*@__PURE__*/getAugmentedNamespace(_polyfillNode_util);
+  var require$$1$2 = /*@__PURE__*/getAugmentedNamespace(_polyfillNode_util);
 
   var browserStdout;
   var hasRequiredBrowserStdout;
@@ -5425,8 +5419,8 @@
   function requireBrowserStdout () {
   	if (hasRequiredBrowserStdout) return browserStdout;
   	hasRequiredBrowserStdout = 1;
-  	var WritableStream = require$$0$3.Writable;
-  	var inherits = require$$1$3.inherits;
+  	var WritableStream = require$$0$2.Writable;
+  	var inherits = require$$1$2.inherits;
 
   	browserStdout = BrowserStdout;
 
@@ -5543,7 +5537,7 @@
     escapeRegExp: escapeRegExp
   });
 
-  var require$$0$2 = /*@__PURE__*/getAugmentedNamespace(regexp);
+  var require$$0$1 = /*@__PURE__*/getAugmentedNamespace(regexp);
 
   // Copyright Joyent, Inc. and other Node contributors.
   //
@@ -5793,7 +5787,7 @@
     sep: sep
   });
 
-  var require$$1$2 = /*@__PURE__*/getAugmentedNamespace(_polyfillNode_path);
+  var require$$1$1 = /*@__PURE__*/getAugmentedNamespace(_polyfillNode_path);
 
   var reporters = {};
 
@@ -6701,7 +6695,7 @@
   		/**
   		 * Module dependencies.
   		 */
-  		var path = require$$1$2;
+  		var path = require$$1$1;
   		var pc = /*@__PURE__*/ requirePicocolors_browser();
   		var isUnicodeSupported = requireIsUnicodeSupported()();
 
@@ -7425,7 +7419,7 @@
   		 * Checks if provided input can be parsed as a JavaScript Number.
   		 */
   		exports.isNumeric = (input) => {
-  		  return !isNaN(parseFloat(input));
+  		  return String(input).trim() !== "" && !isNaN(Number(input));
   		};
 
   		/**
@@ -7461,31 +7455,6 @@
     __proto__: null,
     default: supportsColor
   });
-
-  var require$$0$1 = /*@__PURE__*/getAugmentedNamespace(_polyfillNode_events);
-
-  /**
-   @module Pending
-  */
-
-  /**
-   * Initialize a new `PendingError` error with the given message.
-   *
-   * @param {string} message
-   */
-  class PendingError extends Error {
-    constructor(message) {
-      super(message);
-      this.name = "PendingError";
-    }
-  }
-
-  var pending = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    PendingError: PendingError
-  });
-
-  var require$$1$1 = /*@__PURE__*/getAugmentedNamespace(pending);
 
   var browser = {exports: {}};
 
@@ -8073,12 +8042,28 @@
   var debugModule = /*@__PURE__*/getDefaultExportFromCjs(browserExports);
 
   /**
+   @module Pending
+  */
+
+  /**
+   * Initialize a new `PendingError` error with the given message.
+   *
+   * @param {string} message
+   */
+  class PendingError extends Error {
+    constructor(message) {
+      super(message);
+      this.name = "PendingError";
+    }
+  }
+
+  /**
    * When Mocha throws exceptions (or rejects `Promise`s), it attempts to assign a `code` property to the `Error` object, for easier handling. These are the potential values of `code`.
    * @public
    * @namespace
    * @memberof module:lib/errors
    */
-  const constants$g = {
+  const constants$h = {
     /**
      * An unrecoverable error.
      * @constant
@@ -8192,11 +8177,6 @@
     UNPARSABLE_FILE: "ERR_MOCHA_UNPARSABLE_FILE",
   };
 
-  var errorConstants = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    constants: constants$g
-  });
-
   /**
    * @typedef {import('./mocha.cjs')} Mocha
    * @typedef {import('./runnable.js')} Runnable
@@ -8214,7 +8194,7 @@
    * A set containing all string values of all Mocha error constants, for use by {@link isMochaError}.
    * @private
    */
-  const MOCHA_ERRORS = new Set(Object.values(constants$g));
+  const MOCHA_ERRORS = new Set(Object.values(constants$h));
 
   /**
    * Creates an error object to be thrown when no files to be tested could be found using specified pattern.
@@ -8227,7 +8207,7 @@
    */
   function createNoFilesMatchPatternError(message, pattern) {
     var err = new Error(message);
-    err.code = constants$g.NO_FILES_MATCH_PATTERN;
+    err.code = constants$h.NO_FILES_MATCH_PATTERN;
     err.pattern = pattern;
     return err;
   }
@@ -8242,7 +8222,7 @@
    */
   function createInvalidReporterError(message, reporter) {
     var err = new TypeError(message);
-    err.code = constants$g.INVALID_REPORTER;
+    err.code = constants$h.INVALID_REPORTER;
     err.reporter = reporter;
     return err;
   }
@@ -8258,7 +8238,7 @@
    */
   function createInvalidInterfaceError(message, ui) {
     var err = new Error(message);
-    err.code = constants$g.INVALID_INTERFACE;
+    err.code = constants$h.INVALID_INTERFACE;
     err.interface = ui;
     return err;
   }
@@ -8273,7 +8253,7 @@
    */
   function createUnsupportedError$2(message) {
     var err = new Error(message);
-    err.code = constants$g.UNSUPPORTED;
+    err.code = constants$h.UNSUPPORTED;
     return err;
   }
 
@@ -8303,7 +8283,7 @@
    */
   function createInvalidArgumentTypeError(message, argument, expected) {
     var err = new TypeError(message);
-    err.code = constants$g.INVALID_ARG_TYPE;
+    err.code = constants$h.INVALID_ARG_TYPE;
     err.argument = argument;
     err.expected = expected;
     err.actual = typeof argument;
@@ -8323,7 +8303,7 @@
    */
   function createInvalidArgumentValueError(message, argument, value, reason) {
     var err = new TypeError(message);
-    err.code = constants$g.INVALID_ARG_VALUE;
+    err.code = constants$h.INVALID_ARG_VALUE;
     err.argument = argument;
     err.value = value;
     err.reason = typeof reason !== "undefined" ? reason : "is invalid";
@@ -8340,7 +8320,7 @@
    */
   function createInvalidExceptionError(message, value) {
     var err = new Error(message);
-    err.code = constants$g.INVALID_EXCEPTION;
+    err.code = constants$h.INVALID_EXCEPTION;
     err.valueType = typeof value;
     err.value = value;
     return err;
@@ -8356,7 +8336,7 @@
    */
   function createFatalError(message, value) {
     var err = new Error(message);
-    err.code = constants$g.FATAL;
+    err.code = constants$h.FATAL;
     err.valueType = typeof value;
     err.value = value;
     return err;
@@ -8396,7 +8376,7 @@
     instance,
   ) {
     var err = new Error(message);
-    err.code = constants$g.INSTANCE_ALREADY_DISPOSED;
+    err.code = constants$h.INSTANCE_ALREADY_DISPOSED;
     err.cleanReferencesAfterRun = cleanReferencesAfterRun;
     err.instance = instance;
     return err;
@@ -8410,7 +8390,7 @@
    */
   function createMochaInstanceAlreadyRunningError(message, instance) {
     var err = new Error(message);
-    err.code = constants$g.INSTANCE_ALREADY_RUNNING;
+    err.code = constants$h.INSTANCE_ALREADY_RUNNING;
     err.instance = instance;
     return err;
   }
@@ -8447,7 +8427,7 @@
     }
 
     var err = new Error(message);
-    err.code = constants$g.MULTIPLE_DONE;
+    err.code = constants$h.MULTIPLE_DONE;
     err.valueType = typeof originalErr;
     err.value = originalErr;
     return err;
@@ -8473,7 +8453,7 @@
     }
 
     var err = new Error(message);
-    err.code = constants$g.FORBIDDEN_EXCLUSIVITY;
+    err.code = constants$h.FORBIDDEN_EXCLUSIVITY;
     return err;
   }
 
@@ -8487,7 +8467,7 @@
    */
   function createInvalidPluginDefinitionError(msg, pluginDef) {
     const err = new Error(msg);
-    err.code = constants$g.INVALID_PLUGIN_DEFINITION;
+    err.code = constants$h.INVALID_PLUGIN_DEFINITION;
     err.pluginDef = pluginDef;
     return err;
   }
@@ -8507,7 +8487,7 @@
     { pluginDef, pluginImpl } = {},
   ) {
     const err = new Error(msg);
-    err.code = constants$g.INVALID_PLUGIN_IMPLEMENTATION;
+    err.code = constants$h.INVALID_PLUGIN_IMPLEMENTATION;
     err.pluginDef = pluginDef;
     err.pluginImpl = pluginImpl;
     return err;
@@ -8523,7 +8503,7 @@
    */
   function createTimeoutError(msg, timeout, file) {
     const err = new Error(msg);
-    err.code = constants$g.TIMEOUT;
+    err.code = constants$h.TIMEOUT;
     err.timeout = timeout;
     err.file = file;
     return err;
@@ -8538,7 +8518,7 @@
    */
   function createUnparsableFileError(message) {
     var err = new Error(message);
-    err.code = constants$g.UNPARSABLE_FILE;
+    err.code = constants$h.UNPARSABLE_FILE;
     return err;
   }
 
@@ -8576,7 +8556,7 @@
     isMochaError: isMochaError
   });
 
-  const debug$1 = debugModule("mocha:runnable");
+  const debug$2 = debugModule("mocha:runnable");
 
   /**
    * Save timer references to avoid Sinon interfering (see GH-237).
@@ -8669,7 +8649,7 @@
       } else {
         this._timeout = ms$1;
       }
-      debug$1("timeout %d", this._timeout);
+      debug$2("timeout %d", this._timeout);
 
       if (this.timer) {
         this.resetTimeout();
@@ -8691,7 +8671,7 @@
       if (typeof ms$1 === "string") {
         ms$1 = ms(ms$1);
       }
-      debug$1("slow %d", ms$1);
+      debug$2("slow %d", ms$1);
       this._slow = ms$1;
       return this;
     }
@@ -9044,8 +9024,6 @@
     Runnable: Runnable
   });
 
-  var require$$11$1 = /*@__PURE__*/getAugmentedNamespace(runnable);
-
   const { MOCHA_ID_PROP_NAME: MOCHA_ID_PROP_NAME$2 } = utils.constants;
 
   class Hook extends Runnable {
@@ -9140,7 +9118,7 @@
     getMochaID,
     isString: isString$1,
   } = utils;
-  const debug = debugModule("mocha:suite");
+  const debug$1 = debugModule("mocha:suite");
 
   const { MOCHA_ID_PROP_NAME: MOCHA_ID_PROP_NAME$1 } = utilsConstants;
 
@@ -9306,7 +9284,7 @@
      */
     clone() {
       var suite = new Suite(this.title);
-      debug("clone");
+      debug$1("clone");
       suite.ctx = this.ctx;
       suite.root = this.root;
       suite.timeout(this.timeout());
@@ -9337,7 +9315,7 @@
       var range = [0, INT_MAX];
       ms$1 = clamp(ms$1, range);
 
-      debug("timeout %d", ms$1);
+      debug$1("timeout %d", ms$1);
       this._timeout = parseInt(ms$1, 10);
 
       // Allow overriding inner/nested suites
@@ -9363,7 +9341,7 @@
       if (!arguments.length) {
         return this._retries;
       }
-      debug("retries %d", n);
+      debug$1("retries %d", n);
       this._retries = parseInt(n, 10) || 0;
       return this;
     }
@@ -9382,7 +9360,7 @@
       if (typeof ms$1 === "string") {
         ms$1 = ms(ms$1);
       }
-      debug("slow %d", ms$1);
+      debug$1("slow %d", ms$1);
       this._slow = ms$1;
       return this;
     }
@@ -9398,7 +9376,7 @@
       if (!arguments.length) {
         return this._bail;
       }
-      debug("bail %s", bail);
+      debug$1("bail %s", bail);
       this._bail = bail;
       return this;
     }
@@ -9791,1446 +9769,1405 @@
     Suite: Suite
   });
 
-  var require$$5$1 = /*@__PURE__*/getAugmentedNamespace(suite);
-
-  var require$$8$1 = /*@__PURE__*/getAugmentedNamespace(errors);
-
-  var require$$7$2 = /*@__PURE__*/getAugmentedNamespace(errorConstants);
-
-  var runner;
-  var hasRequiredRunner;
-
-  function requireRunner () {
-  	if (hasRequiredRunner) return runner;
-  	hasRequiredRunner = 1;
-
-  	/**
-  	 * @typedef {import('./types.d.ts').RunnerOptions} RunnerOptions
-  	 */
-
-  	/**
-  	 * Module dependencies.
-  	 * @private
-  	 */
-  	var EventEmitter = require$$0$1.EventEmitter;
-  	var { PendingError } = require$$1$1;
-  	var utils = requireUtils();
-  	var debug = requireBrowser()("mocha:runner");
-  	var { Runnable } = require$$11$1;
-  	var { Suite } = require$$5$1;
-  	var HOOK_TYPE_BEFORE_EACH = Suite.constants.HOOK_TYPE_BEFORE_EACH;
-  	var HOOK_TYPE_AFTER_EACH = Suite.constants.HOOK_TYPE_AFTER_EACH;
-  	var HOOK_TYPE_AFTER_ALL = Suite.constants.HOOK_TYPE_AFTER_ALL;
-  	var HOOK_TYPE_BEFORE_ALL = Suite.constants.HOOK_TYPE_BEFORE_ALL;
-  	var EVENT_ROOT_SUITE_RUN = Suite.constants.EVENT_ROOT_SUITE_RUN;
-  	var STATE_FAILED = Runnable.constants.STATE_FAILED;
-  	var STATE_PASSED = Runnable.constants.STATE_PASSED;
-  	var STATE_PENDING = Runnable.constants.STATE_PENDING;
-  	var stackFilter = utils.stackTraceFilter();
-  	var stringify = utils.stringify;
-
-  	const {
-  	  createInvalidExceptionError,
-  	  createUnsupportedError,
-  	  createFatalError,
-  	  isMochaError,
-  	} = require$$8$1;
-  	const { constants: errorConstants } = require$$7$2;
-
-  	/**
-  	 * Non-enumerable globals.
-  	 * @private
-  	 * @readonly
-  	 */
-  	var globals = [
-  	  "setTimeout",
-  	  "clearTimeout",
-  	  "setInterval",
-  	  "clearInterval",
-  	  "XMLHttpRequest",
-  	  "Date",
-  	  "setImmediate",
-  	  "clearImmediate",
-  	];
-
-  	var constants = utils.defineConstants(
-  	  /**
-  	   * {@link Runner}-related constants. Used by reporters. Each event emits the corresponding object, unless otherwise indicated.
-  	   * @example
-  	   * const Mocha = require('mocha');
-  	   * const Base = Mocha.reporters.Base;
-  	   * const {
-  	   *   EVENT_HOOK_BEGIN,
-  	   *   EVENT_TEST_PASS,
-  	   *   EVENT_TEST_FAIL,
-  	   *   EVENT_TEST_END
-  	   * } = Mocha.Runner.constants
-  	   *
-  	   * function MyReporter(runner, options) {
-  	   *   Base.call(this, runner, options);
-  	   *
-  	   *   runner.on(EVENT_HOOK_BEGIN, function(hook) {
-  	   *     console.log('hook called: ', hook.title);
-  	   *   });
-  	   *
-  	   *   runner.on(EVENT_TEST_PASS, function(test) {
-  	   *     console.log('pass: %s', test.fullTitle());
-  	   *   });
-  	   *
-  	   *   runner.on(EVENT_TEST_FAIL, function(test, err) {
-  	   *     console.log('fail: %s -- error: %s', test.fullTitle(), err.message);
-  	   *   });
-  	   *
-  	   *   runner.on(EVENT_TEST_END, function() {
-  	   *     console.log('end: %d/%d', runner.stats.passes, runner.stats.tests);
-  	   *   });
-  	   * }
-  	   *
-  	   * module.exports = MyReporter;
-  	   *
-  	   * @public
-  	   * @memberof Runner
-  	   * @readonly
-  	   * @alias constants
-  	   * @static
-  	   * @enum {string}
-  	   */
-  	  {
-  	    /**
-  	     * Emitted when {@link Hook} execution begins
-  	     */
-  	    EVENT_HOOK_BEGIN: "hook",
-  	    /**
-  	     * Emitted when {@link Hook} execution ends
-  	     */
-  	    EVENT_HOOK_END: "hook end",
-  	    /**
-  	     * Emitted when Root {@link Suite} execution begins (all files have been parsed and hooks/tests are ready for execution)
-  	     */
-  	    EVENT_RUN_BEGIN: "start",
-  	    /**
-  	     * Emitted when Root {@link Suite} execution has been delayed via `delay` option
-  	     */
-  	    EVENT_DELAY_BEGIN: "waiting",
-  	    /**
-  	     * Emitted when delayed Root {@link Suite} execution is triggered by user via `global.run()`
-  	     */
-  	    EVENT_DELAY_END: "ready",
-  	    /**
-  	     * Emitted when Root {@link Suite} execution ends
-  	     */
-  	    EVENT_RUN_END: "end",
-  	    /**
-  	     * Emitted when {@link Suite} execution begins
-  	     */
-  	    EVENT_SUITE_BEGIN: "suite",
-  	    /**
-  	     * Emitted when {@link Suite} execution ends
-  	     */
-  	    EVENT_SUITE_END: "suite end",
-  	    /**
-  	     * Emitted when {@link Test} execution begins
-  	     */
-  	    EVENT_TEST_BEGIN: "test",
-  	    /**
-  	     * Emitted when {@link Test} execution ends
-  	     */
-  	    EVENT_TEST_END: "test end",
-  	    /**
-  	     * Emitted when {@link Test} execution fails. Includes an `err` object of type `Error`.
-  	     * @example
-  	     * runner.on(EVENT_TEST_FAIL, function(test, err) {
-  	     *   console.log('fail: %s -- error: %s', test.fullTitle(), err.message);
-  	     * });
-  	     *
-  	     *
-  	     */
-  	    EVENT_TEST_FAIL: "fail",
-  	    /**
-  	     * Emitted when {@link Test} execution succeeds
-  	     */
-  	    EVENT_TEST_PASS: "pass",
-  	    /**
-  	     * Emitted when {@link Test} becomes pending
-  	     */
-  	    EVENT_TEST_PENDING: "pending",
-  	    /**
-  	     * Emitted when {@link Test} execution has failed, but will retry
-  	     */
-  	    EVENT_TEST_RETRY: "retry",
-  	    /**
-  	     * Initial state of Runner
-  	     */
-  	    STATE_IDLE: "idle",
-  	    /**
-  	     * State set to this value when the Runner has started running
-  	     */
-  	    STATE_RUNNING: "running",
-  	    /**
-  	     * State set to this value when the Runner has stopped
-  	     */
-  	    STATE_STOPPED: "stopped",
-  	  },
-  	);
-
-  	class Runner extends EventEmitter {
-  	  /**
-  	   * Initialize a `Runner` at the Root {@link Suite}, which represents a hierarchy of {@link Suite|Suites} and {@link Test|Tests}.
-  	   *
-  	   * @extends external:EventEmitter
-  	   * @public
-  	   * @class
-  	   * @param {Suite} suite - Root suite
-  	   * @param {Object} [opts] - Settings object
-  	   * @param {boolean} [opts.cleanReferencesAfterRun] - Whether to clean references to test fns and hooks when a suite is done.
-  	   * @param {boolean} [opts.delay] - Whether to delay execution of root suite until ready.
-  	   * @param {boolean} [opts.dryRun] - Whether to report tests without running them.
-  	   * @param {boolean} [opts.failZero] - Whether to fail test run if zero tests encountered.
-  	   * @param {boolean} [opts.failHookAffectedTests] - Whether to fail all tests affected by hook failures.
-  	   */
-  	  constructor(suite, opts = {}) {
-  	    super();
-
-  	    var self = this;
-  	    this._globals = [];
-  	    this._abort = false;
-  	    this.suite = suite;
-  	    this._opts = opts;
-  	    this.state = constants.STATE_IDLE;
-  	    this.total = suite.total();
-  	    this.failures = 0;
-  	    /**
-  	     * @type {Map<EventEmitter,Map<string,Set<EventListener>>>}
-  	     */
-  	    this._eventListeners = new Map();
-  	    this.on(constants.EVENT_TEST_END, function (test) {
-  	      if (test.type === "test" && test.retriedTest() && test.parent) {
-  	        var idx =
-  	          test.parent.tests && test.parent.tests.indexOf(test.retriedTest());
-  	        if (idx > -1) test.parent.tests[idx] = test;
-  	      }
-  	      self.checkGlobals(test);
-  	    });
-  	    this.on(constants.EVENT_HOOK_END, function (hook) {
-  	      self.checkGlobals(hook);
-  	    });
-  	    this._defaultGrep = /.*/;
-  	    this.grep(this._defaultGrep);
-  	    this.globals(this.globalProps());
-
-  	    this.uncaught = this._uncaught.bind(this);
-  	    this.unhandled = (reason, promise) => {
-  	      if (isMochaError(reason)) {
-  	        debug(
-  	          "trapped unhandled rejection coming out of Mocha; forwarding to uncaught handler:",
-  	          reason,
-  	        );
-  	        this.uncaught(reason);
-  	      } else {
-  	        debug(
-  	          "trapped unhandled rejection from (probably) user code; re-emitting on process",
-  	        );
-  	        this._removeEventListener(
-  	          browser$1$1,
-  	          "unhandledRejection",
-  	          this.unhandled,
-  	        );
-  	        try {
-  	          browser$1$1.emit("unhandledRejection", reason, promise);
-  	        } finally {
-  	          this._addEventListener(browser$1$1, "unhandledRejection", this.unhandled);
-  	        }
-  	      }
-  	    };
-  	  }
-  	}
-
-  	/**
-  	 * Wrapper for setImmediate or browser polyfill.
-  	 *
-  	 * @param {Function} fn
-  	 * @private
-  	 */
-  	Runner.immediately = commonjsGlobal.setImmediate;
-
-  	/**
-  	 * Replacement for `target.on(eventName, listener)` that does bookkeeping to remove them when this runner instance is disposed.
-  	 * @param {EventEmitter} target - The `EventEmitter`
-  	 * @param {string} eventName - The event name
-  	 * @param {string} fn - Listener function
-  	 * @private
-  	 */
-  	Runner.prototype._addEventListener = function (target, eventName, listener) {
-  	  debug(
-  	    "_addEventListener(): adding for event %s; %d current listeners",
-  	    eventName,
-  	    target.listenerCount(eventName),
-  	  );
-  	  /* istanbul ignore next */
-  	  if (
-  	    this._eventListeners.has(target) &&
-  	    this._eventListeners.get(target).has(eventName) &&
-  	    this._eventListeners.get(target).get(eventName).has(listener)
-  	  ) {
-  	    debug(
-  	      "warning: tried to attach duplicate event listener for %s",
-  	      eventName,
-  	    );
-  	    return;
-  	  }
-  	  target.on(eventName, listener);
-  	  const targetListeners = this._eventListeners.has(target)
-  	    ? this._eventListeners.get(target)
-  	    : new Map();
-  	  const targetEventListeners = targetListeners.has(eventName)
-  	    ? targetListeners.get(eventName)
-  	    : new Set();
-  	  targetEventListeners.add(listener);
-  	  targetListeners.set(eventName, targetEventListeners);
-  	  this._eventListeners.set(target, targetListeners);
-  	};
-
-  	/**
-  	 * Replacement for `target.removeListener(eventName, listener)` that also updates the bookkeeping.
-  	 * @param {EventEmitter} target - The `EventEmitter`
-  	 * @param {string} eventName - The event name
-  	 * @param {function} listener - Listener function
-  	 * @private
-  	 */
-  	Runner.prototype._removeEventListener = function (target, eventName, listener) {
-  	  target.removeListener(eventName, listener);
-
-  	  if (this._eventListeners.has(target)) {
-  	    const targetListeners = this._eventListeners.get(target);
-  	    if (targetListeners.has(eventName)) {
-  	      const targetEventListeners = targetListeners.get(eventName);
-  	      targetEventListeners.delete(listener);
-  	      if (!targetEventListeners.size) {
-  	        targetListeners.delete(eventName);
-  	      }
-  	    }
-  	    if (!targetListeners.size) {
-  	      this._eventListeners.delete(target);
-  	    }
-  	  } else {
-  	    debug("trying to remove listener for untracked object %s", target);
-  	  }
-  	};
-
-  	/**
-  	 * Removes all event handlers set during a run on this instance.
-  	 * Remark: this does _not_ clean/dispose the tests or suites themselves.
-  	 */
-  	Runner.prototype.dispose = function () {
-  	  this.removeAllListeners();
-  	  this._eventListeners.forEach((targetListeners, target) => {
-  	    targetListeners.forEach((targetEventListeners, eventName) => {
-  	      targetEventListeners.forEach((listener) => {
-  	        target.removeListener(eventName, listener);
-  	      });
-  	    });
-  	  });
-  	  this._eventListeners.clear();
-  	};
-
-  	/**
-  	 * Run tests with full titles matching `re`. Updates runner.total
-  	 * with number of tests matched.
-  	 *
-  	 * @public
-  	 * @memberof Runner
-  	 * @param {RegExp} re
-  	 * @param {boolean} invert
-  	 * @return {Runner} Runner instance.
-  	 */
-  	Runner.prototype.grep = function (re, invert) {
-  	  debug("grep(): setting to %s", re);
-  	  this._grep = re;
-  	  this._invert = invert;
-  	  this.total = this.grepTotal(this.suite);
-  	  return this;
-  	};
-
-  	/**
-  	 * Returns the number of tests matching the grep search for the
-  	 * given suite.
-  	 *
-  	 * @memberof Runner
-  	 * @public
-  	 * @param {Suite} suite
-  	 * @return {number}
-  	 */
-  	Runner.prototype.grepTotal = function (suite) {
-  	  var self = this;
-  	  var total = 0;
-
-  	  suite.eachTest(function (test) {
-  	    var match = self._grep.test(test.fullTitle());
-  	    if (self._invert) {
-  	      match = !match;
-  	    }
-  	    if (match) {
-  	      total++;
-  	    }
-  	  });
-
-  	  return total;
-  	};
-
-  	/**
-  	 * Return a list of global properties.
-  	 *
-  	 * @return {Array}
-  	 * @private
-  	 */
-  	Runner.prototype.globalProps = function () {
-  	  var props = Object.keys(commonjsGlobal);
-
-  	  // non-enumerables
-  	  for (var i = 0; i < globals.length; ++i) {
-  	    if (~props.indexOf(globals[i])) {
-  	      continue;
-  	    }
-  	    props.push(globals[i]);
-  	  }
-
-  	  return props;
-  	};
-
-  	/**
-  	 * Allow the given `arr` of globals.
-  	 *
-  	 * @public
-  	 * @memberof Runner
-  	 * @param {Array} arr
-  	 * @return {Runner} Runner instance.
-  	 */
-  	Runner.prototype.globals = function (arr) {
-  	  if (!arguments.length) {
-  	    return this._globals;
-  	  }
-  	  debug("globals(): setting to %O", arr);
-  	  this._globals = this._globals.concat(arr);
-  	  return this;
-  	};
-
-  	/**
-  	 * Check for global variable leaks.
-  	 *
-  	 * @private
-  	 */
-  	Runner.prototype.checkGlobals = function (test) {
-  	  if (!this.checkLeaks) {
-  	    return;
-  	  }
-  	  var ok = this._globals;
-
-  	  var globals = this.globalProps();
-  	  var leaks;
-
-  	  if (test) {
-  	    ok = ok.concat(test._allowedGlobals || []);
-  	  }
-
-  	  if (this.prevGlobalsLength === globals.length) {
-  	    return;
-  	  }
-  	  this.prevGlobalsLength = globals.length;
-
-  	  leaks = filterLeaks(ok, globals);
-  	  this._globals = this._globals.concat(leaks);
-
-  	  if (leaks.length) {
-  	    var msg = `global leak(s) detected: ${leaks.map((e) => `'${e}'`).join(", ")}`;
-  	    this.fail(test, new Error(msg));
-  	  }
-  	};
-
-  	/**
-  	 * Create an error object for a test that was skipped due to a hook failure.
-  	 *
-  	 * @private
-  	 * @param {string} hookTitle - The title of the failed hook
-  	 * @param {*} hookError - The error from the failed hook (may not be an Error object)
-  	 * @returns {Error} The error object for the skipped test
-  	 */
-  	function createHookSkipError(hookTitle, hookError) {
-  	  // Handle falsy or undefined exceptions
-  	  if (!hookError) {
-  	    hookError = createInvalidExceptionError(
-  	      'Hook "' + hookTitle + '" failed with exception: ' + hookError,
-  	      hookError,
-  	    );
-  	  }
-  	  // Convert non-Error objects to Error
-  	  else if (!isError(hookError)) {
-  	    hookError = thrown2Error(hookError);
-  	  }
-
-  	  var errorMessage =
-  	    'Test skipped due to failure in hook "' +
-  	    hookTitle +
-  	    '": ' +
-  	    hookError.message;
-  	  var testError = new Error(errorMessage);
-  	  testError.stack = hookError.stack;
-  	  return testError;
-  	}
-
-  	/**
-  	 * Fail all tests that are affected by a hook failure.
-  	 * This is used when the `failHookAffectedTests` option is enabled.
-  	 *
-  	 * @private
-  	 * @param {Suite} suite - The suite containing the affected tests
-  	 * @param {Error} hookError - The error from the failed hook
-  	 * @param {string} hookTitle - The title of the failed hook
-  	 */
-  	Runner.prototype.failAffectedTests = function (suite, hookError, hookTitle) {
-  	  if (!this._opts.failHookAffectedTests) {
-  	    return;
-  	  }
-
-  	  var self = this;
-  	  var testError = createHookSkipError(hookTitle, hookError);
-
-  	  // Recursively fail all tests in this suite and its child suites
-  	  function failTestsInSuite(s) {
-  	    s.tests.forEach(function (test) {
-  	      // Only fail tests that haven't been executed yet
-  	      if (!test.state) {
-  	        test.state = STATE_FAILED;
-  	        self.failures++;
-  	        self.emit(constants.EVENT_TEST_BEGIN, test);
-  	        self.emit(constants.EVENT_TEST_FAIL, test, testError);
-  	        self.emit(constants.EVENT_TEST_END, test);
-  	      }
-  	    });
-
-  	    s.suites.forEach(failTestsInSuite);
-  	  }
-
-  	  failTestsInSuite(suite);
-  	};
-
-  	/**
-  	 * Fail the given `test`.
-  	 *
-  	 * If `test` is a hook, failures work in the following pattern:
-  	 * - If bail, run corresponding `after each` and `after` hooks,
-  	 *   then exit
-  	 * - Failed `before` hook skips all tests in a suite and subsuites,
-  	 *   but jumps to corresponding `after` hook
-  	 * - Failed `before each` hook skips remaining tests in a
-  	 *   suite and jumps to corresponding `after each` hook,
-  	 *   which is run only once
-  	 * - Failed `after` hook does not alter execution order
-  	 * - Failed `after each` hook skips remaining tests in a
-  	 *   suite and subsuites, but executes other `after each`
-  	 *   hooks
-  	 *
-  	 * @private
-  	 * @param {Runnable} test
-  	 * @param {Error} err
-  	 * @param {boolean} [force=false] - Whether to fail a pending test.
-  	 */
-  	Runner.prototype.fail = function (test, err, force) {
-  	  force = force === true;
-  	  if (test.isPending() && !force) {
-  	    return;
-  	  }
-  	  if (this.state === constants.STATE_STOPPED) {
-  	    if (err.code === errorConstants.MULTIPLE_DONE) {
-  	      throw err;
-  	    }
-  	    throw createFatalError(
-  	      "Test failed after root suite execution completed!",
-  	      err,
-  	    );
-  	  }
-
-  	  ++this.failures;
-  	  debug("total number of failures: %d", this.failures);
-  	  test.state = STATE_FAILED;
-
-  	  if (!isError(err)) {
-  	    err = thrown2Error(err);
-  	  }
-
-  	  // Filter the stack traces
-  	  if (!this.fullStackTrace) {
-  	    const alreadyFiltered = new Set();
-  	    let currentErr = err;
-
-  	    while (currentErr && currentErr.stack && !alreadyFiltered.has(currentErr)) {
-  	      alreadyFiltered.add(currentErr);
-
-  	      try {
-  	        currentErr.stack = stackFilter(currentErr.stack);
-  	      } catch {
-  	        // Ignore error as some environments do not take kindly to monkeying with the stack
-  	      }
-
-  	      currentErr = currentErr.cause;
-  	    }
-  	  }
-
-  	  this.emit(constants.EVENT_TEST_FAIL, test, err);
-  	};
-
-  	/**
-  	 * Run hook `name` callbacks and then invoke `fn()`.
-  	 *
-  	 * @private
-  	 * @param {string} name
-  	 * @param {Function} fn
-  	 */
-
-  	Runner.prototype.hook = function (name, fn) {
-  	  if (this._opts.dryRun) return fn();
-
-  	  var suite = this.suite;
-  	  var hooks = suite.getHooks(name);
-  	  var self = this;
-
-  	  function next(i) {
-  	    var hook = hooks[i];
-  	    if (!hook) {
-  	      return fn();
-  	    }
-  	    self.currentRunnable = hook;
-
-  	    if (name === HOOK_TYPE_BEFORE_ALL) {
-  	      hook.ctx.currentTest = hook.parent.tests[0];
-  	    } else if (name === HOOK_TYPE_AFTER_ALL) {
-  	      hook.ctx.currentTest = hook.parent.tests[hook.parent.tests.length - 1];
-  	    } else {
-  	      hook.ctx.currentTest = self.test;
-  	    }
-
-  	    setHookTitle(hook);
-
-  	    hook.allowUncaught = self.allowUncaught;
-
-  	    self.emit(constants.EVENT_HOOK_BEGIN, hook);
-
-  	    if (!hook.listeners("error").length) {
-  	      self._addEventListener(hook, "error", function (err) {
-  	        self.fail(hook, err);
-  	      });
-  	    }
-
-  	    hook.run(function cbHookRun(err) {
-  	      var testError = hook.error();
-  	      if (testError) {
-  	        self.fail(self.test, testError);
-  	      }
-  	      // conditional skip
-  	      if (hook.pending) {
-  	        if (name === HOOK_TYPE_AFTER_EACH) {
-  	          // TODO define and implement use case
-  	          if (self.test) {
-  	            self.test.pending = true;
-  	          }
-  	        } else if (name === HOOK_TYPE_BEFORE_EACH) {
-  	          if (self.test) {
-  	            self.test.pending = true;
-  	          }
-  	          self.emit(constants.EVENT_HOOK_END, hook);
-  	          hook.pending = false; // activates hook for next test
-  	          return fn(new Error("abort hookDown"));
-  	        } else if (name === HOOK_TYPE_BEFORE_ALL) {
-  	          suite.tests.forEach(function (test) {
-  	            test.pending = true;
-  	          });
-  	          suite.suites.forEach(function (suite) {
-  	            suite.pending = true;
-  	          });
-  	          hooks = [];
-  	        } else {
-  	          hook.pending = false;
-  	          var errForbid = createUnsupportedError("`this.skip` forbidden");
-  	          self.fail(hook, errForbid);
-  	          return fn(errForbid);
-  	        }
-  	      } else if (err) {
-  	        self.fail(hook, err);
-  	        // If failHookAffectedTests is enabled, mark affected tests as failed
-  	        if (self._opts.failHookAffectedTests) {
-  	          if (name === HOOK_TYPE_BEFORE_ALL) {
-  	            self.failAffectedTests(self.suite, err, hook.title);
-  	          } else if (name === HOOK_TYPE_BEFORE_EACH) {
-  	            // Fail the current test
-  	            if (self.test && !self.test.state) {
-  	              var testError = createHookSkipError(hook.title, err);
-
-  	              self.test.state = STATE_FAILED;
-  	              self.failures++;
-  	              self.emit(constants.EVENT_TEST_BEGIN, self.test);
-  	              self.emit(constants.EVENT_TEST_FAIL, self.test, testError);
-  	              self.emit(constants.EVENT_TEST_END, self.test);
-  	            }
-  	            // Store the hook error info for remaining tests
-  	            self._failedBeforeEachHook = {
-  	              error: err,
-  	              title: hook.title,
-  	            };
-  	          }
-  	        }
-  	        // stop executing hooks, notify callee of hook err
-  	        return fn(err);
-  	      }
-  	      self.emit(constants.EVENT_HOOK_END, hook);
-  	      delete hook.ctx.currentTest;
-  	      setHookTitle(hook);
-  	      next(++i);
-  	    });
-
-  	    function setHookTitle(hook) {
-  	      hook.originalTitle = hook.originalTitle || hook.title;
-  	      if (hook.ctx && hook.ctx.currentTest) {
-  	        hook.title = `${hook.originalTitle} for "${hook.ctx.currentTest.title}"`;
-  	      } else {
-  	        var parentTitle;
-  	        if (hook.parent.title) {
-  	          parentTitle = hook.parent.title;
-  	        } else {
-  	          parentTitle = hook.parent.root ? "{root}" : "";
-  	        }
-  	        hook.title = `${hook.originalTitle} in "${parentTitle}"`;
-  	      }
-  	    }
-  	  }
-
-  	  Runner.immediately(function () {
-  	    next(0);
-  	  });
-  	};
-
-  	/**
-  	 * Run hook `name` for the given array of `suites`
-  	 * in order, and callback `fn(err, errSuite)`.
-  	 *
-  	 * @private
-  	 * @param {string} name
-  	 * @param {Array} suites
-  	 * @param {Function} fn
-  	 */
-  	Runner.prototype.hooks = function (name, suites, fn) {
-  	  var self = this;
-  	  var orig = this.suite;
-
-  	  function next(suite) {
-  	    self.suite = suite;
-
-  	    if (!suite) {
-  	      self.suite = orig;
-  	      return fn();
-  	    }
-
-  	    self.hook(name, function (err) {
-  	      if (err) {
-  	        var errSuite = self.suite;
-  	        self.suite = orig;
-  	        return fn(err, errSuite);
-  	      }
-
-  	      next(suites.pop());
-  	    });
-  	  }
-
-  	  next(suites.pop());
-  	};
-
-  	/**
-  	 * Run 'afterEach' hooks from bottom up.
-  	 *
-  	 * @param {String} name
-  	 * @param {Function} fn
-  	 * @private
-  	 */
-  	Runner.prototype.hookUp = function (name, fn) {
-  	  var suites = [this.suite].concat(this.parents()).reverse();
-  	  this.hooks(name, suites, fn);
-  	};
-
-  	/**
-  	 * Run 'beforeEach' hooks from top level down.
-  	 *
-  	 * @param {String} name
-  	 * @param {Function} fn
-  	 * @private
-  	 */
-  	Runner.prototype.hookDown = function (name, fn) {
-  	  var suites = [this.suite].concat(this.parents());
-  	  this.hooks(name, suites, fn);
-  	};
-
-  	/**
-  	 * Return an array of parent Suites from
-  	 * closest to furthest.
-  	 *
-  	 * @return {Array}
-  	 * @private
-  	 */
-  	Runner.prototype.parents = function () {
-  	  var suite = this.suite;
-  	  var suites = [];
-  	  while (suite.parent) {
-  	    suite = suite.parent;
-  	    suites.push(suite);
-  	  }
-  	  return suites;
-  	};
-
-  	/**
-  	 * Run the current test and callback `fn(err)`.
-  	 *
-  	 * @param {Function} fn
-  	 * @private
-  	 */
-  	Runner.prototype.runTest = function (fn) {
-  	  if (this._opts.dryRun) return Runner.immediately(fn);
-
-  	  var self = this;
-  	  var test = this.test;
-
-  	  if (!test) {
-  	    return;
-  	  }
-
-  	  if (this.asyncOnly) {
-  	    test.asyncOnly = true;
-  	  }
-  	  this._addEventListener(test, "error", function (err) {
-  	    self.fail(test, err);
-  	  });
-  	  if (this.allowUncaught) {
-  	    test.allowUncaught = true;
-  	    return test.run(fn);
-  	  }
-  	  try {
-  	    test.run(fn);
-  	  } catch (err) {
-  	    fn(err);
-  	  }
-  	};
-
-  	/**
-  	 * Run tests in the given `suite` and invoke the callback `fn()` when complete.
-  	 *
-  	 * @private
-  	 * @param {Suite} suite
-  	 * @param {Function} fn
-  	 */
-  	Runner.prototype.runTests = function (suite, fn) {
-  	  var self = this;
-  	  var tests = suite.tests.slice();
-  	  var test;
-
-  	  function hookErr(err, errSuite, after) {
-  	    // before/after Each hook for errSuite failed:
-  	    var orig = self.suite;
-
-  	    // If failHookAffectedTests is enabled and this is a beforeEach failure,
-  	    // mark remaining tests as failed
-  	    if (
-  	      self._opts.failHookAffectedTests &&
-  	      !after &&
-  	      self._failedBeforeEachHook
-  	    ) {
-  	      // Fail all remaining tests in the suite
-  	      var remainingTests = tests.slice();
-  	      remainingTests.forEach(function (t) {
-  	        if (!t.state) {
-  	          var testError = createHookSkipError(
-  	            self._failedBeforeEachHook.title,
-  	            self._failedBeforeEachHook.error,
-  	          );
-
-  	          t.state = STATE_FAILED;
-  	          self.failures++;
-  	          self.emit(constants.EVENT_TEST_BEGIN, t);
-  	          self.emit(constants.EVENT_TEST_FAIL, t, testError);
-  	          self.emit(constants.EVENT_TEST_END, t);
-  	        }
-  	      });
-  	      // Clear the stored hook info
-  	      delete self._failedBeforeEachHook;
-  	    }
-
-  	    // for failed 'after each' hook start from errSuite parent,
-  	    // otherwise start from errSuite itself
-  	    self.suite = after ? errSuite.parent : errSuite;
-
-  	    if (self.suite) {
-  	      self.hookUp(HOOK_TYPE_AFTER_EACH, function (err2, errSuite2) {
-  	        self.suite = orig;
-  	        // some hooks may fail even now
-  	        if (err2) {
-  	          return hookErr(err2, errSuite2, true);
-  	        }
-  	        // report error suite
-  	        fn(errSuite);
-  	      });
-  	    } else {
-  	      // there is no need calling other 'after each' hooks
-  	      self.suite = orig;
-  	      fn(errSuite);
-  	    }
-  	  }
-
-  	  function next(err, errSuite) {
-  	    // if we bail after first err
-  	    if (self.failures && suite._bail) {
-  	      tests = [];
-  	    }
-
-  	    if (self._abort) {
-  	      return fn();
-  	    }
-
-  	    if (err) {
-  	      return hookErr(err, errSuite, true);
-  	    }
-
-  	    // next test
-  	    test = tests.shift();
-
-  	    // all done
-  	    if (!test) {
-  	      return fn();
-  	    }
-
-  	    // grep
-  	    var match = self._grep.test(test.fullTitle());
-  	    if (self._invert) {
-  	      match = !match;
-  	    }
-  	    if (!match) {
-  	      // Run immediately only if we have defined a grep. When we
-  	      // define a grep — It can cause maximum callstack error if
-  	      // the grep is doing a large recursive loop by neglecting
-  	      // all tests. The run immediately function also comes with
-  	      // a performance cost. So we don't want to run immediately
-  	      // if we run the whole test suite, because running the whole
-  	      // test suite don't do any immediate recursive loops. Thus,
-  	      // allowing a JS runtime to breathe.
-  	      if (self._grep !== self._defaultGrep) {
-  	        Runner.immediately(next);
-  	      } else {
-  	        next();
-  	      }
-  	      return;
-  	    }
-
-  	    // static skip, no hooks are executed
-  	    if (test.isPending()) {
-  	      if (self.forbidPending) {
-  	        self.fail(test, new Error("Pending test forbidden"), true);
-  	      } else {
-  	        test.state = STATE_PENDING;
-  	        self.emit(constants.EVENT_TEST_PENDING, test);
-  	      }
-  	      self.emit(constants.EVENT_TEST_END, test);
-  	      return next();
-  	    }
-
-  	    // execute test and hook(s)
-  	    self.emit(constants.EVENT_TEST_BEGIN, (self.test = test));
-  	    self.hookDown(HOOK_TYPE_BEFORE_EACH, function (err, errSuite) {
-  	      // conditional skip within beforeEach
-  	      if (test.isPending()) {
-  	        if (self.forbidPending) {
-  	          self.fail(test, new Error("Pending test forbidden"), true);
-  	        } else {
-  	          test.state = STATE_PENDING;
-  	          self.emit(constants.EVENT_TEST_PENDING, test);
-  	        }
-  	        self.emit(constants.EVENT_TEST_END, test);
-  	        // skip inner afterEach hooks below errSuite level
-  	        var origSuite = self.suite;
-  	        self.suite = errSuite || self.suite;
-  	        return self.hookUp(HOOK_TYPE_AFTER_EACH, function (e, eSuite) {
-  	          self.suite = origSuite;
-  	          next(e, eSuite);
-  	        });
-  	      }
-  	      if (err) {
-  	        return hookErr(err, errSuite, false);
-  	      }
-  	      self.currentRunnable = self.test;
-  	      self.runTest(function (err) {
-  	        test = self.test;
-  	        // conditional skip within it
-  	        if (test.pending) {
-  	          if (self.forbidPending) {
-  	            self.fail(test, new Error("Pending test forbidden"), true);
-  	          } else {
-  	            test.state = STATE_PENDING;
-  	            self.emit(constants.EVENT_TEST_PENDING, test);
-  	          }
-  	          self.emit(constants.EVENT_TEST_END, test);
-  	          return self.hookUp(HOOK_TYPE_AFTER_EACH, next);
-  	        } else if (err) {
-  	          var retry = test.currentRetry();
-  	          if (retry < test.retries()) {
-  	            var clonedTest = test.clone();
-  	            clonedTest.currentRetry(retry + 1);
-  	            tests.unshift(clonedTest);
-
-  	            self.emit(constants.EVENT_TEST_RETRY, test, err);
-
-  	            // Early return + hook trigger so that it doesn't
-  	            // increment the count wrong
-  	            return self.hookUp(HOOK_TYPE_AFTER_EACH, next);
-  	          } else {
-  	            self.fail(test, err);
-  	          }
-  	          self.emit(constants.EVENT_TEST_END, test);
-  	          return self.hookUp(HOOK_TYPE_AFTER_EACH, next);
-  	        }
-
-  	        test.state = STATE_PASSED;
-  	        self.emit(constants.EVENT_TEST_PASS, test);
-  	        self.emit(constants.EVENT_TEST_END, test);
-  	        self.hookUp(HOOK_TYPE_AFTER_EACH, next);
-  	      });
-  	    });
-  	  }
-
-  	  this.next = next;
-  	  this.hookErr = hookErr;
-  	  next();
-  	};
-
-  	/**
-  	 * Run the given `suite` and invoke the callback `fn()` when complete.
-  	 *
-  	 * @private
-  	 * @param {Suite} suite
-  	 * @param {Function} fn
-  	 */
-  	Runner.prototype.runSuite = function (suite, fn) {
-  	  var i = 0;
-  	  var self = this;
-  	  var total = this.grepTotal(suite);
-
-  	  debug("runSuite(): running %s", suite.fullTitle());
-
-  	  if (!total || (self.failures && suite._bail)) {
-  	    debug("runSuite(): bailing");
-  	    return fn();
-  	  }
-
-  	  this.emit(constants.EVENT_SUITE_BEGIN, (this.suite = suite));
-
-  	  function next(errSuite) {
-  	    if (errSuite) {
-  	      // current suite failed on a hook from errSuite
-  	      if (errSuite === suite) {
-  	        // if errSuite is current suite
-  	        // continue to the next sibling suite
-  	        return done();
-  	      }
-  	      // errSuite is among the parents of current suite
-  	      // stop execution of errSuite and all sub-suites
-  	      return done(errSuite);
-  	    }
-
-  	    if (self._abort) {
-  	      return done();
-  	    }
-
-  	    var curr = suite.suites[i++];
-  	    if (!curr) {
-  	      return done();
-  	    }
-
-  	    // Avoid grep neglecting large number of tests causing a
-  	    // huge recursive loop and thus a maximum call stack error.
-  	    // See comment in `this.runTests()` for more information.
-  	    if (self._grep !== self._defaultGrep) {
-  	      Runner.immediately(function () {
-  	        self.runSuite(curr, next);
-  	      });
-  	    } else {
-  	      self.runSuite(curr, next);
-  	    }
-  	  }
-
-  	  function done(errSuite) {
-  	    self.suite = suite;
-  	    self.nextSuite = next;
-
-  	    // remove reference to test
-  	    delete self.test;
-
-  	    self.hook(HOOK_TYPE_AFTER_ALL, function () {
-  	      self.emit(constants.EVENT_SUITE_END, suite);
-  	      fn(errSuite);
-  	    });
-  	  }
-
-  	  this.nextSuite = next;
-
-  	  this.hook(HOOK_TYPE_BEFORE_ALL, function (err) {
-  	    if (err) {
-  	      return done();
-  	    }
-  	    self.runTests(suite, next);
-  	  });
-  	};
-
-  	/**
-  	 * Handle uncaught exceptions within runner.
-  	 *
-  	 * This function is bound to the instance as `Runner#uncaught` at instantiation
-  	 * time. It's intended to be listening on the `Process.uncaughtException` event.
-  	 * In order to not leak EE listeners, we need to ensure no more than a single
-  	 * `uncaughtException` listener exists per `Runner`.  The only way to do
-  	 * this--because this function needs the context (and we don't have lambdas)--is
-  	 * to use `Function.prototype.bind`. We need strict equality to unregister and
-  	 * _only_ unregister the _one_ listener we set from the
-  	 * `Process.uncaughtException` event; would be poor form to just remove
-  	 * everything. See {@link Runner#run} for where the event listener is registered
-  	 * and unregistered.
-  	 * @param {Error} err - Some uncaught error
-  	 * @private
-  	 */
-  	Runner.prototype._uncaught = function (err) {
-  	  // this is defensive to prevent future developers from mis-calling this function.
-  	  // it's more likely that it'd be called with the incorrect context--say, the global
-  	  // `process` object--than it would to be called with a context that is not a "subclass"
-  	  // of `Runner`.
-  	  if (!(this instanceof Runner)) {
-  	    throw createFatalError(
-  	      "Runner#uncaught() called with invalid context",
-  	      this,
-  	    );
-  	  }
-  	  if (err instanceof PendingError) {
-  	    debug("uncaught(): caught a PendingError");
-  	    return;
-  	  }
-  	  // browser does not exit script when throwing in global.onerror()
-  	  if (this.allowUncaught && !utils.isBrowser()) {
-  	    debug("uncaught(): bubbling exception due to --allow-uncaught");
-  	    throw err;
-  	  }
-
-  	  if (this.state === constants.STATE_STOPPED) {
-  	    debug("uncaught(): throwing after run has completed!");
-  	    throw err;
-  	  }
-
-  	  if (err) {
-  	    debug("uncaught(): got truthy exception %O", err);
-  	  } else {
-  	    debug("uncaught(): undefined/falsy exception");
-  	    err = createInvalidExceptionError(
-  	      "Caught falsy/undefined exception which would otherwise be uncaught. No stack trace found; try a debugger",
-  	      err,
-  	    );
-  	  }
-
-  	  if (!isError(err)) {
-  	    err = thrown2Error(err);
-  	    debug('uncaught(): converted "error" %o to Error', err);
-  	  }
-  	  err.uncaught = true;
-
-  	  var runnable = this.currentRunnable;
-
-  	  if (!runnable) {
-  	    runnable = new Runnable("Uncaught error outside test suite");
-  	    debug("uncaught(): no current Runnable; created a phony one");
-  	    runnable.parent = this.suite;
-
-  	    if (this.state === constants.STATE_RUNNING) {
-  	      debug("uncaught(): failing gracefully");
-  	      this.fail(runnable, err);
-  	    } else {
-  	      // Can't recover from this failure
-  	      debug("uncaught(): test run has not yet started; unrecoverable");
-  	      this.emit(constants.EVENT_RUN_BEGIN);
-  	      this.fail(runnable, err);
-  	      this.emit(constants.EVENT_RUN_END);
-  	    }
-
-  	    return;
-  	  }
-
-  	  runnable.clearTimeout();
-
-  	  if (runnable.isFailed()) {
-  	    debug("uncaught(): Runnable has already failed");
-  	    // Ignore error if already failed
-  	    return;
-  	  } else if (runnable.isPending()) {
-  	    debug("uncaught(): pending Runnable wound up failing!");
-  	    // report 'pending test' retrospectively as failed
-  	    this.fail(runnable, err, true);
-  	    return;
-  	  }
-
-  	  // we cannot recover gracefully if a Runnable has already passed
-  	  // then fails asynchronously
-  	  if (runnable.isPassed()) {
-  	    debug("uncaught(): Runnable has already passed; bailing gracefully");
-  	    this.fail(runnable, err);
-  	    this.abort();
-  	  } else {
-  	    debug("uncaught(): forcing Runnable to complete with Error");
-  	    return runnable.callback(err);
-  	  }
-  	};
-
-  	/**
-  	 * Run the root suite and invoke `fn(failures)`
-  	 * on completion.
-  	 *
-  	 * @public
-  	 * @memberof Runner
-  	 * @param {Function} fn - Callback when finished
-  	 * @param {RunnerOptions} [opts] - For subclasses
-  	 * @returns {Runner} Runner instance.
-  	 */
-  	Runner.prototype.run = function (fn, opts = {}) {
-  	  var rootSuite = this.suite;
-  	  var options = opts.options || {};
-
-  	  debug("run(): got options: %O", options);
-  	  fn = fn || function () {};
-
-  	  const end = () => {
-  	    if (!this.total && this._opts.failZero) this.failures = 1;
-
-  	    debug("run(): root suite completed; emitting %s", constants.EVENT_RUN_END);
-  	    this.emit(constants.EVENT_RUN_END);
-  	  };
-
-  	  const begin = () => {
-  	    debug("run(): emitting %s", constants.EVENT_RUN_BEGIN);
-  	    this.emit(constants.EVENT_RUN_BEGIN);
-  	    debug("run(): emitted %s", constants.EVENT_RUN_BEGIN);
-
-  	    this.runSuite(rootSuite, end);
-  	  };
-
-  	  const prepare = () => {
-  	    debug("run(): starting");
-  	    // If there is an `only` filter
-  	    if (rootSuite.hasOnly()) {
-  	      rootSuite.filterOnly();
-  	      debug("run(): filtered exclusive Runnables");
-  	    }
-  	    this.state = constants.STATE_RUNNING;
-  	    if (this._opts.delay) {
-  	      this.emit(constants.EVENT_DELAY_END);
-  	      debug('run(): "delay" ended');
-  	    }
-
-  	    return begin();
-  	  };
-
-  	  // references cleanup to avoid memory leaks
-  	  if (this._opts.cleanReferencesAfterRun) {
-  	    this.on(constants.EVENT_SUITE_END, (suite) => {
-  	      suite.cleanReferences();
-  	    });
-  	  }
-
-  	  // callback
-  	  this.on(constants.EVENT_RUN_END, function () {
-  	    this.state = constants.STATE_STOPPED;
-  	    debug("run(): emitted %s", constants.EVENT_RUN_END);
-  	    fn(this.failures);
-  	  });
-
-  	  this._removeEventListener(browser$1$1, "uncaughtException", this.uncaught);
-  	  this._removeEventListener(browser$1$1, "unhandledRejection", this.unhandled);
-  	  this._addEventListener(browser$1$1, "uncaughtException", this.uncaught);
-  	  this._addEventListener(browser$1$1, "unhandledRejection", this.unhandled);
-
-  	  if (this._opts.delay) {
-  	    // for reporters, I guess.
-  	    // might be nice to debounce some dots while we wait.
-  	    this.emit(constants.EVENT_DELAY_BEGIN, rootSuite);
-  	    rootSuite.once(EVENT_ROOT_SUITE_RUN, prepare);
-  	    debug("run(): waiting for green light due to --delay");
-  	  } else {
-  	    Runner.immediately(prepare);
-  	  }
-
-  	  return this;
-  	};
-
-  	/**
-  	 * Toggle partial object linking behavior; used for building object references from
-  	 * unique ID's. Does nothing in serial mode, because the object references already exist.
-  	 * Subclasses can implement this (e.g., `ParallelBufferedRunner`)
-  	 * @abstract
-  	 * @param {boolean} [value] - If `true`, enable partial object linking, otherwise disable
-  	 * @returns {Runner}
-  	 * @chainable
-  	 * @public
-  	 * @example
-  	 * // this reporter needs proper object references when run in parallel mode
-  	 * class MyReporter {
-  	 *   constructor(runner) {
-  	 *     runner.linkPartialObjects(true)
-  	 *       .on(EVENT_SUITE_BEGIN, suite => {
-  	 *         // this Suite may be the same object...
-  	 *       })
-  	 *       .on(EVENT_TEST_BEGIN, test => {
-  	 *         // ...as the `test.parent` property
-  	 *       });
-  	 *   }
-  	 * }
-  	 */
-  	Runner.prototype.linkPartialObjects = function () {
-  	  return this;
-  	};
-
-  	/*
-  	 * Like {@link Runner#run}, but does not accept a callback and returns a `Promise` instead of a `Runner`.
-  	 * This function cannot reject; an `unhandledRejection` event will bubble up to the `process` object instead.
-  	 * @public
-  	 * @memberof Runner
-  	 * @param {Object} [opts] - Options for {@link Runner#run}
-  	 * @returns {Promise<number>} Failure count
-  	 */
-  	Runner.prototype.runAsync = async function runAsync(opts = {}) {
-  	  return new Promise((resolve) => {
-  	    this.run(resolve, opts);
-  	  });
-  	};
-
-  	/**
-  	 * Cleanly abort execution.
-  	 *
-  	 * @memberof Runner
-  	 * @public
-  	 * @return {Runner} Runner instance.
-  	 */
-  	Runner.prototype.abort = function () {
-  	  debug("abort(): aborting");
-  	  this._abort = true;
-
-  	  return this;
-  	};
-
-  	/**
-  	 * Returns `true` if Mocha is running in parallel mode.  For reporters.
-  	 *
-  	 * Subclasses should return an appropriate value.
-  	 * @public
-  	 * @returns {false}
-  	 */
-  	Runner.prototype.isParallelMode = function isParallelMode() {
-  	  return false;
-  	};
-
-  	/**
-  	 * Configures an alternate reporter for worker processes to use. Subclasses
-  	 * using worker processes should implement this.
-  	 * @public
-  	 * @param {string} path - Absolute path to alternate reporter for worker processes to use
-  	 * @returns {Runner}
-  	 * @throws When in serial mode
-  	 * @chainable
-  	 * @abstract
-  	 */
-  	Runner.prototype.workerReporter = function () {
-  	  throw createUnsupportedError("workerReporter() not supported in serial mode");
-  	};
-
-  	/**
-  	 * Filter leaks with the given globals flagged as `ok`.
-  	 *
-  	 * @private
-  	 * @param {Array} ok
-  	 * @param {Array} globals
-  	 * @return {Array}
-  	 */
-  	function filterLeaks(ok, globals) {
-  	  return globals.filter(function (key) {
-  	    // Firefox and Chrome exposes iframes as index inside the window object
-  	    if (/^\d+/.test(key)) {
-  	      return false;
-  	    }
-
-  	    // in firefox
-  	    // if runner runs in an iframe, this iframe's window.getInterface method
-  	    // not init at first it is assigned in some seconds
-  	    if (commonjsGlobal.navigator && /^getInterface/.test(key)) {
-  	      return false;
-  	    }
-
-  	    // an iframe could be approached by window[iframeIndex]
-  	    // in ie6,7,8 and opera, iframeIndex is enumerable, this could cause leak
-  	    if (commonjsGlobal.navigator && /^\d+/.test(key)) {
-  	      return false;
-  	    }
-
-  	    // Opera and IE expose global variables for HTML element IDs (issue #243)
-  	    if (/^mocha-/.test(key)) {
-  	      return false;
-  	    }
-
-  	    var matched = ok.filter(function (ok) {
-  	      if (~ok.indexOf("*")) {
-  	        return key.indexOf(ok.split("*")[0]) === 0;
-  	      }
-  	      return key === ok;
-  	    });
-  	    return !matched.length && (!commonjsGlobal.navigator || key !== "onerror");
-  	  });
-  	}
-
-  	/**
-  	 * Check if argument is an instance of Error object or a duck-typed equivalent.
-  	 *
-  	 * @private
-  	 * @param {Object} err - object to check
-  	 * @param {string} err.message - error message
-  	 * @returns {boolean}
-  	 */
-  	function isError(err) {
-  	  return err instanceof Error || (err && typeof err.message === "string");
-  	}
-
-  	/**
-  	 *
-  	 * Converts thrown non-extensible type into proper Error.
-  	 *
-  	 * @private
-  	 * @param {*} thrown - Non-extensible type thrown by code
-  	 * @return {Error}
-  	 */
-  	function thrown2Error(err) {
-  	  return new Error(
-  	    `the ${utils.canonicalType(err)} ${stringify(
-	      err,
-	    )} was thrown, throw an Error :)`,
-  	  );
-  	}
-
-  	Runner.constants = constants;
-
-  	/**
-  	 * Node.js' `EventEmitter`
-  	 * @external EventEmitter
-  	 * @see {@link https://nodejs.org/api/events.html#events_class_eventemitter}
-  	 */
-
-  	runner = Runner;
-  	return runner;
+  const debug = debugModule("mocha:runner");
+
+  var HOOK_TYPE_BEFORE_EACH = Suite.constants.HOOK_TYPE_BEFORE_EACH;
+  var HOOK_TYPE_AFTER_EACH = Suite.constants.HOOK_TYPE_AFTER_EACH;
+  var HOOK_TYPE_AFTER_ALL = Suite.constants.HOOK_TYPE_AFTER_ALL;
+  var HOOK_TYPE_BEFORE_ALL = Suite.constants.HOOK_TYPE_BEFORE_ALL;
+  var EVENT_ROOT_SUITE_RUN = Suite.constants.EVENT_ROOT_SUITE_RUN;
+  var STATE_FAILED$2 = Runnable.constants.STATE_FAILED;
+  var STATE_PASSED = Runnable.constants.STATE_PASSED;
+  var STATE_PENDING = Runnable.constants.STATE_PENDING;
+  var stackFilter = utils.stackTraceFilter();
+  var stringify = utils.stringify;
+
+  /**
+   * Non-enumerable globals.
+   * @private
+   * @readonly
+   */
+  var globals = [
+    "setTimeout",
+    "clearTimeout",
+    "setInterval",
+    "clearInterval",
+    "XMLHttpRequest",
+    "Date",
+    "setImmediate",
+    "clearImmediate",
+  ];
+
+  var constants$g = utils.defineConstants(
+    /**
+     * {@link Runner}-related constants. Used by reporters. Each event emits the corresponding object, unless otherwise indicated.
+     * @example
+     * const Mocha = require('mocha');
+     * const Base = Mocha.reporters.Base;
+     * const {
+     *   EVENT_HOOK_BEGIN,
+     *   EVENT_TEST_PASS,
+     *   EVENT_TEST_FAIL,
+     *   EVENT_TEST_END
+     * } = Mocha.Runner.constants
+     *
+     * function MyReporter(runner, options) {
+     *   Base.call(this, runner, options);
+     *
+     *   runner.on(EVENT_HOOK_BEGIN, function(hook) {
+     *     console.log('hook called: ', hook.title);
+     *   });
+     *
+     *   runner.on(EVENT_TEST_PASS, function(test) {
+     *     console.log('pass: %s', test.fullTitle());
+     *   });
+     *
+     *   runner.on(EVENT_TEST_FAIL, function(test, err) {
+     *     console.log('fail: %s -- error: %s', test.fullTitle(), err.message);
+     *   });
+     *
+     *   runner.on(EVENT_TEST_END, function() {
+     *     console.log('end: %d/%d', runner.stats.passes, runner.stats.tests);
+     *   });
+     * }
+     *
+     * module.exports = MyReporter;
+     *
+     * @public
+     * @memberof Runner
+     * @readonly
+     * @alias constants
+     * @static
+     * @enum {string}
+     */
+    {
+      /**
+       * Emitted when {@link Hook} execution begins
+       */
+      EVENT_HOOK_BEGIN: "hook",
+      /**
+       * Emitted when {@link Hook} execution ends
+       */
+      EVENT_HOOK_END: "hook end",
+      /**
+       * Emitted when Root {@link Suite} execution begins (all files have been parsed and hooks/tests are ready for execution)
+       */
+      EVENT_RUN_BEGIN: "start",
+      /**
+       * Emitted when Root {@link Suite} execution has been delayed via `delay` option
+       */
+      EVENT_DELAY_BEGIN: "waiting",
+      /**
+       * Emitted when delayed Root {@link Suite} execution is triggered by user via `global.run()`
+       */
+      EVENT_DELAY_END: "ready",
+      /**
+       * Emitted when Root {@link Suite} execution ends
+       */
+      EVENT_RUN_END: "end",
+      /**
+       * Emitted when {@link Suite} execution begins
+       */
+      EVENT_SUITE_BEGIN: "suite",
+      /**
+       * Emitted when {@link Suite} execution ends
+       */
+      EVENT_SUITE_END: "suite end",
+      /**
+       * Emitted when {@link Test} execution begins
+       */
+      EVENT_TEST_BEGIN: "test",
+      /**
+       * Emitted when {@link Test} execution ends
+       */
+      EVENT_TEST_END: "test end",
+      /**
+       * Emitted when {@link Test} execution fails. Includes an `err` object of type `Error`.
+       * @example
+       * runner.on(EVENT_TEST_FAIL, function(test, err) {
+       *   console.log('fail: %s -- error: %s', test.fullTitle(), err.message);
+       * });
+       *
+       *
+       */
+      EVENT_TEST_FAIL: "fail",
+      /**
+       * Emitted when {@link Test} execution succeeds
+       */
+      EVENT_TEST_PASS: "pass",
+      /**
+       * Emitted when {@link Test} becomes pending
+       */
+      EVENT_TEST_PENDING: "pending",
+      /**
+       * Emitted when {@link Test} execution has failed, but will retry
+       */
+      EVENT_TEST_RETRY: "retry",
+      /**
+       * Initial state of Runner
+       */
+      STATE_IDLE: "idle",
+      /**
+       * State set to this value when the Runner has started running
+       */
+      STATE_RUNNING: "running",
+      /**
+       * State set to this value when the Runner has stopped
+       */
+      STATE_STOPPED: "stopped",
+    },
+  );
+
+  class Runner extends EventEmitter {
+    /**
+     * Initialize a `Runner` at the Root {@link Suite}, which represents a hierarchy of {@link Suite|Suites} and {@link Test|Tests}.
+     *
+     * @extends external:EventEmitter
+     * @public
+     * @class
+     * @param {Suite} suite - Root suite
+     * @param {Object} [opts] - Settings object
+     * @param {boolean} [opts.cleanReferencesAfterRun] - Whether to clean references to test fns and hooks when a suite is done.
+     * @param {boolean} [opts.delay] - Whether to delay execution of root suite until ready.
+     * @param {boolean} [opts.dryRun] - Whether to report tests without running them.
+     * @param {boolean} [opts.failZero] - Whether to fail test run if zero tests encountered.
+     * @param {boolean} [opts.failHookAffectedTests] - Whether to fail all tests affected by hook failures.
+     */
+    constructor(suite, opts = {}) {
+      super();
+
+      var self = this;
+      this._globals = [];
+      this._abort = false;
+      this.suite = suite;
+      this._opts = opts;
+      this.state = constants$g.STATE_IDLE;
+      this.total = suite.total();
+      this.failures = 0;
+      /**
+       * @type {Map<EventEmitter,Map<string,Set<EventListener>>>}
+       */
+      this._eventListeners = new Map();
+      this.on(constants$g.EVENT_TEST_END, function (test) {
+        if (test.type === "test" && test.retriedTest() && test.parent) {
+          var idx =
+            test.parent.tests && test.parent.tests.indexOf(test.retriedTest());
+          if (idx > -1) test.parent.tests[idx] = test;
+        }
+        self.checkGlobals(test);
+      });
+      this.on(constants$g.EVENT_HOOK_END, function (hook) {
+        self.checkGlobals(hook);
+      });
+      this._defaultGrep = /.*/;
+      this.grep(this._defaultGrep);
+      this.globals(this.globalProps());
+
+      this.uncaught = this._uncaught.bind(this);
+      this.unhandled = (reason, promise) => {
+        if (isMochaError(reason)) {
+          debug(
+            "trapped unhandled rejection coming out of Mocha; forwarding to uncaught handler:",
+            reason,
+          );
+          this.uncaught(reason);
+        } else {
+          debug(
+            "trapped unhandled rejection from (probably) user code; re-emitting on process",
+          );
+          this._removeEventListener(
+            browser$1$1,
+            "unhandledRejection",
+            this.unhandled,
+          );
+          try {
+            browser$1$1.emit("unhandledRejection", reason, promise);
+          } finally {
+            this._addEventListener(browser$1$1, "unhandledRejection", this.unhandled);
+          }
+        }
+      };
+    }
   }
 
-  var runnerExports = requireRunner();
-  var Runner = /*@__PURE__*/getDefaultExportFromCjs(runnerExports);
+  /**
+   * Wrapper for setImmediate or browser polyfill.
+   *
+   * @param {Function} fn
+   * @private
+   */
+  Runner.immediately = global$1.setImmediate;
+
+  /**
+   * Replacement for `target.on(eventName, listener)` that does bookkeeping to remove them when this runner instance is disposed.
+   * @param {EventEmitter} target - The `EventEmitter`
+   * @param {string} eventName - The event name
+   * @param {string} fn - Listener function
+   * @private
+   */
+  Runner.prototype._addEventListener = function (target, eventName, listener) {
+    debug(
+      "_addEventListener(): adding for event %s; %d current listeners",
+      eventName,
+      target.listenerCount(eventName),
+    );
+    /* istanbul ignore next */
+    if (
+      this._eventListeners.has(target) &&
+      this._eventListeners.get(target).has(eventName) &&
+      this._eventListeners.get(target).get(eventName).has(listener)
+    ) {
+      debug(
+        "warning: tried to attach duplicate event listener for %s",
+        eventName,
+      );
+      return;
+    }
+    target.on(eventName, listener);
+    const targetListeners = this._eventListeners.has(target)
+      ? this._eventListeners.get(target)
+      : new Map();
+    const targetEventListeners = targetListeners.has(eventName)
+      ? targetListeners.get(eventName)
+      : new Set();
+    targetEventListeners.add(listener);
+    targetListeners.set(eventName, targetEventListeners);
+    this._eventListeners.set(target, targetListeners);
+  };
+
+  /**
+   * Replacement for `target.removeListener(eventName, listener)` that also updates the bookkeeping.
+   * @param {EventEmitter} target - The `EventEmitter`
+   * @param {string} eventName - The event name
+   * @param {function} listener - Listener function
+   * @private
+   */
+  Runner.prototype._removeEventListener = function (target, eventName, listener) {
+    target.removeListener(eventName, listener);
+
+    if (this._eventListeners.has(target)) {
+      const targetListeners = this._eventListeners.get(target);
+      if (targetListeners.has(eventName)) {
+        const targetEventListeners = targetListeners.get(eventName);
+        targetEventListeners.delete(listener);
+        if (!targetEventListeners.size) {
+          targetListeners.delete(eventName);
+        }
+      }
+      if (!targetListeners.size) {
+        this._eventListeners.delete(target);
+      }
+    } else {
+      debug("trying to remove listener for untracked object %s", target);
+    }
+  };
+
+  /**
+   * Removes all event handlers set during a run on this instance.
+   * Remark: this does _not_ clean/dispose the tests or suites themselves.
+   */
+  Runner.prototype.dispose = function () {
+    this.removeAllListeners();
+    this._eventListeners.forEach((targetListeners, target) => {
+      targetListeners.forEach((targetEventListeners, eventName) => {
+        targetEventListeners.forEach((listener) => {
+          target.removeListener(eventName, listener);
+        });
+      });
+    });
+    this._eventListeners.clear();
+  };
+
+  /**
+   * Run tests with full titles matching `re`. Updates runner.total
+   * with number of tests matched.
+   *
+   * @public
+   * @memberof Runner
+   * @param {RegExp} re
+   * @param {boolean} invert
+   * @return {Runner} Runner instance.
+   */
+  Runner.prototype.grep = function (re, invert) {
+    debug("grep(): setting to %s", re);
+    this._grep = re;
+    this._invert = invert;
+    this.total = this.grepTotal(this.suite);
+    return this;
+  };
+
+  /**
+   * Returns the number of tests matching the grep search for the
+   * given suite.
+   *
+   * @memberof Runner
+   * @public
+   * @param {Suite} suite
+   * @return {number}
+   */
+  Runner.prototype.grepTotal = function (suite) {
+    var self = this;
+    var total = 0;
+
+    suite.eachTest(function (test) {
+      var match = self._grep.test(test.fullTitle());
+      if (self._invert) {
+        match = !match;
+      }
+      if (match) {
+        total++;
+      }
+    });
+
+    return total;
+  };
+
+  /**
+   * Return a list of global properties.
+   *
+   * @return {Array}
+   * @private
+   */
+  Runner.prototype.globalProps = function () {
+    var props = Object.keys(global$1);
+
+    // non-enumerables
+    for (var i = 0; i < globals.length; ++i) {
+      if (~props.indexOf(globals[i])) {
+        continue;
+      }
+      props.push(globals[i]);
+    }
+
+    return props;
+  };
+
+  /**
+   * Allow the given `arr` of globals.
+   *
+   * @public
+   * @memberof Runner
+   * @param {Array} arr
+   * @return {Runner} Runner instance.
+   */
+  Runner.prototype.globals = function (arr) {
+    if (!arguments.length) {
+      return this._globals;
+    }
+    debug("globals(): setting to %O", arr);
+    this._globals = this._globals.concat(arr);
+    return this;
+  };
+
+  /**
+   * Check for global variable leaks.
+   *
+   * @private
+   */
+  Runner.prototype.checkGlobals = function (test) {
+    if (!this.checkLeaks) {
+      return;
+    }
+    var ok = this._globals;
+
+    var globals = this.globalProps();
+    var leaks;
+
+    if (test) {
+      ok = ok.concat(test._allowedGlobals || []);
+    }
+
+    if (this.prevGlobalsLength === globals.length) {
+      return;
+    }
+    this.prevGlobalsLength = globals.length;
+
+    leaks = filterLeaks(ok, globals);
+    this._globals = this._globals.concat(leaks);
+
+    if (leaks.length) {
+      var msg = `global leak(s) detected: ${leaks.map((e) => `'${e}'`).join(", ")}`;
+      this.fail(test, new Error(msg));
+    }
+  };
+
+  /**
+   * Create an error object for a test that was skipped due to a hook failure.
+   *
+   * @private
+   * @param {string} hookTitle - The title of the failed hook
+   * @param {*} hookError - The error from the failed hook (may not be an Error object)
+   * @returns {Error} The error object for the skipped test
+   */
+  function createHookSkipError(hookTitle, hookError) {
+    // Handle falsy or undefined exceptions
+    if (!hookError) {
+      hookError = createInvalidExceptionError(
+        'Hook "' + hookTitle + '" failed with exception: ' + hookError,
+        hookError,
+      );
+    }
+    // Convert non-Error objects to Error
+    else if (!isError(hookError)) {
+      hookError = thrown2Error(hookError);
+    }
+
+    var errorMessage =
+      'Test skipped due to failure in hook "' +
+      hookTitle +
+      '": ' +
+      hookError.message;
+    var testError = new Error(errorMessage);
+    testError.stack = hookError.stack;
+    return testError;
+  }
+
+  /**
+   * Fail all tests that are affected by a hook failure.
+   * This is used when the `failHookAffectedTests` option is enabled.
+   *
+   * @private
+   * @param {Suite} suite - The suite containing the affected tests
+   * @param {Error} hookError - The error from the failed hook
+   * @param {string} hookTitle - The title of the failed hook
+   */
+  Runner.prototype.failAffectedTests = function (suite, hookError, hookTitle) {
+    if (!this._opts.failHookAffectedTests) {
+      return;
+    }
+
+    var self = this;
+    var testError = createHookSkipError(hookTitle, hookError);
+
+    // Recursively fail all tests in this suite and its child suites
+    function failTestsInSuite(s) {
+      s.tests.forEach(function (test) {
+        // Only fail tests that haven't been executed yet
+        if (!test.state) {
+          test.state = STATE_FAILED$2;
+          self.failures++;
+          self.emit(constants$g.EVENT_TEST_BEGIN, test);
+          self.emit(constants$g.EVENT_TEST_FAIL, test, testError);
+          self.emit(constants$g.EVENT_TEST_END, test);
+        }
+      });
+
+      s.suites.forEach(failTestsInSuite);
+    }
+
+    failTestsInSuite(suite);
+  };
+
+  /**
+   * Fail the given `test`.
+   *
+   * If `test` is a hook, failures work in the following pattern:
+   * - If bail, run corresponding `after each` and `after` hooks,
+   *   then exit
+   * - Failed `before` hook skips all tests in a suite and subsuites,
+   *   but jumps to corresponding `after` hook
+   * - Failed `before each` hook skips remaining tests in a
+   *   suite and jumps to corresponding `after each` hook,
+   *   which is run only once
+   * - Failed `after` hook does not alter execution order
+   * - Failed `after each` hook skips remaining tests in a
+   *   suite and subsuites, but executes other `after each`
+   *   hooks
+   *
+   * @private
+   * @param {Runnable} test
+   * @param {Error} err
+   * @param {boolean} [force=false] - Whether to fail a pending test.
+   */
+  Runner.prototype.fail = function (test, err, force) {
+    force = force === true;
+    if (test.isPending() && !force) {
+      return;
+    }
+    if (this.state === constants$g.STATE_STOPPED) {
+      if (err.code === constants$h.MULTIPLE_DONE) {
+        throw err;
+      }
+      throw createFatalError(
+        "Test failed after root suite execution completed!",
+        err,
+      );
+    }
+
+    ++this.failures;
+    debug("total number of failures: %d", this.failures);
+    test.state = STATE_FAILED$2;
+
+    if (!isError(err)) {
+      err = thrown2Error(err);
+    }
+
+    // Filter the stack traces
+    if (!this.fullStackTrace) {
+      const alreadyFiltered = new Set();
+      let currentErr = err;
+
+      while (currentErr && currentErr.stack && !alreadyFiltered.has(currentErr)) {
+        alreadyFiltered.add(currentErr);
+
+        try {
+          currentErr.stack = stackFilter(currentErr.stack);
+        } catch {
+          // Ignore error as some environments do not take kindly to monkeying with the stack
+        }
+
+        currentErr = currentErr.cause;
+      }
+    }
+
+    this.emit(constants$g.EVENT_TEST_FAIL, test, err);
+  };
+
+  /**
+   * Run hook `name` callbacks and then invoke `fn()`.
+   *
+   * @private
+   * @param {string} name
+   * @param {Function} fn
+   */
+
+  Runner.prototype.hook = function (name, fn) {
+    if (this._opts.dryRun) return fn();
+
+    var suite = this.suite;
+    var hooks = suite.getHooks(name);
+    var self = this;
+
+    function next(i) {
+      var hook = hooks[i];
+      if (!hook) {
+        return fn();
+      }
+      self.currentRunnable = hook;
+
+      if (name === HOOK_TYPE_BEFORE_ALL) {
+        hook.ctx.currentTest = hook.parent.tests[0];
+      } else if (name === HOOK_TYPE_AFTER_ALL) {
+        hook.ctx.currentTest = hook.parent.tests[hook.parent.tests.length - 1];
+      } else {
+        hook.ctx.currentTest = self.test;
+      }
+
+      setHookTitle(hook);
+
+      hook.allowUncaught = self.allowUncaught;
+
+      self.emit(constants$g.EVENT_HOOK_BEGIN, hook);
+
+      if (!hook.listeners("error").length) {
+        self._addEventListener(hook, "error", function (err) {
+          self.fail(hook, err);
+        });
+      }
+
+      hook.run(function cbHookRun(err) {
+        var testError = hook.error();
+        if (testError) {
+          self.fail(self.test, testError);
+        }
+        // conditional skip
+        if (hook.pending) {
+          if (name === HOOK_TYPE_AFTER_EACH) {
+            // TODO define and implement use case
+            if (self.test) {
+              self.test.pending = true;
+            }
+          } else if (name === HOOK_TYPE_BEFORE_EACH) {
+            if (self.test) {
+              self.test.pending = true;
+            }
+            self.emit(constants$g.EVENT_HOOK_END, hook);
+            hook.pending = false; // activates hook for next test
+            return fn(new Error("abort hookDown"));
+          } else if (name === HOOK_TYPE_BEFORE_ALL) {
+            suite.tests.forEach(function (test) {
+              test.pending = true;
+            });
+            suite.suites.forEach(function (suite) {
+              suite.pending = true;
+            });
+            hooks = [];
+          } else {
+            hook.pending = false;
+            var errForbid = createUnsupportedError$2("`this.skip` forbidden");
+            self.fail(hook, errForbid);
+            return fn(errForbid);
+          }
+        } else if (err) {
+          self.fail(hook, err);
+          // If failHookAffectedTests is enabled, mark affected tests as failed
+          if (self._opts.failHookAffectedTests) {
+            if (name === HOOK_TYPE_BEFORE_ALL) {
+              self.failAffectedTests(self.suite, err, hook.title);
+            } else if (name === HOOK_TYPE_BEFORE_EACH) {
+              // Fail the current test
+              if (self.test && !self.test.state) {
+                var testError = createHookSkipError(hook.title, err);
+
+                self.test.state = STATE_FAILED$2;
+                self.failures++;
+                self.emit(constants$g.EVENT_TEST_BEGIN, self.test);
+                self.emit(constants$g.EVENT_TEST_FAIL, self.test, testError);
+                self.emit(constants$g.EVENT_TEST_END, self.test);
+              }
+              // Store the hook error info for remaining tests
+              self._failedBeforeEachHook = {
+                error: err,
+                title: hook.title,
+              };
+            }
+          }
+          // stop executing hooks, notify callee of hook err
+          return fn(err);
+        }
+        self.emit(constants$g.EVENT_HOOK_END, hook);
+        delete hook.ctx.currentTest;
+        setHookTitle(hook);
+        next(++i);
+      });
+
+      function setHookTitle(hook) {
+        hook.originalTitle = hook.originalTitle || hook.title;
+        if (hook.ctx && hook.ctx.currentTest) {
+          hook.title = `${hook.originalTitle} for "${hook.ctx.currentTest.title}"`;
+        } else {
+          var parentTitle;
+          if (hook.parent.title) {
+            parentTitle = hook.parent.title;
+          } else {
+            parentTitle = hook.parent.root ? "{root}" : "";
+          }
+          hook.title = `${hook.originalTitle} in "${parentTitle}"`;
+        }
+      }
+    }
+
+    Runner.immediately(function () {
+      next(0);
+    });
+  };
+
+  /**
+   * Run hook `name` for the given array of `suites`
+   * in order, and callback `fn(err, errSuite)`.
+   *
+   * @private
+   * @param {string} name
+   * @param {Array} suites
+   * @param {Function} fn
+   */
+  Runner.prototype.hooks = function (name, suites, fn) {
+    var self = this;
+    var orig = this.suite;
+
+    function next(suite) {
+      self.suite = suite;
+
+      if (!suite) {
+        self.suite = orig;
+        return fn();
+      }
+
+      self.hook(name, function (err) {
+        if (err) {
+          var errSuite = self.suite;
+          self.suite = orig;
+          return fn(err, errSuite);
+        }
+
+        next(suites.pop());
+      });
+    }
+
+    next(suites.pop());
+  };
+
+  /**
+   * Run 'afterEach' hooks from bottom up.
+   *
+   * @param {String} name
+   * @param {Function} fn
+   * @private
+   */
+  Runner.prototype.hookUp = function (name, fn) {
+    var suites = [this.suite].concat(this.parents()).reverse();
+    this.hooks(name, suites, fn);
+  };
+
+  /**
+   * Run 'beforeEach' hooks from top level down.
+   *
+   * @param {String} name
+   * @param {Function} fn
+   * @private
+   */
+  Runner.prototype.hookDown = function (name, fn) {
+    var suites = [this.suite].concat(this.parents());
+    this.hooks(name, suites, fn);
+  };
+
+  /**
+   * Return an array of parent Suites from
+   * closest to furthest.
+   *
+   * @return {Array}
+   * @private
+   */
+  Runner.prototype.parents = function () {
+    var suite = this.suite;
+    var suites = [];
+    while (suite.parent) {
+      suite = suite.parent;
+      suites.push(suite);
+    }
+    return suites;
+  };
+
+  /**
+   * Run the current test and callback `fn(err)`.
+   *
+   * @param {Function} fn
+   * @private
+   */
+  Runner.prototype.runTest = function (fn) {
+    if (this._opts.dryRun) return Runner.immediately(fn);
+
+    var self = this;
+    var test = this.test;
+
+    if (!test) {
+      return;
+    }
+
+    if (this.asyncOnly) {
+      test.asyncOnly = true;
+    }
+    this._addEventListener(test, "error", function (err) {
+      self.fail(test, err);
+    });
+    if (this.allowUncaught) {
+      test.allowUncaught = true;
+      return test.run(fn);
+    }
+    try {
+      test.run(fn);
+    } catch (err) {
+      fn(err);
+    }
+  };
+
+  /**
+   * Run tests in the given `suite` and invoke the callback `fn()` when complete.
+   *
+   * @private
+   * @param {Suite} suite
+   * @param {Function} fn
+   */
+  Runner.prototype.runTests = function (suite, fn) {
+    var self = this;
+    var tests = suite.tests.slice();
+    var test;
+
+    function hookErr(err, errSuite, after) {
+      // before/after Each hook for errSuite failed:
+      var orig = self.suite;
+
+      // If failHookAffectedTests is enabled and this is a beforeEach failure,
+      // mark remaining tests as failed
+      if (
+        self._opts.failHookAffectedTests &&
+        !after &&
+        self._failedBeforeEachHook
+      ) {
+        // Fail all remaining tests in the suite
+        var remainingTests = tests.slice();
+        remainingTests.forEach(function (t) {
+          if (!t.state) {
+            var testError = createHookSkipError(
+              self._failedBeforeEachHook.title,
+              self._failedBeforeEachHook.error,
+            );
+
+            t.state = STATE_FAILED$2;
+            self.failures++;
+            self.emit(constants$g.EVENT_TEST_BEGIN, t);
+            self.emit(constants$g.EVENT_TEST_FAIL, t, testError);
+            self.emit(constants$g.EVENT_TEST_END, t);
+          }
+        });
+        // Clear the stored hook info
+        delete self._failedBeforeEachHook;
+      }
+
+      // for failed 'after each' hook start from errSuite parent,
+      // otherwise start from errSuite itself
+      self.suite = after ? errSuite.parent : errSuite;
+
+      if (self.suite) {
+        self.hookUp(HOOK_TYPE_AFTER_EACH, function (err2, errSuite2) {
+          self.suite = orig;
+          // some hooks may fail even now
+          if (err2) {
+            return hookErr(err2, errSuite2, true);
+          }
+          // report error suite
+          fn(errSuite);
+        });
+      } else {
+        // there is no need calling other 'after each' hooks
+        self.suite = orig;
+        fn(errSuite);
+      }
+    }
+
+    function next(err, errSuite) {
+      // if we bail after first err
+      if (self.failures && suite._bail) {
+        tests = [];
+      }
+
+      if (self._abort) {
+        return fn();
+      }
+
+      if (err) {
+        return hookErr(err, errSuite, true);
+      }
+
+      // next test
+      test = tests.shift();
+
+      // all done
+      if (!test) {
+        return fn();
+      }
+
+      // grep
+      var match = self._grep.test(test.fullTitle());
+      if (self._invert) {
+        match = !match;
+      }
+      if (!match) {
+        // Run immediately only if we have defined a grep. When we
+        // define a grep — It can cause maximum callstack error if
+        // the grep is doing a large recursive loop by neglecting
+        // all tests. The run immediately function also comes with
+        // a performance cost. So we don't want to run immediately
+        // if we run the whole test suite, because running the whole
+        // test suite don't do any immediate recursive loops. Thus,
+        // allowing a JS runtime to breathe.
+        if (self._grep !== self._defaultGrep) {
+          Runner.immediately(next);
+        } else {
+          next();
+        }
+        return;
+      }
+
+      // static skip, no hooks are executed
+      if (test.isPending()) {
+        if (self.forbidPending) {
+          self.fail(test, new Error("Pending test forbidden"), true);
+        } else {
+          test.state = STATE_PENDING;
+          self.emit(constants$g.EVENT_TEST_PENDING, test);
+        }
+        self.emit(constants$g.EVENT_TEST_END, test);
+        return next();
+      }
+
+      // execute test and hook(s)
+      self.emit(constants$g.EVENT_TEST_BEGIN, (self.test = test));
+      self.hookDown(HOOK_TYPE_BEFORE_EACH, function (err, errSuite) {
+        // conditional skip within beforeEach
+        if (test.isPending()) {
+          if (self.forbidPending) {
+            self.fail(test, new Error("Pending test forbidden"), true);
+          } else {
+            test.state = STATE_PENDING;
+            self.emit(constants$g.EVENT_TEST_PENDING, test);
+          }
+          self.emit(constants$g.EVENT_TEST_END, test);
+          // skip inner afterEach hooks below errSuite level
+          var origSuite = self.suite;
+          self.suite = errSuite || self.suite;
+          return self.hookUp(HOOK_TYPE_AFTER_EACH, function (e, eSuite) {
+            self.suite = origSuite;
+            next(e, eSuite);
+          });
+        }
+        if (err) {
+          return hookErr(err, errSuite, false);
+        }
+        self.currentRunnable = self.test;
+        self.runTest(function (err) {
+          test = self.test;
+          // conditional skip within it
+          if (test.pending) {
+            if (self.forbidPending) {
+              self.fail(test, new Error("Pending test forbidden"), true);
+            } else {
+              test.state = STATE_PENDING;
+              self.emit(constants$g.EVENT_TEST_PENDING, test);
+            }
+            self.emit(constants$g.EVENT_TEST_END, test);
+            return self.hookUp(HOOK_TYPE_AFTER_EACH, next);
+          } else if (err) {
+            var retry = test.currentRetry();
+            if (retry < test.retries()) {
+              var clonedTest = test.clone();
+              clonedTest.currentRetry(retry + 1);
+              tests.unshift(clonedTest);
+
+              self.emit(constants$g.EVENT_TEST_RETRY, test, err);
+
+              // Early return + hook trigger so that it doesn't
+              // increment the count wrong
+              return self.hookUp(HOOK_TYPE_AFTER_EACH, next);
+            } else {
+              self.fail(test, err);
+            }
+            self.emit(constants$g.EVENT_TEST_END, test);
+            return self.hookUp(HOOK_TYPE_AFTER_EACH, next);
+          }
+
+          test.state = STATE_PASSED;
+          self.emit(constants$g.EVENT_TEST_PASS, test);
+          self.emit(constants$g.EVENT_TEST_END, test);
+          self.hookUp(HOOK_TYPE_AFTER_EACH, next);
+        });
+      });
+    }
+
+    this.next = next;
+    this.hookErr = hookErr;
+    next();
+  };
+
+  /**
+   * Run the given `suite` and invoke the callback `fn()` when complete.
+   *
+   * @private
+   * @param {Suite} suite
+   * @param {Function} fn
+   */
+  Runner.prototype.runSuite = function (suite, fn) {
+    var i = 0;
+    var self = this;
+    var total = this.grepTotal(suite);
+
+    debug("runSuite(): running %s", suite.fullTitle());
+
+    if (!total || (self.failures && suite._bail)) {
+      debug("runSuite(): bailing");
+      return fn();
+    }
+
+    this.emit(constants$g.EVENT_SUITE_BEGIN, (this.suite = suite));
+
+    function next(errSuite) {
+      if (errSuite) {
+        // current suite failed on a hook from errSuite
+        if (errSuite === suite) {
+          // if errSuite is current suite
+          // continue to the next sibling suite
+          return done();
+        }
+        // errSuite is among the parents of current suite
+        // stop execution of errSuite and all sub-suites
+        return done(errSuite);
+      }
+
+      if (self._abort) {
+        return done();
+      }
+
+      var curr = suite.suites[i++];
+      if (!curr) {
+        return done();
+      }
+
+      // Avoid grep neglecting large number of tests causing a
+      // huge recursive loop and thus a maximum call stack error.
+      // See comment in `this.runTests()` for more information.
+      if (self._grep !== self._defaultGrep) {
+        Runner.immediately(function () {
+          self.runSuite(curr, next);
+        });
+      } else {
+        self.runSuite(curr, next);
+      }
+    }
+
+    function done(errSuite) {
+      self.suite = suite;
+      self.nextSuite = next;
+
+      // remove reference to test
+      delete self.test;
+
+      self.hook(HOOK_TYPE_AFTER_ALL, function () {
+        self.emit(constants$g.EVENT_SUITE_END, suite);
+        fn(errSuite);
+      });
+    }
+
+    this.nextSuite = next;
+
+    this.hook(HOOK_TYPE_BEFORE_ALL, function (err) {
+      if (err) {
+        return done();
+      }
+      self.runTests(suite, next);
+    });
+  };
+
+  /**
+   * Handle uncaught exceptions within runner.
+   *
+   * This function is bound to the instance as `Runner#uncaught` at instantiation
+   * time. It's intended to be listening on the `Process.uncaughtException` event.
+   * In order to not leak EE listeners, we need to ensure no more than a single
+   * `uncaughtException` listener exists per `Runner`.  The only way to do
+   * this--because this function needs the context (and we don't have lambdas)--is
+   * to use `Function.prototype.bind`. We need strict equality to unregister and
+   * _only_ unregister the _one_ listener we set from the
+   * `Process.uncaughtException` event; would be poor form to just remove
+   * everything. See {@link Runner#run} for where the event listener is registered
+   * and unregistered.
+   * @param {Error} err - Some uncaught error
+   * @private
+   */
+  Runner.prototype._uncaught = function (err) {
+    // this is defensive to prevent future developers from mis-calling this function.
+    // it's more likely that it'd be called with the incorrect context--say, the global
+    // `process` object--than it would to be called with a context that is not a "subclass"
+    // of `Runner`.
+    if (!(this instanceof Runner)) {
+      throw createFatalError(
+        "Runner#uncaught() called with invalid context",
+        this,
+      );
+    }
+    if (err instanceof PendingError) {
+      debug("uncaught(): caught a PendingError");
+      return;
+    }
+    // browser does not exit script when throwing in global.onerror()
+    if (this.allowUncaught && !utils.isBrowser()) {
+      debug("uncaught(): bubbling exception due to --allow-uncaught");
+      throw err;
+    }
+
+    if (this.state === constants$g.STATE_STOPPED) {
+      debug("uncaught(): throwing after run has completed!");
+      throw err;
+    }
+
+    if (err) {
+      debug("uncaught(): got truthy exception %O", err);
+    } else {
+      debug("uncaught(): undefined/falsy exception");
+      err = createInvalidExceptionError(
+        "Caught falsy/undefined exception which would otherwise be uncaught. No stack trace found; try a debugger",
+        err,
+      );
+    }
+
+    if (!isError(err)) {
+      err = thrown2Error(err);
+      debug('uncaught(): converted "error" %o to Error', err);
+    }
+    err.uncaught = true;
+
+    var runnable = this.currentRunnable;
+
+    if (!runnable) {
+      runnable = new Runnable("Uncaught error outside test suite");
+      debug("uncaught(): no current Runnable; created a phony one");
+      runnable.parent = this.suite;
+
+      if (this.state === constants$g.STATE_RUNNING) {
+        debug("uncaught(): failing gracefully");
+        this.fail(runnable, err);
+      } else {
+        // Can't recover from this failure
+        debug("uncaught(): test run has not yet started; unrecoverable");
+        this.emit(constants$g.EVENT_RUN_BEGIN);
+        this.fail(runnable, err);
+        this.emit(constants$g.EVENT_RUN_END);
+      }
+
+      return;
+    }
+
+    runnable.clearTimeout();
+
+    if (runnable.isFailed()) {
+      debug("uncaught(): Runnable has already failed");
+      // Ignore error if already failed
+      return;
+    } else if (runnable.isPending()) {
+      debug("uncaught(): pending Runnable wound up failing!");
+      // report 'pending test' retrospectively as failed
+      this.fail(runnable, err, true);
+      return;
+    }
+
+    // we cannot recover gracefully if a Runnable has already passed
+    // then fails asynchronously
+    if (runnable.isPassed()) {
+      debug("uncaught(): Runnable has already passed; bailing gracefully");
+      this.fail(runnable, err);
+      this.abort();
+    } else {
+      debug("uncaught(): forcing Runnable to complete with Error");
+      return runnable.callback(err);
+    }
+  };
+
+  /**
+   * Run the root suite and invoke `fn(failures)`
+   * on completion.
+   *
+   * @public
+   * @memberof Runner
+   * @param {Function} fn - Callback when finished
+   * @param {RunnerOptions} [opts] - For subclasses
+   * @returns {Runner} Runner instance.
+   */
+  Runner.prototype.run = function (fn, opts = {}) {
+    var rootSuite = this.suite;
+    var options = opts.options || {};
+
+    debug("run(): got options: %O", options);
+    fn = fn || function () {};
+
+    const end = () => {
+      if (!this.total && this._opts.failZero) this.failures = 1;
+
+      debug("run(): root suite completed; emitting %s", constants$g.EVENT_RUN_END);
+      this.emit(constants$g.EVENT_RUN_END);
+    };
+
+    const begin = () => {
+      debug("run(): emitting %s", constants$g.EVENT_RUN_BEGIN);
+      this.emit(constants$g.EVENT_RUN_BEGIN);
+      debug("run(): emitted %s", constants$g.EVENT_RUN_BEGIN);
+
+      this.runSuite(rootSuite, end);
+    };
+
+    const prepare = () => {
+      debug("run(): starting");
+      // If there is an `only` filter
+      if (rootSuite.hasOnly()) {
+        rootSuite.filterOnly();
+        debug("run(): filtered exclusive Runnables");
+      }
+      this.state = constants$g.STATE_RUNNING;
+      if (this._opts.delay) {
+        this.emit(constants$g.EVENT_DELAY_END);
+        debug('run(): "delay" ended');
+      }
+
+      return begin();
+    };
+
+    // references cleanup to avoid memory leaks
+    if (this._opts.cleanReferencesAfterRun) {
+      this.on(constants$g.EVENT_SUITE_END, (suite) => {
+        suite.cleanReferences();
+      });
+    }
+
+    // callback
+    this.on(constants$g.EVENT_RUN_END, function () {
+      this.state = constants$g.STATE_STOPPED;
+      debug("run(): emitted %s", constants$g.EVENT_RUN_END);
+      fn(this.failures);
+    });
+
+    this._removeEventListener(browser$1$1, "uncaughtException", this.uncaught);
+    this._removeEventListener(browser$1$1, "unhandledRejection", this.unhandled);
+    this._addEventListener(browser$1$1, "uncaughtException", this.uncaught);
+    this._addEventListener(browser$1$1, "unhandledRejection", this.unhandled);
+
+    if (this._opts.delay) {
+      // for reporters, I guess.
+      // might be nice to debounce some dots while we wait.
+      this.emit(constants$g.EVENT_DELAY_BEGIN, rootSuite);
+      rootSuite.once(EVENT_ROOT_SUITE_RUN, prepare);
+      debug("run(): waiting for green light due to --delay");
+    } else {
+      Runner.immediately(prepare);
+    }
+
+    return this;
+  };
+
+  /**
+   * Toggle partial object linking behavior; used for building object references from
+   * unique ID's. Does nothing in serial mode, because the object references already exist.
+   * Subclasses can implement this (e.g., `ParallelBufferedRunner`)
+   * @abstract
+   * @param {boolean} [value] - If `true`, enable partial object linking, otherwise disable
+   * @returns {Runner}
+   * @chainable
+   * @public
+   * @example
+   * // this reporter needs proper object references when run in parallel mode
+   * class MyReporter {
+   *   constructor(runner) {
+   *     runner.linkPartialObjects(true)
+   *       .on(EVENT_SUITE_BEGIN, suite => {
+   *         // this Suite may be the same object...
+   *       })
+   *       .on(EVENT_TEST_BEGIN, test => {
+   *         // ...as the `test.parent` property
+   *       });
+   *   }
+   * }
+   */
+  Runner.prototype.linkPartialObjects = function () {
+    return this;
+  };
+
+  /*
+   * Like {@link Runner#run}, but does not accept a callback and returns a `Promise` instead of a `Runner`.
+   * This function cannot reject; an `unhandledRejection` event will bubble up to the `process` object instead.
+   * @public
+   * @memberof Runner
+   * @param {Object} [opts] - Options for {@link Runner#run}
+   * @returns {Promise<number>} Failure count
+   */
+  Runner.prototype.runAsync = async function runAsync(opts = {}) {
+    return new Promise((resolve) => {
+      this.run(resolve, opts);
+    });
+  };
+
+  /**
+   * Cleanly abort execution.
+   *
+   * @memberof Runner
+   * @public
+   * @return {Runner} Runner instance.
+   */
+  Runner.prototype.abort = function () {
+    debug("abort(): aborting");
+    this._abort = true;
+
+    return this;
+  };
+
+  /**
+   * Returns `true` if Mocha is running in parallel mode.  For reporters.
+   *
+   * Subclasses should return an appropriate value.
+   * @public
+   * @returns {false}
+   */
+  Runner.prototype.isParallelMode = function isParallelMode() {
+    return false;
+  };
+
+  /**
+   * Configures an alternate reporter for worker processes to use. Subclasses
+   * using worker processes should implement this.
+   * @public
+   * @param {string} path - Absolute path to alternate reporter for worker processes to use
+   * @returns {Runner}
+   * @throws When in serial mode
+   * @chainable
+   * @abstract
+   */
+  Runner.prototype.workerReporter = function () {
+    throw createUnsupportedError$2("workerReporter() not supported in serial mode");
+  };
+
+  /**
+   * Filter leaks with the given globals flagged as `ok`.
+   *
+   * @private
+   * @param {Array} ok
+   * @param {Array} globals
+   * @return {Array}
+   */
+  function filterLeaks(ok, globals) {
+    return globals.filter(function (key) {
+      // Firefox and Chrome exposes iframes as index inside the window object
+      if (/^\d+/.test(key)) {
+        return false;
+      }
+
+      // in firefox
+      // if runner runs in an iframe, this iframe's window.getInterface method
+      // not init at first it is assigned in some seconds
+      if (global$1.navigator && /^getInterface/.test(key)) {
+        return false;
+      }
+
+      // an iframe could be approached by window[iframeIndex]
+      // in ie6,7,8 and opera, iframeIndex is enumerable, this could cause leak
+      if (global$1.navigator && /^\d+/.test(key)) {
+        return false;
+      }
+
+      // Opera and IE expose global variables for HTML element IDs (issue #243)
+      if (/^mocha-/.test(key)) {
+        return false;
+      }
+
+      var matched = ok.filter(function (ok) {
+        if (~ok.indexOf("*")) {
+          return key.indexOf(ok.split("*")[0]) === 0;
+        }
+        return key === ok;
+      });
+      return !matched.length && (!global$1.navigator || key !== "onerror");
+    });
+  }
+
+  /**
+   * Check if argument is an instance of Error object or a duck-typed equivalent.
+   *
+   * @private
+   * @param {Object} err - object to check
+   * @param {string} err.message - error message
+   * @returns {boolean}
+   */
+  function isError(err) {
+    return err instanceof Error || (err && typeof err.message === "string");
+  }
+
+  /**
+   *
+   * Converts thrown non-extensible type into proper Error.
+   *
+   * @private
+   * @param {*} thrown - Non-extensible type thrown by code
+   * @return {Error}
+   */
+  function thrown2Error(err) {
+    return new Error(
+      `the ${utils.canonicalType(err)} ${stringify(
+      err,
+    )} was thrown, throw an Error :)`,
+    );
+  }
+
+  Runner.constants = constants$g;
+
+  var runner = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    Runner: Runner
+  });
 
   const { constants: constants$f } = Runner;
   var EVENT_TEST_PASS$c = constants$f.EVENT_TEST_PASS;
@@ -11617,36 +11554,63 @@
     }
 
     var message;
+    var usedInspect = false;
 
     if (typeof err.inspect === "function") {
       message = err.inspect() + "";
+      usedInspect = true;
     } else if (err.message && typeof err.message.toString === "function") {
       message = err.message + "";
     } else {
       message = "";
     }
 
-    var msg;
-    var stack = err.stack || message;
-    var index = message ? stack.indexOf(message) : -1;
-
-    if (index === -1) {
-      msg = message;
-    } else {
-      index += message.length;
-      msg = stack.slice(0, index);
-      // remove msg from stack
-      stack = stack.slice(index + 1);
-
-      if (err.cause) {
-        seen = seen || new Set();
-        seen.add(err);
-        const causeStack = getFullErrorStack(err.cause, seen);
-        stack +=
-          "\n   Caused by: " +
-          causeStack.msg +
-          (causeStack.stack ? "\n" + causeStack.stack : "");
+    var rawStack = err.stack || message;
+    var lines = rawStack.split("\n");
+    var lastLine = lines.length - 1;
+    while (lastLine >= 0 && lines[lastLine] === "") {
+      lastLine--;
+    }
+    var frameStart = lastLine + 1;
+    for (var i = lastLine; i >= 0; i--) {
+      if (/^\s+at\s/.test(lines[i])) {
+        frameStart = i;
+      } else {
+        break;
       }
+    }
+
+    var msg;
+    var stack;
+    var splitSucceeded = false;
+    if (frameStart <= lastLine) {
+      stack = lines.slice(frameStart, lastLine + 1).join("\n");
+      msg =
+        usedInspect || frameStart === 0
+          ? message
+          : lines.slice(0, frameStart).join("\n");
+      splitSucceeded = true;
+    } else {
+      var index = message ? rawStack.indexOf(message) : -1;
+      if (index === -1) {
+        msg = message;
+        stack = rawStack;
+      } else {
+        index += message.length;
+        msg = rawStack.slice(0, index);
+        stack = rawStack.slice(index + 1);
+        splitSucceeded = true;
+      }
+    }
+
+    if (splitSucceeded && err.cause) {
+      seen = seen || new Set();
+      seen.add(err);
+      const causeStack = getFullErrorStack(err.cause, seen);
+      stack +=
+        "\n   Caused by: " +
+        causeStack.msg +
+        (causeStack.stack ? "\n" + causeStack.stack : "");
     }
 
     return {
@@ -11947,7 +11911,7 @@
   var require$$1 = /*@__PURE__*/getAugmentedNamespace(dot);
 
   /**
-   * @typedef {import('../runner.cjs')} Runner
+   * @typedef {import('../runner.js').Runner} Runner
    */
 
   var constants$d = Runner.constants;
@@ -12876,7 +12840,7 @@
     HTML: HTML
   });
 
-  var require$$5 = /*@__PURE__*/getAugmentedNamespace(html);
+  var require$$5$1 = /*@__PURE__*/getAugmentedNamespace(html);
 
   var { constants: constants$9 } = Runner;
   var EVENT_RUN_BEGIN$7 = constants$9.EVENT_RUN_BEGIN;
@@ -12984,7 +12948,7 @@
   var require$$7$1 = /*@__PURE__*/getAugmentedNamespace(min);
 
   /**
-   * @typedef {import('../runner.cjs')} Runner
+   * @typedef {import('../runner.js').Runner} Runner
    * @typedef {import('../test.js')} Test
    */
 
@@ -13072,7 +13036,7 @@
     Spec: Spec
   });
 
-  var require$$8 = /*@__PURE__*/getAugmentedNamespace(spec);
+  var require$$8$1 = /*@__PURE__*/getAugmentedNamespace(spec);
 
   var constants$6 = Runner.constants;
   var EVENT_RUN_BEGIN$4 = constants$6.EVENT_RUN_BEGIN;
@@ -13677,7 +13641,7 @@
     Markdown: Markdown
   });
 
-  var require$$11 = /*@__PURE__*/getAugmentedNamespace(markdown);
+  var require$$11$1 = /*@__PURE__*/getAugmentedNamespace(markdown);
 
   var constants$3 = Runner.constants;
   var EVENT_RUN_BEGIN$3 = constants$3.EVENT_RUN_BEGIN;
@@ -13875,7 +13839,7 @@
     Landing: Landing
   });
 
-  var require$$13 = /*@__PURE__*/getAugmentedNamespace(landing);
+  var require$$13$1 = /*@__PURE__*/getAugmentedNamespace(landing);
 
   var constants$1 = Runner.constants;
   var EVENT_TEST_PASS$1 = constants$1.EVENT_TEST_PASS;
@@ -14116,23 +14080,23 @@
   		exports.TAP = exports.tap = TAP;
   		const { JSONReporter } = require$$4$1;
   		exports.JSON = exports.json = JSONReporter;
-  		const { HTML } = require$$5;
+  		const { HTML } = require$$5$1;
   		exports.HTML = exports.html = HTML;
   		const { List } = require$$6;
   		exports.List = exports.list = List;
   		const { Min } = require$$7$1;
   		exports.Min = exports.min = Min;
-  		const { Spec } = require$$8;
+  		const { Spec } = require$$8$1;
   		exports.Spec = exports.spec = Spec;
   		const { NyanCat } = require$$9;
   		exports.Nyan = exports.nyan = NyanCat;
   		const { XUnit } = require$$10$1;
   		exports.XUnit = exports.xunit = XUnit;
-  		const { Markdown } = require$$11;
+  		const { Markdown } = require$$11$1;
   		exports.Markdown = exports.markdown = Markdown;
   		const { Progress } = require$$12$1;
   		exports.Progress = exports.progress = Progress;
-  		const { Landing } = require$$13;
+  		const { Landing } = require$$13$1;
   		exports.Landing = exports.landing = Landing;
   		const { JSONStream } = require$$14$1;
   		exports.JSONStream = exports["json-stream"] = JSONStream;
@@ -14166,11 +14130,13 @@
   ]
   };
 
+  var require$$5 = /*@__PURE__*/getAugmentedNamespace(suite);
+
   var require$$18 = /*@__PURE__*/getAugmentedNamespace(_nodeResolve_empty);
 
   /**
    * @typedef {import('./types.d.ts').StatsCollector} StatsCollector
-   * @typedef {import('./runner.cjs')} Runner
+   * @typedef {import('./runner.js').Runner} Runner
    */
 
 
@@ -14239,6 +14205,8 @@
   });
 
   var require$$7 = /*@__PURE__*/getAugmentedNamespace(statsCollector);
+
+  var require$$8 = /*@__PURE__*/getAugmentedNamespace(errors);
 
   const { isString } = utils;
   const { MOCHA_ID_PROP_NAME } = utils.constants;
@@ -14909,6 +14877,8 @@
 
   var require$$10 = /*@__PURE__*/getAugmentedNamespace(interfaces);
 
+  var require$$11 = /*@__PURE__*/getAugmentedNamespace(runnable);
+
   /**
    * @typedef {import('./runnable.js')} Runnable
    */
@@ -14994,6 +14964,8 @@
 
   var require$$12 = /*@__PURE__*/getAugmentedNamespace(context);
 
+  var require$$13 = /*@__PURE__*/getAugmentedNamespace(runner);
+
   var require$$14 = /*@__PURE__*/getAugmentedNamespace(hook);
 
   var require$$15 = /*@__PURE__*/getAugmentedNamespace(test);
@@ -15015,12 +14987,12 @@
   		 * MIT Licensed
   		 */
 
-  		var { escapeRegExp } = require$$0$2;
-  		var path = require$$1$2;
+  		var { escapeRegExp } = require$$0$1;
+  		var path = require$$1$1;
   		var builtinReporters = requireReporters();
   		var utils = requireUtils();
   		var mocharc = require$$4;
-  		var { Suite } = require$$5$1;
+  		var { Suite } = require$$5;
   		var esmUtils = require$$18;
   		var createStatsCollector = require$$7.createStatsCollector;
   		const {
@@ -15029,7 +15001,7 @@
   		  createMochaInstanceAlreadyDisposedError,
   		  createMochaInstanceAlreadyRunningError,
   		  createUnsupportedError,
-  		} = require$$8$1;
+  		} = require$$8;
   		const { EVENT_FILE_PRE_REQUIRE, EVENT_FILE_POST_REQUIRE, EVENT_FILE_REQUIRE } =
   		  Suite.constants;
   		var debug = requireBrowser()("mocha:mocha");
@@ -15100,13 +15072,13 @@
   		 * @memberof Mocha
   		 */
   		exports.reporters = builtinReporters;
-  		exports.Runnable = require$$11$1.Runnable;
+  		exports.Runnable = require$$11.Runnable;
   		exports.Context = require$$12.Context;
   		/**
   		 *
   		 * @memberof Mocha
   		 */
-  		exports.Runner = requireRunner();
+  		exports.Runner = require$$13.Runner;
   		exports.Suite = Suite;
   		exports.Hook = require$$14.Hook;
   		exports.Test = require$$15.Test;
@@ -15980,7 +15952,7 @@
   		 * @see {@link Mocha#unloadFiles}
   		 * @see {@link Runner#run}
   		 * @param {DoneCB} [fn] - Callback invoked when test execution completed.
-  		 * @returns {import("./runner.cjs")} runner instance
+  		 * @returns {import("./runner.js").Runner} runner instance
   		 * @example
   		 *
   		 * // exit with non-zero status if there were test failures
