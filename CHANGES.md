@@ -1,5 +1,30 @@
 # CHANGES for indexeddbshim
 
+## 19.0.4
+
+- fix: keep multi-request transactions alive on standard (3-argument) WebSQL drivers
+
+`advanceAfterDispatch`/`checkQueueEntry` deferred each continuation via a
+plain `queueMicrotask`, regardless of driver. That's fine for Node's
+driver, whose real commit/rollback is deferred separately via
+`nonstandardTransCb`, but a standard (3-argument) driver — browser
+WebSQL, `cordova-plugin-sqlite-2`, etc. — finalizes its own underlying
+SQL transaction synchronously as soon as it sees no further
+`executeSql` call already in flight or queued. A microtask hop alone
+never issues one, so the driver already considers the transaction done
+by the time the deferred continuation runs, silently dropping whatever
+it tries to do next: the second request in `store.put(a); store.put(b)`,
+a follow-up issued from `onsuccess`, or one queued from an `await`
+continuation. No `success`, no `error`, no `complete` — the transaction
+just hangs.
+
+A new `keepAliveAndWait` helper takes over both call sites. On a
+standard driver (detected via the same arity check `__callTransFinishedCb`
+already used, now shared through `__usesStandardDriver`) it issues a
+harmless `SELECT 1` instead of a bare microtask wait, keeping the
+driver's own queue non-empty across the gap. Node's driver is
+unaffected — it still just gets a `queueMicrotask`.
+
 ## 19.0.3
 
 - chore: update node-static, typeson-registry, devDeps

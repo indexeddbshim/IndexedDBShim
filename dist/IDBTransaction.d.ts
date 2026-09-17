@@ -36,6 +36,7 @@ export type IDBTransactionFull = EventTarget & {
     __requestsFinished: boolean;
     __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void;
     __callTransFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void;
+    __usesStandardDriver: () => boolean;
     __transactionEndCallback: (() => void) | undefined;
     __transactionFinished: boolean;
     __completed: boolean;
@@ -68,6 +69,20 @@ declare class IDBTransaction {
      * @returns {void}
      */
     __transFinishedCb(err: boolean, cb: (bool: boolean) => void): void;
+    /**
+     * A standard (3-argument) `transaction()`/`readTransaction()` implementation
+     *   (browser WebSQL, `cordova-plugin-sqlite-2`, etc.) never invokes the
+     *   non-standard 4th callback that installs the real `__transFinishedCb`,
+     *   and finalizes its own underlying SQL transaction synchronously, as soon
+     *   as it sees no further `executeSql` call already in flight or queued --
+     *   with no way for it to know a JS-level continuation (e.g. an
+     *   `await`-deferred follow-up request) is still coming. Detected via
+     *   arity, checking whichever of the two methods this transaction's own
+     *   mode actually uses.
+     * @this {IDBTransactionFull}
+     * @returns {boolean}
+     */
+    __usesStandardDriver(this: IDBTransactionFull): boolean;
     /**
      * In Node, the real (SQL-commit-capable) `__transFinishedCb` is only
      * installed once the underlying WebSQL driver's own SQL-queue-idle check
