@@ -297,6 +297,10 @@ IDBTransaction.prototype.__executeRequests = function () {
             let q,
                 i = -1;
 
+            // On a standard driver, `keepAliveAndWait` issues a SQL query, which
+            //   is a macrotask. Otherwise it issues ten microtasks.
+            const keepAliveAttempts = isStandardDriver ? 1 : 10;
+
             /**
              * A continuation that must still be able to observe the
              *   transaction as safe to extend (e.g., re-checking whether an
@@ -567,7 +571,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 }
                 i++;
                 if (i >= me.__requests.length) {
-                    checkQueueEntry(10);
+                    checkQueueEntry(keepAliveAttempts);
                     return;
                 }
                 runQueuedRequest();
@@ -604,7 +608,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 }
                 i++;
                 if (i >= me.__requests.length) {
-                    checkQueueEntry(10);
+                    checkQueueEntry(keepAliveAttempts);
                     return;
                 }
                 keepAliveAndWait(() => {
