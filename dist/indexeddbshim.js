@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.4 - 9/17/2026 */
+/*! indexeddbshim - v19.0.5 - 9/17/2026 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
