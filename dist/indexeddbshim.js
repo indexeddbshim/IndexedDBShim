@@ -5613,6 +5613,10 @@
       var q,
         i = -1;
 
+      // On a standard driver, `keepAliveAndWait` issues a SQL query, which
+      //   is a macrotask. Otherwise it issues ten microtasks.
+      var keepAliveAttempts = isStandardDriver ? 1 : 10;
+
       /**
        * A continuation that must still be able to observe the
        *   transaction as safe to extend (e.g., re-checking whether an
@@ -5648,9 +5652,9 @@
           });
         } catch (err) {
           // The driver has already finalized the transaction (or otherwise
-          //   rejected the call) -- nothing left to hold open, so fall back
-          //   to a plain microtask hop for the continuation itself.
-          queueMicrotask(cb);
+          //   rejected the call) -- nothing left to hold open. We explicitly
+          //   abort the transaction here.
+          me.__abortTransaction(/** @type {Error|DOMException} */err);
         }
       }
 
@@ -5857,9 +5861,11 @@
        *   consumer of that same handler (e.g. one that resolves a
        *   promise from within `onsuccess` and only attaches `oncomplete`
        *   afterward) ever gets a turn to run, so it can miss `complete`
-       *   entirely. `readonly` requests don't hold a real SQL
-       *   transaction open, though, so there's no file-lock/connection
-       *   collision risk in waiting the same bounded amount here.
+       *   afterward) ever gets a turn to run, so it can miss `complete`
+       *   entirely. On a non-standard driver, `readonly` requests don't hold
+       *   a real SQL transaction open, so there's no file-lock/connection
+       *   collision risk. On a standard driver, the wait now issues real SQL
+       *   inside the read transaction, so this does carry a slight risk.
        * @param {number} attemptsLeft
        * @returns {void}
        */
@@ -5894,7 +5900,7 @@
         }
         i++;
         if (i >= me.__requests.length) {
-          checkQueueEntry(10);
+          checkQueueEntry(keepAliveAttempts);
           return;
         }
         runQueuedRequest();
@@ -5931,7 +5937,7 @@
         }
         i++;
         if (i >= me.__requests.length) {
-          checkQueueEntry(10);
+          checkQueueEntry(keepAliveAttempts);
           return;
         }
         keepAliveAndWait(function () {

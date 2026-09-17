@@ -336,9 +336,9 @@ IDBTransaction.prototype.__executeRequests = function () {
                     });
                 } catch (err) {
                     // The driver has already finalized the transaction (or otherwise
-                    //   rejected the call) -- nothing left to hold open, so fall back
-                    //   to a plain microtask hop for the continuation itself.
-                    queueMicrotask(cb);
+                    //   rejected the call) -- nothing left to hold open. We explicitly
+                    //   abort the transaction here.
+                    me.__abortTransaction(/** @type {Error|DOMException} */ (err));
                 }
             }
 
@@ -534,9 +534,11 @@ IDBTransaction.prototype.__executeRequests = function () {
              *   consumer of that same handler (e.g. one that resolves a
              *   promise from within `onsuccess` and only attaches `oncomplete`
              *   afterward) ever gets a turn to run, so it can miss `complete`
-             *   entirely. `readonly` requests don't hold a real SQL
-             *   transaction open, though, so there's no file-lock/connection
-             *   collision risk in waiting the same bounded amount here.
+             *   afterward) ever gets a turn to run, so it can miss `complete`
+             *   entirely. On a non-standard driver, `readonly` requests don't hold
+             *   a real SQL transaction open, so there's no file-lock/connection
+             *   collision risk. On a standard driver, the wait now issues real SQL
+             *   inside the read transaction, so this does carry a slight risk.
              * @param {number} attemptsLeft
              * @returns {void}
              */

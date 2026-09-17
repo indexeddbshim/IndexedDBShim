@@ -1,9 +1,13 @@
 # CHANGES for indexeddbshim
 
+## 19.0.5
+
+- fix: a standard driver failing the SELECT keep-alive should immediately abort
+- perf: wait one keep-alive attempt, not ten, at the empty-queue boundary on a standard (3-argument) WebSQL driver (@theblang)
+
 ## 19.0.4
 
 - fix: keep multi-request transactions alive on standard (3-argument) WebSQL drivers
-- perf: wait one keep-alive attempt, not ten, at the empty-queue boundary on a standard (3-argument) WebSQL driver (@theblang)
 
 `advanceAfterDispatch`/`checkQueueEntry` deferred each continuation via a
 plain `queueMicrotask`, regardless of driver. That's fine for Node's
