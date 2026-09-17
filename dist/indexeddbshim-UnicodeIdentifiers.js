@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.3 - 9/16/2026 */
+/*! indexeddbshim - v19.0.4 - 9/17/2026 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -5383,6 +5383,7 @@
    *   __requestsFinished: boolean,
    *   __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
    *   __callTransFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
+   *   __usesStandardDriver: () => boolean,
    *   __transactionEndCallback: (() => void)|undefined,
    *   __transactionFinished: boolean,
    *   __completed: boolean,
@@ -5523,6 +5524,27 @@
   };
 
   /**
+   * A standard (3-argument) `transaction()`/`readTransaction()` implementation
+   *   (browser WebSQL, `cordova-plugin-sqlite-2`, etc.) never invokes the
+   *   non-standard 4th callback that installs the real `__transFinishedCb`,
+   *   and finalizes its own underlying SQL transaction synchronously, as soon
+   *   as it sees no further `executeSql` call already in flight or queued --
+   *   with no way for it to know a JS-level continuation (e.g. an
+   *   `await`-deferred follow-up request) is still coming. Detected via
+   *   arity, checking whichever of the two methods this transaction's own
+   *   mode actually uses.
+   * @this {IDBTransactionFull}
+   * @returns {boolean}
+   */
+  IDBTransaction.prototype.__usesStandardDriver = function () {
+    var me = this;
+    var dbConn = me.db && me.db.__db;
+    var dbMethodName = me.mode === 'readonly' ? 'readTransaction' : 'transaction';
+    var supportsNonstandardTransCb = Boolean(dbConn && typeof dbConn[dbMethodName] === 'function' && dbConn[dbMethodName].length >= 4);
+    return !supportsNonstandardTransCb;
+  };
+
+  /**
    * In Node, the real (SQL-commit-capable) `__transFinishedCb` is only
    * installed once the underlying WebSQL driver's own SQL-queue-idle check
    * has fired at least once for this transaction (asynchronously, via the
@@ -5556,17 +5578,11 @@
       return;
     }
     if (me.__transFinishedCb === IDBTransaction.prototype.__transFinishedCb) {
-      // Standard (3-argument) `transaction()`/`readTransaction()` implementations
-      //  (browser WebSQL, `cordova-plugin-sqlite-2`, etc.) never invoke the
-      //  non-standard 4th callback that installs the real `__transFinishedCb`,
-      //  so waiting for it here would defer forever. Detect that via arity
-      //  (checking whichever of the two methods this transaction's own mode
-      //  actually uses -- see `__executeRequests`) and, if it's not supported,
-      //  just call the default (the driver auto-commits on its own).
-      var dbConn = me.db && me.db.__db;
-      var dbMethodName = me.mode === 'readonly' ? 'readTransaction' : 'transaction';
-      var supportsNonstandardTransCb = Boolean(dbConn && typeof dbConn[dbMethodName] === 'function' && dbConn[dbMethodName].length >= 4);
-      if (!supportsNonstandardTransCb) {
+      // Waiting here for the non-standard 4th callback to install the real
+      //  `__transFinishedCb` would defer forever on a standard driver, which
+      //  never invokes it -- call the default instead (the driver auto-commits
+      //  on its own).
+      if (me.__usesStandardDriver()) {
         me.__transFinishedCbFired = true;
         me.__transFinishedCb(err, cb);
         return;
@@ -5605,9 +5621,51 @@
     // `readTransaction` is optimized, at least in `node-websql`
     function executeRequests(tx) {
       me.__tx = tx;
+      var isStandardDriver = me.__usesStandardDriver();
       /** @type {RequestInfo} */
       var q,
         i = -1;
+
+      /**
+       * A continuation that must still be able to observe the
+       *   transaction as safe to extend (e.g., re-checking whether an
+       *   `await`-based follow-up request has arrived yet, or giving a
+       *   same-tick microtask scheduled from a handler a chance to run
+       *   first) can normally just be deferred via `queueMicrotask`.
+       *   That alone isn't safe on a standard (3-argument) driver,
+       *   though: it finalizes its own underlying SQL transaction
+       *   synchronously, as soon as it sees no further `executeSql`
+       *   call already in flight or queued, and a microtask hop by
+       *   itself never issues one -- so the driver already considers
+       *   the transaction done by the time the deferred continuation
+       *   runs, silently dropping whatever it tries to do next. Issuing
+       *   a harmless `SELECT 1` instead keeps the driver's own queue
+       *   non-empty across that same gap, at the cost of a real SQL
+       *   round trip; Node's driver doesn't need this since its real
+       *   commit/rollback is already deferred separately, via
+       *   `nonstandardTransCb`.
+       * @param {() => void} cb
+       * @returns {void}
+       */
+      function keepAliveAndWait(cb) {
+        if (!isStandardDriver) {
+          queueMicrotask(cb);
+          return;
+        }
+        try {
+          tx.executeSql('SELECT 1', [], function () {
+            cb();
+          }, function () {
+            cb();
+            return false; // Don't roll back the transaction over a keep-alive no-op
+          });
+        } catch (err) {
+          // The driver has already finalized the transaction (or otherwise
+          //   rejected the call) -- nothing left to hold open, so fall back
+          //   to a plain microtask hop for the continuation itself.
+          queueMicrotask(cb);
+        }
+      }
 
       /**
        * @typedef {unknown} IDBRequestResult
@@ -5802,9 +5860,9 @@
        *   from a microtask -- so if the JS-level queue is merely found
        *   empty here, that doesn't yet mean no more work is coming, only
        *   that none has been queued *yet*. Re-check across a small, bounded
-       *   number of further microtask turns (letting a typical `await`
-       *   chain like `await store.put(...); await store.get(...)` catch
-       *   up) before finally concluding the transaction is genuinely done.
+       *   number of further turns (see `keepAliveAndWait`, letting a typical
+       *   `await` chain like `await store.put(...); await store.get(...)`
+       *   catch up) before finally concluding the transaction is genuinely done.
        *   Applies to `readonly` transactions too, not just `readwrite`/
        *   `versionchange`: a `readonly` transaction's `complete` event
        *   can otherwise fire synchronously, immediately after its last
@@ -5834,7 +5892,7 @@
           }
           return;
         }
-        queueMicrotask(function () {
+        keepAliveAndWait(function () {
           checkQueueEntry(attemptsLeft - 1);
         });
       }
@@ -5889,7 +5947,7 @@
           checkQueueEntry(10);
           return;
         }
-        queueMicrotask(function () {
+        keepAliveAndWait(function () {
           if (me.__errored || me.__requestsFinished) {
             return;
           }

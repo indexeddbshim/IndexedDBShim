@@ -45,6 +45,7 @@ if (typeof process !== 'undefined' && process.env.npm_config_test) { // eslint-d
         'IDBTransaction/objectStore-spec.js',
         'IDBTransaction/events-spec.js',
         'IDBTransaction/durability-spec.js',
+        'IDBTransaction/issue391-standard-driver-spec.js',
         ...(typeof process !== 'undefined' ? ['IDBTransaction/retention-spec.js'] : [])
     ];
 }
