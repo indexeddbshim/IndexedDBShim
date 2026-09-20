@@ -97,22 +97,43 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
     };
 }));
 
-// Iterate IndexedDB files
-await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
-    let data;
-    if (web) {
-        data = await new Promise((resolve) => { // eslint-disable-line promise/avoid-new -- No API
-            http.get(inputFile, (res) => {
+// The large number of `.any.html`/`.any.worker.html` variants fetched below
+//   fires enough simultaneous connections to occasionally exceed `wpt
+//   serve`'s accept backlog, which resets a handful of them with
+//   `ECONNRESET`; retrying (rather than giving up immediately) lets those
+//   requests go through once the burst has cleared.
+/**
+ * @param {string} url
+ * @param {number} [attemptsLeft]
+ * @returns {Promise<string>}
+ */
+async function fetchWithRetry (url, attemptsLeft = 5) {
+    try {
+        return await new Promise((resolve, reject) => { // eslint-disable-line promise/avoid-new -- No API
+            http.get(url, (res) => {
                 res.setEncoding('utf8');
                 let rawData = '';
                 res.on('data', (chunk) => { rawData += chunk; });
                 res.on('end', () => {
                     resolve(rawData);
                 });
-            }).on('error', (e) => {
-                console.error(`Got error retrieving ${inputFile}: ${e.message}`);
-            });
+            }).on('error', reject);
         });
+    } catch (err) {
+        if (attemptsLeft <= 1) {
+            console.error(`Got error retrieving ${url}: ${err.message}`);
+            return '';
+        }
+        await new Promise((resolve) => { setTimeout(resolve, 200); }); // eslint-disable-line promise/avoid-new -- No API
+        return fetchWithRetry(url, attemptsLeft - 1);
+    }
+}
+
+// Iterate IndexedDB files
+await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
+    let data;
+    if (web) {
+        data = await fetchWithRetry(inputFile);
     } else {
         try {
             data = await readFile(inputFile, 'utf8');
