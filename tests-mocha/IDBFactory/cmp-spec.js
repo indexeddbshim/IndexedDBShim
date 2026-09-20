@@ -216,13 +216,15 @@ describe('IDBFactory.cmp', function () {
             equal([], []);
             equal([0], [0]);
 
-            if (!env.browser.isIE) {
-                // BUG: IE truncates string keys at 889 characters.
-                compare([1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 0]);
-                compare([1, 1, 1, 1, 0], [1, 1, 1, 1, 1]);
-                equal([0, 0, 0, 0, 0], [0, 0, 0, 0, 0]);
-                equal([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]);
+            if (env.browser.isIE) {
+                return;
             }
+
+            // BUG: IE truncates string keys at 889 characters.
+            compare([1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 0]);
+            compare([1, 1, 1, 1, 0], [1, 1, 1, 1, 1]);
+            equal([0, 0, 0, 0, 0], [0, 0, 0, 0, 0]);
+            equal([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]);
         });
 
         util.skipIf(env.isNative && env.browser.isIE, 'should compare string arrays', function () {
@@ -241,11 +243,13 @@ describe('IDBFactory.cmp', function () {
             equal([' '], [' ']);
             equal(['a', 'b', 'c'], ['a', 'b', 'c']);
 
-            if (!env.browser.isIE) {
-                // BUG: IE truncates string keys at 889 characters.
-                compare([util.sampleData.veryLongString, 'a'], [util.sampleData.veryLongString, 'b']);
-                equal([util.sampleData.veryLongString, util.sampleData.veryLongString], [util.sampleData.veryLongString, util.sampleData.veryLongString]);
+            if (env.browser.isIE) {
+                return;
             }
+
+            // BUG: IE truncates string keys at 889 characters.
+            compare([util.sampleData.veryLongString, 'a'], [util.sampleData.veryLongString, 'b']);
+            equal([util.sampleData.veryLongString, util.sampleData.veryLongString], [util.sampleData.veryLongString, util.sampleData.veryLongString]);
         });
 
         util.skipIf(env.isNative && env.browser.isIE, 'should compare nested arrays', function () {

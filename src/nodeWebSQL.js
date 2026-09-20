@@ -29,6 +29,7 @@ import CFG from './CFG.js';
  * @returns {SQLiteDatabaseInstance}
  */
 function wrappedSQLiteDatabase (name) {
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore It's ok; needed under some TS versions
     const db = new SQLiteDatabase(name, {});
     if (CFG.sqlBusyTimeout) {

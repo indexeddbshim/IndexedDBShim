@@ -230,6 +230,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
             this._length = 0;
         };
         DOMStringList.prototype = DOMStringListAlias.prototype;
+        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
         // @ts-ignore It's ok; needed under some TS versions
         return /** @type {DOMStringListFull} */ (new DOMStringList());
     }

@@ -629,9 +629,7 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
     } case 'date': {
         const date = /** @type {Date} */ (input);
         if (!Number.isNaN(date.getTime())) {
-            return fullKeys
-                ? {type, value: date.getTime()}
-                : {type, value: new Date(date)};
+            return {type, value: fullKeys ? date.getTime() : new Date(date)};
         }
         return {type, invalid: true, message: 'Not a valid date'};
         // Falls through
@@ -707,10 +705,9 @@ function extractKeyValueDecodedFromValueUsingKeyPath (value, keyPath, multiEntry
     if (r.failure) {
         return r;
     }
-    if (!multiEntry) {
-        return convertValueToKeyValueDecoded(r.value, null, false, fullKeys);
-    }
-    return convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
+    return !multiEntry
+        ? convertValueToKeyValueDecoded(r.value, null, false, fullKeys)
+        : convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
 }
 
 /**
@@ -889,10 +886,9 @@ function isKeyInRange (key, range, checkCached) {
 function isMultiEntryMatch (encodedEntry, encodedKey) {
     const keyType = encodedCharToKeyType[encodedKey.slice(0, 1)];
 
-    if (keyType === 'array') {
-        return encodedKey.indexOf(encodedEntry) > 1;
-    }
-    return encodedKey === encodedEntry;
+    return keyType === 'array'
+        ? encodedKey.indexOf(encodedEntry) > 1
+        : encodedKey === encodedEntry;
 }
 
 /**
@@ -993,10 +989,9 @@ function encode (key, inArray) {
  * @returns {undefined|ValueType}
  */
 function decode (key, inArray) {
-    if (typeof key !== 'string') {
-        return undefined;
-    }
-    return types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
+    return typeof key !== 'string'
+        ? undefined
+        : types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
 }
 
 /**

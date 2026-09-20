@@ -444,15 +444,17 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.dispatchEvent(e);
                 // Do not set __active or __handlerActive flags to false yet --
                 //   see the matching comment in `success`, above.
-                if (e.__legacyOutputDidListenersThrowError) {
-                    logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
-                    e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
-                    if (me.__committed) { // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
-                        util.runContinuationSafely(advanceAfterDispatch);
-                        return;
-                    }
-                    me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
+                if (!e.__legacyOutputDidListenersThrowError) {
+                    return;
                 }
+
+                logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+                e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
+                if (me.__committed) { // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
+                    util.runContinuationSafely(advanceAfterDispatch);
+                    return;
+                }
+                me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
             }
 
             /**
@@ -614,10 +616,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     return;
                 }
                 keepAliveAndWait(() => {
-                    if (me.__errored || me.__requestsFinished) {
-                        return;
-                    }
-                    if (!prepareNextRequest()) {
+                    if (me.__errored || me.__requestsFinished || !prepareNextRequest()) {
                         return;
                     }
                     launchQueuedOp();
@@ -645,10 +644,12 @@ IDBTransaction.prototype.__executeRequests = function () {
                 me.__transactionFinished = true;
                 return;
             }
-            if (me.__transactionEndCallback && !me.__completed && !me.__transFinishedCbFired) {
-                me.__transFinishedCbFired = true;
-                me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
+            if (!me.__transactionEndCallback || me.__completed || me.__transFinishedCbFired) {
+                return;
             }
+
+            me.__transFinishedCbFired = true;
+            me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
         },
         function (currentTask, err, done, rollback, commit) {
             if (err) {

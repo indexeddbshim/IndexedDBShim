@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- chore: update `@node-static/node-static`, typeson-registry, devDeps.; lint
+
 ## 19.0.5
 
 - fix: a standard driver failing the SELECT keep-alive should immediately abort

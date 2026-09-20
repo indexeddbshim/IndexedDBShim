@@ -780,6 +780,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
         me.transaction
     ).__createRequest(me);
     const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore -- Private API
     IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, true, ky);
     return request;
@@ -812,6 +813,7 @@ IDBObjectStore.prototype.put = function (value /* , key */) {
         me.transaction
     ).__createRequest(me);
     const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore -- Private API
     IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, false, ky);
     return request;

@@ -42,8 +42,10 @@ function IDBRequest () {
  * @this {IDBRequestFull}
  */
 IDBRequest.__super = function IDBRequest () {
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore It's ok
     this[Symbol.toStringTag] = 'IDBRequest';
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore Part of `ShimEventTarget`
     this.__setOptions({
         legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
@@ -106,10 +108,9 @@ IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
  * @returns {import('./IDBTransaction.js').IDBTransactionFull|null|undefined}
  */
 IDBRequest.prototype.__getParent = function () {
-    if (this.toString() === '[object IDBOpenDBRequest]') {
-        return null;
-    }
-    return this.__transaction;
+    return this.toString() === '[object IDBOpenDBRequest]'
+        ? null
+        : this.__transaction;
 };
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
@@ -171,8 +172,10 @@ IDBOpenDBRequest.__createInstance = function () {
     function IDBOpenDBRequest () {
         IDBRequest.__super.call(this);
 
+        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
         // @ts-ignore It's ok
         this[Symbol.toStringTag] = 'IDBOpenDBRequest';
+        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
         // @ts-ignore It's ok
         this.__setOptions({
             legacyOutputDidListenersThrowFlag: true, // Event hook for IndexedB

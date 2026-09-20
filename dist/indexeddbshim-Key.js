@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.5 - 9/17/2026 */
+/*! indexeddbshim - v19.0.5 - 9/20/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -525,8 +525,10 @@
          */
         get: function get() {
           if (!(this instanceof DOMException ||
+          // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
           // @ts-ignore Just checking; needed under some TS versions
           this instanceof DummyDOMException ||
+          // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
           // @ts-ignore Just checking; needed under some TS versions
           this instanceof Error)) {
             throw new TypeError('Illegal invocation');
@@ -585,6 +587,7 @@
       value: DOMException
     });
 
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore We don't need all its properties; needed under some TS versions
     return DOMException;
   }
@@ -597,6 +600,7 @@
    * @returns {Error}
    */
   function createNonNativeDOMException(name, message) {
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore It's ok; needed under some TS versions
     return new ShimNonNativeDOMException(message, name);
   }
@@ -684,10 +688,7 @@
     return arg.replaceAll(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
       // Could add a corresponding surrogate for compatibility with `node-sqlite3`: https://bugs.python.org/issue12569 and https://stackoverflow.com/a/6701665/271577
       //   but Chrome having problems
-      if (unmatchedHighSurrogate) {
-        return '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0');
-      }
-      return (precedingLow || '') + '^3' + unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
+      return unmatchedHighSurrogate ? '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0') : (precedingLow || '') + '^3' + unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
     });
   }
 
@@ -1471,12 +1472,9 @@
         {
           var date = /** @type {Date} */input;
           if (!Number.isNaN(date.getTime())) {
-            return fullKeys ? {
+            return {
               type: type,
-              value: date.getTime()
-            } : {
-              type: type,
-              value: new Date(date)
+              value: fullKeys ? date.getTime() : new Date(date)
             };
           }
           return {
@@ -1564,10 +1562,7 @@
     if (r.failure) {
       return r;
     }
-    if (!multiEntry) {
-      return convertValueToKeyValueDecoded(r.value, null, false, fullKeys);
-    }
-    return convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
+    return !multiEntry ? convertValueToKeyValueDecoded(r.value, null, false, fullKeys) : convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
   }
 
   /**
@@ -1748,10 +1743,7 @@
    */
   function isMultiEntryMatch(encodedEntry, encodedKey) {
     var keyType = encodedCharToKeyType[encodedKey.slice(0, 1)];
-    if (keyType === 'array') {
-      return encodedKey.indexOf(encodedEntry) > 1;
-    }
-    return encodedKey === encodedEntry;
+    return keyType === 'array' ? encodedKey.indexOf(encodedEntry) > 1 : encodedKey === encodedEntry;
   }
 
   /**
@@ -1869,10 +1861,7 @@
    * @returns {undefined|ValueType}
    */
   function _decode(key, inArray) {
-    if (typeof key !== 'string') {
-      return undefined;
-    }
-    return types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
+    return typeof key !== 'string' ? undefined : types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
   }
 
   /**

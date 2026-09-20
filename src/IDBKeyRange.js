@@ -223,10 +223,12 @@ function setSQLForKeyRange (
         sql.push(quotedKeyColumnName, (range.lowerOpen ? '>' : '>='), '?');
     }
     if (hasLower && hasUpper) { sql.push('AND'); }
-    if (hasUpper) {
-        sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
-        sqlValues.push(util.escapeSQLiteStatement(/** @type {string} */ (encodedUpperKey)));
+    if (!hasUpper) {
+        return;
     }
+
+    sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
+    sqlValues.push(util.escapeSQLiteStatement(/** @type {string} */ (encodedUpperKey)));
 }
 
 /**
@@ -239,10 +241,9 @@ function convertValueToKeyRange (value, nullDisallowed) {
     if (util.instanceOf(value, IDBKeyRange)) {
         // We still need to validate IDBKeyRange-like objects (the above check is based on loose duck-typing)
         const range = /** @type {IDBKeyRangeFull} */ (value);
-        if (range.toString() !== '[object IDBKeyRange]') {
-            return IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-        }
-        return range;
+        return range.toString() !== '[object IDBKeyRange]'
+            ? IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen)
+            : range;
     }
     if (util.isNullish(value)) {
         if (nullDisallowed) {

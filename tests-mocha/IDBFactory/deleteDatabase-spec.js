@@ -133,11 +133,13 @@ describe('IDBFactory.deleteDatabase', function () {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(del);
 
-                if (!alreadyDone) {
-                    alreadyDone = true;
-                    db.close();
-                    done();
+                if (alreadyDone) {
+                    return;
                 }
+
+                alreadyDone = true;
+                db.close();
+                done();
             };
         });
     });

@@ -210,10 +210,9 @@
      * @returns {Element|SimulatedElement}
      */
     function getElementById (id) {
-        if (typeof document === 'undefined') {
-            return {className: '', style: {}};
-        }
-        return document.querySelector('#' + id) || {style: {}};
+        return typeof document === 'undefined'
+            ? {className: '', style: {}}
+            : document.querySelector('#' + id) || {style: {}};
     }
 
     // Sample data
@@ -374,12 +373,14 @@
                  */
                 const success = function () {
                     expect(true, 'Data added to store').to.be.true;
-                    if (++counter >= max) {
-                        db.close();
-                        cb();
-                        // eslint-disable-next-line no-useless-return -- Needed by linter
+                    if (++counter < max) {
                         return;
                     }
+
+                    db.close();
+                    cb();
+                    // eslint-disable-next-line no-useless-return -- Needed by linter
+                    return;
                 };
                 /**
                  * @param {Event} e
@@ -387,11 +388,13 @@
                  */
                 const error = function (e) {
                     expect(false, 'Could not add data').to.be.true;
-                    if (++counter >= 10) {
-                        cb(e);
-                        // eslint-disable-next-line no-useless-return -- Needed by linter
+                    if (++counter < 10) {
                         return;
                     }
+
+                    cb(e);
+                    // eslint-disable-next-line no-useless-return -- Needed by linter
+                    return;
                 };
                 for (let i = 0; i < max; i++) {
                     const req = objectStore.add(sample.obj(), i);

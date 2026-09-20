@@ -147,10 +147,8 @@ export class MsgStream extends EventEmitter {
  * @returns {string|false}
  */
 export const makeFileURL = function (workerConfig, dir) {
-    if (workerConfig.relativePathType === 'file') {
-        return 'file://' + dir.replaceAll('\\', '/') + '/';
-    }
-    return false;
+    return (workerConfig.relativePathType === 'file') &&
+        ('file://' + dir.replaceAll('\\', '/') + '/');
 };
 
 // Todo: Implement the WorkerLocation interface described in

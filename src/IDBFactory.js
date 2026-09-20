@@ -148,6 +148,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
                 return undefined;
             }
             const e = /** @type {Event & IDBVersionChangeEvent} */ (
+                // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
                 // @ts-ignore It's ok; needed under some TS versions
                 new IDBVersionChangeEvent('versionchange', {oldVersion, newVersion})
             );
@@ -193,6 +194,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
                 }
             };
             const e = /** @type {Event & IDBVersionChangeEvent} */ (
+                // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
                 // @ts-ignore It's ok; needed under some TS versions
                 new IDBVersionChangeEvent('blocked', {oldVersion, newVersion})
             );
@@ -717,6 +719,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                          */
                         function versionSet () {
                             const e = /** @type {import('eventtargeter').EventWithProps & Event & IDBVersionChangeEvent} */ (
+                                // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
                                 // @ts-ignore It's ok; needed under some TS versions
                                 new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version})
                             );
@@ -1128,6 +1131,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 req.__result = undefined;
                 req.__done = true;
                 const e = /** @type {Event & IDBVersionChangeEvent} */ (
+                    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
                     // @ts-ignore It's ok; needed under some TS versions
                     new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null})
                 );

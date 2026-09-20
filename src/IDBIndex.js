@@ -173,6 +173,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                         ['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
                         ['value', 'BLOB']
                     ].concat(
+                        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
                         // @ts-ignore Has numeric indexes instead of iterator; needed under some TS versions
                         [...objectStore.indexNames]
                             .filter((indexName) => indexName !== newName)
@@ -895,11 +896,13 @@ function executeFetchIndexData (
                         record = row;
                     }
                 }
-                if (record) {
-                    records.push(decode(record));
-                    if (unboundedDisallowed) {
-                        break;
-                    }
+                if (!record) {
+                    continue;
+                }
+
+                records.push(decode(record));
+                if (unboundedDisallowed) {
+                    break;
                 }
             }
         } else {

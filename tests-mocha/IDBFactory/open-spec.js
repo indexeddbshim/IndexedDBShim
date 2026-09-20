@@ -182,10 +182,12 @@ describe('IDBFactory.open', function () {
                     const db = event.target.result;
                     expect(db.version).to.equal(1);
                     expect(open.result.version).to.equal(1);
-                    if (env.isShimmed || !env.browser.isSafari) {
-                        expect(event.newVersion).to.equal(1); // BUG: Safari equals null
-                        expect(event.oldVersion).to.equal(0); // BUG: Safari equals Number.MAX_VALUE
+                    if (!env.isShimmed && env.browser.isSafari) {
+                        return;
                     }
+
+                    expect(event.newVersion).to.equal(1); // BUG: Safari equals null
+                    expect(event.oldVersion).to.equal(0); // BUG: Safari equals Number.MAX_VALUE
                 });
 
                 open.onsuccess = function () {
@@ -482,10 +484,12 @@ describe('IDBFactory.open', function () {
                 }
 
                 expect(typeof err).equal('object'); // When using native, an('object') will show custom string
-                if (env.isShimmed || !env.browser.isIE) {
-                    expect(err).to.be.an.instanceOf(TypeError); // IE throws a DOMException
-                    expect(err.name).to.equal('TypeError');
+                if (!env.isShimmed && env.browser.isIE) {
+                    return;
                 }
+
+                expect(err).to.be.an.instanceOf(TypeError); // IE throws a DOMException
+                expect(err.name).to.equal('TypeError');
             }
         });
     });

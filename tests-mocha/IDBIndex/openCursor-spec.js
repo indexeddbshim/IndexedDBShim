@@ -899,15 +899,17 @@ describe('IDBIndex.openCursor', function () {
 
                 // Index queries
                 query(index, 0, []);
-                if (env.isShimmed || env.isChrome) {
-                    // Only Chrome supports immediate querying of generated inline keys for indexes
-                    query(index, IDBKeyRange.lowerBound(5), [
-                        {primaryKey: 5, key: 5, value: {id: 'five', name: {first: 5}}}
-                    ]);
-                    query(index, IDBKeyRange.upperBound(1), [
-                        {primaryKey: 1, key: 1, value: {id: 'one', name: {first: 1}}}
-                    ]);
+                if (!env.isShimmed && !env.isChrome) {
+                    return;
                 }
+
+                // Only Chrome supports immediate querying of generated inline keys for indexes
+                query(index, IDBKeyRange.lowerBound(5), [
+                    {primaryKey: 5, key: 5, value: {id: 'five', name: {first: 5}}}
+                ]);
+                query(index, IDBKeyRange.upperBound(1), [
+                    {primaryKey: 1, key: 1, value: {id: 'one', name: {first: 1}}}
+                ]);
             });
         });
 
@@ -1084,34 +1086,36 @@ describe('IDBIndex.openCursor', function () {
                 query(index, IDBKeyRange.only('a'), 'nextunique', [
                     {primaryKey: 'a', key: 'a', value: {id: 'a'}}
                 ]);
-                if (env.isShimmed || !env.browser.isSafari) {
-                    // Safari's native IndexedDB cursors don't return the correct keys
-                    query(index, IDBKeyRange.only('a'), [
-                        {primaryKey: 'a', key: 'a', value: {id: 'a'}},
-                        {primaryKey: ['a'], key: 'a', value: {id: ['a']}},
-                        {primaryKey: ['a', 'b', 'c'], key: 'a', value: {id: ['a', 'b', 'c']}}
-                    ]);
-                    query(index, IDBKeyRange.lowerBound('a'), [
-                        {primaryKey: 'a', key: 'a', value: {id: 'a'}},
-                        {primaryKey: ['a'], key: 'a', value: {id: ['a']}},
-                        {primaryKey: ['a', 'b', 'c'], key: 'a', value: {id: ['a', 'b', 'c']}},
-                        {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}},
-                        {primaryKey: ['b'], key: 'b', value: {id: ['b']}},
-                        {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
-                        {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}}
-                    ]);
-                    query(index, IDBKeyRange.lowerBound('a', true), 'prev', [
-                        {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}},
-                        {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
-                        {primaryKey: ['b'], key: 'b', value: {id: ['b']}},
-                        {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}}
-                    ]);
-                    query(index, IDBKeyRange.lowerBound('a', true), 'prevunique', [
-                        {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}},
-                        {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
-                        {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}}
-                    ]);
+                if (!env.isShimmed && env.browser.isSafari) {
+                    return;
                 }
+
+                // Safari's native IndexedDB cursors don't return the correct keys
+                query(index, IDBKeyRange.only('a'), [
+                    {primaryKey: 'a', key: 'a', value: {id: 'a'}},
+                    {primaryKey: ['a'], key: 'a', value: {id: ['a']}},
+                    {primaryKey: ['a', 'b', 'c'], key: 'a', value: {id: ['a', 'b', 'c']}}
+                ]);
+                query(index, IDBKeyRange.lowerBound('a'), [
+                    {primaryKey: 'a', key: 'a', value: {id: 'a'}},
+                    {primaryKey: ['a'], key: 'a', value: {id: ['a']}},
+                    {primaryKey: ['a', 'b', 'c'], key: 'a', value: {id: ['a', 'b', 'c']}},
+                    {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}},
+                    {primaryKey: ['b'], key: 'b', value: {id: ['b']}},
+                    {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
+                    {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}}
+                ]);
+                query(index, IDBKeyRange.lowerBound('a', true), 'prev', [
+                    {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}},
+                    {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
+                    {primaryKey: ['b'], key: 'b', value: {id: ['b']}},
+                    {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}}
+                ]);
+                query(index, IDBKeyRange.lowerBound('a', true), 'prevunique', [
+                    {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}},
+                    {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
+                    {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}}
+                ]);
             });
         });
 

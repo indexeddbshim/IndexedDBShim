@@ -683,6 +683,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
  * @returns {void}
  */
 IDBCursor.prototype.__invalidateCache = function () {
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore Why is this not being found?; needed under some TS versions
     this.__prefetchedData = null;
     this.__multiEntryExhausted = false;
@@ -976,6 +977,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
         //   continuation logic in `__findBasic` to see this update's
         //   effect on ordering (see "Modify records during cursor
         //   iteration" in idbcursor_update_index.any.js).
+        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
         // @ts-ignore -- API (not erring in TS 6)
         IDBObjectStore.__storingRecordObjectStore(request, me.__store, true, clonedValue, false, key);
     }

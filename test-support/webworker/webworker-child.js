@@ -61,7 +61,7 @@ const workerConfig = {
     relativePathType: process.argv[7],
 
     // The base path for pathType="url" defaults to `localhost`; the base path for pathType="file"; defaults to the current working directory; if `false`, will throw upon relative paths
-    basePath: process.argv[8] === 'false' ? false : process.argv[8],
+    basePath: process.argv[8] !== 'false' && process.argv[8],
     rootPath: process.argv[9],
     // Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
     origin: process.argv[10]
@@ -285,20 +285,21 @@ const startWorker = (scriptSource) => {
         //   IPC channel `self.postMessage` already sends over, since this
         //   shim only supports a single, immediately-connected client (see
         //   `WebSharedWorker` in `webworker.js`).
-        if (isSharedWorker) {
-            const port = {
-                postMessage: workerCtx.postMessage,
-                addEventListener () { /* No-op: this shim never emits port-level events */ },
-                removeEventListener () { /* No-op */ },
-                start () { /* No-op */ },
-                close () { /* No-op */ }
-            };
-            const connectEvent = {ports: [port], source: port};
-            if (workerCtx.onconnect) {
-                workerCtx.onconnect(connectEvent);
-            }
-            workerCtx.eventHandlers.connect.forEach((handler) => handler(connectEvent));
+        if (!isSharedWorker) {
+            return;
         }
+        const port = {
+            postMessage: workerCtx.postMessage,
+            addEventListener () { /* No-op: this shim never emits port-level events */ },
+            removeEventListener () { /* No-op */ },
+            start () { /* No-op */ },
+            close () { /* No-op */ }
+        };
+        const connectEvent = {ports: [port], source: port};
+        if (workerCtx.onconnect) {
+            workerCtx.onconnect(connectEvent);
+        }
+        workerCtx.eventHandlers.connect.forEach((handler) => handler(connectEvent));
     });
 };
     // Context elements required for node.js

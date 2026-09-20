@@ -34,10 +34,9 @@ const customFileList = origFileList
          * @returns {boolean}
          */
         test (x, state) {
-            if (typeof FileList !== 'undefined') {
-                return x instanceof FileList;
-            }
-            return typeof origTest === 'function' ? origTest(x, state) : false;
+            return typeof FileList !== 'undefined'
+                ? x instanceof FileList
+                : ((typeof origTest === 'function') && origTest(x, state));
         },
         /**
          * @param {unknown} x

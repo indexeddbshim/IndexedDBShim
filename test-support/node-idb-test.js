@@ -233,12 +233,11 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                                 unknownFiles.push(file);
                             }
                         });
-                        if (!files.length) {
-                            return _ + '  ' + status + ': 0\n';
-                        }
-                        return _ + '  ' + status + ' (' + files.length +
-                            '): [\n    ' + cleanJSONOutput(files).slice(1, -1) +
-                            '\n  ]\n';
+                        return !files.length
+                            ? _ + '  ' + status + ': 0\n'
+                            : _ + '  ' + status + ' (' + files.length +
+                                '): [\n    ' + cleanJSONOutput(files).slice(1, -1) +
+                                '\n  ]\n';
                     }, '\n')
                 );
 

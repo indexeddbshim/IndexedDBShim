@@ -43,6 +43,7 @@ IDBRecord.__createInstance = function (key, primaryKey, value) {
      * @this {IDBRecordFull}
      */
     function IDBRecord () {
+        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
         // @ts-ignore Should be ok
         this[Symbol.toStringTag] = 'IDBRecord';
         this.__key = key;
@@ -84,6 +85,7 @@ readonlyProperties.forEach((prop) => {
             if (!(this instanceof IDBRecordAlias)) {
                 throw new TypeError('Illegal invocation');
             }
+            // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
             // @ts-ignore `this` is a real instance past the check above (not an issue in TS7)
             return this['__' + prop];
         }

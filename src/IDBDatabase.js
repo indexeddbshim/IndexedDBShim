@@ -334,13 +334,15 @@ IDBDatabase.prototype.__forceClose = function (msg) {
         // eslint-disable-next-line camelcase -- Clear API
         trans.on__abort = function () {
             ct++;
-            if (ct === me.__transactions.length) {
-                // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
-                const evt = createEvent('close');
-                setTimeout(() => {
-                    me.dispatchEvent(evt);
-                }, 0);
+            if (ct !== me.__transactions.length) {
+                return;
             }
+
+            // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
+            const evt = createEvent('close');
+            setTimeout(() => {
+                me.dispatchEvent(evt);
+            }, 0);
         };
         trans.__abortTransaction(createDOMException(
             'AbortError',

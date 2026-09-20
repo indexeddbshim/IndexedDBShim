@@ -213,90 +213,92 @@ function setGlobalVars (idb, initialConfig) {
                 });
             }
             const shimIDBFactory = IDBFactory;
-            if (CFG.win.openDatabase !== undefined) {
-                shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
-                // Polyfill ALL of IndexedDB, using WebSQL
-                shim('indexedDB', shimIndexedDB, {
-                    enumerable: true,
-                    configurable: true,
-                    get () {
-                        if (this !== IDB && !isNullish(this) && !this.shimNS) { // Latter is hack for test environment
-                            throw new TypeError('Illegal invocation');
-                        }
-                        return shimIndexedDB;
-                    }
-                });
-                /** @type {[string, unknown][]} */
-                ([
-                    ['IDBFactory', shimIDBFactory],
-                    ['IDBDatabase', shimIDBDatabase],
-                    ['IDBObjectStore', shimIDBObjectStore],
-                    ['IDBIndex', shimIDBIndex],
-                    ['IDBTransaction', shimIDBTransaction],
-                    ['IDBCursor', shimIDBCursor],
-                    ['IDBCursorWithValue', shimIDBCursorWithValue],
-                    ['IDBRecord', shimIDBRecord],
-                    ['IDBKeyRange', shimIDBKeyRange],
-                    ['IDBRequest', shimIDBRequest],
-                    ['IDBOpenDBRequest', shimIDBOpenDBRequest],
-                    ['IDBVersionChangeEvent', shimIDBVersionChangeEvent]
-                ]).forEach(([prop, obj]) => {
-                    shim(prop, obj, {
-                        enumerable: false,
-                        configurable: true
-                    });
-                });
-                // For Node environments
-                if (CFG.fs) {
-                    setFS(CFG.fs);
-                }
-                if (CFG.fullIDLSupport) {
-                    // Slow per MDN so off by default! Though apparently needed for WebIDL: https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
-
-                    Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
-                    Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
-
-                    Object.setPrototypeOf(shimIDBDatabase, ShimEventTarget);
-                    Object.setPrototypeOf(shimIDBRequest, ShimEventTarget);
-                    Object.setPrototypeOf(shimIDBTransaction, ShimEventTarget);
-                    Object.setPrototypeOf(shimIDBVersionChangeEvent, ShimEvent);
-                    // `ShimDOMException` is the real native `DOMException` when one
-                    //   is available (see `DOMException.js`'s `useNativeDOMException`)
-                    //   -- which, unlike the shim classes above, is a single,
-                    //   process-wide singleton shared by reference across every
-                    //   sandbox this library gets installed into (see
-                    //   `node-idb-test.js`'s `sandboxObj`). A native `DOMException`
-                    //   already has the correct prototype chain out of the box
-                    //   (`Object.getPrototypeOf(DOMException) === Function.prototype`,
-                    //   not `Error`), so forcing it here isn't just unneeded but
-                    //   actively wrong -- and, because it's shared, permanently
-                    //   wrong for every later use of `DOMException` in the same
-                    //   process (e.g. a later WPT test file's own idlharness-style
-                    //   check that `DOMException` does *not* inherit from `Error`
-                    //   on the class side), not just this one shim install.
-                    if (typeof DOMException === 'undefined' || ShimDOMException !== DOMException) {
-                        Object.setPrototypeOf(ShimDOMException, Error);
-                        Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
-                    }
-                }
-                if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
-                    if (CFG.addNonIDBGlobals) {
-                        // As `DOMStringList` exists per IDL (and Chrome) in the global
-                        //   thread (but not in workers), we prefix the name to avoid
-                        //   shadowing or conflicts
-                        setNonIDBGlobals('Shim');
-                    }
-                    if (CFG.replaceNonIDBGlobals) {
-                        setNonIDBGlobals();
-                    }
-                }
-                /* c8 ignore start -- TS guard */
-                if (!IDB.shimIndexedDB) {
-                    return;
-                }
-                /* c8 ignore stop -- TS guard */
-                IDB.shimIndexedDB.__setConnectionQueueOrigin();
+            if (CFG.win.openDatabase === undefined) {
+                return;
             }
+
+            shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
+            // Polyfill ALL of IndexedDB, using WebSQL
+            shim('indexedDB', shimIndexedDB, {
+                enumerable: true,
+                configurable: true,
+                get () {
+                    if (this !== IDB && !isNullish(this) && !this.shimNS) { // Latter is hack for test environment
+                        throw new TypeError('Illegal invocation');
+                    }
+                    return shimIndexedDB;
+                }
+            });
+            /** @type {[string, unknown][]} */
+            ([
+                ['IDBFactory', shimIDBFactory],
+                ['IDBDatabase', shimIDBDatabase],
+                ['IDBObjectStore', shimIDBObjectStore],
+                ['IDBIndex', shimIDBIndex],
+                ['IDBTransaction', shimIDBTransaction],
+                ['IDBCursor', shimIDBCursor],
+                ['IDBCursorWithValue', shimIDBCursorWithValue],
+                ['IDBRecord', shimIDBRecord],
+                ['IDBKeyRange', shimIDBKeyRange],
+                ['IDBRequest', shimIDBRequest],
+                ['IDBOpenDBRequest', shimIDBOpenDBRequest],
+                ['IDBVersionChangeEvent', shimIDBVersionChangeEvent]
+            ]).forEach(([prop, obj]) => {
+                shim(prop, obj, {
+                    enumerable: false,
+                    configurable: true
+                });
+            });
+            // For Node environments
+            if (CFG.fs) {
+                setFS(CFG.fs);
+            }
+            if (CFG.fullIDLSupport) {
+                // Slow per MDN so off by default! Though apparently needed for WebIDL: https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+
+                Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
+                Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
+
+                Object.setPrototypeOf(shimIDBDatabase, ShimEventTarget);
+                Object.setPrototypeOf(shimIDBRequest, ShimEventTarget);
+                Object.setPrototypeOf(shimIDBTransaction, ShimEventTarget);
+                Object.setPrototypeOf(shimIDBVersionChangeEvent, ShimEvent);
+                // `ShimDOMException` is the real native `DOMException` when one
+                //   is available (see `DOMException.js`'s `useNativeDOMException`)
+                //   -- which, unlike the shim classes above, is a single,
+                //   process-wide singleton shared by reference across every
+                //   sandbox this library gets installed into (see
+                //   `node-idb-test.js`'s `sandboxObj`). A native `DOMException`
+                //   already has the correct prototype chain out of the box
+                //   (`Object.getPrototypeOf(DOMException) === Function.prototype`,
+                //   not `Error`), so forcing it here isn't just unneeded but
+                //   actively wrong -- and, because it's shared, permanently
+                //   wrong for every later use of `DOMException` in the same
+                //   process (e.g. a later WPT test file's own idlharness-style
+                //   check that `DOMException` does *not* inherit from `Error`
+                //   on the class side), not just this one shim install.
+                if (typeof DOMException === 'undefined' || ShimDOMException !== DOMException) {
+                    Object.setPrototypeOf(ShimDOMException, Error);
+                    Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
+                }
+            }
+            if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
+                if (CFG.addNonIDBGlobals) {
+                    // As `DOMStringList` exists per IDL (and Chrome) in the global
+                    //   thread (but not in workers), we prefix the name to avoid
+                    //   shadowing or conflicts
+                    setNonIDBGlobals('Shim');
+                }
+                if (CFG.replaceNonIDBGlobals) {
+                    setNonIDBGlobals();
+                }
+            }
+            /* c8 ignore start -- TS guard */
+            if (!IDB.shimIndexedDB) {
+                return;
+            }
+            /* c8 ignore stop -- TS guard */
+            IDB.shimIndexedDB.__setConnectionQueueOrigin();
         };
 
         IDB.shimIndexedDB.__debug = /** @type {(val: boolean) => void} */ (function (val) {

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.5 - 9/17/2026 */
+/*! indexeddbshim - v19.0.5 - 9/20/2026 */
 
 'use strict';
 
@@ -1582,10 +1582,7 @@ function escapeUnmatchedSurrogates(arg) {
   return arg.replaceAll(/([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/gu, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
     // Could add a corresponding surrogate for compatibility with `node-sqlite3`: https://bugs.python.org/issue12569 and https://stackoverflow.com/a/6701665/271577
     //   but Chrome having problems
-    if (unmatchedHighSurrogate) {
-      return '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0');
-    }
-    return (precedingLow || '') + '^3' + unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
+    return unmatchedHighSurrogate ? '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0') : (precedingLow || '') + '^3' + unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
   });
 }
 
@@ -2424,8 +2421,10 @@ function createNonNativeDOMExceptionClass() {
        */
       get() {
         if (!(this instanceof DOMException ||
+        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
         // @ts-ignore Just checking; needed under some TS versions
         this instanceof DummyDOMException ||
+        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
         // @ts-ignore Just checking; needed under some TS versions
         this instanceof Error)) {
           throw new TypeError('Illegal invocation');
@@ -2484,6 +2483,7 @@ function createNonNativeDOMExceptionClass() {
     value: DOMException
   });
 
+  // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
   // @ts-ignore We don't need all its properties; needed under some TS versions
   return DOMException;
 }
@@ -2496,6 +2496,7 @@ const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
  * @returns {Error}
  */
 function createNonNativeDOMException(name, message) {
+  // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
   // @ts-ignore It's ok; needed under some TS versions
   return new ShimNonNativeDOMException(message, name);
 }
@@ -2693,8 +2694,10 @@ function IDBRequest() {
  * @this {IDBRequestFull}
  */
 IDBRequest.__super = function IDBRequest() {
+  // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
   // @ts-ignore It's ok
   this[Symbol.toStringTag] = 'IDBRequest';
+  // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
   // @ts-ignore Part of `ShimEventTarget`
   this.__setOptions({
     legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
@@ -2755,10 +2758,7 @@ IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
  * @returns {import('./IDBTransaction.js').IDBTransactionFull|null|undefined}
  */
 IDBRequest.prototype.__getParent = function () {
-  if (this.toString() === '[object IDBOpenDBRequest]') {
-    return null;
-  }
-  return this.__transaction;
+  return this.toString() === '[object IDBOpenDBRequest]' ? null : this.__transaction;
 };
 
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
@@ -2817,8 +2817,10 @@ IDBOpenDBRequest.__createInstance = function () {
   function IDBOpenDBRequest() {
     IDBRequest.__super.call(this);
 
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore It's ok
     this[Symbol.toStringTag] = 'IDBOpenDBRequest';
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore It's ok
     this.__setOptions({
       legacyOutputDidListenersThrowFlag: true,
@@ -3799,12 +3801,9 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
       {
         const date = /** @type {Date} */input;
         if (!Number.isNaN(date.getTime())) {
-          return fullKeys ? {
+          return {
             type,
-            value: date.getTime()
-          } : {
-            type,
-            value: new Date(date)
+            value: fullKeys ? date.getTime() : new Date(date)
           };
         }
         return {
@@ -3892,10 +3891,7 @@ function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry,
   if (r.failure) {
     return r;
   }
-  if (!multiEntry) {
-    return convertValueToKeyValueDecoded(r.value, null, false, fullKeys);
-  }
-  return convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
+  return !multiEntry ? convertValueToKeyValueDecoded(r.value, null, false, fullKeys) : convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
 }
 
 /**
@@ -4067,10 +4063,7 @@ function isKeyInRange(key, range, checkCached) {
  */
 function isMultiEntryMatch(encodedEntry, encodedKey) {
   const keyType = encodedCharToKeyType[encodedKey.slice(0, 1)];
-  if (keyType === 'array') {
-    return encodedKey.indexOf(encodedEntry) > 1;
-  }
-  return encodedKey === encodedEntry;
+  return keyType === 'array' ? encodedKey.indexOf(encodedEntry) > 1 : encodedKey === encodedEntry;
 }
 
 /**
@@ -4181,10 +4174,7 @@ function encode$1(key, inArray) {
  * @returns {undefined|ValueType}
  */
 function decode$1(key, inArray) {
-  if (typeof key !== 'string') {
-    return undefined;
-  }
-  return types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
+  return typeof key !== 'string' ? undefined : types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
 }
 
 /**
@@ -4596,10 +4586,11 @@ function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, c
   if (hasLower && hasUpper) {
     sql.push('AND');
   }
-  if (hasUpper) {
-    sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
-    sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedUpperKey));
+  if (!hasUpper) {
+    return;
   }
+  sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
+  sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedUpperKey));
 }
 
 /**
@@ -4612,10 +4603,7 @@ function convertValueToKeyRange(value, nullDisallowed) {
   if (instanceOf(value, IDBKeyRange)) {
     // We still need to validate IDBKeyRange-like objects (the above check is based on loose duck-typing)
     const range = /** @type {IDBKeyRangeFull} */value;
-    if (range.toString() !== '[object IDBKeyRange]') {
-      return IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-    }
-    return range;
+    return range.toString() !== '[object IDBKeyRange]' ? IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen) : range;
   }
   if (isNullish(value)) {
     if (nullDisallowed) {
@@ -4860,6 +4848,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
       this._length = 0;
     };
     DOMStringList.prototype = DOMStringListAlias.prototype;
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore It's ok; needed under some TS versions
     return /** @type {DOMStringListFull} */new DOMStringList();
   }
@@ -5333,16 +5322,17 @@ IDBTransaction.prototype.__executeRequests = function () {
       q.req.dispatchEvent(e);
       // Do not set __active or __handlerActive flags to false yet --
       //   see the matching comment in `success`, above.
-      if (e.__legacyOutputDidListenersThrowError) {
-        logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
-        e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
-        if (me.__committed) {
-          // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
-          runContinuationSafely(advanceAfterDispatch);
-          return;
-        }
-        me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
+      if (!e.__legacyOutputDidListenersThrowError) {
+        return;
       }
+      logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+      e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
+      if (me.__committed) {
+        // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
+        runContinuationSafely(advanceAfterDispatch);
+        return;
+      }
+      me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
     }
 
     /**
@@ -5505,10 +5495,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         return;
       }
       keepAliveAndWait(() => {
-        if (me.__errored || me.__requestsFinished) {
-          return;
-        }
-        if (!prepareNextRequest()) {
+        if (me.__errored || me.__requestsFinished || !prepareNextRequest()) {
           return;
         }
         launchQueuedOp();
@@ -5535,10 +5522,11 @@ IDBTransaction.prototype.__executeRequests = function () {
       me.__transactionFinished = true;
       return;
     }
-    if (me.__transactionEndCallback && !me.__completed && !me.__transFinishedCbFired) {
-      me.__transFinishedCbFired = true;
-      me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
+    if (!me.__transactionEndCallback || me.__completed || me.__transFinishedCbFired) {
+      return;
     }
+    me.__transFinishedCbFired = true;
+    me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
   }, function (currentTask, err, done, rollback, commit) {
     if (err) {
       return true;
@@ -6952,7 +6940,7 @@ const w = {
         const t = e.getTime();
         return Number.isNaN(t) ? "NaN" : t;
       },
-      revive: e => "NaN" === e ? new Date(NaN) : new Date(e)
+      revive: e => new Date("NaN" === e ? NaN : e)
     }
   },
   T = {
@@ -7651,10 +7639,7 @@ const customFileList = origFileList ? {
    * @returns {boolean}
    */
   test(x, state) {
-    if (typeof FileList !== 'undefined') {
-      return x instanceof FileList;
-    }
-    return typeof origTest === 'function' ? origTest(x, state) : false;
+    return typeof FileList !== 'undefined' ? x instanceof FileList : typeof origTest === 'function' && origTest(x, state);
   },
   /**
    * @param {unknown} x
@@ -7922,6 +7907,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
           storeHandle.__indexHandles[newName] = oldIndexHandle; // Ensure new reference accessible
           me.__pendingName = oldName;
           const colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat(
+          // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
           // @ts-ignore Has numeric indexes instead of iterator; needed under some TS versions
           [...objectStore.indexNames].filter(indexName => indexName !== newName).map(indexName => [escapeIndexNameForSQL(indexName), 'BLOB']));
           me.__renameIndex(objectStore, oldName, newName, colInfoToPreserveArr, function (tx, success) {
@@ -8589,11 +8575,12 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
             record = row;
           }
         }
-        if (record) {
-          records.push(decode$2(record));
-          if (unboundedDisallowed) {
-            break;
-          }
+        if (!record) {
+          continue;
+        }
+        records.push(decode$2(record));
+        if (unboundedDisallowed) {
+          break;
         }
       }
     } else {
@@ -9375,6 +9362,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
   me.transaction.__assertWritable();
   const request = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__createRequest(me);
   const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
+  // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
   // @ts-ignore -- Private API
   IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, true, ky);
   return request;
@@ -9403,6 +9391,7 @@ IDBObjectStore.prototype.put = function (value /* , key */) {
   me.transaction.__assertWritable();
   const request = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__createRequest(me);
   const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
+  // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
   // @ts-ignore -- Private API
   IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, false, ky);
   return request;
@@ -10186,13 +10175,15 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     // eslint-disable-next-line camelcase -- Clear API
     trans.on__abort = function () {
       ct++;
-      if (ct === me.__transactions.length) {
-        // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
-        const evt = createEvent('close');
-        setTimeout(() => {
-          me.dispatchEvent(evt);
-        }, 0);
+      if (ct !== me.__transactions.length) {
+        return;
       }
+
+      // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
+      const evt = createEvent('close');
+      setTimeout(() => {
+        me.dispatchEvent(evt);
+      }, 0);
     };
     trans.__abortTransaction(createDOMException('AbortError', 'The connection was force-closed: ' + (msg || '')));
   });
@@ -10357,6 +10348,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         return undefined;
       }
       const e = /** @type {Event & IDBVersionChangeEvent} */
+      // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
       // @ts-ignore It's ok; needed under some TS versions
       new IDBVersionChangeEvent('versionchange', {
         oldVersion,
@@ -10404,6 +10396,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         }
       };
       const e = /** @type {Event & IDBVersionChangeEvent} */
+      // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
       // @ts-ignore It's ok; needed under some TS versions
       new IDBVersionChangeEvent('blocked', {
         oldVersion,
@@ -10880,6 +10873,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
              */
             function versionSet() {
               const e = /** @type {import('eventtargeter').EventWithProps & Event & IDBVersionChangeEvent} */
+              // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
               // @ts-ignore It's ok; needed under some TS versions
               new IDBVersionChangeEvent('upgradeneeded', {
                 oldVersion,
@@ -11260,6 +11254,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         req.__result = undefined;
         req.__done = true;
         const e = /** @type {Event & IDBVersionChangeEvent} */
+        // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
         // @ts-ignore It's ok; needed under some TS versions
         new IDBVersionChangeEvent('success', {
           oldVersion: version,
@@ -11535,6 +11530,7 @@ IDBRecord.__createInstance = function (key, primaryKey, value) {
    * @this {IDBRecordFull}
    */
   function IDBRecord() {
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore Should be ok
     this[Symbol.toStringTag] = 'IDBRecord';
     this.__key = key;
@@ -11575,6 +11571,7 @@ readonlyProperties.forEach(prop => {
       if (!(this instanceof IDBRecordAlias)) {
         throw new TypeError('Illegal invocation');
       }
+      // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
       // @ts-ignore `this` is a real instance past the check above (not an issue in TS7)
       return this['__' + prop];
     }
@@ -12227,6 +12224,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
  * @returns {void}
  */
 IDBCursor.prototype.__invalidateCache = function () {
+  // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
   // @ts-ignore Why is this not being found?; needed under some TS versions
   this.__prefetchedData = null;
   this.__multiEntryExhausted = false;
@@ -12500,6 +12498,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     //   continuation logic in `__findBasic` to see this update's
     //   effect on ordering (see "Modify records during cursor
     //   iteration" in idbcursor_update_index.any.js).
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore -- API (not erring in TS 6)
     IDBObjectStore.__storingRecordObjectStore(request, me.__store, true, clonedValue, false, key);
   }
@@ -13054,77 +13053,78 @@ function setGlobalVars(idb, initialConfig) {
         });
       }
       const shimIDBFactory = IDBFactory;
-      if (CFG.win.openDatabase !== undefined) {
-        shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
-        // Polyfill ALL of IndexedDB, using WebSQL
-        shim('indexedDB', shimIndexedDB, {
-          enumerable: true,
-          configurable: true,
-          get() {
-            if (this !== IDB && !isNullish(this) && !this.shimNS) {
-              // Latter is hack for test environment
-              throw new TypeError('Illegal invocation');
-            }
-            return shimIndexedDB;
-          }
-        });
-        /** @type {[string, unknown][]} */
-        [['IDBFactory', shimIDBFactory], ['IDBDatabase', IDBDatabase], ['IDBObjectStore', IDBObjectStore], ['IDBIndex', IDBIndex], ['IDBTransaction', IDBTransaction], ['IDBCursor', IDBCursor], ['IDBCursorWithValue', IDBCursorWithValue], ['IDBRecord', IDBRecord], ['IDBKeyRange', IDBKeyRange], ['IDBRequest', IDBRequest], ['IDBOpenDBRequest', IDBOpenDBRequest], ['IDBVersionChangeEvent', IDBVersionChangeEvent]].forEach(([prop, obj]) => {
-          shim(prop, obj, {
-            enumerable: false,
-            configurable: true
-          });
-        });
-        // For Node environments
-        if (CFG.fs) {
-          setFS(CFG.fs);
-        }
-        if (CFG.fullIDLSupport) {
-          // Slow per MDN so off by default! Though apparently needed for WebIDL: https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
-
-          Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
-          Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
-          Object.setPrototypeOf(IDBDatabase, EventTarget);
-          Object.setPrototypeOf(IDBRequest, EventTarget);
-          Object.setPrototypeOf(IDBTransaction, EventTarget);
-          Object.setPrototypeOf(IDBVersionChangeEvent, ShimEvent);
-          // `ShimDOMException` is the real native `DOMException` when one
-          //   is available (see `DOMException.js`'s `useNativeDOMException`)
-          //   -- which, unlike the shim classes above, is a single,
-          //   process-wide singleton shared by reference across every
-          //   sandbox this library gets installed into (see
-          //   `node-idb-test.js`'s `sandboxObj`). A native `DOMException`
-          //   already has the correct prototype chain out of the box
-          //   (`Object.getPrototypeOf(DOMException) === Function.prototype`,
-          //   not `Error`), so forcing it here isn't just unneeded but
-          //   actively wrong -- and, because it's shared, permanently
-          //   wrong for every later use of `DOMException` in the same
-          //   process (e.g. a later WPT test file's own idlharness-style
-          //   check that `DOMException` does *not* inherit from `Error`
-          //   on the class side), not just this one shim install.
-          if (typeof DOMException === 'undefined' || ShimDOMException !== DOMException) {
-            Object.setPrototypeOf(ShimDOMException, Error);
-            Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
-          }
-        }
-        if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
-          if (CFG.addNonIDBGlobals) {
-            // As `DOMStringList` exists per IDL (and Chrome) in the global
-            //   thread (but not in workers), we prefix the name to avoid
-            //   shadowing or conflicts
-            setNonIDBGlobals('Shim');
-          }
-          if (CFG.replaceNonIDBGlobals) {
-            setNonIDBGlobals();
-          }
-        }
-        /* c8 ignore start -- TS guard */
-        if (!IDB.shimIndexedDB) {
-          return;
-        }
-        /* c8 ignore stop -- TS guard */
-        IDB.shimIndexedDB.__setConnectionQueueOrigin();
+      if (CFG.win.openDatabase === undefined) {
+        return;
       }
+      shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
+      // Polyfill ALL of IndexedDB, using WebSQL
+      shim('indexedDB', shimIndexedDB, {
+        enumerable: true,
+        configurable: true,
+        get() {
+          if (this !== IDB && !isNullish(this) && !this.shimNS) {
+            // Latter is hack for test environment
+            throw new TypeError('Illegal invocation');
+          }
+          return shimIndexedDB;
+        }
+      });
+      /** @type {[string, unknown][]} */
+      [['IDBFactory', shimIDBFactory], ['IDBDatabase', IDBDatabase], ['IDBObjectStore', IDBObjectStore], ['IDBIndex', IDBIndex], ['IDBTransaction', IDBTransaction], ['IDBCursor', IDBCursor], ['IDBCursorWithValue', IDBCursorWithValue], ['IDBRecord', IDBRecord], ['IDBKeyRange', IDBKeyRange], ['IDBRequest', IDBRequest], ['IDBOpenDBRequest', IDBOpenDBRequest], ['IDBVersionChangeEvent', IDBVersionChangeEvent]].forEach(([prop, obj]) => {
+        shim(prop, obj, {
+          enumerable: false,
+          configurable: true
+        });
+      });
+      // For Node environments
+      if (CFG.fs) {
+        setFS(CFG.fs);
+      }
+      if (CFG.fullIDLSupport) {
+        // Slow per MDN so off by default! Though apparently needed for WebIDL: https://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+
+        Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
+        Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
+        Object.setPrototypeOf(IDBDatabase, EventTarget);
+        Object.setPrototypeOf(IDBRequest, EventTarget);
+        Object.setPrototypeOf(IDBTransaction, EventTarget);
+        Object.setPrototypeOf(IDBVersionChangeEvent, ShimEvent);
+        // `ShimDOMException` is the real native `DOMException` when one
+        //   is available (see `DOMException.js`'s `useNativeDOMException`)
+        //   -- which, unlike the shim classes above, is a single,
+        //   process-wide singleton shared by reference across every
+        //   sandbox this library gets installed into (see
+        //   `node-idb-test.js`'s `sandboxObj`). A native `DOMException`
+        //   already has the correct prototype chain out of the box
+        //   (`Object.getPrototypeOf(DOMException) === Function.prototype`,
+        //   not `Error`), so forcing it here isn't just unneeded but
+        //   actively wrong -- and, because it's shared, permanently
+        //   wrong for every later use of `DOMException` in the same
+        //   process (e.g. a later WPT test file's own idlharness-style
+        //   check that `DOMException` does *not* inherit from `Error`
+        //   on the class side), not just this one shim install.
+        if (typeof DOMException === 'undefined' || ShimDOMException !== DOMException) {
+          Object.setPrototypeOf(ShimDOMException, Error);
+          Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
+        }
+      }
+      if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
+        if (CFG.addNonIDBGlobals) {
+          // As `DOMStringList` exists per IDL (and Chrome) in the global
+          //   thread (but not in workers), we prefix the name to avoid
+          //   shadowing or conflicts
+          setNonIDBGlobals('Shim');
+        }
+        if (CFG.replaceNonIDBGlobals) {
+          setNonIDBGlobals();
+        }
+      }
+      /* c8 ignore start -- TS guard */
+      if (!IDB.shimIndexedDB) {
+        return;
+      }
+      /* c8 ignore stop -- TS guard */
+      IDB.shimIndexedDB.__setConnectionQueueOrigin();
     };
     IDB.shimIndexedDB.__debug = /** @type {(val: boolean) => void} */function (val) {
       CFG.DEBUG = val;
@@ -13232,6 +13232,7 @@ function setGlobalVars(idb, initialConfig) {
  * @returns {SQLiteDatabaseInstance}
  */
 function wrappedSQLiteDatabase(name) {
+  // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
   // @ts-ignore It's ok; needed under some TS versions
   const db = new SQLiteDatabase(name, {});
   if (CFG.sqlBusyTimeout) {

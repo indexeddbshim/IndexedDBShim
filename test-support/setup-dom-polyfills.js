@@ -1,3 +1,4 @@
+/* globals HTMLInputElement -- Imported below */
 // Must be the *first* import wherever it's used (see `node-idb-test.js`) --
 //   before anything that transitively imports `typeson-registry` (e.g.
 //   `src/Sca.js`, pulled in via `indexeddbshim`). Each of typeson-registry's
@@ -11,12 +12,10 @@
 import './define-dummy-html-input.js';
 import {
     DOMMatrix, DOMMatrixReadOnly, DOMPoint, DOMPointReadOnly,
-    DOMRect, DOMRectReadOnly, DOMQuad
+    DOMRect, DOMRectReadOnly, DOMQuad, buildFileList
 } from 'typeson-registry/polyfills';
 
-// Exported separately from /polyfills in typeson-registry because
-//   `FileList` expects HTMLInputElement to be available
-import {FileList} from 'typeson-registry/polyfills/FileList.js';
+const FileList = buildFileList(HTMLInputElement);
 
 Object.assign(globalThis, {
     DOMMatrix, DOMMatrixReadOnly, DOMPoint, DOMPointReadOnly,

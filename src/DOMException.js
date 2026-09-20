@@ -178,8 +178,10 @@ function createNonNativeDOMExceptionClass () {
              */
             get () {
                 if (!(this instanceof DOMException ||
+                    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
                     // @ts-ignore Just checking; needed under some TS versions
                     this instanceof DummyDOMException ||
+                    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
                     // @ts-ignore Just checking; needed under some TS versions
                     this instanceof Error)) {
                     throw new TypeError('Illegal invocation');
@@ -242,6 +244,7 @@ function createNonNativeDOMExceptionClass () {
         value: DOMException
     });
 
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore We don't need all its properties; needed under some TS versions
     return DOMException;
 }
@@ -255,6 +258,7 @@ const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
  * @returns {Error}
  */
 function createNonNativeDOMException (name, message) {
+    // eslint-disable-next-line jsdoc/ts-ban-ts-comment -- TS 6/7
     // @ts-ignore It's ok; needed under some TS versions
     return new ShimNonNativeDOMException(message, name);
 }
