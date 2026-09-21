@@ -1,6 +1,14 @@
 describe('IDBTransaction.objectStore', function () {
     'use strict';
 
+    if (!env.isNative) {
+        it('should throw "Illegal invocation" when called on a non-instance', function () {
+            expect(() => {
+                IDBTransaction.prototype.objectStore.call({}, 'inline');
+            }).to.throw(TypeError, 'Illegal invocation');
+        });
+    }
+
     it('should return an IDBObjectStore', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
