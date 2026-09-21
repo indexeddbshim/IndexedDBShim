@@ -1,4 +1,5 @@
 import * as util from '../src/util.js';
+import CFG from '../src/CFG.js';
 
 describe('unescapeDatabaseNameForSQLAndFiles', () => {
     it('should escape and unescape database name', () => {
@@ -10,6 +11,79 @@ describe('unescapeDatabaseNameForSQLAndFiles', () => {
             escaped
         );
         expect(unescaped).to.equal(name + '.sqlite');
+    });
+});
+
+describe('escapeSQLiteStatement/unescapeSQLiteResponse', () => {
+    // This Node test environment already defaults `escapeNULForSQLiteStatements`
+    //   to `false` (NUL is preserved literally, per better-sqlite3 support),
+    //   so both states are set explicitly here rather than relying on
+    //   whatever the ambient default happens to be.
+    it('should escape and unescape a NUL character when enabled', () => {
+        const original = CFG.escapeNULForSQLiteStatements;
+        try {
+            CFG.escapeNULForSQLiteStatements = true;
+            const value = 'a\0b';
+            const escaped = util.escapeSQLiteStatement(value);
+            expect(escaped).to.equal('a^0b');
+            expect(util.unescapeSQLiteResponse(escaped)).to.equal(value);
+        } finally {
+            CFG.escapeNULForSQLiteStatements = original;
+        }
+    });
+
+    it('should leave NUL untouched when `escapeNULForSQLiteStatements` is `false`', () => {
+        const original = CFG.escapeNULForSQLiteStatements;
+        try {
+            CFG.escapeNULForSQLiteStatements = false;
+            const value = 'a\0b';
+            const escaped = util.escapeSQLiteStatement(value);
+            expect(escaped).to.equal(value);
+            expect(util.unescapeSQLiteResponse(escaped)).to.equal(value);
+        } finally {
+            CFG.escapeNULForSQLiteStatements = original;
+        }
+    });
+});
+
+describe('escapeDatabaseNameForSQLAndFiles config hooks', () => {
+    it('should defer to a custom `escapeDatabaseName`/`unescapeDatabaseName` when configured', () => {
+        const originalEscape = CFG.escapeDatabaseName;
+        const originalUnescape = CFG.unescapeDatabaseName;
+        try {
+            CFG.escapeDatabaseName = (db) => 'CUSTOM_' + db;
+            CFG.unescapeDatabaseName = (db) => db.replace(/^CUSTOM_/v, '');
+            expect(util.escapeDatabaseNameForSQLAndFiles('my-db')).to.equal('CUSTOM_my-db');
+            expect(util.unescapeDatabaseNameForSQLAndFiles('CUSTOM_my-db')).to.equal('my-db');
+        } finally {
+            CFG.escapeDatabaseName = originalEscape;
+            CFG.unescapeDatabaseName = originalUnescape;
+        }
+    });
+
+    it('should throw when the escaped name exceeds `databaseNameLengthLimit`', () => {
+        const original = CFG.databaseNameLengthLimit;
+        try {
+            CFG.databaseNameLengthLimit = 5;
+            expect(() => {
+                util.escapeDatabaseNameForSQLAndFiles('a-fairly-long-database-name');
+            }).to.throw(Error, /length limit/v);
+        } finally {
+            CFG.databaseNameLengthLimit = original;
+        }
+    });
+
+    it('should use a custom `databaseCharacterEscapeList` regex when configured', () => {
+        const original = CFG.databaseCharacterEscapeList;
+        try {
+            // Escape lowercase `z` specifically, instead of the default
+            //   control-character/reserved-symbol set.
+            CFG.databaseCharacterEscapeList = 'z';
+            const escaped = util.escapeDatabaseNameForSQLAndFiles('zoo');
+            expect(escaped).to.include('^1');
+        } finally {
+            CFG.databaseCharacterEscapeList = original;
+        }
     });
 });
 
