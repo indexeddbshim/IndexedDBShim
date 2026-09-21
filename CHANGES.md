@@ -2,7 +2,7 @@
 
 ## ?
 
-- chore: update `@node-static/node-static`, typeson-registry, devDeps.; lint
+- chore: update `@node-static/node-static`, typeson-registry, eventargeter, devDeps.; lint
 
 ## 19.0.5
 
