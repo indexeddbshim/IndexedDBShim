@@ -23,6 +23,7 @@ if (typeof process !== 'undefined' && process.env.npm_config_test) { // eslint-d
         'IDBFactory/issue383-standard-driver-spec.js',
         'IDBFactory/forceClose-spec.js',
         'IDBFactory/upgrade-abort-reverts-version-spec.js',
+        'IDBFactory/memoryDatabase-delete-spec.js',
         'IDBDatabase/close-spec.js',
         'IDBDatabase/createObjectStore-spec.js',
         'IDBDatabase/deleteObjectStore-spec.js',

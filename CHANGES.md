@@ -3,6 +3,7 @@
 ## ?
 
 - fix(`__forceClose`): close() was clearing __transactions before __forceClose's abort loop could read it, so it never aborted anything, and a second bug in the same function meant the close event's completion counter also referenced the now-emptied array
+- fix: allow resetting `memoryDatabase` and stop `sysdb` staying pinned to a stale setting
 - chore: update `@node-static/node-static`, typeson-registry, eventargeter, devDeps.; lint
 
 ## 19.0.5

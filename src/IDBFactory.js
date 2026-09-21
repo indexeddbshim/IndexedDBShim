@@ -253,6 +253,13 @@ const pendingVersionChanges = new Map();
 
 /** @type {import('websql-configurable/lib/websql/WebSQLDatabase.js').default} */
 let sysdb;
+// Tracks which `CFG.memoryDatabase` value `sysdb` was opened against, so a
+//   later change to that config (e.g. toggling in-memory mode on and back
+//   off) causes `sysdb` to be recreated for the new setting rather than
+//   staying pinned, forever, to whatever it was the first time any database
+//   was created in the process.
+/** @type {string|null|undefined} */
+let sysdbMemoryDatabaseSetting;
 let nameCounter = 0;
 
 /**
@@ -444,9 +451,10 @@ function createSysDB (__openDatabase, success, failure) {
         failure(er);
     }
 
-    if (sysdb) {
+    if (sysdb && sysdbMemoryDatabaseSetting === CFG.memoryDatabase) {
         success();
     } else {
+        sysdbMemoryDatabaseSetting = CFG.memoryDatabase;
         // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
         sysdb = __openDatabase(
             typeof CFG.memoryDatabase === 'string'

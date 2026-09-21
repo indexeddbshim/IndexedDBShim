@@ -36,7 +36,7 @@
  *   databaseNameLengthLimit: number|false,
  *   escapeNFDForDatabaseNames: boolean,
  *   addSQLiteExtension: boolean,
- *   memoryDatabase: string,
+ *   memoryDatabase: string|null|undefined,
  *   deleteDatabaseFiles: boolean,
  *   databaseBasePath: string,
  *   sysDatabaseBasePath: string,
@@ -191,17 +191,31 @@ const CFG = /** @type {ConfigValues} */ ({});
     [
         'memoryDatabase',
         /**
-         * @param {string} val
+         * `null`/`undefined` are accepted (and left unvalidated against the
+         *   regex below) specifically so this can be reset back to its
+         *   unset/disabled state after being set: unlike other `CFG`
+         *   boolean-ish switches (e.g. `sqlMemoryQuota`, which is checked
+         *   with a falsy `if (CFG.sqlMemoryQuota)`), `memoryDatabase`'s own
+         *   usage sites check `typeof CFG.memoryDatabase === 'string'`, so
+         *   even the empty string counts as "on" (it's a distinct, valid
+         *   in-memory mode of its own -- an unnamed private temporary
+         *   database -- not an "off" state). Without this, once set to any
+         *   string there would be no value passable back through this same
+         *   validator that turns `useMemoryDatabase` false again.
+         * @param {string|null|undefined} val
          * @throws {TypeError}
          * @returns {void}
          */
         (val) => {
+            if (val === null || val === undefined) {
+                return;
+            }
             if (!(/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/u).test(
                 /** @type {string} */ (val)
             )) {
                 throw new TypeError(
-                    '`memoryDatabase` must be the empty string, ":memory:", or a ' +
-                    '"file::memory:[?queryString][#hash] URL".'
+                    '`memoryDatabase` must be `null`/`undefined` (to reset it to disabled), the empty string, ' +
+                    '":memory:", or a "file::memory:[?queryString][#hash] URL".'
                 );
             }
         }

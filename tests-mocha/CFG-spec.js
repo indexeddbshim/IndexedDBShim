@@ -26,5 +26,19 @@ describe('CFG', function () {
         expect(() => {
             CFG.memoryDatabase = 'file::memory:?cache=shared#frag';
         }).to.not.throw();
+
+        // `null`/`undefined` are accepted unconditionally, as an explicit
+        //   way to reset back to the unset/disabled state -- unlike other
+        //   values here, no string round-trips back to "disabled", since
+        //   even the empty string is its own distinct in-memory mode.
+        expect(() => {
+            CFG.memoryDatabase = null;
+        }).to.not.throw();
+        expect(CFG.memoryDatabase).to.equal(null);
+
+        expect(() => {
+            CFG.memoryDatabase = undefined;
+        }).to.not.throw();
+        expect(CFG.memoryDatabase).to.equal(undefined);
     });
 });
