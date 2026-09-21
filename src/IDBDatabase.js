@@ -319,7 +319,6 @@ IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
     }
 };
 
-// Todo __forceClose: Add tests for `__forceClose`
 /**
  *
  * @param {string} msg
@@ -328,28 +327,43 @@ IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
  */
 IDBDatabase.prototype.__forceClose = function (msg) {
     const me = this;
+    // `close()` (below) resets `me.__transactions` to `[]`, so the
+    //   transactions to abort -- and the total count the completion check
+    //   below needs -- must be captured before calling it, not read back off
+    //   `me.__transactions` afterward.
+    const transactions = me.__transactions;
     me.close();
+
+    /**
+     * @returns {void}
+     */
+    function dispatchClose () {
+        // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
+        const evt = createEvent('close');
+        setTimeout(() => {
+            me.dispatchEvent(evt);
+        }, 0);
+    }
+
+    if (!transactions.length) {
+        dispatchClose();
+        return;
+    }
     let ct = 0;
-    me.__transactions.forEach(function (trans) {
+    transactions.forEach(function (trans) {
         // eslint-disable-next-line camelcase -- Clear API
         trans.on__abort = function () {
             ct++;
-            if (ct !== me.__transactions.length) {
+            if (ct !== transactions.length) {
                 return;
             }
-
-            // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
-            const evt = createEvent('close');
-            setTimeout(() => {
-                me.dispatchEvent(evt);
-            }, 0);
+            dispatchClose();
         };
         trans.__abortTransaction(createDOMException(
             'AbortError',
             'The connection was force-closed: ' + (msg || '')
         ));
     });
-    me.__transactions = [];
 };
 /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
 util.defineOuterInterface(IDBDatabase.prototype, listeners);

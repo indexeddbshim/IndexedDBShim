@@ -1293,7 +1293,6 @@ IDBFactory.prototype.databases = function () {
 };
 
 /**
- * @todo forceClose: Test
  * This is provided to facilitate unit-testing of the
  *  closing of a database connection with a forced flag:
  * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
