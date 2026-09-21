@@ -61,6 +61,31 @@ describe('Key.extractKeyFromValueUsingKeyPath', function () {
     });
 });
 
+describe('Key.convertValueToMultiEntryKey', function () {
+    'use strict';
+
+    it('should convert an array to a deduplicated multi-entry key', () => {
+        // Not currently used internally (multi-entry index keys are derived
+        //   via `convertValueToMultiEntryKeyDecoded` instead), but kept as
+        //   part of the module's exported API.
+        const result = Key.convertValueToMultiEntryKey(['a', 'b', 'a']);
+        expect(result.type).to.equal('array');
+        expect(result.value).to.have.lengthOf(2);
+        expect(result.value.map((k) => k.value)).to.deep.equal(['a', 'b']);
+    });
+});
+
+describe('Key.evaluateKeyPathOnValue', function () {
+    'use strict';
+
+    it('should evaluate a key path directly against a value', () => {
+        // Not currently used internally (key extraction goes through
+        //   `extractKeyFromValueUsingKeyPath` instead), but kept as part of
+        //   the module's exported API.
+        expect(Key.evaluateKeyPathOnValue({foo: 'bar'}, 'foo', false)).to.deep.equal({value: 'bar'});
+    });
+});
+
 describe('Key.convertKeyToValue', function () {
     'use strict';
 

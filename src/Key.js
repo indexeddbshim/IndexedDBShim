@@ -613,8 +613,14 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
                     (!fullKeys && keys.every((k) => cmp(
                         /** @type {Key} */ (k), /** @type {Key} */ (key.value)
                     ) !== 0)) ||
+                    // `keys` holds full `{type, value}` objects here (see
+                    //   `safePush` below), so -- like the sibling branch
+                    //   above -- `cmp` (which expects raw `Value`s, not
+                    //   decoded key objects) must compare their `.value`s,
+                    //   not the wrapper objects themselves.
                     (fullKeys && keys.every((k) => cmp(
-                        /** @type {Key} */ (k), /** @type {Key} */ (/** @type {unknown} */ (key))
+                        /** @type {Key} */ (/** @type {KeyValueObject} */ (k).value),
+                        /** @type {Key} */ (key.value)
                     ) !== 0))
                 ) {
                     safePush(keys, fullKeys ? key : key.value);

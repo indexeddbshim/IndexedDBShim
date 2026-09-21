@@ -46,5 +46,43 @@ describe('shimIndexedDB.__setConfig', function () {
                 });
             }
         });
+
+        it('should call through to `Sca.register()` when configuring `registerSCA`', function (done) {
+            this.timeout(20000);
+            // `register()` replaces the module-level `typeson` instance used
+            //   for *all* structured cloning with one built only from
+            //   whatever this callback returns -- dropping `Sca.js`'s own
+            //   `customFileList` merge for the rest of this process. Nothing
+            //   else in this suite clones an actual/duck-typed `FileList`
+            //   through this shared instance (the dedicated `Sca.js` test
+            //   for that uses its own isolated import instead), so this is
+            //   safe, but an identity callback is used regardless to keep
+            //   the change as inert as possible.
+            let called = false;
+            window.shimIndexedDB.__setConfig({
+                registerSCA (preset) {
+                    called = true;
+                    return preset;
+                }
+            });
+            expect(called, 'the registerSCA callback was invoked').to.equal(true);
+
+            // Structured cloning of ordinary values must still work.
+            testHelper.createObjectStores(undefined, (error, [objectStore]) => {
+                if (error) {
+                    done(error);
+                    return;
+                }
+                const addReq = objectStore.add({plain: 'value'}, 1);
+                addReq.onsuccess = function () {
+                    expect(addReq.result).to.equal(1);
+                    objectStore.transaction.db.close();
+                    done();
+                };
+                addReq.onerror = function () {
+                    done(new Error('Could not add data after registerSCA'));
+                };
+            });
+        });
     }
 });
