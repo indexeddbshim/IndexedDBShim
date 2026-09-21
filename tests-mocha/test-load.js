@@ -7,7 +7,7 @@ if (typeof process !== 'undefined' && process.env.npm_config_test) { // eslint-d
     tests = [
         'api-spec.js',
         'util-spec.js',
-        ...(typeof process !== 'undefined' ? ['DOMException-spec.js', 'nodeWebSQL-config-spec.js', 'CFG-spec.js'] : []),
+        ...(typeof process !== 'undefined' ? ['DOMException-spec.js', 'nodeWebSQL-config-spec.js', 'CFG-spec.js', 'Sca-spec.js'] : []),
         'IDBCursor/delete-spec.js',
         'IDBCursor/update-spec.js',
         'IDBFactory/cmp-spec.js',
