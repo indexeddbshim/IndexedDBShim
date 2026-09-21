@@ -176,7 +176,7 @@
     "sync-promise-expanded": "^2.0.0",
     "typeson": "10.3.0",
     "typeson-registry": "15.0.0",
-    "websql-configurable": "^4.0.0"
+    "websql-configurable": "^4.1.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
