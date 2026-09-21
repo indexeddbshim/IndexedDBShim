@@ -12,6 +12,93 @@ describe('unescapeDatabaseNameForSQLAndFiles', () => {
         );
         expect(unescaped).to.equal(name + '.sqlite');
     });
+
+    it('should escape and unescape an NFD-expanding character and a reserved character', () => {
+        // `é` (U+00E9) expands, under NFD normalization, into `e` plus a
+        //   combining acute accent -- exercising the `escapeNFDForDatabaseNames`
+        //   path (`^4` escapes). `:` is one of the reserved/control
+        //   characters in the default `databaseCharacterEscapeList` (`^1`
+        //   escapes). The uppercase `T` and the NUL character exercise
+        //   `escapeNameForSQLiteIdentifier`'s own two escapes (a bare `^`
+        //   before an uppercase letter, and `^0` for NUL).
+        const name = 'Café:Time\0End';
+        const escaped = util.escapeDatabaseNameForSQLAndFiles(name);
+        expect(escaped).to.include('^4').and.to.include('^1').and.to.include('^0');
+
+        const unescaped = util.unescapeDatabaseNameForSQLAndFiles(escaped);
+        expect(unescaped).to.equal(name + '.sqlite');
+    });
+
+    it('should round-trip a name whose literal text already looks like one of the escape sequences', () => {
+        // Each of these substrings, after the leading `^` in it gets doubled
+        //   during escaping, becomes indistinguishable from a real escape
+        //   sequence except by the (now even) number of leading carets --
+        //   exercising the "this was just literal text" branch of each
+        //   escape scheme (NUL, the reserved-character list, NFD expansion,
+        //   uppercase letters, and both surrogate forms).
+        const name = '^1ab^2d800^3dc00^4000065^T';
+        const escaped = util.escapeDatabaseNameForSQLAndFiles(name);
+        const unescaped = util.unescapeDatabaseNameForSQLAndFiles(escaped);
+        expect(unescaped).to.equal(name + '.sqlite');
+    });
+
+    it('should omit the `.sqlite` extension when `addSQLiteExtension` is `false`', () => {
+        const original = CFG.addSQLiteExtension;
+        try {
+            CFG.addSQLiteExtension = false;
+            const escaped = util.escapeDatabaseNameForSQLAndFiles('plain');
+            expect(escaped).to.not.include('.sqlite');
+            expect(util.unescapeDatabaseNameForSQLAndFiles(escaped)).to.equal('plain');
+        } finally {
+            CFG.addSQLiteExtension = original;
+        }
+    });
+
+    it('should throw using the natural (unconfigured) length limit and its default in the message', () => {
+        // `databaseNameLengthLimit` is falsy by default (whether truly
+        //   `undefined` or reset to `0` by some other test), so this name,
+        //   without configuring anything, exercises the same `|| 254`
+        //   fallback used both in the length check and in this message.
+        const veryLongName = 'a'.repeat(300);
+        expect(() => {
+            util.escapeDatabaseNameForSQLAndFiles(veryLongName);
+        }).to.throw(Error, /length limit setting: 254/v);
+    });
+
+    it('should leave an even (already-doubled) run of carets before an escaped uppercase letter or NUL untouched', () => {
+        // Escaping a real name can never itself *produce* an even run of
+        //   carets immediately before one of these markers -- doubling
+        //   existing carets always yields an even count, and then exactly
+        //   one more is added for the marker itself, so the result is
+        //   always odd. An even run only arises from a hand-crafted (or
+        //   otherwise not-escaped-by-this-code) string, so these are
+        //   exercised directly rather than through a round trip.
+        expect(util.unescapeDatabaseNameForSQLAndFiles('D_^^T')).to.equal('^T');
+        expect(util.unescapeDatabaseNameForSQLAndFiles('D_^^0')).to.equal('^0');
+
+        // `unescapeSQLiteResponse` only runs its NUL-unescape regex (where
+        //   this same even/odd distinction applies) when
+        //   `escapeNULForSQLiteStatements` isn't `false` -- this Node
+        //   environment's ambient default -- so it must be enabled
+        //   explicitly here (see the `escapeSQLiteStatement`/
+        //   `unescapeSQLiteResponse` tests below for the same pattern).
+        const original = CFG.escapeNULForSQLiteStatements;
+        try {
+            CFG.escapeNULForSQLiteStatements = true;
+            expect(util.unescapeSQLiteResponse('^^0')).to.equal('^0');
+        } finally {
+            CFG.escapeNULForSQLiteStatements = original;
+        }
+    });
+});
+
+describe('defineListenerProperties', () => {
+    it('should accept a single listener name as a bare string', () => {
+        const obj = {};
+        util.defineListenerProperties(obj, 'onfoo');
+        obj.onfoo = function () { /* noop */ };
+        expect(obj.onfoo).to.be.a('function');
+    });
 });
 
 describe('escapeSQLiteStatement/unescapeSQLiteResponse', () => {

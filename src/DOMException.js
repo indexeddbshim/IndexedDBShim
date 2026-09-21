@@ -11,6 +11,7 @@ function createNativeDOMException (name, message) {
     // eslint-disable-next-line new-cap -- Ok
     return new DOMException.prototype.constructor(
         message,
+        /* c8 ignore next -- Defensive fallback; every call site in this codebase always supplies a `name` */
         name || 'DOMException'
     );
 }
@@ -285,6 +286,7 @@ function logError (name, message, error) {
         ? error.message
         : /** @type {string} */ (error);
 
+    /* c8 ignore next -- Defensive fallback for an environment lacking `console.error` */
     const method = typeof (console.error) === 'function' ? 'error' : 'log';
     console[method](name + ': ' + message + '. ' + (msg || ''));
     if (console.trace) { console.trace(); }

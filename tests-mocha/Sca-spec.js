@@ -1,3 +1,31 @@
+import {clone} from '../src/Sca.js';
+
+describe('Sca FileList cloning without a native/polyfilled `FileList`', function () {
+    'use strict';
+
+    it('should round-trip a duck-typed, empty FileList-like value', function () {
+        // typeson-registry's own `filelist` type (which `Sca.js`'s
+        //   `customFileList` wraps and falls back to whenever `FileList`
+        //   isn't defined, as in this Node mocha environment) identifies a
+        //   FileList purely by `Symbol.toStringTag`, and reconstructs one
+        //   by iterating `.length`/`.item(i)` -- so an *empty* duck-typed
+        //   FileList round-trips with no need for the real per-file
+        //   Blob/File byte-reading machinery this project doesn't wire up
+        //   (see the `revive()`/FileList branch note in past coverage work).
+        const fakeFileList = {
+            [Symbol.toStringTag]: 'FileList',
+            length: 0,
+            item () {
+                return undefined;
+            }
+        };
+
+        const cloned = clone(fakeFileList);
+        expect(Object.prototype.toString.call(cloned)).to.equal('[object FileList]');
+        expect(cloned.length).to.equal(0);
+    });
+});
+
 describe('Sca.register', function () {
     'use strict';
 

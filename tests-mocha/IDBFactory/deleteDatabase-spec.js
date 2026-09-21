@@ -180,6 +180,15 @@ describe('IDBFactory.deleteDatabase', function () {
                 sinon.assert.notCalled(del.onerror);
 
                 if (++deletedCounter === deletingCounter) {
+                    // Reset back to the natural (unset) default -- this is a
+                    //   shared, process-wide setting, and every later test
+                    //   creating a database goes through this same length
+                    //   check. `false` would disable the check entirely
+                    //   rather than restoring its normal 254-character
+                    //   fallback, so `undefined` is used instead.
+                    if (window.shimIndexedDB) {
+                        window.shimIndexedDB.__setConfig({databaseNameLengthLimit: undefined});
+                    }
                     done();
                 }
             };

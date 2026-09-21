@@ -28,9 +28,11 @@ if (Object.defineProperty) {
         if (testObject.test) {
             cleanInterface = true;
         }
+    /* c8 ignore start -- Defensive fallback for an engine with a broken `Object.defineProperty` */
     } catch (err) {
     // Object.defineProperty does not work as intended.
     }
+    /* c8 ignore stop -- Defensive fallback for an engine with a broken `Object.defineProperty` */
 }
 
 /**

@@ -518,9 +518,11 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
 
     IDBIndex.__invalidStateIfDeleted(me);
     IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
+    /* c8 ignore start -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
     if (me.objectStore.__deleted) {
         throw createDOMException('InvalidStateError', "This index's object store has been deleted");
     }
+    /* c8 ignore stop -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
     IDBTransaction.__assertActive(me.objectStore.transaction);
 
     if (nullDisallowed && util.isNullish(range)) {

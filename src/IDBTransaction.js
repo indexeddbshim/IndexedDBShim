@@ -359,9 +359,11 @@ IDBTransaction.prototype.__executeRequests = function () {
                 if (req) {
                     q.req = req; // Need to do this in case of cursors
                 }
-                if (!q.req) { // TS guard
+                /* c8 ignore start -- TS guard */
+                if (!q.req) {
                     return;
                 }
+                /* c8 ignore stop -- TS guard */
                 if (q.req.__done) { // Avoid continuing with aborted requests
                     return;
                 }
@@ -432,9 +434,11 @@ IDBTransaction.prototype.__executeRequests = function () {
                     }
                 );
                 q.req.addDefaultEventListener('error', function () {
-                    if (!q.req) { // TS guard
+                    /* c8 ignore start -- TS guard */
+                    if (!q.req) {
                         return;
                     }
+                    /* c8 ignore stop -- TS guard */
                     me.__abortTransaction(q.req.__error);
                 });
 
@@ -980,9 +984,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             //  behaves first-in-first-out with the same timeout so we could
             //  just use a `forEach`.
             return promises.then(function () {
-                if (!q.req) { // TS guard
+                /* c8 ignore start -- TS guard */
+                if (!q.req) {
                     throw new Error('Missing request');
                 }
+                /* c8 ignore stop -- TS guard */
                 q.req.__done = true;
                 q.req.__result = undefined;
                 q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
@@ -991,9 +997,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                     /** @type {(resolve: (value?: unknown) => void) => void} */
                     (resolve) => {
                         setTimeout(() => {
-                            if (!q.req) { // TS guard
+                            /* c8 ignore start -- TS guard */
+                            if (!q.req) {
                                 throw new Error('Missing request');
                             }
+                            /* c8 ignore stop -- TS guard */
                             q.req.dispatchEvent(reqEvt); // No need to catch errors
                             resolve();
                         }, 0);

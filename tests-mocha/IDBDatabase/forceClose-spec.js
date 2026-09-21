@@ -50,5 +50,66 @@ describe('IDBDatabase.__forceClose', function () {
                 };
             });
         });
+
+        it('should wait for every active transaction to abort before dispatching `close`', function (done) {
+            this.timeout(20000);
+            // An isolated, uniquely-named database (rather than the shared
+            //   `DB.NAME` `testHelper.createObjectStores` uses) so nothing
+            //   here can leak a connection that blocks a later, unrelated
+            //   test sharing that name.
+            util.createDatabase('out-of-line', 'out-of-line-compound', function (err, db) {
+                if (err) {
+                    done(err);
+                    return;
+                }
+                // Both schema items are plain out-of-line-keyed stores (the
+                //   `-compound` suffix only affects how a *caller* might
+                //   choose to key it, not how the store itself is created),
+                //   so both transactions below do symmetric work and finish
+                //   at comparable speed -- no assumption about which is
+                //   "faster" is needed.
+                const tx1 = db.transaction('out-of-line', 'readwrite');
+                const store1 = tx1.objectStore('out-of-line');
+                const tx2 = db.transaction('out-of-line-compound', 'readwrite');
+                const store2 = tx2.objectStore('out-of-line-compound');
+
+                let tx1Aborted = false;
+                let tx2Aborted = false;
+                let closeFired = false;
+
+                tx1.onabort = function () {
+                    tx1Aborted = true;
+                    expect(closeFired, '`close` should not fire before this abort').to.equal(false);
+                };
+                tx2.onabort = function () {
+                    tx2Aborted = true;
+                    expect(closeFired, '`close` should not fire before this abort').to.equal(false);
+                };
+
+                db.onclose = function () {
+                    closeFired = true;
+                    expect(tx1Aborted, 'tx1 aborted before `close`').to.equal(true);
+                    expect(tx2Aborted, 'tx2 aborted before `close`').to.equal(true);
+                    done();
+                };
+
+                const req1 = store1.add(sample.obj(), sample.integer());
+                const req2 = store2.add(sample.obj(), sample.integer());
+                req1.onerror = function (event) { event.preventDefault(); };
+                req2.onerror = function (event) { event.preventDefault(); };
+
+                // `readwrite` transactions on the same database are
+                //   serialized by SQLite's own write-locking even across
+                //   different stores, so waiting for either one's request to
+                //   succeed before force closing risks the *other* having
+                //   already finished entirely in the meantime (whichever
+                //   gets scheduled second could otherwise not even have
+                //   started). Calling `__forceClose` synchronously, in the
+                //   same tick as issuing both requests -- before either's
+                //   SQL has had a chance to run at all -- avoids relying on
+                //   any assumption about their relative scheduling.
+                env.indexedDB.__forceClose(db.name);
+            });
+        });
     }
 });

@@ -15,14 +15,17 @@ const specSet = structuredCloningForStorage
 
 const origFileList = specSet && !Array.isArray(specSet) && 'filelist' in specSet
     ? specSet.filelist
+    /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist` preset entry ever goes missing */
     : undefined;
 
 const origTest = origFileList && typeof origFileList === 'object' && 'test' in origFileList && typeof origFileList.test === 'function'
     ? origFileList.test
+    /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist.test` ever goes missing */
     : undefined;
 
 const origRevive = origFileList && typeof origFileList === 'object' && 'revive' in origFileList && typeof origFileList.revive === 'function'
     ? origFileList.revive
+    /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist.revive` ever goes missing */
     : undefined;
 
 const customFileList = origFileList
@@ -47,13 +50,16 @@ const customFileList = origFileList
             if (typeof FileList !== 'undefined') {
                 return Reflect.construct(FileList, [x]);
             }
+            /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist.revive` ever goes missing */
             return typeof origRevive === 'function' ? origRevive(x, state) : undefined;
         }
     }
+    /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist` preset entry ever goes missing */
     : undefined;
 
 let typeson = new Typeson().register([
     structuredCloningForStorage,
+    /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist` preset entry ever goes missing */
     customFileList ? {filelist: customFileList} : {}
 ]);
 
