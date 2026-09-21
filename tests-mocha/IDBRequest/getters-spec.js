@@ -12,8 +12,10 @@ describe('IDBRequest', function () {
             }
             const req = objectStore.get(sample.integer());
             expect(req.readyState, 'readyState while pending').to.equal('pending');
-            expect(() => req.result, '`result` while pending').to.throw(/still pending/v);
-            expect(() => req.error, '`error` while pending').to.throw(/still pending/v);
+            if (!env.isNative) {
+                expect(() => req.result, '`result` while pending').to.throw(/still pending/v);
+                expect(() => req.error, '`error` while pending').to.throw(/still pending/v)
+            }
             req.onsuccess = req.onerror = function () {
                 expect(req.readyState, 'readyState once done').to.equal('done');
                 objectStore.transaction.db.close();
