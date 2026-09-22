@@ -12798,6 +12798,7 @@
         success(undefined, undefined, undefined);
       }
     }, function (tx, err) {
+      /* c8 ignore next -- debug */
       if (CFG.DEBUG) {
         console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
       }
@@ -12954,15 +12955,15 @@
           }
         }
         if (rows.length === 0) {
+          /* c8 ignore next 5 -- debug */
           if (me.__multiEntryExhausted) {
-            /* c8 ignore next -- debug */
             if (CFG.DEBUG) {
               console.log('[multiEntry] Reached end of multiEntry cursor (last batch had no matches)');
             }
             success(undefined, undefined, undefined);
             return;
           }
-          /* c8 ignore next -- debug */
+          /* c8 ignore next 2 -- debug */
           if (CFG.DEBUG) {
             console.log('[multiEntry] batch had no matches; fetching next batch');
           }
@@ -12983,6 +12984,7 @@
           if (a.key > b.key) {
             return me.direction === 'prev' ? -1 : 1;
           }
+          /* c8 ignore next -- unreachable (identical primary keys) */
           return 0;
         });
         me.__prefetchedIndex = 0;
@@ -12998,13 +13000,13 @@
             return this.data[index];
           }
         };
-        /* c8 ignore next -- debug */
+        /* c8 ignore next 2 -- debug */
         if (CFG.DEBUG) {
           console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
         }
         me.__decode(rows[0], success);
       }, function (tx, err) {
-        /* c8 ignore next -- debug */
+        /* c8 ignore next 4 -- debug / sqlite error */
         if (CFG.DEBUG) {
           console.log('[multiEntry] Could not execute Cursor.continue', sqlStr, sqlValues);
         }
@@ -13144,7 +13146,7 @@
       convertValueToKeyRethrowingAndIfInvalid(key);
       var cmpResult = cmp(key, me.key);
       if (cmpResult === 0 || me.direction.includes('next') && cmpResult === -1 || me.direction.includes('prev') && cmpResult === 1) {
-        throw createDOMException('DataError', 'Cannot ' + (advanceState ? 'advance' : 'continue') + ' the cursor in an unexpected direction');
+        throw createDOMException('DataError', 'Cannot continue the cursor in an unexpected direction');
       }
     }
     this.__continueFinish(key, undefined, advanceState);
@@ -13451,11 +13453,12 @@
             // We don't invalidate the cache (as we don't access it anymore
             //    and it will set the index off)
             success(undefined);
+            /* c8 ignore next 4 -- edge case */
           } else {
             // @ts-expect-error Apparently ok
-            /* c8 ignore next 2 -- edge case */
             error('No rows with key found' + key);
           }
+          /* c8 ignore next 4 -- sqlite error */
         }, function (tx, data) {
           error(data);
           return false;

@@ -36,6 +36,10 @@ D_db.sqlite*
 D_test*
 D_db*
 D_http*
+D_c^*
+D_cont*
+D_delete-*
+D_update-*
 
 coverage
 xunit.xml
