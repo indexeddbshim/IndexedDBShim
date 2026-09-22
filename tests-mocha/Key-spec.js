@@ -109,3 +109,85 @@ describe('Key.convertKeyToValue', function () {
         }).to.throw(Error, 'Bad key');
     });
 });
+
+describe('Key additional coverage', function () {
+    'use strict';
+
+    it('should throw "Invalid number." for badly formatted number keys in decode', function () {
+        expect(() => {
+            const numberPrefix = String.fromCodePoint(200) + '-';
+            Key.decode(numberPrefix + '9000000000000', false);
+        }).to.throw(Error, 'Invalid number.');
+    });
+
+    it('should throw when buffer is undefined', function () {
+        const originalIsView = ArrayBuffer.isView;
+        ArrayBuffer.isView = () => true;
+        try {
+            expect(() => {
+                Key.encode({ byteLength: 1, slice: () => {} });
+            }).to.throw(TypeError, 'Could not copy the bytes held by a buffer source as the buffer was undefined.');
+        } finally {
+            ArrayBuffer.isView = originalIsView;
+        }
+    });
+
+    it('should handle zero rows or error in getCurrentNumber via generateKeyForStore', function (done) {
+        const tx = {
+            executeSql: function (sql, args, success, error) {
+                if (sql.includes('SELECT "currNum"')) {
+                    success(tx, { rows: { length: 0 } });
+                } else if (sql.includes('UPDATE __sys__')) {
+                    success(tx);
+                }
+            }
+        };
+        const store = { __currentName: 'testStore', autoIncrement: true };
+        Key.generateKeyForStore(tx, store, function (err, key) {
+            expect(key).to.equal(1);
+
+            const txErr = {
+                executeSql: function (sql, args, success, error) {
+                    if (sql.includes('SELECT "currNum"')) {
+                        error(txErr, new Error('Simulated select error'));
+                    }
+                }
+            };
+            Key.generateKeyForStore(txErr, store, function () {}, function (err) {
+                expect(err.name).to.equal('DataError');
+                expect(err.message).to.equal('Could not get the auto increment value for key');
+                done();
+            });
+        }, function () {});
+    });
+
+    it('should handle error in assignCurrentNumber', function (done) {
+        const tx = {
+            executeSql: function (sql, args, success, error) {
+                if (sql.includes('UPDATE __sys__')) {
+                    error(tx, new Error('Simulated update error'));
+                }
+            }
+        };
+        const store = { __currentName: 'testStore' };
+        Key.assignCurrentNumber(tx, store, 5, function () {}, function (err) {
+            expect(err.name).to.equal('UnknownError');
+            expect(err.message).to.equal('Could not set the auto increment value for key');
+            done();
+        });
+    });
+    it('should cover isKeyInRange edge cases for null bounds', function () {
+        // Line 866 and 876
+        const match = Key.isKeyInRange(
+            undefined, 
+            { lower: 'defined', upper: 'defined', lowerOpen: false, upperOpen: false, __lowerCached: null, __upperCached: null }, 
+            true
+        );
+        expect(match).to.equal(true); 
+    });
+
+    it('should return undefined when decoding non-string', function () {
+        // Line 999
+        expect(Key.decode(null)).to.equal(undefined);
+    });
+});
