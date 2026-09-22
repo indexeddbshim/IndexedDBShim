@@ -86,3 +86,88 @@ describe('shimIndexedDB.__setConfig', function () {
         });
     }
 });
+import setGlobalVars from '../src/setGlobalVars.js';
+
+describe('setGlobalVars coverage', function () {
+    it('should cover undefined openDatabase in __useShim (lines 217-218)', function () {
+        const idb = {};
+        const cfg = { win: { openDatabase: () => {} } };
+        setGlobalVars(idb, cfg);
+        cfg.win.openDatabase = undefined;
+        idb.shimIndexedDB.__useShim(); // Should return early without throwing
+    });
+
+    it('should cover fullIDLSupport and DOMException prototype manipulation (lines 281-283)', function () {
+        const idb = {};
+        const cfg = { win: { openDatabase: () => {} }, fullIDLSupport: true, fs: {} };
+        const originalDOMException = global.DOMException;
+        global.DOMException = class DOMException {};
+        try {
+            setGlobalVars(idb, cfg);
+            idb.shimIndexedDB.__useShim(); // Should set prototype
+        } finally {
+            global.DOMException = originalDOMException;
+        }
+    });
+
+    it('should cover no-op shim fallback when openDatabase is undefined (lines 324-338)', function () {
+        const idb = {};
+        const cfg = { win: {} };
+        setGlobalVars(idb, cfg);
+        idb.shimIndexedDB.__useShim(); // Should print a console warning
+    });
+
+    it('should cover Android poorIndexedDbSupport (line 359)', function () {
+        const idb = {};
+        const cfg = { win: { openDatabase: () => {} } };
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
+        Object.defineProperty(global, 'navigator', { get: () => ({ userAgent: 'Android 4.1' }), configurable: true });
+        try {
+            setGlobalVars(idb, cfg);
+        } finally {
+            if (originalNavigatorDesc) {
+                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+            } else {
+                delete global.navigator;
+            }
+        }
+    });
+
+    it('should cover iOS 9 poorIndexedDbSupport (line 367)', function () {
+        const idb = {};
+        const cfg = { win: { openDatabase: () => {} } };
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
+        Object.defineProperty(global, 'navigator', { get: () => ({ userAgent: 'iPhone os 9_' }), configurable: true });
+        try {
+            setGlobalVars(idb, cfg);
+        } finally {
+            if (originalNavigatorDesc) {
+                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+            } else {
+                delete global.navigator;
+            }
+        }
+    });
+
+    it('should cover Safari DEFAULT_DB_SIZE logic (line 381)', function () {
+        const idb = {};
+        const cfg = { win: { openDatabase: () => {} } };
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
+        Object.defineProperty(global, 'navigator', { get: () => ({ userAgent: 'Safari' }), configurable: true });
+        try {
+            setGlobalVars(idb, cfg);
+        } finally {
+            if (originalNavigatorDesc) {
+                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+            } else {
+                delete global.navigator;
+            }
+        }
+    });
+
+    it('should cover fallback block when avoidAutoShim is true (lines 393-403)', function () {
+        const idb = {};
+        const cfg = { win: { openDatabase: () => {} }, avoidAutoShim: true };
+        setGlobalVars(idb, cfg);
+    });
+});
