@@ -107,16 +107,16 @@ describe('setGlobalVars coverage', function () {
     it('should cover fullIDLSupport and DOMException prototype manipulation (lines 281-283)', function () {
         const idb = {};
         const cfg = {win: {openDatabase () { /* no-op */ }}, fullIDLSupport: true, fs: {}};
-        const originalDOMException = global.DOMException;
+        const originalDOMException = DOMException;
         /**
          *
          */
-        global.DOMException = class DOMException {};
+        globalThis.DOMException = class DOMException {};
         try {
             setGlobalVars(idb, cfg);
             idb.shimIndexedDB.__useShim(); // Should set prototype
         } finally {
-            global.DOMException = originalDOMException;
+            globalThis.DOMException = originalDOMException;
         }
     });
 
@@ -130,15 +130,15 @@ describe('setGlobalVars coverage', function () {
     it('should cover Android poorIndexedDbSupport (line 359)', function () {
         const idb = {};
         const cfg = {win: {openDatabase () { /* no-op */ }}};
-        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
-        Object.defineProperty(global, 'navigator', {get: () => ({userAgent: 'Android 4.1'}), configurable: true});
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+        Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: 'Android 4.1'}), configurable: true});
         try {
             setGlobalVars(idb, cfg);
         } finally {
             if (originalNavigatorDesc) {
-                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+                Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
             } else {
-                delete global.navigator;
+                delete globalThis.navigator;
             }
         }
     });
@@ -146,15 +146,15 @@ describe('setGlobalVars coverage', function () {
     it('should cover iOS 9 poorIndexedDbSupport (line 367)', function () {
         const idb = {};
         const cfg = {win: {openDatabase () { /* no-op */ }}};
-        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
-        Object.defineProperty(global, 'navigator', {get: () => ({userAgent: 'iPhone os 9_'}), configurable: true});
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+        Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: 'iPhone os 9_'}), configurable: true});
         try {
             setGlobalVars(idb, cfg);
         } finally {
             if (originalNavigatorDesc) {
-                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+                Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
             } else {
-                delete global.navigator;
+                delete globalThis.navigator;
             }
         }
     });
@@ -162,15 +162,15 @@ describe('setGlobalVars coverage', function () {
     it('should cover Safari DEFAULT_DB_SIZE logic (line 381)', function () {
         const idb = {};
         const cfg = {win: {openDatabase () { /* no-op */ }}};
-        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
-        Object.defineProperty(global, 'navigator', {get: () => ({userAgent: 'Safari'}), configurable: true});
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+        Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: 'Safari'}), configurable: true});
         try {
             setGlobalVars(idb, cfg);
         } finally {
             if (originalNavigatorDesc) {
-                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+                Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
             } else {
-                delete global.navigator;
+                delete globalThis.navigator;
             }
         }
     });
@@ -184,15 +184,15 @@ describe('setGlobalVars coverage', function () {
     it('should cover Safari DEFAULT_DB_SIZE logic false branch (line 381)', function () {
         const idb = {};
         const cfg = {win: {openDatabase () { /* no-op */ }}};
-        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
-        Object.defineProperty(global, 'navigator', {get: () => ({userAgent: 'Safari Chrome'}), configurable: true});
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+        Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: 'Safari Chrome'}), configurable: true});
         try {
             setGlobalVars(idb, cfg);
         } finally {
             if (originalNavigatorDesc) {
-                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+                Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
             } else {
-                delete global.navigator;
+                delete globalThis.navigator;
             }
         }
     });
@@ -232,15 +232,15 @@ describe('setGlobalVars coverage', function () {
     it('should cover Safari DEFAULT_DB_SIZE logic false branch empty userAgent (line 381)', function () {
         const idb = {};
         const cfg = {win: {openDatabase () { /* no-op */ }}};
-        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
-        Object.defineProperty(global, 'navigator', {get: () => ({userAgent: ''}), configurable: true});
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+        Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: ''}), configurable: true});
         try {
             setGlobalVars(idb, cfg);
         } finally {
             if (originalNavigatorDesc) {
-                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+                Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
             } else {
-                delete global.navigator;
+                delete globalThis.navigator;
             }
         }
     });
@@ -248,15 +248,15 @@ describe('setGlobalVars coverage', function () {
     it('should cover Safari DEFAULT_DB_SIZE logic false branch no userAgent (line 381)', function () {
         const idb = {};
         const cfg = {win: {openDatabase () { /* no-op */ }}};
-        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
-        Object.defineProperty(global, 'navigator', {get: () => ({}), configurable: true});
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+        Object.defineProperty(globalThis, 'navigator', {get: () => ({}), configurable: true});
         try {
             setGlobalVars(idb, cfg);
         } finally {
             if (originalNavigatorDesc) {
-                Object.defineProperty(global, 'navigator', originalNavigatorDesc);
+                Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
             } else {
-                delete global.navigator;
+                delete globalThis.navigator;
             }
         }
     });
