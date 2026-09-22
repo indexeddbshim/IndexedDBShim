@@ -31,7 +31,7 @@ export type ConfigValues = {
     databaseNameLengthLimit: number | false;
     escapeNFDForDatabaseNames: boolean;
     addSQLiteExtension: boolean;
-    memoryDatabase: string;
+    memoryDatabase: string | null | undefined;
     deleteDatabaseFiles: boolean;
     databaseBasePath: string;
     sysDatabaseBasePath: string;

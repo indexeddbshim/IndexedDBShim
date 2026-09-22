@@ -4,7 +4,9 @@
     "noEmit": false,
     "emitDeclarationOnly": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "outDir": "dist",
+    "rootDir": "src"
   },
   "include": ["src/**/*.js", "typings/shimIndexedDB.d.ts"]
 }

@@ -3,7 +3,7 @@ describe('IDBCursor.continuePrimaryKey', function () {
     if (env.isNative) { return; }
     // eslint-disable-next-line jsdoc/require-jsdoc -- helper
     function createDB (name, upgrade, cb) {
-        const req = indexedDB.open(name, 1);
+        const req = indexedDB.open(name + Date.now() + Math.random(), 1);
         req.onupgradeneeded = function (e) {
             upgrade(e.target.result);
         };
