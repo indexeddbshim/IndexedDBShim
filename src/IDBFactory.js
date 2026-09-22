@@ -447,6 +447,7 @@ function createSysDB (__openDatabase, success, failure) {
      */
     function sysDbCreateError (tx, err) {
         const er = webSQLErrback(/** @type {(Error & {code?: number})} */ (err) || tx);
+        /* c8 ignore next -- debug log */
         if (CFG.DEBUG) { console.log('Error in sysdb transaction - when creating dbVersions', err); }
         failure(er);
     }
@@ -581,6 +582,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
+    /* c8 ignore next 4 -- error case */
     // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
         throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
@@ -1075,6 +1077,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
+    /* c8 ignore next 4 -- error case */
     // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
         throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');

@@ -210,6 +210,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
                                 delete me.__pendingName;
                                 success();
                             });
+                            /* c8 ignore next 4 -- sqlite error */
                         }, function (tx, err) {
                             error(err);
                             return false;
@@ -563,6 +564,7 @@ IDBObjectStore.prototype.__checkIndexConstraints = function (tx, value, excludeK
                 indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry);
                 if (
                     ('invalid' in indexKey && indexKey.invalid) ||
+                    /* c8 ignore next -- unreachable (index evaluation failure) */
                     ('failure' in indexKey && indexKey.failure)
                 ) {
                     throw new Error('Go to catch');
@@ -572,13 +574,14 @@ IDBObjectStore.prototype.__checkIndexConstraints = function (tx, value, excludeK
                 return;
             }
             const indexKeyValue = indexKey.value;
+            /* c8 ignore next 4 -- unreachable (index evaluation undefined) */
             if (indexKeyValue === undefined) {
                 resolve(undefined);
                 return;
             }
             const multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
             const fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
-            executeFetchIndexData(null, ...fetchArgs, tx, null, function success (key) {
+            executeFetchIndexData(...fetchArgs, tx, null, function success (key) {
                 if (key === undefined || (excludeKey !== undefined && cmp(
                     /** @type {import('./Key.js').Key} */ (key), excludeKey
                 ) === 0)) {
@@ -670,6 +673,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
              * @returns {void}
              */
             function setIndexInfo (index) {
+                /* c8 ignore next 3 -- unreachable (index evaluation undefined) */
                 if (indexKeyValue === undefined) {
                     return;
                 }
@@ -680,7 +684,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             if (index.unique) {
                 const multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
                 const fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
-                executeFetchIndexData(null, ...fetchArgs, tx, null, function success (key) {
+                executeFetchIndexData(...fetchArgs, tx, null, function success (key) {
                     if (key === undefined) {
                         setIndexInfo(index);
                         resolve(undefined);
@@ -837,6 +841,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
         if (CFG.DEBUG) { console.log('Did the row with the', key, 'exist?', data.rowsAffected); }
         cb(tx);
+    /* c8 ignore next 4 -- sqlite error */
     }, function (tx, err) {
         error(err);
         return false;
@@ -952,11 +957,13 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
                 ret = getKey
                     ? Key.decode(util.unescapeSQLiteResponse(/** @type {{key: string}} */ (data.rows.item(0)).key), false)
                     : Sca.decode(util.unescapeSQLiteResponse(/** @type {{value: string}} */ (data.rows.item(0)).value));
+            /* c8 ignore next 4 -- sqlite data corruption */
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
                 if (CFG.DEBUG) { console.log(e); }
             }
             success(ret);
+        /* c8 ignore next 4 -- sqlite error */
         }, function (tx, err) {
             error(err);
             return false;
@@ -1061,6 +1068,7 @@ IDBObjectStore.prototype.delete = function (query) {
                 cursor.__invalidateCache(); // Delete
             });
             success();
+        /* c8 ignore next 4 -- sqlite error */
         }, function (tx, err) {
             error(err);
             return false;
@@ -1092,6 +1100,7 @@ IDBObjectStore.prototype.clear = function () {
                 cursor.__invalidateCache(); // Clear
             });
             success();
+        /* c8 ignore next 4 -- sqlite error */
         }, function (tx, err) {
             error(err);
             return false;

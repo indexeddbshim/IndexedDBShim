@@ -276,6 +276,7 @@ IDBIndex.__createIndex = function (store, index) {
         /** @type {{[key: string]: boolean}} */
         let indexValues = {};
 
+        /* c8 ignore next 8 -- sqlite error */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
@@ -420,6 +421,7 @@ IDBIndex.__deleteIndex = function (store, index) {
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         transaction
     ).__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
+        /* c8 ignore next 8 -- sqlite error */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
@@ -506,15 +508,11 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
  * @param {Query} range
  * @param {"value"|"key"|"count"} opType
  * @param {boolean} nullDisallowed
- * @param {number} [count]
  * @this {IDBIndexFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
+IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed) {
     const me = this;
-    if (count !== undefined) {
-        count = util.enforceRange(count, 'unsigned long');
-    }
 
     IDBIndex.__invalidStateIfDeleted(me);
     IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
@@ -534,7 +532,6 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
         me.objectStore.transaction
     ).__addToTransactionQueue(function (...args) {
         executeFetchIndexData(
-            count,
             ...fetchArgs,
             // @ts-expect-error It's ok
             ...args
@@ -677,6 +674,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         store.transaction
     ).__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
+        /* c8 ignore next 8 -- sqlite error */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
@@ -693,6 +691,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                 cb(tx, success);
                 return;
             }
+            /* c8 ignore next 2 -- unreachable */
             success();
         }
         // See https://www.sqlite.org/lang_altertable.html#otheralter
@@ -733,6 +732,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                     sql,
                                     [],
                                     resolve,
+                                    /* c8 ignore next 4 -- sqlite error */
                                     /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
                                         reject(err);
@@ -747,20 +747,24 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 const escapedIndexToRecreate = util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
                                 // Chrome erring here if not dropped first; Node does not
                                 const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
+                                /* c8 ignore next -- debug log */
                                 if (CFG.DEBUG) { console.log(sql); }
                                 tx.executeSql(
                                     sql, [], function () {
                                         const sql = 'CREATE INDEX ' + escapedIndexToRecreate +
                                             ' ON ' + escapedStoreNameSQL + '("key")';
+                                        /* c8 ignore next -- debug log */
                                         if (CFG.DEBUG) { console.log(sql); }
                                         tx.executeSql(
                                             sql, [], resolve,
+                                            /* c8 ignore next 4 -- sqlite error */
                                             /** @type {SqlErrorCallback} */
                                             (function (tx, err) {
                                                 reject(err);
                                             })
                                         );
                                     },
+                                    /* c8 ignore next 4 -- sqlite error */
                                     /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
                                         reject(err);
@@ -807,7 +811,6 @@ Object.defineProperty(IDBIndex, 'prototype', {
 /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 /**
- * @param {number|null} count
  * @param {boolean} unboundedDisallowed
  * @param {IDBIndexFull} index
  * @param {boolean} hasKey
@@ -825,14 +828,11 @@ Object.defineProperty(IDBIndex, 'prototype', {
  * @returns {void}
  */
 function executeFetchIndexData (
-    count, unboundedDisallowed, index, hasKey, range, opType,
+    unboundedDisallowed, index, hasKey, range, opType,
     multiChecks, sql, sqlValues, tx, args, success, error
 ) {
     if (unboundedDisallowed) {
-        count = 1;
-    }
-    if (count) {
-        sql.push('LIMIT', String(count));
+        sql.push('LIMIT', '1');
     }
     const isCount = opType === 'count';
     if (CFG.DEBUG) { console.log('Trying to fetch data for Index', sql.join(' '), sqlValues); }
