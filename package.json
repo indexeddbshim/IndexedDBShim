@@ -45,7 +45,7 @@
     "clean": "run-p clean-sysDB clean-mocha clean-fake clean-mock clean-w3c clean-w3cOld",
     "clean-sysDB": "rimraf --glob __sysdb__*",
     "clean-polyfill": "run-p clean-fake clean-mock clean-w3cOld clean-sysDB",
-    "clean-mocha": "rimraf --glob D_indexeddbshim_test_database_* D_test.sqlite D_delete-* D_update-*",
+    "clean-mocha": "rimraf --glob D_indexeddbshim_test_database_* D_test.sqlite D_delete-* D_update-* D_cont* D_c^*",
     "clean-fake": "rimraf --glob D_test0.*",
     "clean-mock": "rimraf --glob D_test_database*",
     "clean-w3c": "rimraf --glob D_opaque* D_inbox* D_output* D_*_bucket_* D_^D^B2* D_db* D_test* D_about* D_^I^D^B* D_blank* D_database_name* D_idbtransaction* D_x D_x.sqlite D_y D_y.sqlite D_webworker* D_http* && npm run clean-sysDB",

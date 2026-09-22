@@ -12,6 +12,8 @@ if (typeof process !== 'undefined' && process.env.npm_config_test) { // eslint-d
         'setGlobalVars-spec.js',
         ...(typeof process !== 'undefined' ? ['DOMException-spec.js', 'nodeWebSQL-config-spec.js', 'CFG-spec.js', 'Sca-spec.js'] : []),
         'IDBCursor/advance-spec.js',
+        'IDBCursor/continue-spec.js',
+        'IDBCursor/continuePrimaryKey-spec.js',
         'IDBCursor/collectAll-spec.js',
         'IDBCursor/delete-spec.js',
         'IDBCursor/update-spec.js',

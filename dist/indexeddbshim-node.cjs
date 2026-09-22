@@ -12127,12 +12127,14 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
       }
       if (rows.length === 0) {
         if (me.__multiEntryExhausted) {
+          /* c8 ignore next -- debug */
           if (CFG.DEBUG) {
             console.log('[multiEntry] Reached end of multiEntry cursor (last batch had no matches)');
           }
           success(undefined, undefined, undefined);
           return;
         }
+        /* c8 ignore next -- debug */
         if (CFG.DEBUG) {
           console.log('[multiEntry] batch had no matches; fetching next batch');
         }
@@ -12168,11 +12170,13 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
           return this.data[index];
         }
       };
+      /* c8 ignore next -- debug */
       if (CFG.DEBUG) {
         console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
       }
       me.__decode(rows[0], success);
     }, function (tx, err) {
+      /* c8 ignore next -- debug */
       if (CFG.DEBUG) {
         console.log('[multiEntry] Could not execute Cursor.continue', sqlStr, sqlValues);
       }
@@ -12610,6 +12614,7 @@ IDBCursor.prototype.delete = function () {
           success(undefined);
         } else {
           // @ts-expect-error Apparently ok
+          /* c8 ignore next 2 -- edge case */
           error('No rows with key found' + key);
         }
       }, function (tx, data) {
