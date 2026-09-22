@@ -22,7 +22,7 @@ describe('Sca FileList cloning without a native/polyfilled `FileList`', function
 
         const cloned = clone(fakeFileList);
         expect(Object.prototype.toString.call(cloned)).to.equal('[object FileList]');
-        expect(cloned.length).to.equal(0);
+        expect(cloned).to.have.lengthOf(0);
     });
 });
 

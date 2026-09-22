@@ -30,7 +30,7 @@ describe('IDBIndex deleted state', function () {
                 //   browsers use their own standard message for the same
                 //   error, so only check the message text against the shim.
                 if (!env.isNative) {
-                    expect(thrown.message).to.match(/This index has been deleted/);
+                    expect(thrown.message).to.match(/This index has been deleted/v);
                 }
             };
             dbOpenRequest.onsuccess = function () {

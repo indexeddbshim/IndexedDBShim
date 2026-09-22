@@ -34,11 +34,11 @@ describe('CFG', function () {
         expect(() => {
             CFG.memoryDatabase = null;
         }).to.not.throw();
-        expect(CFG.memoryDatabase).to.equal(null);
+        expect(CFG.memoryDatabase).to.be.null;
 
         expect(() => {
             CFG.memoryDatabase = undefined;
         }).to.not.throw();
-        expect(CFG.memoryDatabase).to.equal(undefined);
+        expect(CFG.memoryDatabase).to.be.undefined;
     });
 });

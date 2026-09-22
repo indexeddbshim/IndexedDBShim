@@ -454,6 +454,7 @@ function createSysDB (__openDatabase, success, failure) {
     if (sysdb && sysdbMemoryDatabaseSetting === CFG.memoryDatabase) {
         success();
     } else {
+        // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Needed
         sysdbMemoryDatabaseSetting = CFG.memoryDatabase;
         // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
         sysdb = __openDatabase(
@@ -975,7 +976,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
             db = websqlDBCache[name][version];
         } else {
             db = /** @type {DatabaseFull} */ (me.__openDatabase(
-                useMemoryDatabase ? CFG.memoryDatabase : util.joinPath(CFG.databaseBasePath || '', escapedDatabaseName),
+                useMemoryDatabase
+                    ? /** @type {string} */ (CFG.memoryDatabase)
+                    : util.joinPath(CFG.databaseBasePath || '', escapedDatabaseName),
                 '1',
                 name,
                 CFG.DEFAULT_DB_SIZE
@@ -1303,7 +1306,7 @@ IDBFactory.prototype.databases = function () {
 /**
  * This is provided to facilitate unit-testing of the
  *  closing of a database connection with a forced flag:
- * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+ * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>.
  * @param {string} dbName
  * @param {Integer} connIdx
  * @param {string} msg
