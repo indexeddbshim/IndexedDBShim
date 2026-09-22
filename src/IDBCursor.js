@@ -351,7 +351,6 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        /* c8 ignore next -- debug */
         if (CFG.DEBUG) { console.log('Could not execute Cursor.continue', sqlStr, sqlValues); }
         error(err);
         return false;
@@ -518,12 +517,10 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 
             if (rows.length === 0) {
                 if (me.__multiEntryExhausted) {
-                    /* c8 ignore next -- debug */
                     if (CFG.DEBUG) { console.log('[multiEntry] Reached end of multiEntry cursor (last batch had no matches)'); }
                     success(undefined, undefined, undefined);
                     return;
                 }
-                /* c8 ignore next -- debug */
                 if (CFG.DEBUG) { console.log('[multiEntry] batch had no matches; fetching next batch'); }
                 runQuery();
                 return;
@@ -543,7 +540,6 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 if (a.key > b.key) {
                     return me.direction === 'prev' ? -1 : 1;
                 }
-                /* c8 ignore next -- unreachable (identical primary keys) */
                 return 0;
             });
 
@@ -560,11 +556,9 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                     return this.data[index];
                 }
             };
-            /* c8 ignore next -- debug */
             if (CFG.DEBUG) { console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor'); }
             me.__decode(rows[0], success);
         }, function (tx, err) {
-            /* c8 ignore next 4 -- debug / sqlite error */
             if (CFG.DEBUG) { console.log('[multiEntry] Could not execute Cursor.continue', sqlStr, sqlValues); }
             error(err);
             return false;
@@ -1038,12 +1032,10 @@ IDBCursor.prototype.delete = function () {
                         // We don't invalidate the cache (as we don't access it anymore
                         //    and it will set the index off)
                         success(undefined);
-                    /* c8 ignore next 4 -- edge case */
                     } else {
                         // @ts-expect-error Apparently ok
                         error('No rows with key found' + key);
                     }
-                    /* c8 ignore next 4 -- sqlite error */
                 }, function (tx, data) {
                     error(data);
                     return false;

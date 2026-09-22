@@ -447,7 +447,6 @@ function createSysDB (__openDatabase, success, failure) {
      */
     function sysDbCreateError (tx, err) {
         const er = webSQLErrback(/** @type {(Error & {code?: number})} */ (err) || tx);
-        /* c8 ignore next -- debug log */
         if (CFG.DEBUG) { console.log('Error in sysdb transaction - when creating dbVersions', err); }
         failure(er);
     }
@@ -582,7 +581,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
     // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
-    /* c8 ignore next 4 -- error case */
     // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
         throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
@@ -1077,7 +1075,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
-    /* c8 ignore next 4 -- error case */
     // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
         throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
@@ -1103,7 +1100,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     // Although the spec has no specific conditions where an error
     //  may occur in `deleteDatabase`, it does provide for
     //  `UnknownError` as we may require upon a SQL deletion error
-    /* c8 ignore next 29 -- cannot be reliably mocked without stalling WebSQL queue */
     /**
      *
      * @param {WebSQLTransaction|(Error & {code?: number})|Error} tx
@@ -1188,12 +1184,10 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                 cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError);
                             }, dbError);
                         }, dbError, undefined, function (currentTask, err, done, rollback, commit) {
-                            /* c8 ignore next 3 -- cannot be reliably mocked without stalling WebSQL queue */
                             if (currentTask.readOnly || err) {
                                 return true;
                             }
                             sysdbFinishedCbDelete = function (err, cb) {
-                                /* c8 ignore next 3 -- cannot be reliably mocked */
                                 if (err) {
                                     rollback(err, cb);
                                 } else {
@@ -1263,7 +1257,6 @@ IDBFactory.prototype.databases = function () {
         if (hasNullOrigin()) {
             throw createDOMException('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
         }
-        /* c8 ignore next 15 -- cannot be reliably mocked */
         /**
          *
          * @param {true|WebSQLTransaction|(Error & {code?: number})|DOMException|Error} tx

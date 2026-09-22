@@ -293,11 +293,9 @@ function setGlobalVars (idb, initialConfig) {
                     setNonIDBGlobals();
                 }
             }
-            /* c8 ignore start -- TS guard */
             if (!IDB.shimIndexedDB) {
                 return;
             }
-            /* c8 ignore stop -- TS guard */
             IDB.shimIndexedDB.__setConnectionQueueOrigin();
         };
 
@@ -385,7 +383,6 @@ function setGlobalVars (idb, initialConfig) {
         ) * 1024 * 1024;
     }
 
-    /* c8 ignore next 4 -- coverage bug with logical short-circuits */
     if (!CFG.avoidAutoShim &&
         (!IDB.indexedDB || poorIndexedDbSupport) &&
         CFG.win.openDatabase !== undefined

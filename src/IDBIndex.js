@@ -275,7 +275,6 @@ IDBIndex.__createIndex = function (store, index) {
         /** @type {{[key: string]: boolean}} */
         let indexValues = {};
 
-        /* c8 ignore next 8 -- sqlite error */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
@@ -414,7 +413,6 @@ IDBIndex.__deleteIndex = function (store, index) {
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         transaction
     ).__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
-        /* c8 ignore next 8 -- sqlite error */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
@@ -508,11 +506,9 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed) {
 
     IDBIndex.__invalidStateIfDeleted(me);
     IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
-    /* c8 ignore start -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
     if (me.objectStore.__deleted) {
         throw createDOMException('InvalidStateError', "This index's object store has been deleted");
     }
-    /* c8 ignore stop -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
     IDBTransaction.__assertActive(me.objectStore.transaction);
 
     if (nullDisallowed && util.isNullish(range)) {
@@ -666,7 +662,6 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         store.transaction
     ).__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
-        /* c8 ignore next 8 -- sqlite error */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
@@ -683,7 +678,6 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                 cb(tx, success);
                 return;
             }
-            /* c8 ignore next 2 -- unreachable */
             success();
         }
         if (!CFG.useSQLiteIndexes) {
@@ -724,7 +718,6 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                     sql,
                                     [],
                                     resolve,
-                                    /* c8 ignore next 4 -- sqlite error */
                                     /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
                                         reject(err);
@@ -739,24 +732,20 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 const escapedIndexToRecreate = util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
                                 // Chrome erring here if not dropped first; Node does not
                                 const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
-                                /* c8 ignore next -- debug log */
                                 if (CFG.DEBUG) { console.log(sql); }
                                 tx.executeSql(
                                     sql, [], function () {
                                         const sql = 'CREATE INDEX ' + escapedIndexToRecreate +
                                             ' ON ' + escapedStoreNameSQL + '("key")';
-                                        /* c8 ignore next -- debug log */
                                         if (CFG.DEBUG) { console.log(sql); }
                                         tx.executeSql(
                                             sql, [], resolve,
-                                            /* c8 ignore next 4 -- sqlite error */
                                             /** @type {SqlErrorCallback} */
                                             (function (tx, err) {
                                                 reject(err);
                                             })
                                         );
                                     },
-                                    /* c8 ignore next 4 -- sqlite error */
                                     /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
                                         reject(err);
@@ -767,7 +756,6 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                         SyncPromise.all(indexCreations).then(finish).catch(
                             /** @type {(reason: unknown) => PromiseLike<never>} */
                             (error)
-                        /* c8 ignore next 4 -- cannot be reliably mocked */
                         ).catch((err) => {
                             console.log('Index rename error');
                             throw err;
@@ -891,7 +879,6 @@ function executeFetchIndexData (
                         record = row;
                     }
                 }
-                /* c8 ignore next 3 -- requires difficult to simulate complex SQLite multiEntry LIKE query false-positive */
                 if (!record) {
                     continue;
                 }
