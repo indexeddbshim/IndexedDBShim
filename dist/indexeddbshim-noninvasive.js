@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.5 - 9/22/2026 */
+/*! indexeddbshim - v19.0.6 - 9/22/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -5616,6 +5616,7 @@
   IDBTransaction.prototype.__executeRequests = function () {
     var me = this;
     if (me.__running) {
+      /* c8 ignore next -- debug log */
       if (CFG.DEBUG) {
         console.log('Looks like the request set is already running', me.mode);
       }
@@ -5677,6 +5678,7 @@
             cb();
             return false; // Don't roll back the transaction over a keep-alive no-op
           });
+          /* c8 ignore next 6 -- error case */
         } catch (err) {
           // The driver has already finalized the transaction (or otherwise
           //   rejected the call) -- nothing left to hold open. We explicitly
@@ -6055,6 +6057,7 @@
        */
       function complete() {
         me.__completed = true;
+        /* c8 ignore next -- debug log */
         if (CFG.DEBUG) {
           console.log('Transaction completed');
         }
@@ -6305,13 +6308,16 @@
      */
     function abort(tx, errOrResult) {
       if (!tx) {
+        /* c8 ignore next -- debug log */
         if (CFG.DEBUG) {
           console.log('Rollback not possible due to missing transaction', me);
         }
       } else if (errOrResult && 'code' in errOrResult && typeof errOrResult.code === 'number') {
+        /* c8 ignore next -- debug log */
         if (CFG.DEBUG) {
           console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
         }
+        /* c8 ignore next -- debug log */
       } else if (CFG.DEBUG) {
         console.log('Rollback succeeded', me);
       }
@@ -6386,6 +6392,7 @@
         }
         try {
           me.__tx.executeSql('ROLLBACK', [], abort, /** @type {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} */abort); // Not working in some circumstances, even in Node
+          /* c8 ignore next 5 -- error case */
         } catch (err) {
           // Browser errs when transaction has ended and since it most likely already erred here,
           //   we call to abort
@@ -6408,6 +6415,7 @@
     if (!(me instanceof IDBTransaction)) {
       throw new TypeError('Illegal invocation');
     }
+    /* c8 ignore next -- debug log */
     if (CFG.DEBUG) {
       console.log('The transaction was aborted', me);
     }
@@ -6439,6 +6447,7 @@
     if (!me.__active || !me.__handlerActive || me.__committed) {
       throw createDOMException('InvalidStateError', 'Failed to execute \'commit\' on \'IDBTransaction\': The transaction is not active.');
     }
+    /* c8 ignore next -- debug log */
     if (CFG.DEBUG) {
       console.log('The transaction was explicitly committed', me);
     }
@@ -6489,6 +6498,7 @@
   IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
     try {
       IDBTransaction.__assertNotFinished(tx);
+      /* c8 ignore next 3 -- difficult to mock without corrupting transaction queue */
     } catch (err) {
       if (tx && !tx.__completed && !tx.__abortFinished) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
@@ -8821,6 +8831,7 @@
       /** @type {{[key: string]: boolean}} */
       var indexValues = {};
 
+      /* c8 ignore next 8 -- sqlite error */
       /**
        * @param {WebSQLTransaction} tx
        * @param {(Error & {code?: number})} err
@@ -8892,7 +8903,7 @@
         }, /** @type {SqlErrorCallback} */error);
       }
       var escapedStoreNameSQL = escapeStoreNameForSQL(storeName);
-      var escapedIndexNameSQL = escapeIndexNameForSQL(index.name);
+      var escapedIndexNameSQL = escapeIndexNameForSQL(indexName);
 
       /**
        * @param {WebSQLTransaction} tx
@@ -8944,6 +8955,7 @@
     var transaction = store.transaction;
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     transaction.__addNonRequestToTransactionQueue(function deleteIndex(tx, args, success, failure) {
+      /* c8 ignore next 8 -- sqlite error */
       /**
        * @param {WebSQLTransaction} tx
        * @param {(Error & {code?: number})} err
@@ -9021,15 +9033,11 @@
    * @param {Query} range
    * @param {"value"|"key"|"count"} opType
    * @param {boolean} nullDisallowed
-   * @param {number} [count]
    * @this {IDBIndexFull}
    * @returns {import('./IDBRequest.js').IDBRequestFull}
    */
-  IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
+  IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed) {
     var me = this;
-    if (count !== undefined) {
-      count = enforceRange(count, 'unsigned long');
-    }
     IDBIndex.__invalidStateIfDeleted(me);
     IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
     /* c8 ignore start -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
@@ -9046,7 +9054,7 @@
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
-      executeFetchIndexData.apply(void 0, [count].concat(_toConsumableArray(fetchArgs), args));
+      executeFetchIndexData.apply(void 0, _toConsumableArray(fetchArgs).concat(args));
     }, undefined, me);
   };
 
@@ -9212,6 +9220,7 @@
     //    to make the approach reusable without passing column names, but it is a bit fragile
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
+      /* c8 ignore next 8 -- sqlite error */
       /**
        * @param {WebSQLTransaction} tx
        * @param {(Error & {code?: number})} err
@@ -9228,7 +9237,12 @@
           cb(tx, success);
           return;
         }
+        /* c8 ignore next 2 -- unreachable */
         success();
+      }
+      if (!CFG.useSQLiteIndexes) {
+        finish();
+        return;
       }
       // See https://www.sqlite.org/lang_altertable.html#otheralter
       // We don't query for indexes as we already have the info
@@ -9253,10 +9267,6 @@
               console.log(sql);
             }
             tx.executeSql(sql, [], function (tx) {
-              if (!CFG.useSQLiteIndexes) {
-                finish();
-                return;
-              }
               var indexCreations = colNamesToPreserve.slice(2) // Doing `key` separately and no need for index on `value`
               .map(function (escapedIndexNameSQL) {
                 return new SyncPromise(function (resolve, reject) {
@@ -9268,7 +9278,8 @@
                   if (CFG.DEBUG) {
                     console.log(sql);
                   }
-                  tx.executeSql(sql, [], resolve, /** @type {SqlErrorCallback} */
+                  tx.executeSql(sql, [], resolve, /* c8 ignore next 4 -- sqlite error */
+                  /** @type {SqlErrorCallback} */
                   function (tx, err) {
                     reject(err);
                   });
@@ -9281,19 +9292,23 @@
                 var escapedIndexToRecreate = sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
                 // Chrome erring here if not dropped first; Node does not
                 var sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
+                /* c8 ignore next -- debug log */
                 if (CFG.DEBUG) {
                   console.log(sql);
                 }
                 tx.executeSql(sql, [], function () {
                   var sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '("key")';
+                  /* c8 ignore next -- debug log */
                   if (CFG.DEBUG) {
                     console.log(sql);
                   }
-                  tx.executeSql(sql, [], resolve, /** @type {SqlErrorCallback} */
+                  tx.executeSql(sql, [], resolve, /* c8 ignore next 4 -- sqlite error */
+                  /** @type {SqlErrorCallback} */
                   function (tx, err) {
                     reject(err);
                   });
-                }, /** @type {SqlErrorCallback} */
+                }, /* c8 ignore next 4 -- sqlite error */
+                /** @type {SqlErrorCallback} */
                 function (tx, err) {
                   reject(err);
                 });
@@ -9330,7 +9345,6 @@
   /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
   /**
-   * @param {number|null} count
    * @param {boolean} unboundedDisallowed
    * @param {IDBIndexFull} index
    * @param {boolean} hasKey
@@ -9347,12 +9361,9 @@
    * @param {(tx: WebSQLTransaction, err: (Error & {code?: number})) => void} error
    * @returns {void}
    */
-  function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+  function executeFetchIndexData(unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
     if (unboundedDisallowed) {
-      count = 1;
-    }
-    if (count) {
-      sql.push('LIMIT', String(count));
+      sql.push('LIMIT', '1');
     }
     var isCount = opType === 'count';
     if (CFG.DEBUG) {
@@ -9694,6 +9705,7 @@
                   delete me.__pendingName;
                   success();
                 });
+                /* c8 ignore next 4 -- sqlite error */
               }, function (tx, err) {
                 error(err);
                 return false;
@@ -10019,7 +10031,8 @@
         var indexKey;
         try {
           indexKey = extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry);
-          if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
+          if ('invalid' in indexKey && indexKey.invalid || (/* c8 ignore next -- unreachable (index evaluation failure) */
+          'failure' in indexKey && indexKey.failure)) {
             throw new Error('Go to catch');
           }
         } catch (err) {
@@ -10027,13 +10040,14 @@
           return;
         }
         var indexKeyValue = indexKey.value;
+        /* c8 ignore next 4 -- unreachable (index evaluation undefined) */
         if (indexKeyValue === undefined) {
           resolve(undefined);
           return;
         }
         var multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
         var fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
-        executeFetchIndexData.apply(void 0, [null].concat(_toConsumableArray(fetchArgs), [tx, null, function success(key) {
+        executeFetchIndexData.apply(void 0, _toConsumableArray(fetchArgs).concat([tx, null, function success(key) {
           if (key === undefined || excludeKey !== undefined && cmp(/** @type {import('./Key.js').Key} */key, excludeKey) === 0) {
             resolve(undefined);
             return;
@@ -10113,6 +10127,7 @@
          * @returns {void}
          */
         function setIndexInfo(index) {
+          /* c8 ignore next 3 -- unreachable (index evaluation undefined) */
           if (indexKeyValue === undefined) {
             return;
           }
@@ -10122,7 +10137,7 @@
         if (index.unique) {
           var multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
           var fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
-          executeFetchIndexData.apply(void 0, [null].concat(_toConsumableArray(fetchArgs), [tx, null, function success(key) {
+          executeFetchIndexData.apply(void 0, _toConsumableArray(fetchArgs).concat([tx, null, function success(key) {
             if (key === undefined) {
               setIndexInfo(index);
               resolve(undefined);
@@ -10271,6 +10286,7 @@
         console.log('Did the row with the', key, 'exist?', data.rowsAffected);
       }
       cb(tx);
+      /* c8 ignore next 4 -- sqlite error */
     }, function (tx, err) {
       error(err);
       return false;
@@ -10382,6 +10398,7 @@
             return;
           }
           ret = getKey ? _decode(unescapeSQLiteResponse(/** @type {{key: string}} */data.rows.item(0).key), false) : decode(unescapeSQLiteResponse(/** @type {{value: string}} */data.rows.item(0).value));
+          /* c8 ignore next 4 -- sqlite data corruption */
         } catch (e) {
           // If no result is returned, or error occurs when parsing JSON
           if (CFG.DEBUG) {
@@ -10389,6 +10406,7 @@
           }
         }
         success(ret);
+        /* c8 ignore next 4 -- sqlite error */
       }, function (tx, err) {
         error(err);
         return false;
@@ -10502,6 +10520,7 @@
           cursor.__invalidateCache(); // Delete
         });
         success();
+        /* c8 ignore next 4 -- sqlite error */
       }, function (tx, err) {
         error(err);
         return false;
@@ -10531,6 +10550,7 @@
           cursor.__invalidateCache(); // Clear
         });
         success();
+        /* c8 ignore next 4 -- sqlite error */
       }, function (tx, err) {
         error(err);
         return false;
@@ -11514,6 +11534,7 @@
      */
     function sysDbCreateError(tx, err) {
       var er = webSQLErrback(/** @type {(Error & {code?: number})} */err || tx);
+      /* c8 ignore next -- debug log */
       if (CFG.DEBUG) {
         console.log('Error in sysdb transaction - when creating dbVersions', err);
       }
@@ -11628,6 +11649,7 @@
     // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
       escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name);
+      /* c8 ignore next 4 -- error case */
       // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
       throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
@@ -12072,6 +12094,7 @@
     // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
       escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name);
+      /* c8 ignore next 4 -- error case */
       // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
       throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');

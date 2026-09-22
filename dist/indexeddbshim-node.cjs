@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.5 - 9/22/2026 */
+/*! indexeddbshim - v19.0.6 - 9/22/2026 */
 
 'use strict';
 
@@ -5177,6 +5177,7 @@ IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
 IDBTransaction.prototype.__executeRequests = function () {
   const me = this;
   if (me.__running) {
+    /* c8 ignore next -- debug log */
     if (CFG.DEBUG) {
       console.log('Looks like the request set is already running', me.mode);
     }
@@ -5238,6 +5239,7 @@ IDBTransaction.prototype.__executeRequests = function () {
           cb();
           return false; // Don't roll back the transaction over a keep-alive no-op
         });
+        /* c8 ignore next 6 -- error case */
       } catch (err) {
         // The driver has already finalized the transaction (or otherwise
         //   rejected the call) -- nothing left to hold open. We explicitly
@@ -5611,6 +5613,7 @@ IDBTransaction.prototype.__executeRequests = function () {
      */
     function complete() {
       me.__completed = true;
+      /* c8 ignore next -- debug log */
       if (CFG.DEBUG) {
         console.log('Transaction completed');
       }
@@ -5861,13 +5864,16 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
    */
   function abort(tx, errOrResult) {
     if (!tx) {
+      /* c8 ignore next -- debug log */
       if (CFG.DEBUG) {
         console.log('Rollback not possible due to missing transaction', me);
       }
     } else if (errOrResult && 'code' in errOrResult && typeof errOrResult.code === 'number') {
+      /* c8 ignore next -- debug log */
       if (CFG.DEBUG) {
         console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
       }
+      /* c8 ignore next -- debug log */
     } else if (CFG.DEBUG) {
       console.log('Rollback succeeded', me);
     }
@@ -5940,6 +5946,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
       }
       try {
         me.__tx.executeSql('ROLLBACK', [], abort, /** @type {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} */abort); // Not working in some circumstances, even in Node
+        /* c8 ignore next 5 -- error case */
       } catch (err) {
         // Browser errs when transaction has ended and since it most likely already erred here,
         //   we call to abort
@@ -5962,6 +5969,7 @@ IDBTransaction.prototype.abort = function () {
   if (!(me instanceof IDBTransaction)) {
     throw new TypeError('Illegal invocation');
   }
+  /* c8 ignore next -- debug log */
   if (CFG.DEBUG) {
     console.log('The transaction was aborted', me);
   }
@@ -5993,6 +6001,7 @@ IDBTransaction.prototype.commit = function () {
   if (!me.__active || !me.__handlerActive || me.__committed) {
     throw createDOMException('InvalidStateError', 'Failed to execute \'commit\' on \'IDBTransaction\': The transaction is not active.');
   }
+  /* c8 ignore next -- debug log */
   if (CFG.DEBUG) {
     console.log('The transaction was explicitly committed', me);
   }
@@ -6043,6 +6052,7 @@ IDBTransaction.__assertNotFinished = function (tx) {
 IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
   try {
     IDBTransaction.__assertNotFinished(tx);
+    /* c8 ignore next 3 -- difficult to mock without corrupting transaction queue */
   } catch (err) {
     if (tx && !tx.__completed && !tx.__abortFinished) {
       throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
@@ -8034,6 +8044,7 @@ IDBIndex.__createIndex = function (store, index) {
     /** @type {{[key: string]: boolean}} */
     let indexValues = {};
 
+    /* c8 ignore next 8 -- sqlite error */
     /**
      * @param {WebSQLTransaction} tx
      * @param {(Error & {code?: number})} err
@@ -8105,7 +8116,7 @@ IDBIndex.__createIndex = function (store, index) {
       }, /** @type {SqlErrorCallback} */error);
     }
     const escapedStoreNameSQL = escapeStoreNameForSQL(storeName);
-    const escapedIndexNameSQL = escapeIndexNameForSQL(index.name);
+    const escapedIndexNameSQL = escapeIndexNameForSQL(indexName);
 
     /**
      * @param {WebSQLTransaction} tx
@@ -8159,6 +8170,7 @@ IDBIndex.__deleteIndex = function (store, index) {
   } = store;
   /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   transaction.__addNonRequestToTransactionQueue(function deleteIndex(tx, args, success, failure) {
+    /* c8 ignore next 8 -- sqlite error */
     /**
      * @param {WebSQLTransaction} tx
      * @param {(Error & {code?: number})} err
@@ -8236,15 +8248,11 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
  * @param {Query} range
  * @param {"value"|"key"|"count"} opType
  * @param {boolean} nullDisallowed
- * @param {number} [count]
  * @this {IDBIndexFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
+IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed) {
   const me = this;
-  if (count !== undefined) {
-    count = enforceRange(count, 'unsigned long');
-  }
   IDBIndex.__invalidStateIfDeleted(me);
   IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
   /* c8 ignore start -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
@@ -8258,7 +8266,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
   }
   const fetchArgs = buildFetchIndexDataSQL(nullDisallowed, me, range, opType, false);
   return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.objectStore.transaction.__addToTransactionQueue(function (...args) {
-    executeFetchIndexData(count, ...fetchArgs,
+    executeFetchIndexData(...fetchArgs,
     // @ts-expect-error It's ok
     ...args);
   }, undefined, me);
@@ -8419,6 +8427,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
   //    to make the approach reusable without passing column names, but it is a bit fragile
   /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
+    /* c8 ignore next 8 -- sqlite error */
     /**
      * @param {WebSQLTransaction} tx
      * @param {(Error & {code?: number})} err
@@ -8435,7 +8444,12 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
         cb(tx, success);
         return;
       }
+      /* c8 ignore next 2 -- unreachable */
       success();
+    }
+    if (!CFG.useSQLiteIndexes) {
+      finish();
+      return;
     }
     // See https://www.sqlite.org/lang_altertable.html#otheralter
     // We don't query for indexes as we already have the info
@@ -8460,10 +8474,6 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
             console.log(sql);
           }
           tx.executeSql(sql, [], function (tx) {
-            if (!CFG.useSQLiteIndexes) {
-              finish();
-              return;
-            }
             const indexCreations = colNamesToPreserve.slice(2) // Doing `key` separately and no need for index on `value`
             .map(escapedIndexNameSQL => new SyncPromise(function (resolve, reject) {
               const escapedIndexToRecreate = sqlQuote(escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1));
@@ -8474,7 +8484,8 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               if (CFG.DEBUG) {
                 console.log(sql);
               }
-              tx.executeSql(sql, [], resolve, /** @type {SqlErrorCallback} */
+              tx.executeSql(sql, [], resolve, /* c8 ignore next 4 -- sqlite error */
+              /** @type {SqlErrorCallback} */
               function (tx, err) {
                 reject(err);
               });
@@ -8486,19 +8497,23 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               const escapedIndexToRecreate = sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
               // Chrome erring here if not dropped first; Node does not
               const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
+              /* c8 ignore next -- debug log */
               if (CFG.DEBUG) {
                 console.log(sql);
               }
               tx.executeSql(sql, [], function () {
                 const sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '("key")';
+                /* c8 ignore next -- debug log */
                 if (CFG.DEBUG) {
                   console.log(sql);
                 }
-                tx.executeSql(sql, [], resolve, /** @type {SqlErrorCallback} */
+                tx.executeSql(sql, [], resolve, /* c8 ignore next 4 -- sqlite error */
+                /** @type {SqlErrorCallback} */
                 function (tx, err) {
                   reject(err);
                 });
-              }, /** @type {SqlErrorCallback} */
+              }, /* c8 ignore next 4 -- sqlite error */
+              /** @type {SqlErrorCallback} */
               function (tx, err) {
                 reject(err);
               });
@@ -8533,7 +8548,6 @@ Object.defineProperty(IDBIndex, 'prototype', {
 /* eslint-enable unicorn/no-top-level-side-effects -- Would be good */
 
 /**
- * @param {number|null} count
  * @param {boolean} unboundedDisallowed
  * @param {IDBIndexFull} index
  * @param {boolean} hasKey
@@ -8550,12 +8564,9 @@ Object.defineProperty(IDBIndex, 'prototype', {
  * @param {(tx: WebSQLTransaction, err: (Error & {code?: number})) => void} error
  * @returns {void}
  */
-function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+function executeFetchIndexData(unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
   if (unboundedDisallowed) {
-    count = 1;
-  }
-  if (count) {
-    sql.push('LIMIT', String(count));
+    sql.push('LIMIT', '1');
   }
   const isCount = opType === 'count';
   if (CFG.DEBUG) {
@@ -8891,6 +8902,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
                 delete me.__pendingName;
                 success();
               });
+              /* c8 ignore next 4 -- sqlite error */
             }, function (tx, err) {
               error(err);
               return false;
@@ -9216,7 +9228,8 @@ IDBObjectStore.prototype.__checkIndexConstraints = function (tx, value, excludeK
       let indexKey;
       try {
         indexKey = extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry);
-        if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
+        if ('invalid' in indexKey && indexKey.invalid || (/* c8 ignore next -- unreachable (index evaluation failure) */
+        'failure' in indexKey && indexKey.failure)) {
           throw new Error('Go to catch');
         }
       } catch (err) {
@@ -9224,13 +9237,14 @@ IDBObjectStore.prototype.__checkIndexConstraints = function (tx, value, excludeK
         return;
       }
       const indexKeyValue = indexKey.value;
+      /* c8 ignore next 4 -- unreachable (index evaluation undefined) */
       if (indexKeyValue === undefined) {
         resolve(undefined);
         return;
       }
       const multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
       const fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
-      executeFetchIndexData(null, ...fetchArgs, tx, null, function success(key) {
+      executeFetchIndexData(...fetchArgs, tx, null, function success(key) {
         if (key === undefined || excludeKey !== undefined && cmp(/** @type {import('./Key.js').Key} */key, excludeKey) === 0) {
           resolve(undefined);
           return;
@@ -9310,6 +9324,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
        * @returns {void}
        */
       function setIndexInfo(index) {
+        /* c8 ignore next 3 -- unreachable (index evaluation undefined) */
         if (indexKeyValue === undefined) {
           return;
         }
@@ -9319,7 +9334,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       if (index.unique) {
         const multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
         const fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
-        executeFetchIndexData(null, ...fetchArgs, tx, null, function success(key) {
+        executeFetchIndexData(...fetchArgs, tx, null, function success(key) {
           if (key === undefined) {
             setIndexInfo(index);
             resolve(undefined);
@@ -9459,6 +9474,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
       console.log('Did the row with the', key, 'exist?', data.rowsAffected);
     }
     cb(tx);
+    /* c8 ignore next 4 -- sqlite error */
   }, function (tx, err) {
     error(err);
     return false;
@@ -9570,6 +9586,7 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
           return;
         }
         ret = getKey ? decode$1(unescapeSQLiteResponse(/** @type {{key: string}} */data.rows.item(0).key), false) : decode(unescapeSQLiteResponse(/** @type {{value: string}} */data.rows.item(0).value));
+        /* c8 ignore next 4 -- sqlite data corruption */
       } catch (e) {
         // If no result is returned, or error occurs when parsing JSON
         if (CFG.DEBUG) {
@@ -9577,6 +9594,7 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
         }
       }
       success(ret);
+      /* c8 ignore next 4 -- sqlite error */
     }, function (tx, err) {
       error(err);
       return false;
@@ -9693,6 +9711,7 @@ IDBObjectStore.prototype.delete = function (query) {
         cursor.__invalidateCache(); // Delete
       });
       success();
+      /* c8 ignore next 4 -- sqlite error */
     }, function (tx, err) {
       error(err);
       return false;
@@ -9722,6 +9741,7 @@ IDBObjectStore.prototype.clear = function () {
         cursor.__invalidateCache(); // Clear
       });
       success();
+      /* c8 ignore next 4 -- sqlite error */
     }, function (tx, err) {
       error(err);
       return false;
@@ -10693,6 +10713,7 @@ function createSysDB(__openDatabase, success, failure) {
    */
   function sysDbCreateError(tx, err) {
     const er = webSQLErrback(/** @type {(Error & {code?: number})} */err || tx);
+    /* c8 ignore next -- debug log */
     if (CFG.DEBUG) {
       console.log('Error in sysdb transaction - when creating dbVersions', err);
     }
@@ -10807,6 +10828,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
   // eslint-disable-next-line no-useless-catch -- Possible refactoring
   try {
     escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name);
+    /* c8 ignore next 4 -- error case */
     // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
   } catch (err) {
     throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
@@ -11251,6 +11273,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
   // eslint-disable-next-line no-useless-catch -- Possible refactoring
   try {
     escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name);
+    /* c8 ignore next 4 -- error case */
     // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
   } catch (err) {
     throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');

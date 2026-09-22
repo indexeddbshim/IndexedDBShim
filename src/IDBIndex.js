@@ -360,7 +360,7 @@ IDBIndex.__createIndex = function (store, index) {
         }
 
         const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
-        const escapedIndexNameSQL = util.escapeIndexNameForSQL(index.name);
+        const escapedIndexNameSQL = util.escapeIndexNameForSQL(indexName);
 
         /**
          * @param {WebSQLTransaction} tx
@@ -694,6 +694,10 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
             /* c8 ignore next 2 -- unreachable */
             success();
         }
+        if (!CFG.useSQLiteIndexes) {
+            finish();
+            return;
+        }
         // See https://www.sqlite.org/lang_altertable.html#otheralter
         // We don't query for indexes as we already have the info
         // This approach has the advantage of auto-deleting indexes via the DROP TABLE
@@ -712,10 +716,6 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                     const sql = 'ALTER TABLE ' + escapedTmpStoreNameSQL + ' RENAME TO ' + escapedStoreNameSQL;
                     if (CFG.DEBUG) { console.log(sql); }
                     tx.executeSql(sql, [], function (tx) {
-                        if (!CFG.useSQLiteIndexes) {
-                            finish();
-                            return;
-                        }
                         const indexCreations = colNamesToPreserve
                             .slice(2) // Doing `key` separately and no need for index on `value`
                             .map((escapedIndexNameSQL) => new SyncPromise(function (resolve, reject) {
