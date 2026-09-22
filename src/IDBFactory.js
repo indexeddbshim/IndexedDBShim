@@ -348,9 +348,16 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
     if (useMemoryDatabase) {
         const latestSQLiteDBCached = Object.hasOwn(websqlDBCache, name) ? getLatestCachedWebSQLDB(name) : null;
         if (!latestSQLiteDBCached) {
+            /* c8 ignore start -- Defensive: only reachable if `websqlDBCache[name]`
+               was initialized as an empty placeholder by `open()`'s connection-queue
+               setup (`addRequestToConnectionQueue`, above `openDB`) but never
+               populated with an actual instance -- e.g. `__openDatabase` throwing
+               after a `dbVersions` row already existed for `name` from an earlier,
+               successful `open()`. Not reachable via normal, non-tampered API usage. */
             console.warn('Could not find a memory database instance to delete.');
             databaseDeleted();
             return;
+            /* c8 ignore stop -- see comment above */
         }
         const sqliteDB = latestSQLiteDBCached._db;
         if (!sqliteDB || !sqliteDB.close) {
@@ -413,15 +420,24 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
                     ), [], function () {
                         deleteTables(i + 1);
                     }, function () {
+                        /* c8 ignore start -- Defensive: continues deleting the rest
+                           even if this specific store's table is already gone (e.g.
+                           duplicate `__sys__` rows for the same escaped table name, or
+                           external tampering); not reachable via normal API usage. */
                         deleteTables(i + 1);
                         return false;
+                        /* c8 ignore stop -- see comment above */
                     });
                 }
             }(0));
         }, function () {
-            // __sys__ table does not exist, but that does not mean delete did not happen
+            /* c8 ignore start -- `__sys__` is always created by `openDB` before this
+               database's `dbVersions` row (a prerequisite for reaching this code at
+               all) is ever inserted; only reachable if the file was tampered with/
+               removed externally afterward. */
             databaseDeleted();
             return false;
+            /* c8 ignore stop -- see comment above */
         });
     });
 }
@@ -654,6 +670,17 @@ IDBFactory.prototype.open = function (name /* , version */) {
                      * @returns {void}
                      */
                     let sysdbFinishedCb = function (systx, err, cb) {
+                        /* c8 ignore start -- This initial definition is always
+                           superseded before ever being invoked: the `sysdb.transaction(...)`
+                           call below always reaches its `nonstandardTransCb` (4th arg)
+                           after this same SQL batch finishes running (since `dbCreateError`
+                           always reports errors as "handled" and this call site is never
+                           a `readTransaction`), which unconditionally reassigns
+                           `sysdbFinishedCb` to a version using the library's own
+                           `rollback`/`commit` -- well before any real invocation from
+                           `on__beforecomplete`/`on__preabort`/`on__abort` below (those only
+                           fire once the upgrade transaction itself later completes/aborts).
+                           Kept as a defensive fallback in case that invariant ever changes. */
                         if (err) {
                             /**
                              * @param {unknown} [errorToShow]
@@ -720,6 +747,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         }
                         // In browser, should auto-commit
                         cb(); // eslint-disable-line promise/no-callback-in-promise -- Convenient
+                        /* c8 ignore stop -- see comment above */
                     };
 
                     sysdb.transaction(function (systx) {
@@ -862,7 +890,13 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__complete = function () {
                                 const pos = connection.__transactions.indexOf(req.transaction);
+                                // `req.transaction` (the versionchange transaction) is created
+                                //   directly via `IDBTransaction.__createInstance` above, never
+                                //   via `IDBDatabase.prototype.transaction()` (the only place
+                                //   that pushes onto `connection.__transactions`), so `pos` is
+                                //   always -1 here.
                                 if (pos !== -1) {
+                                    /* c8 ignore next -- see comment above */
                                     connection.__transactions.splice(pos, 1);
                                 }
 
@@ -902,7 +936,13 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
                         }
                     }, dbCreateError, undefined, function (currentTask, err, done, rollback, commit) {
+                        // Defensive fallback, not reachable in practice: same reasoning
+                        //   as `deleteDatabase`'s own `nonstandardTransCb` below
+                        //   (`currentTask.readOnly` is always false here, and
+                        //   `dbCreateError` always returns `false`, so `err` is never
+                        //   truthy either).
                         if (currentTask.readOnly || err) {
+                            /* c8 ignore next 2 -- see comment above */
                             return true;
                         }
                         sysdbFinishedCb = function (systx, err, cb) {
@@ -927,7 +967,16 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                                     );
                                                 }
                                             },
+                                            // Deeply-nested defensive path: only reached if
+                                            //   the *revert* SQL (undoing the `dbVersions`
+                                            //   INSERT/UPDATE after the original version-
+                                            //   upgrade itself already failed) fails a
+                                            //   *second* time. Not feasibly triggerable
+                                            //   without fault-injecting the underlying SQL
+                                            //   driver on this specific, already-failing
+                                            //   revert statement.
                                             function (sqlErr) {
+                                                /* c8 ignore next 2 -- see comment above */
                                                 isRevertingSysdb = false;
                                                 cb(sqlErr); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                                             },
@@ -945,8 +994,20 @@ IDBFactory.prototype.open = function (name /* , version */) {
                     });
                     return undefined;
                 }).catch((err) => {
+                    /* c8 ignore start -- Purely defensive: nothing in
+                       `triggerAnyVersionChangeAndBlockedEvents`'s promise chain
+                       (or this `.then()` continuation above) ever rejects/throws
+                       under any reachable application-level condition -- all of
+                       its continuations resolve cleanly, and its `dispatchEvent`
+                       calls are deliberately fire-and-forget ("No need to catch
+                       errors"), running inside a `setTimeout` where a listener
+                       throwing becomes an uncaught exception in that macrotask
+                       rather than a promise rejection here. This exists solely
+                       to surface a truly-unexpected internal bug via the console
+                       before rethrowing, not to handle a real, testable error path. */
                     console.log('Error within `triggerAnyVersionChangeAndBlockedEvents`');
                     throw err;
+                    /* c8 ignore stop -- see comment above */
                 });
             } else {
                 finishRequest();
@@ -985,7 +1046,15 @@ IDBFactory.prototype.open = function (name /* , version */) {
             ));
             if (useDatabaseCache) {
                 if (!(Object.hasOwn(websqlDBCache, name))) {
+                    /* c8 ignore start -- Defensive: by the time `openDB` runs,
+                       `websqlDBCache[name]` has always already been created by
+                       `addRequestToConnectionQueue`'s own callback above (guarded
+                       by this same `useDatabaseCache` condition), which always
+                       runs first and unconditionally ensures the entry exists
+                       before ever calling `openDB`. Kept as a safety net in case
+                       that invariant ever changes. */
                     websqlDBCache[name] = {};
+                    /* c8 ignore stop -- see comment above */
                 }
                 websqlDBCache[name][version] = db;
             }
@@ -1185,8 +1254,22 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                             }, dbError);
                         }, dbError, undefined, function (currentTask, err, done, rollback, commit) {
                             if (currentTask.readOnly || err) {
+                                /* c8 ignore start -- Defensive fallback, not reachable in
+                                   practice: `currentTask.readOnly` is always `false` here
+                                   (this callback is only ever attached to the writable
+                                   `sysdb.transaction(...)` call above, never to a
+                                   `sysdb.readTransaction(...)`), and `err` can only be
+                                   truthy if the `DELETE FROM dbVersions` statement's own
+                                   error callback (`dbError`) reports the failure back to
+                                   `websql-configurable` as unhandled -- but `dbError`
+                                   deliberately always `return`s `false`, which tells the
+                                   library the error was already handled (and to keep
+                                   `err` falsy here), precisely so this custom
+                                   `sysdbFinishedCbDelete` rollback/commit path below is
+                                   used instead of the library's own default rollback. */
                                 return true;
                             }
+                            /* c8 ignore stop -- see comment above */
                             sysdbFinishedCbDelete = function (err, cb) {
                                 if (err) {
                                     rollback(err, cb);
