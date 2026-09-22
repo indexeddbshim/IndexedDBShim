@@ -950,6 +950,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         me.__error = err;
     }
 
+    /* c8 ignore next 13 -- cannot be reliably mocked */
     if (me.__requestsFinished && err !== null) {
         // The transaction has already completed, so we can't call "onerror" or "onabort".
         // So throw the error instead. `err` is only ever `null` here via
@@ -1024,6 +1025,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                 releaseFinishedTransaction(me);
             }, 0);
             return undefined;
+        /* c8 ignore next 4 -- cannot be reliably mocked */
         }).catch((err) => {
             console.log('Abort error');
             throw err;
@@ -1035,6 +1037,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             //   rollback automatically), but for Node.js, etc., we give chance for
             //   manual aborts which would otherwise not work.
             if (me.mode === 'readwrite') {
+                /* c8 ignore next 4 -- cannot be reliably mocked */
                 if (me.__transactionFinished) {
                     abort();
                     return;
@@ -1142,6 +1145,7 @@ IDBTransaction.__assertNotFinished = function (tx) {
 };
 
 // object store methods behave differently: see https://github.com/w3c/IndexedDB/issues/192
+/* c8 ignore start -- cannot be reliably mocked; not in use? */
 /**
  *
  * @param {IDBTransactionFull} tx
@@ -1150,7 +1154,6 @@ IDBTransaction.__assertNotFinished = function (tx) {
 IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
     try {
         IDBTransaction.__assertNotFinished(tx);
-    /* c8 ignore next 3 -- difficult to mock without corrupting transaction queue */
     } catch (err) {
         if (tx && !tx.__completed && !tx.__abortFinished) {
             throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
@@ -1158,6 +1161,7 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
         throw err;
     }
 };
+/* c8 ignore stop -- end */
 
 /**
  *

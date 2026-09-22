@@ -775,6 +775,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                         SyncPromise.all(indexCreations).then(finish).catch(
                             /** @type {(reason: unknown) => PromiseLike<never>} */
                             (error)
+                        /* c8 ignore next 4 -- cannot be reliably mocked */
                         ).catch((err) => {
                             console.log('Index rename error');
                             throw err;

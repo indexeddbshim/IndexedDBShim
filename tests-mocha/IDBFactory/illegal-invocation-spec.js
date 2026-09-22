@@ -27,3 +27,26 @@ describe('IDBFactory illegal invocation', function () {
         }
     });
 });
+
+describe('IDBFactory SecurityError', function () {
+    'use strict';
+    if (env.isNative) {
+        return;
+    }
+
+    it('should reject with SecurityError when databases() is called from an opaque origin', async function () {
+        const checkOrigin = shimIndexedDB.__getConfig('checkOrigin');
+        const oldLocation = global.location;
+        global.location = { origin: 'null' };
+        shimIndexedDB.__setConfig('checkOrigin', true);
+        try {
+            await shimIndexedDB.databases();
+            throw new Error('Expected databases() to reject');
+        } catch (err) {
+            expect(err.name).to.equal('SecurityError');
+        } finally {
+            shimIndexedDB.__setConfig('checkOrigin', checkOrigin);
+            global.location = oldLocation;
+        }
+    });
+});

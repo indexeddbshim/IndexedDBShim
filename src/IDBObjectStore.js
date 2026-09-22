@@ -205,6 +205,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
                         tx.executeSql(sql, sqlValues, function (tx) {
                             // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
                             const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
+                            /* c8 ignore next -- debug */
                             if (CFG.DEBUG) { console.log(sql); }
                             tx.executeSql(sql, [], function () {
                                 delete me.__pendingName;
@@ -297,6 +298,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     }
 
     transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
+        /* c8 ignore next 10 -- sqlite error */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} [err]
@@ -370,6 +372,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     // Remove the object store from WebSQL
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
+        /* c8 ignore next 10 -- sqlite error */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} [err]
