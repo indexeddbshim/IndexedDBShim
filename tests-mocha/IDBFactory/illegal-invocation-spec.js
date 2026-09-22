@@ -49,4 +49,34 @@ describe('IDBFactory SecurityError', function () {
             global.location = oldLocation;
         }
     });
+
+    it('should throw SecurityError when open() is called from an opaque origin', function () {
+        const checkOrigin = shimIndexedDB.__getConfig('checkOrigin');
+        const oldLocation = global.location;
+        global.location = {origin: 'null'};
+        shimIndexedDB.__setConfig('checkOrigin', true);
+        try {
+            expect(() => {
+                shimIndexedDB.open('some-db-name');
+            }).to.throw(Error, /opaque origin/);
+        } finally {
+            shimIndexedDB.__setConfig('checkOrigin', checkOrigin);
+            global.location = oldLocation;
+        }
+    });
+
+    it('should throw SecurityError when deleteDatabase() is called from an opaque origin', function () {
+        const checkOrigin = shimIndexedDB.__getConfig('checkOrigin');
+        const oldLocation = global.location;
+        global.location = {origin: 'null'};
+        shimIndexedDB.__setConfig('checkOrigin', true);
+        try {
+            expect(() => {
+                shimIndexedDB.deleteDatabase('some-db-name');
+            }).to.throw(Error, /opaque origin/);
+        } finally {
+            shimIndexedDB.__setConfig('checkOrigin', checkOrigin);
+            global.location = oldLocation;
+        }
+    });
 });
