@@ -66,7 +66,6 @@ const IDBIndexAlias = IDBIndex;
  *   __unique: boolean,
  *   __objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
  *   __keyPath: import('./Key.js').KeyPath,
- *   __recreated?: boolean,
  *   __fetchIndexData: (
  *     range: Query,
  *     opType: "value"|"key"|"count",
@@ -231,7 +230,7 @@ IDBIndex.__clone = function (index, store) {
     });
     /** @type {const} */ ([
         '__pendingCreate', '__pendingDelete', '__deleted',
-        '__originalName', '__recreated'
+        '__originalName'
     ]).forEach((p) => {
         // @ts-expect-error Why is this type "never"?
         idx[p] = index[p];
@@ -271,7 +270,7 @@ IDBIndex.__createIndex = function (store, index) {
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         transaction
     ).__addNonRequestToTransactionQueue(function createIndex (tx, args, success, failure) {
-        const columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
+        const columnExists = idx && idx.__deleted; // This check must occur here rather than earlier as properties may not have been set yet otherwise
 
         /** @type {{[key: string]: boolean}} */
         let indexValues = {};
@@ -345,12 +344,6 @@ IDBIndex.__createIndex = function (store, index) {
                         } else {
                             delete index.__pendingCreate;
                             delete indexHandle.__pendingCreate;
-                            if (index.__deleted) {
-                                delete index.__deleted;
-                                delete indexHandle.__deleted;
-                                index.__recreated = true;
-                                indexHandle.__recreated = true;
-                            }
                             indexValues = {};
                             success(store);
                         }
@@ -438,7 +431,6 @@ IDBIndex.__deleteIndex = function (store, index) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function (store) {
                 delete index.__pendingDelete;
-                delete index.__recreated;
                 index.__deleted = true;
                 if (indexHandle) {
                     indexHandle.__deleted = true;
@@ -899,6 +891,7 @@ function executeFetchIndexData (
                         record = row;
                     }
                 }
+                /* c8 ignore next 3 -- requires difficult to simulate complex SQLite multiEntry LIKE query false-positive */
                 if (!record) {
                     continue;
                 }
