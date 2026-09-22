@@ -100,6 +100,7 @@ describe('IDBCursor.update edge cases', function () {
 
     // eslint-disable-next-line jsdoc/require-jsdoc -- helper
     function createDB (name, upgrade, cb) {
+        // eslint-disable-next-line sonarjs/pseudo-random -- Testing
         const req = indexedDB.open(name + Date.now() + Math.random(), 1);
         req.onupgradeneeded = function (e) {
             upgrade(e.target.result);
