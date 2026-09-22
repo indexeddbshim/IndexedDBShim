@@ -93,3 +93,55 @@ describe('IDBCursor.update', function () {
         });
     });
 });
+
+
+describe('IDBCursor.update edge cases', function () {
+    if (env.isNative) { return; }
+
+    // eslint-disable-next-line jsdoc/require-jsdoc -- helper
+    function createDB (name, upgrade, cb) {
+        const req = indexedDB.open(name, 1);
+        req.onupgradeneeded = function (e) {
+            upgrade(e.target.result);
+        };
+        req.onsuccess = function (e) {
+            cb(e.target.result);
+        };
+        req.onerror = function () {
+            throw new Error('db open failed');
+        };
+    }
+
+    it('should throw DataError if the new value evaluates to a different key than the cursor primaryKey', function (done) {
+        createDB('update-db1', (db) => db.createObjectStore('store', {keyPath: 'id'}), (db) => {
+            const tx = db.transaction('store', 'readwrite');
+            tx.objectStore('store').put({id: 1, val: 'a'});
+            tx.oncomplete = () => {
+                const tx2 = db.transaction('store', 'readwrite');
+                const req = tx2.objectStore('store').openCursor();
+                req.onsuccess = () => {
+                    const cursor = req.result;
+                    if (!cursor) { return; }
+                    try { cursor.update({id: 2, val: 'b'}); done(new Error('Should throw')); }
+                    catch (e) { expect(e.name).to.equal('DataError'); db.close(); done(); }
+                };
+            };
+        });
+    });
+    it('should throw InvalidStateError if called on a key cursor', function (done) {
+        createDB('update-db2', (db) => db.createObjectStore('store'), (db) => {
+            const tx = db.transaction('store', 'readwrite');
+            tx.objectStore('store').put('a', 1);
+            tx.oncomplete = () => {
+                const tx2 = db.transaction('store', 'readwrite');
+                const req = tx2.objectStore('store').openKeyCursor();
+                req.onsuccess = () => {
+                    const cursor = req.result;
+                    if (!cursor) { return; }
+                    try { cursor.update('b'); done(new Error('Should throw')); }
+                    catch (e) { expect(e.name).to.equal('InvalidStateError'); db.close(); done(); }
+                };
+            };
+        });
+    });
+});

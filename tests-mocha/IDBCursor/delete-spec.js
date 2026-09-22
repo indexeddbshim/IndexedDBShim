@@ -60,3 +60,62 @@ describe('IDBCursor.delete', function () {
         });
     });
 });
+
+
+describe('IDBCursor.delete edge cases', function () {
+    if (env.isNative) { return; }
+
+    // eslint-disable-next-line jsdoc/require-jsdoc -- helper
+    function createDB (name, upgrade, cb) {
+        const req = indexedDB.open(name, 1);
+        req.onupgradeneeded = function (e) {
+            upgrade(e.target.result);
+        };
+        req.onsuccess = function (e) {
+            cb(e.target.result);
+        };
+        req.onerror = function () {
+            throw new Error('db open failed');
+        };
+    }
+
+    it('should throw InvalidStateError if called on a key cursor', function (done) {
+        createDB('delete-db1', (db) => db.createObjectStore('store'), (db) => {
+            const tx = db.transaction('store', 'readwrite');
+            tx.objectStore('store').put('a', 1);
+            tx.oncomplete = () => {
+                const tx2 = db.transaction('store', 'readwrite');
+                const req = tx2.objectStore('store').openKeyCursor();
+                req.onsuccess = () => {
+                    const cursor = req.result;
+                    if (!cursor) { return; }
+                    try { cursor.delete(); done(new Error('Should throw')); }
+                    catch (e) { expect(e.name).to.equal('InvalidStateError'); db.close(); done(); }
+                };
+            };
+        });
+    });
+    it('should return error if record is not found during delete', function (done) {
+        createDB('delete-db2', (db) => db.createObjectStore('store'), (db) => {
+            const tx = db.transaction('store', 'readwrite');
+            tx.objectStore('store').put('a', 1);
+            tx.oncomplete = () => {
+                const tx2 = db.transaction('store', 'readwrite');
+                const store2 = tx2.objectStore('store');
+                const req = store2.openCursor();
+                req.onsuccess = () => {
+                    const cursor = req.result;
+                    if (!cursor) { return; }
+                    const delReq = store2.delete(cursor.primaryKey);
+                    delReq.onsuccess = () => {
+                        const curDelReq = cursor.delete();
+                        curDelReq.onerror = () => {
+                            expect(curDelReq.error).to.be.ok;
+                            db.close(); done();
+                        };
+                    };
+                };
+            };
+        });
+    });
+});
