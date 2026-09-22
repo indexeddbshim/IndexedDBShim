@@ -37,7 +37,7 @@ describe('IDBFactory SecurityError', function () {
     it('should reject with SecurityError when databases() is called from an opaque origin', async function () {
         const checkOrigin = shimIndexedDB.__getConfig('checkOrigin');
         const oldLocation = global.location;
-        global.location = { origin: 'null' };
+        global.location = {origin: 'null'};
         shimIndexedDB.__setConfig('checkOrigin', true);
         try {
             await shimIndexedDB.databases();
