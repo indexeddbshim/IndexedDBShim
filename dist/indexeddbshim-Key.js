@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.5 - 9/20/2026 */
+/*! indexeddbshim - v19.0.5 - 9/22/2026 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -166,7 +166,7 @@
    *   databaseNameLengthLimit: number|false,
    *   escapeNFDForDatabaseNames: boolean,
    *   addSQLiteExtension: boolean,
-   *   memoryDatabase: string,
+   *   memoryDatabase: string|null|undefined,
    *   deleteDatabaseFiles: boolean,
    *   databaseBasePath: string,
    *   sysDatabaseBasePath: string,
@@ -309,13 +309,27 @@
   // Various types of in-memory databases that can auto-delete
   ['memoryDatabase',
   /**
-   * @param {string} val
+   * `null`/`undefined` are accepted (and left unvalidated against the
+   *   regex below) specifically so this can be reset back to its
+   *   unset/disabled state after being set: unlike other `CFG`
+   *   boolean-ish switches (e.g. `sqlMemoryQuota`, which is checked
+   *   with a falsy `if (CFG.sqlMemoryQuota)`), `memoryDatabase`'s own
+   *   usage sites check `typeof CFG.memoryDatabase === 'string'`, so
+   *   even the empty string counts as "on" (it's a distinct, valid
+   *   in-memory mode of its own -- an unnamed private temporary
+   *   database -- not an "off" state). Without this, once set to any
+   *   string there would be no value passable back through this same
+   *   validator that turns `useMemoryDatabase` false again.
+   * @param {string|null|undefined} val
    * @throws {TypeError}
    * @returns {void}
    */
   function (val) {
+    if (val === null || val === undefined) {
+      return;
+    }
     if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(/** @type {string} */val)) {
-      throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
+      throw new TypeError('`memoryDatabase` must be `null`/`undefined` (to reset it to disabled), the empty string, ' + '":memory:", or a "file::memory:[?queryString][#hash] URL".');
     }
   }],
   // NODE-SPECIFIC CONFIG
@@ -361,7 +375,8 @@
   function createNativeDOMException(name, message) {
     // @ts-expect-error It's ok
     // eslint-disable-next-line new-cap -- Ok
-    return new DOMException.prototype.constructor(message, name || 'DOMException');
+    return new DOMException.prototype.constructor(message, /* c8 ignore next -- Defensive fallback; every call site in this codebase always supplies a `name` */
+    name || 'DOMException');
   }
 
   // From web-platform-tests testharness.js name_code_map (though not in new spec)
@@ -623,6 +638,8 @@
       return;
     }
     var msg = error && _typeof(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
+
+    /* c8 ignore next -- Defensive fallback for an environment lacking `console.error` */
     var method = typeof console.error === 'function' ? 'error' : 'log';
     console[method](name + ': ' + message + '. ' + (msg || ''));
     if (console.trace) {
@@ -1446,8 +1463,14 @@
                 }
                 if (!multiEntry || !fullKeys && keys.every(function (k) {
                   return cmp(/** @type {Key} */k, /** @type {Key} */key.value) !== 0;
-                }) || fullKeys && keys.every(function (k) {
-                  return cmp(/** @type {Key} */k, /** @type {Key} */ /** @type {unknown} */key) !== 0;
+                }) ||
+                // `keys` holds full `{type, value}` objects here (see
+                //   `safePush` below), so -- like the sibling branch
+                //   above -- `cmp` (which expects raw `Value`s, not
+                //   decoded key objects) must compare their `.value`s,
+                //   not the wrapper objects themselves.
+                fullKeys && keys.every(function (k) {
+                  return cmp(/** @type {Key} */ /** @type {KeyValueObject} */k.value, /** @type {Key} */key.value) !== 0;
                 })) {
                   safePush(keys, fullKeys ? key : key.value);
                 }

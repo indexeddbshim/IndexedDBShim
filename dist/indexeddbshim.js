@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.5 - 9/20/2026 */
+/*! indexeddbshim - v19.0.5 - 9/22/2026 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -473,6 +473,7 @@
   var ShimDOMException$1 = typeof DOMException === 'undefined'
   // Todo: Better polyfill (if even needed here)
   /* eslint-disable no-shadow -- Polyfill */
+  /* c8 ignore start -- Only reachable when the global `DOMException` is absent, which it never is in this project's test environment (Node always provides it) */
   // eslint-disable-next-line @stylistic/operator-linebreak -- TS/JSDoc needs
   ?
   /**
@@ -490,9 +491,10 @@
       configurable: true
     });
     return err;
-  } : DOMException;
+  }
+  /* c8 ignore stop */ : DOMException;
 
-  /** @type {WeakMap<object, any>} */
+  /** @type {WeakMap<object, EventWithProps>} */
   var ev = new WeakMap();
   /** @type {WeakMap<object, EventWithProps>} */
   var evCfg = new WeakMap();
@@ -538,11 +540,12 @@
       obj[prop] = {
         configurable: true,
         get: function get() {
-          return Object.hasOwn(_evCfg, prop) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
+          return Object.hasOwn(_evCfg, prop) ? _evCfg[prop] : Reflect.has(_ev, prop) ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false
+          /* c8 ignore next -- Every prop this is ever called with ('type'/'bubbles'/'cancelable'/'timeStamp'/'composed'/'detail') always ends up set on `_evCfg` or `_ev` by the time it's read, so this is unreachable */ : undefined;
         }
       };
       return obj;
-    }, /** @type {{[key: string]: any}} */{}));
+    }, /** @type {PropertyDescriptorMap} */{}));
   }
 
   /**
@@ -565,8 +568,9 @@
       throw new TypeError('Illegal invocation');
     }
     var _evCfg = getEvCfg(this);
-    var _ev = ev.get(this);
-    return Boolean(Object.hasOwn(_evCfg, 'isTrusted') ? _evCfg.isTrusted : Reflect.has(_ev, 'isTrusted') && _ev.isTrusted);
+    var _ev = /** @type {EventWithProps} */ /** @type {EventWithProps} */ev.get(this);
+    return Boolean(Object.hasOwn(_evCfg, 'isTrusted')
+    /* c8 ignore next -- Nothing currently sets `_evCfg.isTrusted` (see the commented-out assignment above); kept for when/if it's revived */ ? _evCfg.isTrusted : Reflect.has(_ev, 'isTrusted') && _ev.isTrusted);
   }
 
   /**
@@ -717,15 +721,15 @@
   //   this untyped alias, rather than `ShimEvent.prototype` directly, keeps
   //   that dynamic-augmentation pattern working without a `@ts-expect-error`
   //   on every single line below.
-  /** @type {any} */
-  var ShimEventProto = ShimEvent.prototype;
+
+  var ShimEventProto = /** @type {Record<PropertyKey, unknown>} */ /** @type {unknown} */ShimEvent.prototype;
 
   /** @this {EventWithProps} */
   ShimEventProto.preventDefault = function preventDefault() {
     if (!(this instanceof ShimEvent)) {
       throw new TypeError('Illegal invocation');
     }
-    var _ev = ev.get(this);
+    var _ev = /** @type {EventWithProps} */ /** @type {EventWithProps} */ev.get(this);
     var _evCfg = getEvCfg(this);
     if (this.cancelable && !_evCfg._passive) {
       _evCfg.defaultPrevented = true;
@@ -923,13 +927,12 @@
     return _createClass(CustomEvent);
   }(Event);
   var ShimCustomEvent = CustomEvent;
-  /** @type {any} */
-  var ShimCustomEventProto = ShimCustomEvent.prototype;
+  var ShimCustomEventProto = /** @type {Record<PropertyKey, unknown>} */ /** @type {unknown} */ShimCustomEvent.prototype;
   /**
    * @param {string} type
    * @param {boolean} [bubbles]
    * @param {boolean} [cancelable]
-   * @param {any} [detail]
+   * @param {unknown} [detail]
    * @this {EventWithProps}
    */
   ShimCustomEventProto.initCustomEvent = function initCustomEvent(type) {
@@ -941,6 +944,10 @@
       throw new TypeError('Illegal invocation');
     }
     var _evCfg = getEvCfg(this);
+    if (_evCfg._dispatched) {
+      return;
+    }
+
     // @ts-expect-error `detail` isn't part of `EventInit`, only used internally here
     // eslint-disable-next-line prefer-rest-params -- Keep signature
     initEventInternal(this, type, {
@@ -948,16 +955,13 @@
       cancelable: cancelable,
       detail: detail
     }, arguments[4]);
-    if (_evCfg._dispatched) {
-      return;
-    }
     if (detail !== undefined) {
       _evCfg.detail = detail;
     }
     // `initCustomEvent` deliberately excluded -- see the matching comment
     //   in `initEventInternal` for `initEvent`, above; the same reasoning
     //   applies here.
-    definePassthroughProps(this, ['detail'], _evCfg, ev.get(this));
+    definePassthroughProps(this, ['detail'], _evCfg, /** @type {EventWithProps} */ev.get(this));
   };
   // @ts-expect-error Not part of the class body itself
   ShimCustomEvent[Symbol.toStringTag] = 'Function';
@@ -1364,7 +1368,7 @@
         /** @type {string[]} */
         this._extraProperties.forEach(function (prop) {
           if (Reflect.has(e, prop)) {
-            /** @type {{[key: string]: any}} */eventCopy[prop] = /** @type {{[key: string]: any}} */e[prop]; // Todo: Put internal to `ShimEvent`?
+            /** @type {PropertyDescriptorMap} */eventCopy[prop] = /** @type {PropertyDescriptorMap} */e[prop]; // Todo: Put internal to `ShimEvent`?
           }
         });
       }
@@ -1443,6 +1447,7 @@
             if (child) {
               child._defaultSync = this._defaultSync;
             }
+            /* c8 ignore next -- `cfg._children` always has exactly as many entries as remaining capturing-phase steps (built from the same walk that starts this phase), so `child` is never falsy here; the `|| this` fallback is defensive only */
             return (child || this)._dispatchEvent(eventCopy, false);
           }
         case phases.AT_TARGET:
@@ -1740,7 +1745,7 @@
    *   databaseNameLengthLimit: number|false,
    *   escapeNFDForDatabaseNames: boolean,
    *   addSQLiteExtension: boolean,
-   *   memoryDatabase: string,
+   *   memoryDatabase: string|null|undefined,
    *   deleteDatabaseFiles: boolean,
    *   databaseBasePath: string,
    *   sysDatabaseBasePath: string,
@@ -1883,13 +1888,27 @@
   // Various types of in-memory databases that can auto-delete
   ['memoryDatabase',
   /**
-   * @param {string} val
+   * `null`/`undefined` are accepted (and left unvalidated against the
+   *   regex below) specifically so this can be reset back to its
+   *   unset/disabled state after being set: unlike other `CFG`
+   *   boolean-ish switches (e.g. `sqlMemoryQuota`, which is checked
+   *   with a falsy `if (CFG.sqlMemoryQuota)`), `memoryDatabase`'s own
+   *   usage sites check `typeof CFG.memoryDatabase === 'string'`, so
+   *   even the empty string counts as "on" (it's a distinct, valid
+   *   in-memory mode of its own -- an unnamed private temporary
+   *   database -- not an "off" state). Without this, once set to any
+   *   string there would be no value passable back through this same
+   *   validator that turns `useMemoryDatabase` false again.
+   * @param {string|null|undefined} val
    * @throws {TypeError}
    * @returns {void}
    */
   function (val) {
+    if (val === null || val === undefined) {
+      return;
+    }
     if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(/** @type {string} */val)) {
-      throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
+      throw new TypeError('`memoryDatabase` must be `null`/`undefined` (to reset it to disabled), the empty string, ' + '":memory:", or a "file::memory:[?queryString][#hash] URL".');
     }
   }],
   // NODE-SPECIFIC CONFIG
@@ -2610,7 +2629,8 @@
   function createNativeDOMException(name, message) {
     // @ts-expect-error It's ok
     // eslint-disable-next-line new-cap -- Ok
-    return new DOMException.prototype.constructor(message, name || 'DOMException');
+    return new DOMException.prototype.constructor(message, /* c8 ignore next -- Defensive fallback; every call site in this codebase always supplies a `name` */
+    name || 'DOMException');
   }
 
   // From web-platform-tests testharness.js name_code_map (though not in new spec)
@@ -2872,6 +2892,8 @@
       return;
     }
     var msg = error && _typeof(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
+
+    /* c8 ignore next -- Defensive fallback for an environment lacking `console.error` */
     var method = typeof console.error === 'function' ? 'error' : 'log';
     console[method](name + ': ' + message + '. ' + (msg || ''));
     if (console.trace) {
@@ -4191,8 +4213,14 @@
                 }
                 if (!multiEntry || !fullKeys && keys.every(function (k) {
                   return cmp(/** @type {Key} */k, /** @type {Key} */key.value) !== 0;
-                }) || fullKeys && keys.every(function (k) {
-                  return cmp(/** @type {Key} */k, /** @type {Key} */ /** @type {unknown} */key) !== 0;
+                }) ||
+                // `keys` holds full `{type, value}` objects here (see
+                //   `safePush` below), so -- like the sibling branch
+                //   above -- `cmp` (which expects raw `Value`s, not
+                //   decoded key objects) must compare their `.value`s,
+                //   not the wrapper objects themselves.
+                fullKeys && keys.every(function (k) {
+                  return cmp(/** @type {Key} */ /** @type {KeyValueObject} */k.value, /** @type {Key} */key.value) !== 0;
                 })) {
                   safePush(keys, fullKeys ? key : key.value);
                 }
@@ -5074,9 +5102,11 @@
       if (testObject.test) {
         cleanInterface = true;
       }
+      /* c8 ignore start -- Defensive fallback for an engine with a broken `Object.defineProperty` */
     } catch (err) {
       // Object.defineProperty does not work as intended.
     }
+    /* c8 ignore stop -- Defensive fallback for an engine with a broken `Object.defineProperty` */
   }
 
   /**
@@ -5664,10 +5694,11 @@
         if (req) {
           q.req = req; // Need to do this in case of cursors
         }
+        /* c8 ignore start -- TS guard */
         if (!q.req) {
-          // TS guard
           return;
         }
+        /* c8 ignore stop -- TS guard */
         if (q.req.__done) {
           // Avoid continuing with aborted requests
           return;
@@ -5741,10 +5772,11 @@
           }
         });
         q.req.addDefaultEventListener('error', function () {
+          /* c8 ignore start -- TS guard */
           if (!q.req) {
-            // TS guard
             return;
           }
+          /* c8 ignore stop -- TS guard */
           me.__abortTransaction(q.req.__error);
         });
         me.__active = true;
@@ -6287,10 +6319,11 @@
         //  behaves first-in-first-out with the same timeout so we could
         //  just use a `forEach`.
         return promises.then(function () {
+          /* c8 ignore start -- TS guard */
           if (!q.req) {
-            // TS guard
             throw new Error('Missing request');
           }
+          /* c8 ignore stop -- TS guard */
           q.req.__done = true;
           q.req.__result = undefined;
           q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
@@ -6301,10 +6334,11 @@
           return new SyncPromise(/** @type {(resolve: (value?: unknown) => void) => void} */
           function (resolve) {
             setTimeout(function () {
+              /* c8 ignore start -- TS guard */
               if (!q.req) {
-                // TS guard
                 throw new Error('Missing request');
               }
+              /* c8 ignore stop -- TS guard */
               q.req.dispatchEvent(reqEvt); // No need to catch errors
               resolve();
             }, 0);
@@ -8411,9 +8445,12 @@
   }).find(function (preset) {
     return preset && !Array.isArray(preset) && 'filelist' in preset;
   });
-  var origFileList = specSet && !Array.isArray(specSet) && 'filelist' in specSet ? specSet.filelist : undefined;
-  var origTest = origFileList && _typeof(origFileList) === 'object' && 'test' in origFileList && typeof origFileList.test === 'function' ? origFileList.test : undefined;
-  var origRevive = origFileList && _typeof(origFileList) === 'object' && 'revive' in origFileList && typeof origFileList.revive === 'function' ? origFileList.revive : undefined;
+  var origFileList = specSet && !Array.isArray(specSet) && 'filelist' in specSet ? specSet.filelist
+  /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist` preset entry ever goes missing */ : undefined;
+  var origTest = origFileList && _typeof(origFileList) === 'object' && 'test' in origFileList && typeof origFileList.test === 'function' ? origFileList.test
+  /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist.test` ever goes missing */ : undefined;
+  var origRevive = origFileList && _typeof(origFileList) === 'object' && 'revive' in origFileList && typeof origFileList.revive === 'function' ? origFileList.revive
+  /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist.revive` ever goes missing */ : undefined;
   var customFileList = origFileList ? _objectSpread2(_objectSpread2({}, origFileList), {}, {
     /**
      * @param {unknown} x
@@ -8432,10 +8469,12 @@
       if (typeof FileList !== 'undefined') {
         return Reflect.construct(FileList, [x]);
       }
+      /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist.revive` ever goes missing */
       return typeof origRevive === 'function' ? origRevive(x, state) : undefined;
     }
-  }) : undefined;
-  var typeson = new Typeson().register([fe, customFileList ? {
+  }) /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist` preset entry ever goes missing */ : undefined;
+  var typeson = new Typeson().register([fe, /* c8 ignore next -- Defensive fallback if typeson-registry's `filelist` preset entry ever goes missing */
+  customFileList ? {
     filelist: customFileList
   } : {}]);
 
@@ -8985,9 +9024,11 @@
     }
     IDBIndex.__invalidStateIfDeleted(me);
     IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
+    /* c8 ignore start -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
     if (me.objectStore.__deleted) {
       throw createDOMException('InvalidStateError', "This index's object store has been deleted");
     }
+    /* c8 ignore stop -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
     IDBTransaction.__assertActive(me.objectStore.transaction);
     if (nullDisallowed && isNullish(range)) {
       throw createDOMException('DataError', 'No key or range was specified');
@@ -10968,7 +11009,6 @@
     }
   };
 
-  // Todo __forceClose: Add tests for `__forceClose`
   /**
    *
    * @param {string} msg
@@ -10977,25 +11017,39 @@
    */
   IDBDatabase.prototype.__forceClose = function (msg) {
     var me = this;
+    // `close()` (below) resets `me.__transactions` to `[]`, so the
+    //   transactions to abort -- and the total count the completion check
+    //   below needs -- must be captured before calling it, not read back off
+    //   `me.__transactions` afterward.
+    var transactions = me.__transactions;
     me.close();
+
+    /**
+     * @returns {void}
+     */
+    function dispatchClose() {
+      // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
+      var evt = createEvent('close');
+      setTimeout(function () {
+        me.dispatchEvent(evt);
+      }, 0);
+    }
+    if (!transactions.length) {
+      dispatchClose();
+      return;
+    }
     var ct = 0;
-    me.__transactions.forEach(function (trans) {
+    transactions.forEach(function (trans) {
       // eslint-disable-next-line camelcase -- Clear API
       trans.on__abort = function () {
         ct++;
-        if (ct !== me.__transactions.length) {
+        if (ct !== transactions.length) {
           return;
         }
-
-        // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
-        var evt = createEvent('close');
-        setTimeout(function () {
-          me.dispatchEvent(evt);
-        }, 0);
+        dispatchClose();
       };
       trans.__abortTransaction(createDOMException('AbortError', 'The connection was force-closed: ' + (msg || '')));
     });
-    me.__transactions = [];
   };
   /* eslint-disable unicorn/no-top-level-side-effects -- Would be good */
   defineOuterInterface(IDBDatabase.prototype, listeners);
@@ -11271,6 +11325,13 @@
 
   /** @type {import('websql-configurable/lib/websql/WebSQLDatabase.js').default} */
   var sysdb;
+  // Tracks which `CFG.memoryDatabase` value `sysdb` was opened against, so a
+  //   later change to that config (e.g. toggling in-memory mode on and back
+  //   off) causes `sysdb` to be recreated for the new setting rather than
+  //   staying pinned, forever, to whatever it was the first time any database
+  //   was created in the process.
+  /** @type {string|null|undefined} */
+  var sysdbMemoryDatabaseSetting;
   var nameCounter = 0;
 
   /**
@@ -11450,9 +11511,11 @@
       }
       failure(er);
     }
-    if (sysdb) {
+    if (sysdb && sysdbMemoryDatabaseSetting === CFG.memoryDatabase) {
       success();
     } else {
+      // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Needed
+      sysdbMemoryDatabaseSetting = CFG.memoryDatabase;
       // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Necessary?
       sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : joinPath(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), '1', 'System Database', CFG.DEFAULT_DB_SIZE);
       sysdb.transaction(function (systx) {
@@ -11913,7 +11976,7 @@
       if ((useMemoryDatabase || useDatabaseCache) && Object.hasOwn(websqlDBCache, name) && Object.hasOwn(websqlDBCache[name], version)) {
         db = websqlDBCache[name][version];
       } else {
-        db = /** @type {DatabaseFull} */me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : joinPath(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
+        db = /** @type {DatabaseFull} */me.__openDatabase(useMemoryDatabase ? (/** @type {string} */CFG.memoryDatabase) : joinPath(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
         if (useDatabaseCache) {
           if (!Object.hasOwn(websqlDBCache, name)) {
             websqlDBCache[name] = {};
@@ -12239,10 +12302,9 @@
   };
 
   /**
-   * @todo forceClose: Test
    * This is provided to facilitate unit-testing of the
    *  closing of a database connection with a forced flag:
-   * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+   * <https://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>.
    * @param {string} dbName
    * @param {Integer} connIdx
    * @param {string} msg
@@ -13787,7 +13849,7 @@
    */
   function setGlobalVars(idb, initialConfig) {
     var IDB = /** @type {ShimmedObject & {[key: string]: unknown}} */
-    /** @type {unknown} */globalThis || {};
+    /** @type {unknown} */globalThis;
     /**
      * @param {string} name
      * @param {unknown} value
@@ -14019,6 +14081,8 @@
       // React Native
       navigator.userAgent && navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 25 : 4) * 1024 * 1024;
     }
+
+    /* c8 ignore next 4 -- coverage bug with logical short-circuits */
     if (!CFG.avoidAutoShim && (!IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
       IDB.shimIndexedDB.__useShim();
     } else {

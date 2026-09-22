@@ -108,7 +108,7 @@ function setGlobalVars (idb, initialConfig) {
         setConfig(initialConfig);
     }
     const IDB = /** @type {ShimmedObject & {[key: string]: unknown}} */ (
-        /** @type {unknown} */ (idb || globalThis || {})
+        /** @type {unknown} */ (idb || globalThis)
     );
     /**
      * @param {string} name
@@ -384,6 +384,8 @@ function setGlobalVars (idb, initialConfig) {
                 : 4
         ) * 1024 * 1024;
     }
+
+    /* c8 ignore next 4 -- coverage bug with logical short-circuits */
     if (!CFG.avoidAutoShim &&
         (!IDB.indexedDB || poorIndexedDbSupport) &&
         CFG.win.openDatabase !== undefined

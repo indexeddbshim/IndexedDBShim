@@ -354,4 +354,11 @@ describe('setGlobalVars coverage', function () {
             }
         }
     });
+    it('should cover line 388 false branch for openDatabase !== undefined', function () {
+        // IDB.indexedDB is falsy, so (!IDB.indexedDB || poorIndexedDbSupport) is TRUE
+        // But openDatabase is undefined!
+        const idb = {};
+        const cfg = {win: {}}; // no openDatabase!
+        setGlobalVars(idb, cfg);
+    });
 });
