@@ -260,4 +260,98 @@ describe('setGlobalVars coverage', function () {
             }
         }
     });
+    it('should cover line 111 branch by passing undefined idb', function () {
+        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        // Passing null to cover `idb || globalThis || {}`
+        setGlobalVars(null, cfg);
+    });
+
+    it('should cover line 136 propDesc || {} by making ShimDOMException read-only', function () {
+        const idb = {};
+        const cfg = {win: {openDatabase () { /* no-op */ }}, fullIDLSupport: true, fs: {}};
+        // Create a read-only property so initial assignment fails
+        Object.defineProperty(idb, 'ShimDOMException', {get: () => undefined, configurable: true});
+        setGlobalVars(idb, cfg);
+        idb.shimIndexedDB.__useShim();
+    });
+
+    it('should cover lines 343-346 webkitIndexedDB fallback', function () {
+        const idb = {webkitIndexedDB: {}};
+        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        setGlobalVars(idb, cfg);
+    });
+
+    it('should cover lines 343-346 mozIndexedDB fallback', function () {
+        const idb = {mozIndexedDB: {}};
+        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        setGlobalVars(idb, cfg);
+    });
+
+    it('should cover lines 343-346 oIndexedDB fallback', function () {
+        const idb = {oIndexedDB: {}};
+        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        setGlobalVars(idb, cfg);
+    });
+
+    it('should cover lines 343-346 msIndexedDB fallback', function () {
+        const idb = {msIndexedDB: {}};
+        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        setGlobalVars(idb, cfg);
+    });
+
+    it('should cover line 388 (!IDB.indexedDB || poorIndexedDbSupport) false branch', function () {
+        // IDB.indexedDB is truthy, poorIndexedDbSupport is falsy
+        const idb = {indexedDB: {}};
+        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        setGlobalVars(idb, cfg);
+    });
+
+    it('should cover line 388 poorIndexedDbSupport true branch with truthy IDB.indexedDB', function () {
+        // IDB.indexedDB is truthy, poorIndexedDbSupport is truthy
+        const idb = {indexedDB: {}};
+        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+        Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: 'Android 4.1'}), configurable: true});
+        try {
+            setGlobalVars(idb, cfg);
+        } finally {
+            if (originalNavigatorDesc) {
+                Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
+            } else {
+                delete globalThis.navigator;
+            }
+        }
+    });
+
+    it('should cover lines 395-401 webkit fallbacks', function () {
+        const idb = {
+            webkitIDBDatabase: {},
+            webkitIDBTransaction: {},
+            webkitIDBCursor: {},
+            webkitIDBKeyRange: {}
+        };
+        const cfg = {win: {openDatabase () { /* no-op */ }}, avoidAutoShim: true};
+        setGlobalVars(idb, cfg);
+    });
+
+    it('should cover line 388 (!IDB.indexedDB || poorIndexedDbSupport) true/false branches completely', function () {
+        // IDB.indexedDB truthy, poor falsy
+        setGlobalVars({indexedDB: {}}, {win: {openDatabase () { /* no-op */ }}});
+
+        // IDB.indexedDB falsy
+        setGlobalVars({}, {win: {openDatabase () { /* no-op */ }}});
+
+        // IDB.indexedDB truthy, poor truthy
+        const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+        Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: 'Android 4.1'}), configurable: true});
+        try {
+            setGlobalVars({indexedDB: {}}, {win: {openDatabase () { /* no-op */ }}});
+        } finally {
+            if (originalNavigatorDesc) {
+                Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
+            } else {
+                delete globalThis.navigator;
+            }
+        }
+    });
 });
