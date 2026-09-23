@@ -47,6 +47,7 @@ shim will ensure consistent behavior across all browsers.
     [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
     (Not recently tested)
 - This shim is basically an IndexedDB-to-WebSQL adapter.
+- Tests with 100% coverage
 - More (though most likely now outdated) details about the project at
     <http://nparashuram.com/IndexedDBShim>
 
@@ -97,6 +98,7 @@ use the following instead:
 const setGlobalVars = require('indexeddbshim');
 
 globalThis.window = globalThis; // We'll allow ourselves to use `window.indexedDB` or `indexedDB` as a global
+globalThis.location = {origin: 'mysite.com'}; // Set `origin` to anything besides the string `"null"`
 setGlobalVars(); // See signature below
 ```
 
