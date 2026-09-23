@@ -5607,13 +5607,14 @@
    */
   IDBTransaction.prototype.__executeRequests = function () {
     var me = this;
+    /* c8 ignore start -- Dead code: `__executeRequests` has exactly one caller (a single `setTimeout` scheduled once per transaction), so `me.__running` can never already be `true` when this function starts. */
     if (me.__running) {
-      /* c8 ignore next -- debug log */
       if (CFG.DEBUG) {
         console.log('Looks like the request set is already running', me.mode);
       }
       return;
     }
+    /* c8 ignore stop -- see comment above */
 
     // The synchronous script that created this transaction (and
     //   synchronously queued whatever requests it wanted to) has now
@@ -5663,6 +5664,7 @@
           queueMicrotask(cb);
           return;
         }
+        /* c8 ignore start -- Browser-only path: in every automated test environment (Node's websql-configurable/better-sqlite3 driver, and the fake/mock drivers modeled after it) `__usesStandardDriver()` is always `false` (they support the 4-arg `nonstandardTransCb` signature), so `isStandardDriver` is never `true` and this branch is never reached. Only a real standard (3-arg) WebSQL driver, as found in an actual browser, would exercise it. */
         try {
           tx.executeSql('SELECT 1', [], function () {
             cb();
@@ -5670,13 +5672,13 @@
             cb();
             return false; // Don't roll back the transaction over a keep-alive no-op
           });
-          /* c8 ignore next 6 -- error case */
         } catch (err) {
           // The driver has already finalized the transaction (or otherwise
           //   rejected the call) -- nothing left to hold open. We explicitly
           //   abort the transaction here.
           me.__abortTransaction(/** @type {Error|DOMException} */err);
         }
+        /* c8 ignore stop -- see comment above */
       }
 
       /**
@@ -5689,22 +5691,26 @@
        * @returns {void}
        */
       function success(result, req) {
+        /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished by a concurrent path (e.g. a driver-level failure or explicit `abort()`) racing with this request's own in-flight SQL success callback; not reliably reproducible without directly manipulating the SQL driver's callback timing. */
         if (me.__errored || me.__requestsFinished) {
           // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
           return;
         }
+        /* c8 ignore stop -- see comment above */
         if (req) {
           q.req = req; // Need to do this in case of cursors
         }
-        /* c8 ignore start -- TS guard */
+        /* c8 ignore start -- Dead code: `launchQueuedOp` only ever passes `success` as a callback in the branch where `q.req` is already truthy, and a falsy `req` param here leaves `q.req` unchanged, so `q.req` can't be falsy at this point. */
         if (!q.req) {
           return;
         }
-        /* c8 ignore stop -- TS guard */
+        /* c8 ignore stop -- see comment above */
+        /* c8 ignore start -- Defensive: only reached if the SQL driver invoked this request's success callback more than once for the same queued op; not reliably reproducible without directly manipulating the SQL driver. */
         if (q.req.__done) {
           // Avoid continuing with aborted requests
           return;
         }
+        /* c8 ignore stop -- see comment above */
         q.req.__done = true;
         q.req.__result = result;
         q.req.__error = null;
@@ -5721,6 +5727,7 @@
         //   is what actually resets `__handlerActive`, once it's
         //   confirmed (across its own bounded microtask wait) that no
         //   such continuation queued anything.
+        /* c8 ignore start -- Deliberately not tested: throwing from a request's `onsuccess` handler to exercise this branch would surface as an uncaught error through this test suite's `window.onerror` shim, which (per `retention-spec.js`'s `assertLater` comment) can trigger unbounded recursion here; not safe to trigger directly. */
         if (e.__legacyOutputDidListenersThrowError) {
           logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
           if (!me.__committed) {
@@ -5730,6 +5737,7 @@
             return;
           }
         }
+        /* c8 ignore stop -- see comment above */
         runContinuationSafely(advanceAfterDispatch);
       }
 
@@ -5741,15 +5749,19 @@
        * @returns {void}
        */
       function error() {
+        /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished by a concurrent path racing with this request's own in-flight SQL error callback; not reliably reproducible without directly manipulating the SQL driver's callback timing. */
         if (me.__errored || me.__requestsFinished) {
           // We've already called "onerror", "onabort", or thrown within
           //  the transaction, so don't do it again.
           return;
         }
+        /* c8 ignore stop -- see comment above */
+        /* c8 ignore start -- Defensive: only reached if the SQL driver invoked this request's error callback more than once, or after its success callback already ran; not reliably reproducible without directly manipulating the SQL driver. */
         if (q.req && q.req.__done) {
           // Avoid continuing with aborted requests
           return;
         }
+        /* c8 ignore stop -- see comment above */
         for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
           args[_key] = arguments[_key];
         }
@@ -5774,11 +5786,11 @@
           }
         });
         q.req.addDefaultEventListener('error', function () {
-          /* c8 ignore start -- TS guard */
+          /* c8 ignore start -- Defensive: this default listener is skipped entirely by `eventtargeter` whenever the event was `preventDefault()`-ed (the only case in which the shared `q` variable above could have already advanced to a different, non-request queue entry by the time a default listener runs); not reachable via the public API under normal (synchronous) dispatch. */
           if (!q.req) {
             return;
           }
-          /* c8 ignore stop -- TS guard */
+          /* c8 ignore stop -- see comment above */
           me.__abortTransaction(q.req.__error);
         });
         me.__active = true;
@@ -5790,6 +5802,7 @@
         q.req.dispatchEvent(e);
         // Do not set __active or __handlerActive flags to false yet --
         //   see the matching comment in `success`, above.
+        /* c8 ignore start -- Deliberately not tested: throwing from a request's `onerror` handler to exercise this branch would surface as an uncaught error through this test suite's `window.onerror` shim, which (per `retention-spec.js`'s `assertLater` comment) can trigger unbounded recursion here; not safe to trigger directly. */
         if (!e.__legacyOutputDidListenersThrowError) {
           return;
         }
@@ -5801,6 +5814,7 @@
           return;
         }
         me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
+        /* c8 ignore stop -- see comment above */
       }
 
       /**
@@ -5824,10 +5838,12 @@
           //   (not reset here).
           return true;
         }
+        /* c8 ignore start -- Defensive: reaching this queue entry via the normal advancement path after it was independently marked `__done` (e.g. by `__abortTransaction`'s own separate, async per-request error dispatch) requires a narrow race between that async cleanup and this synchronous advancement; not reliably reproducible without directly manipulating that timing. */
         if (q.req.__done) {
           // Avoid continuing with aborted requests
           return false;
         }
+        /* c8 ignore stop -- see comment above */
         // We're now handing off to (possibly async) work for
         //   this request, so the transaction is no longer active
         //   until its own `success`/`error` dispatch (below)
@@ -5852,18 +5868,22 @@
             return;
           }
           q.op(tx, q.args, success, error, executeNextRequest);
+          /* c8 ignore start -- Defensive: `q.op` (the SQL driver callback) is expected to report failures via its own `error`/`failure` callback argument rather than throwing synchronously; not reliably reproducible without directly forcing the driver to throw. */
         } catch (e) {
           error(/** @type {Error} */e);
         }
+        /* c8 ignore stop -- see comment above */
       }
 
       /**
        * @returns {void}
        */
       function runQueuedRequest() {
+        /* c8 ignore start -- Defensive: only reached if `prepareNextRequest` returns `false` (see its own ignore comment above for why that's not reliably reproducible). */
         if (!prepareNextRequest()) {
           return;
         }
+        /* c8 ignore stop -- see comment above */
         launchQueuedOp();
       }
 
@@ -5894,9 +5914,11 @@
        * @returns {void}
        */
       function checkQueueEntry(attemptsLeft) {
+        /* c8 ignore start -- Defensive: only reached if the transaction is independently errored/finished (e.g. an explicit `abort()`) during this function's keep-alive polling wait; not reliably reproducible without a contrived timing race. */
         if (me.__errored || me.__requestsFinished) {
           return;
         }
+        /* c8 ignore stop -- see comment above */
         if (i < me.__requests.length) {
           runQueuedRequest();
           return;
@@ -5918,10 +5940,12 @@
        * @returns {void}
        */
       function executeNextRequest() {
+        /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished by a concurrent path racing with this continuation; not reliably reproducible without a contrived timing race. */
         if (me.__errored || me.__requestsFinished) {
           // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
           return;
         }
+        /* c8 ignore stop -- see comment above */
         i++;
         if (i >= me.__requests.length) {
           checkQueueEntry(keepAliveAttempts);
@@ -5956,28 +5980,34 @@
        * @returns {void}
        */
       function advanceAfterDispatch() {
+        /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished by a concurrent path racing with this continuation; not reliably reproducible without a contrived timing race. */
         if (me.__errored || me.__requestsFinished) {
           return;
         }
+        /* c8 ignore stop -- see comment above */
         i++;
         if (i >= me.__requests.length) {
           checkQueueEntry(keepAliveAttempts);
           return;
         }
         keepAliveAndWait(function () {
+          /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished (or the next request's preparation failed) by a concurrent path racing with this continuation; not reliably reproducible without a contrived timing race. */
           if (me.__errored || me.__requestsFinished || !prepareNextRequest()) {
             return;
           }
+          /* c8 ignore stop -- see comment above */
           launchQueuedOp();
         });
       }
       executeNextRequest();
     }, function webSQLError(webSQLErr) {
+      /* c8 ignore start -- Dead code: the underlying websql-configurable driver's `_onTransactionComplete` always passes either `null` or a genuine `Error`/`DOMException` as this callback's argument, never the literal value `true`, under any driver used by the test suite. */
       // @ts-expect-error It's ok
       if (webSQLErr === true) {
         // Not a genuine SQL error
         return;
       }
+      /* c8 ignore stop -- see comment above */
       var err = webSQLErrback(/** @type {Error & {code?: number}} */webSQLErr);
       me.__abortTransaction(err);
     }, function () {
@@ -5988,19 +6018,25 @@
         // Node
         return;
       }
+      /* c8 ignore start -- Defensive: reaching this callback before `requestsFinished` has already set `__transactionEndCallback` (or finished) would require the underlying driver's own "queue empty" signal to race ahead of this codebase's own request-completion tracking; not observed (nor reliably reproducible) in this test suite, where the latter always wins. */
       if (!me.__transactionEndCallback && !me.__requestsFinished) {
         me.__transactionFinished = true;
         return;
       }
+      /* c8 ignore stop -- see comment above */
+      /* c8 ignore start -- Dead code in practice: by the time this callback runs, `requestsFinished` has always already set `__transactionEndCallback` (per the guard above), and `__completed`/`__transFinishedCbFired` are always already set true by `requestsFinished`'s own `__callTransFinishedCb` call, so this guard always returns early and the fall-through body below is never reached; not reliably reproducible without a contrived timing race. */
       if (!me.__transactionEndCallback || me.__completed || me.__transFinishedCbFired) {
         return;
       }
       me.__transFinishedCbFired = true;
       me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
+      /* c8 ignore stop -- see comment above */
     }, function (currentTask, err, done, rollback, commit) {
+      /* c8 ignore start -- Defensive: `err` here would mean the underlying WebSQL/SQLite driver reported a genuine unhandled SQL error bubbling out of this transaction's own executed statements -- every `executeSql` error callback in this codebase already handles/reports its own errors (returning `false`), so this is not reliably reproducible without mocking the SQL layer. */
       if (err) {
         return true;
       }
+      /* c8 ignore stop -- see comment above */
       // `readonly` transactions never hold a real SQL transaction open
       //   (see `WebSQLTransaction`'s constructor skipping `BEGIN;` for
       //   them), so there's no commit/rollback round trip to defer --
@@ -6049,7 +6085,7 @@
        */
       function complete() {
         me.__completed = true;
-        /* c8 ignore next -- debug log */
+        /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
         if (CFG.DEBUG) {
           console.log('Transaction completed');
         }
@@ -6059,6 +6095,7 @@
           me.dispatchEvent(evt);
           me.__internal = false;
           me.dispatchEvent(createEvent('__complete'));
+          /* c8 ignore start -- Deliberately not tested: throwing from an `oncomplete`/`__complete` handler to exercise this branch would surface as an uncaught error through this test suite's `window.onerror` shim, which (per `retention-spec.js`'s `assertLater` comment) can trigger unbounded recursion here; not safe to trigger directly. */
         } catch (e) {
           me.__internal = false;
           // An error occurred in the "oncomplete" handler.
@@ -6066,6 +6103,7 @@
           // (this may seem odd/bad, but it's how all native IndexedDB implementations work)
           me.__errored = true;
           throw e;
+          /* c8 ignore stop -- see comment above */
         } finally {
           activeTransactions.delete(me);
           me.__storeHandles = {};
@@ -6073,10 +6111,12 @@
         }
       }
       if (me.mode === 'readwrite' || me.mode === 'readonly') {
+        /* c8 ignore start -- Dead code in practice: `__transactionFinished` is only ever set by the driver-queue-idle-races-ahead scenario described above (also `c8 ignore`d there), which is not observed in this test suite. */
         if (me.__transactionFinished) {
           complete();
           return;
         }
+        /* c8 ignore stop -- see comment above */
         me.__transactionEndCallback = complete;
         // The underlying SQL driver's own "queue empty" check
         //   (`nonstandardTransCb`, above) typically already ran and
@@ -6112,6 +6152,7 @@
   IDBTransaction.prototype.__createRequest = function (source) {
     var me = this;
     var request = IDBRequest.__createInstance();
+    /* c8 ignore next -- Defensive: every call site (via `__addToTransactionQueue` or directly) always passes an explicit `source`, so the `me.db` fallback is not reachable via the public API. */
     request.__source = source !== undefined ? source : me.db;
     request.__transaction = me;
     return request;
@@ -6181,9 +6222,11 @@
    * @returns {void}
    */
   IDBTransaction.prototype.__assertActive = function () {
+    /* c8 ignore start -- Defensive: every call site (via `__addToTransactionQueue`/`__addNonRequestToTransactionQueue`) either already performed the static `IDBTransaction.__assertActive(tx)` check synchronously just beforehand, or queues against a transaction just created fresh (necessarily active), so this redundant instance-level check is not reachable via the public API. */
     if (!this.__active || !this.__handlerActive || this.__committed) {
       throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
+    /* c8 ignore stop -- see comment above */
   };
 
   /**
@@ -6197,6 +6240,7 @@
     }
   };
 
+  /* c8 ignore start -- Dead code: this instance method has no callers anywhere in src/ (confirmed via grep); every real call site uses the static `IDBTransaction.__assertVersionChange(tx)` directly instead. */
   /**
    * @this {IDBTransactionFull}
    * @returns {void}
@@ -6204,6 +6248,7 @@
   IDBTransaction.prototype.__assertVersionChange = function () {
     IDBTransaction.__assertVersionChange(this);
   };
+  /* c8 ignore stop -- see comment above */
 
   /**
    * Returns the specified object store.
@@ -6225,9 +6270,12 @@
       throw createDOMException('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     var store = me.db.__objectStores[objectStoreName];
+    /* c8 ignore start -- Defensive: `me.__objectStoreNames` (checked just above) and `me.db.__objectStores` are always kept in sync by every code path that adds/renames/removes a store, so a name that passes the participation check above should always also be found here; not reliably reproducible via the public API. */
     if (!store) {
       throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + me.db.name);
     }
+    /* c8 ignore stop -- see comment above */
+
     if (!Object.hasOwn(me.__storeHandles, objectStoreName) ||
     // These latter conditions are to allow store
     //   recreation to create new clone object
@@ -6246,10 +6294,12 @@
   IDBTransaction.prototype.__abortTransaction = function (err) {
     var me = this;
     logError('Error', 'An error occurred in a transaction', err);
+    /* c8 ignore start -- Defensive re-entrancy guard: only reached if `__abortTransaction` is invoked a second time on the same transaction after `__errored` is already `true` (e.g. two independent internal error paths racing); not reliably reproducible without a contrived timing race. */
     if (me.__errored) {
       // We've already called "onerror", "onabort", or thrown, so don't do it again.
       return;
     }
+    /* c8 ignore stop -- see comment above */
     me.__errored = true;
     if (me.mode === 'versionchange') {
       // Steps for aborting an upgrade transaction
@@ -6279,19 +6329,16 @@
     if (err !== null) {
       me.__error = err;
     }
+
+    /* c8 ignore start -- Defense in depth: `err` is only ever `null` here via `IDBTransaction.prototype.abort`'s own `__abortTransaction(null)` call, which now checks `__requestsFinished` itself first and throws `InvalidStateError` synchronously before ever reaching this point -- so this guard should not see a non-null `err` in practice. */
     if (me.__requestsFinished && err !== null) {
       // The transaction has already completed, so we can't call "onerror" or "onabort".
-      // So throw the error instead. `err` is only ever `null` here via
-      //   `IDBTransaction.prototype.abort`'s own `__abortTransaction(null)`
-      //   call, which now checks `__requestsFinished` itself first and
-      //   throws `InvalidStateError` synchronously before ever reaching
-      //   this point -- so this guard is just defense in depth against
-      //   `err` somehow being `null` some other way, not something this
-      //   path should see in practice.
+      // So throw the error instead.
       setTimeout(function () {
         throw err;
       }, 0);
     }
+    /* c8 ignore stop -- see comment above */
 
     /**
      * @param {import('websql-configurable/lib/websql/WebSQLTransaction.js').default|null} [tx]
@@ -6300,16 +6347,17 @@
      */
     function abort(tx, errOrResult) {
       if (!tx) {
-        /* c8 ignore next -- debug log */
+        /* c8 ignore next -- Debug-only log; only reached via the no-op `abort()` calls below (rare paths), and requires `CFG.DEBUG` to have any effect anyway. */
         if (CFG.DEBUG) {
           console.log('Rollback not possible due to missing transaction', me);
         }
+        /* c8 ignore start -- Defensive: the underlying WebSQL/SQLite driver erroring on the manual `ROLLBACK` executed below (with a result object exposing a numeric `code`) is not reliably reproducible without mocking the SQL layer. */
       } else if (errOrResult && 'code' in errOrResult && typeof errOrResult.code === 'number') {
-        /* c8 ignore next -- debug log */
         if (CFG.DEBUG) {
           console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
         }
-        /* c8 ignore next -- debug log */
+        /* c8 ignore stop -- see comment above */
+        /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
       } else if (CFG.DEBUG) {
         console.log('Rollback succeeded', me);
       }
@@ -6325,11 +6373,11 @@
         //  behaves first-in-first-out with the same timeout so we could
         //  just use a `forEach`.
         return promises.then(function () {
-          /* c8 ignore start -- TS guard */
+          /* c8 ignore start -- Dead code: the preceding `.filter()` only keeps entries with a truthy `q.req`, and nothing ever resets `q.req` back to a falsy value afterward, so this invariant can't actually be violated. */
           if (!q.req) {
             throw new Error('Missing request');
           }
-          /* c8 ignore stop -- TS guard */
+          /* c8 ignore stop -- see comment above */
           q.req.__done = true;
           q.req.__result = undefined;
           q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
@@ -6340,11 +6388,11 @@
           return new SyncPromise(/** @type {(resolve: (value?: unknown) => void) => void} */
           function (resolve) {
             setTimeout(function () {
-              /* c8 ignore start -- TS guard */
+              /* c8 ignore start -- Dead code: same invariant as above -- `q.req` was already confirmed truthy by the outer `.filter()` and is never reset. */
               if (!q.req) {
                 throw new Error('Missing request');
               }
-              /* c8 ignore stop -- TS guard */
+              /* c8 ignore stop -- see comment above */
               q.req.dispatchEvent(reqEvt); // No need to catch errors
               resolve();
             }, 0);
@@ -6364,10 +6412,12 @@
           releaseFinishedTransaction(me);
         }, 0);
         return undefined;
+        /* c8 ignore start -- Diagnostic safety net: nothing in the preceding promise chain normally rejects (the only throws it could catch are the dead invariant-violation checks above), so this handler is not reachable in practice. */
       }).catch(function (err) {
         console.log('Abort error');
         throw err;
       });
+      /* c8 ignore stop -- see comment above */
     }
     me.__transFinishedCb(true, function (rollback) {
       if (rollback && me.__tx) {
@@ -6375,21 +6425,24 @@
         //   rollback automatically), but for Node.js, etc., we give chance for
         //   manual aborts which would otherwise not work.
         if (me.mode === 'readwrite') {
+          /* c8 ignore start -- Dead code in practice: `__transactionFinished` is only ever set by the driver-queue-idle-races-ahead scenario described earlier in this file (also `c8 ignore`d there), which is not observed in this test suite. */
           if (me.__transactionFinished) {
             abort();
             return;
           }
+          /* c8 ignore stop -- see comment above */
           me.__transactionEndCallback = abort;
           return;
         }
         try {
           me.__tx.executeSql('ROLLBACK', [], abort, /** @type {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} */abort); // Not working in some circumstances, even in Node
-          /* c8 ignore next 5 -- error case */
+          /* c8 ignore start -- Defensive: the underlying WebSQL/SQLite driver throwing synchronously on `ROLLBACK` is not reliably reproducible without mocking the SQL layer. */
         } catch (err) {
           // Browser errs when transaction has ended and since it most likely already erred here,
           //   we call to abort
           abort();
         }
+        /* c8 ignore stop -- see comment above */
       } else {
         abort(null, {
           code: 0
@@ -6407,7 +6460,7 @@
     if (!(me instanceof IDBTransaction)) {
       throw new TypeError('Illegal invocation');
     }
-    /* c8 ignore next -- debug log */
+    /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
     if (CFG.DEBUG) {
       console.log('The transaction was aborted', me);
     }
@@ -6439,7 +6492,7 @@
     if (!me.__active || !me.__handlerActive || me.__committed) {
       throw createDOMException('InvalidStateError', 'Failed to execute \'commit\' on \'IDBTransaction\': The transaction is not active.');
     }
-    /* c8 ignore next -- debug log */
+    /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
     if (CFG.DEBUG) {
       console.log('The transaction was explicitly committed', me);
     }
@@ -6482,6 +6535,7 @@
   };
 
   // object store methods behave differently: see https://github.com/w3c/IndexedDB/issues/192
+  /* c8 ignore start -- Dead code: this function has no callers anywhere in src/ (confirmed via grep); object store methods use `IDBTransaction.__assertActive`/`__assertNotFinished` directly instead. */
   /**
    *
    * @param {IDBTransactionFull} tx
@@ -6490,7 +6544,6 @@
   IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
     try {
       IDBTransaction.__assertNotFinished(tx);
-      /* c8 ignore next 3 -- difficult to mock without corrupting transaction queue */
     } catch (err) {
       if (tx && !tx.__completed && !tx.__abortFinished) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
@@ -6498,6 +6551,7 @@
       throw err;
     }
   };
+  /* c8 ignore stop -- see comment above */
 
   /**
    *
@@ -8640,7 +8694,6 @@
    *   __unique: boolean,
    *   __objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
    *   __keyPath: import('./Key.js').KeyPath,
-   *   __recreated?: boolean,
    *   __fetchIndexData: (
    *     range: Query,
    *     opType: "value"|"key"|"count",
@@ -8786,7 +8839,7 @@
       }
     });
     /** @type {const} */
-    ['__pendingCreate', '__pendingDelete', '__deleted', '__originalName', '__recreated'].forEach(function (p) {
+    ['__pendingCreate', '__pendingDelete', '__deleted', '__originalName'].forEach(function (p) {
       // @ts-expect-error Why is this type "never"?
       idx[p] = index[p];
     });
@@ -8818,12 +8871,12 @@
     var transaction = store.transaction;
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     transaction.__addNonRequestToTransactionQueue(function createIndex(tx, args, success, failure) {
-      var columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
+      var columnExists = idx && idx.__deleted; // This check must occur here rather than earlier as properties may not have been set yet otherwise
 
       /** @type {{[key: string]: boolean}} */
       var indexValues = {};
 
-      /* c8 ignore next 8 -- sqlite error */
+      /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
       /**
        * @param {WebSQLTransaction} tx
        * @param {(Error & {code?: number})} err
@@ -8832,6 +8885,7 @@
       function error(tx, err) {
         failure(createDOMException('UnknownError', 'Could not create index "' + indexName + '"' + err.code + '::' + err.message, err));
       }
+      /* c8 ignore stop -- see comment above */
 
       /**
        * @param {WebSQLTransaction} tx
@@ -8881,12 +8935,6 @@
               } else {
                 delete index.__pendingCreate;
                 delete indexHandle.__pendingCreate;
-                if (index.__deleted) {
-                  delete index.__deleted;
-                  delete indexHandle.__deleted;
-                  index.__recreated = true;
-                  indexHandle.__recreated = true;
-                }
                 indexValues = {};
                 success(store);
               }
@@ -8947,7 +8995,7 @@
     var transaction = store.transaction;
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     transaction.__addNonRequestToTransactionQueue(function deleteIndex(tx, args, success, failure) {
-      /* c8 ignore next 8 -- sqlite error */
+      /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
       /**
        * @param {WebSQLTransaction} tx
        * @param {(Error & {code?: number})} err
@@ -8956,6 +9004,7 @@
       function error(tx, err) {
         failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));
       }
+      /* c8 ignore stop -- see comment above */
 
       /**
        * @returns {void}
@@ -8964,7 +9013,6 @@
         // Update the object store's index list
         IDBIndex.__updateIndexList(store, tx, function (store) {
           delete index.__pendingDelete;
-          delete index.__recreated;
           index.__deleted = true;
           if (indexHandle) {
             indexHandle.__deleted = true;
@@ -9032,11 +9080,11 @@
     var me = this;
     IDBIndex.__invalidStateIfDeleted(me);
     IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
-    /* c8 ignore start -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
+    /* c8 ignore start -- Defensive: `IDBObjectStore.__invalidStateIfDeleted` just above already throws when `me.objectStore.__deleted` is true, so this identical check can never be reached. */
     if (me.objectStore.__deleted) {
       throw createDOMException('InvalidStateError', "This index's object store has been deleted");
     }
-    /* c8 ignore stop -- Unreachable: `IDBObjectStore.__invalidStateIfDeleted` above already throws whenever `__deleted` is true */
+    /* c8 ignore stop -- see comment above */
     IDBTransaction.__assertActive(me.objectStore.transaction);
     if (nullDisallowed && isNullish(range)) {
       throw createDOMException('DataError', 'No key or range was specified');
@@ -9205,14 +9253,16 @@
     var colInfoToPreserve = colInfoToPreserveArr.map(function (colInfo) {
       return colInfo.join(' ');
     });
+    /* c8 ignore next -- Defensive: the sole caller always supplies a non-empty `colInfoToPreserveArr` (seeded with `key`/`value` column info), so the empty-array fallback is unreachable. */
     var listColInfoToPreserve = colInfoToPreserve.length ? colInfoToPreserve.join(', ') + ', ' : '';
+    /* c8 ignore next -- Defensive: see comment above. */
     var listColsToPreserve = colNamesToPreserve.length ? colNamesToPreserve.join(', ') + ', ' : '';
 
     // We could adapt the approach at https://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
-      /* c8 ignore next 8 -- sqlite error */
+      /* c8 ignore start -- Defensive: only reached if one of the chained `CREATE TABLE`/`INSERT`/`DROP TABLE`/`ALTER TABLE` statements below fails, which is not reliably reproducible without mocking the SQL layer. */
       /**
        * @param {WebSQLTransaction} tx
        * @param {(Error & {code?: number})} err
@@ -9221,6 +9271,7 @@
       function sqlError(tx, err) {
         error(err);
       }
+      /* c8 ignore stop -- see comment above */
       /**
        * @returns {void}
        */
@@ -9229,9 +9280,10 @@
           cb(tx, success);
           return;
         }
-        /* c8 ignore next 2 -- unreachable */
+        /* c8 ignore start -- Defensive: `__renameIndex`'s only caller (the `IDBIndex.prototype.name` setter) always supplies a `cb`, so this fallback is dead with the current call graph. */
         success();
       }
+      /* c8 ignore stop -- see comment above */
       if (!CFG.useSQLiteIndexes) {
         finish();
         return;
@@ -9267,14 +9319,16 @@
                   // if (CFG.DEBUG) { console.log(sql); }
                   // tx.executeSql(sql, [], function () {
                   var sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')';
+                  /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
                   if (CFG.DEBUG) {
                     console.log(sql);
                   }
-                  tx.executeSql(sql, [], resolve, /* c8 ignore next 4 -- sqlite error */
+                  tx.executeSql(sql, [], resolve, /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                   /** @type {SqlErrorCallback} */
                   function (tx, err) {
                     reject(err);
-                  });
+                  }
+                  /* c8 ignore stop -- see comment above */);
                   // }, function (tx, err) {
                   //    reject(err);
                   // });
@@ -9284,31 +9338,33 @@
                 var escapedIndexToRecreate = sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
                 // Chrome erring here if not dropped first; Node does not
                 var sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
-                /* c8 ignore next -- debug log */
                 if (CFG.DEBUG) {
                   console.log(sql);
                 }
                 tx.executeSql(sql, [], function () {
                   var sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '("key")';
-                  /* c8 ignore next -- debug log */
                   if (CFG.DEBUG) {
                     console.log(sql);
                   }
-                  tx.executeSql(sql, [], resolve, /* c8 ignore next 4 -- sqlite error */
+                  tx.executeSql(sql, [], resolve, /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                   /** @type {SqlErrorCallback} */
                   function (tx, err) {
                     reject(err);
-                  });
-                }, /* c8 ignore next 4 -- sqlite error */
+                  }
+                  /* c8 ignore stop -- see comment above */);
+                }, /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                 /** @type {SqlErrorCallback} */
                 function (tx, err) {
                   reject(err);
-                });
+                }
+                /* c8 ignore stop -- see comment above */);
               }));
               SyncPromise.all(indexCreations).then(finish).catch(/** @type {(reason: unknown) => PromiseLike<never>} */
               error).catch(function (err) {
+                /* c8 ignore start -- Defensive: only reached if `finish` or the outer `error` callback itself throws; not reliably reproducible. */
                 console.log('Index rename error');
                 throw err;
+                /* c8 ignore stop -- see comment above */
               });
             }, /** @type {SqlErrorCallback} */sqlError);
           }, /** @type {SqlErrorCallback} */sqlError);
@@ -9419,9 +9475,12 @@
                 record = row;
               }
             }
+            /* c8 ignore start -- Defensive: the SQL `LIKE` clause is a coarse pre-filter and this precise re-check in JS is meant to catch its false positives, but the encoding's per-character dash-prefix plus trailing-space delimiter (see `Key.js` string encoding) and fixed-length number encoding prevent one encoded value from ever being a spurious substring of another, so a `LIKE` hit always also passes this check in practice. */
             if (!record) {
               return 0; // continue
             }
+            /* c8 ignore stop -- see comment above */
+
             records.push(decode$1(record));
             if (unboundedDisallowed) {
               return 1; // break
@@ -9445,8 +9504,16 @@
       if (isCount) {
         success(recordCount);
       } else if (recordCount === 0) {
+        // `unboundedDisallowed` is always `true` here: this function is only reached (for
+        //   non-`count` `opType`s) via `get`/`getKey`, which always pass `nullDisallowed: true`
+        //   through as `unboundedDisallowed`. `getAll`/`getAllKeys`/`getAllRecords` use a
+        //   different (cursor-based) code path, so the `unboundedDisallowed`-`false` case
+        //   (returning `[]` here) is unreachable given current callers.
+        /* c8 ignore next -- see comment above */
         success(unboundedDisallowed ? undefined : []);
       } else {
+        // `unboundedDisallowed` is always `true` here; see comment above.
+        /* c8 ignore next -- see comment above */
         success(unboundedDisallowed ? records[0] : records);
       }
     }, /** @type {SqlErrorCallback} */error);
@@ -9690,6 +9757,7 @@
               tx.executeSql(sql, sqlValues, function (tx) {
                 // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
                 var sql = 'ALTER TABLE ' + escapeStoreNameForSQL(oldName) + ' RENAME TO ' + escapeStoreNameForSQL(name);
+                /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG` while renaming a store. */
                 if (CFG.DEBUG) {
                   console.log(sql);
                 }
@@ -9697,10 +9765,11 @@
                   delete me.__pendingName;
                   success();
                 });
-                /* c8 ignore next 4 -- sqlite error */
               }, function (tx, err) {
+                /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                 error(err);
                 return false;
+                /* c8 ignore stop -- see comment above */
               });
             });
           }
@@ -9774,6 +9843,7 @@
       storeHandles[storeName] = IDBObjectStore.__clone(store, transaction);
     }
     transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
+      /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
       /**
        * @param {WebSQLTransaction} tx
        * @param {(Error & {code?: number})} [err]
@@ -9786,6 +9856,8 @@
         failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
         return false;
       }
+      /* c8 ignore stop -- see comment above */
+
       var escapedStoreNameSQL = escapeStoreNameForSQL(storeName);
       // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
       var sql = ['CREATE TABLE', escapedStoreNameSQL, '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
@@ -9840,6 +9912,7 @@
 
     // Remove the object store from WebSQL
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
+      /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
       /**
        * @param {WebSQLTransaction} tx
        * @param {(Error & {code?: number})} [err]
@@ -9852,6 +9925,8 @@
         failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
         return false;
       }
+      /* c8 ignore stop -- see comment above */
+
       tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [escapeSQLiteStatement(store.__currentName)], function (tx, data) {
         if (data.rows.length > 0) {
           tx.executeSql('DROP TABLE ' + escapeStoreNameForSQL(store.__currentName), [], function () {
@@ -10023,8 +10098,7 @@
         var indexKey;
         try {
           indexKey = extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry);
-          if ('invalid' in indexKey && indexKey.invalid || (/* c8 ignore next -- unreachable (index evaluation failure) */
-          'failure' in indexKey && indexKey.failure)) {
+          if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
             throw new Error('Go to catch');
           }
         } catch (err) {
@@ -10032,11 +10106,12 @@
           return;
         }
         var indexKeyValue = indexKey.value;
-        /* c8 ignore next 4 -- unreachable (index evaluation undefined) */
+        /* c8 ignore start -- Defensive: unreachable given the current `Key.js` implementation, where a keyPath evaluation that would resolve to `undefined` always instead reports `invalid`/`failure` (caught above, causing an earlier `return`) rather than succeeding with an `undefined` value. */
         if (indexKeyValue === undefined) {
           resolve(undefined);
           return;
         }
+        /* c8 ignore stop -- see comment above */
         var multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
         var fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
         executeFetchIndexData.apply(void 0, _toConsumableArray(fetchArgs).concat([tx, null, function success(key) {
@@ -10119,10 +10194,11 @@
          * @returns {void}
          */
         function setIndexInfo(index) {
-          /* c8 ignore next 3 -- unreachable (index evaluation undefined) */
+          /* c8 ignore start -- Defensive: unreachable given the current `Key.js` implementation, where a keyPath evaluation that would resolve to `undefined` always instead reports `invalid`/`failure` (caught above, causing an earlier `return`) rather than succeeding with an `undefined` value. */
           if (indexKeyValue === undefined) {
             return;
           }
+          /* c8 ignore stop -- see comment above */
           paramMap[index.__currentName] = /** @type {string} */
           _encode(indexKeyValue, index.multiEntry);
         }
@@ -10278,10 +10354,11 @@
         console.log('Did the row with the', key, 'exist?', data.rowsAffected);
       }
       cb(tx);
-      /* c8 ignore next 4 -- sqlite error */
     }, function (tx, err) {
+      /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
       error(err);
       return false;
+      /* c8 ignore stop -- see comment above */
     });
   };
 
@@ -10390,18 +10467,20 @@
             return;
           }
           ret = getKey ? _decode(unescapeSQLiteResponse(/** @type {{key: string}} */data.rows.item(0).key), false) : decode(unescapeSQLiteResponse(/** @type {{value: string}} */data.rows.item(0).value));
-          /* c8 ignore next 4 -- sqlite data corruption */
+          /* c8 ignore start -- Defensive: catches unexpected decode failures (e.g. corrupted stored data); not reliably reproducible via the public API since encode/decode are always paired and never write undecodable data. */
         } catch (e) {
           // If no result is returned, or error occurs when parsing JSON
           if (CFG.DEBUG) {
             console.log(e);
           }
         }
+        /* c8 ignore stop -- see comment above */
         success(ret);
-        /* c8 ignore next 4 -- sqlite error */
       }, function (tx, err) {
+        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
         error(err);
         return false;
+        /* c8 ignore stop -- see comment above */
       });
     }, undefined, me);
   };
@@ -10512,10 +10591,11 @@
           cursor.__invalidateCache(); // Delete
         });
         success();
-        /* c8 ignore next 4 -- sqlite error */
       }, function (tx, err) {
+        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
         error(err);
         return false;
+        /* c8 ignore stop -- see comment above */
       });
     }, undefined, me);
   };
@@ -10542,10 +10622,11 @@
           cursor.__invalidateCache(); // Clear
         });
         success();
-        /* c8 ignore next 4 -- sqlite error */
       }, function (tx, err) {
+        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
         error(err);
         return false;
+        /* c8 ignore stop -- see comment above */
       });
     }, undefined, me);
   };
@@ -10880,7 +10961,7 @@
     if (keyPath !== null && !isValidKeyPath(keyPath)) {
       throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }
-    if (Object.hasOwn(this.__objectStores, storeName) && !this.__objectStores[storeName].__pendingDelete) {
+    if (Object.hasOwn(this.__objectStores, storeName) && !this.__objectStores[storeName].__pendingDelete && !this.__objectStores[storeName].__deleted) {
       throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
     var autoInc = createOptions.autoIncrement;
@@ -11433,12 +11514,20 @@
   function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
     var useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
     if (useMemoryDatabase) {
+      /* c8 ignore start -- Defensive: only reachable if `websqlDBCache[name]`
+         was initialized as an empty placeholder by `open()`'s connection-queue
+         setup (`addRequestToConnectionQueue`, above `openDB`) but never
+         populated with an actual instance -- e.g. `__openDatabase` throwing
+         after a `dbVersions` row already existed for `name` from an earlier,
+         successful `open()` -- or if `name` was never added to the cache at
+         all. Not reachable via normal, non-tampered API usage. */
       var latestSQLiteDBCached = Object.hasOwn(websqlDBCache, name) ? getLatestCachedWebSQLDB(name) : null;
       if (!latestSQLiteDBCached) {
         console.warn('Could not find a memory database instance to delete.');
         databaseDeleted();
         return;
       }
+      /* c8 ignore stop -- see comment above */
       var _sqliteDB = latestSQLiteDBCached._db;
       if (!_sqliteDB || !_sqliteDB.close) {
         console.error('The `openDatabase` implementation does not have the expected `._db.close` method for closing the database');
@@ -11492,15 +11581,24 @@
             tables.item(i).name)), [], function () {
               deleteTables(i + 1);
             }, function () {
+              /* c8 ignore start -- Defensive: continues deleting the rest
+                 even if this specific store's table is already gone (e.g.
+                 duplicate `__sys__` rows for the same escaped table name, or
+                 external tampering); not reachable via normal API usage. */
               deleteTables(i + 1);
               return false;
+              /* c8 ignore stop -- see comment above */
             });
           }
         })(0);
       }, function () {
-        // __sys__ table does not exist, but that does not mean delete did not happen
+        /* c8 ignore start -- `__sys__` is always created by `openDB` before this
+           database's `dbVersions` row (a prerequisite for reaching this code at
+           all) is ever inserted; only reachable if the file was tampered with/
+           removed externally afterward. */
         databaseDeleted();
         return false;
+        /* c8 ignore stop -- see comment above */
       });
     });
   }
@@ -11526,7 +11624,6 @@
      */
     function sysDbCreateError(tx, err) {
       var er = webSQLErrback(/** @type {(Error & {code?: number})} */err || tx);
-      /* c8 ignore next -- debug log */
       if (CFG.DEBUG) {
         console.log('Error in sysdb transaction - when creating dbVersions', err);
       }
@@ -11641,7 +11738,6 @@
     // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
       escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name);
-      /* c8 ignore next 4 -- error case */
       // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
       throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
@@ -11717,6 +11813,17 @@
              * @returns {void}
              */
             var sysdbFinishedCb = function sysdbFinishedCb(systx, err, cb) {
+              /* c8 ignore start -- This initial definition is always
+                 superseded before ever being invoked: the `sysdb.transaction(...)`
+                 call below always reaches its `nonstandardTransCb` (4th arg)
+                 after this same SQL batch finishes running (since `dbCreateError`
+                 always reports errors as "handled" and this call site is never
+                 a `readTransaction`), which unconditionally reassigns
+                 `sysdbFinishedCb` to a version using the library's own
+                 `rollback`/`commit` -- well before any real invocation from
+                 `on__beforecomplete`/`on__preabort`/`on__abort` below (those only
+                 fire once the upgrade transaction itself later completes/aborts).
+                 Kept as a defensive fallback in case that invariant ever changes. */
               if (err) {
                 /**
                  * @param {unknown} [errorToShow]
@@ -11765,6 +11872,7 @@
               }
               // In browser, should auto-commit
               cb(); // eslint-disable-line promise/no-callback-in-promise -- Convenient
+              /* c8 ignore stop -- see comment above */
             };
             sysdb.transaction(function (systx) {
               /**
@@ -11898,9 +12006,17 @@
                 // eslint-disable-next-line camelcase -- Clear API
                 req.transaction.on__complete = function () {
                   var pos = connection.__transactions.indexOf(req.transaction);
+                  // `req.transaction` (the versionchange transaction) is created
+                  //   directly via `IDBTransaction.__createInstance` above, never
+                  //   via `IDBDatabase.prototype.transaction()` (the only place
+                  //   that pushes onto `connection.__transactions`), so `pos` is
+                  //   always -1 here.
+                  /* c8 ignore start -- see comment above */
                   if (pos !== -1) {
                     connection.__transactions.splice(pos, 1);
                   }
+                  /* c8 ignore stop -- see comment above */
+
                   if (/** @type {import('./IDBDatabase.js').IDBDatabaseFull} */req.__result.__closePending) {
                     req.__transaction = null;
                     var err = createDOMException('AbortError', 'The connection has been closed.');
@@ -11936,9 +12052,16 @@
                 systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
               }
             }, dbCreateError, undefined, function (currentTask, err, done, rollback, commit) {
+              // Defensive fallback, not reachable in practice: same reasoning
+              //   as `deleteDatabase`'s own `nonstandardTransCb` below
+              //   (`currentTask.readOnly` is always false here, and
+              //   `dbCreateError` always returns `false`, so `err` is never
+              //   truthy either).
+              /* c8 ignore start -- see comment above */
               if (currentTask.readOnly || err) {
                 return true;
               }
+              /* c8 ignore stop -- see comment above */
               sysdbFinishedCb = function sysdbFinishedCb(systx, err, cb) {
                 if (err) {
                   rollback(err,
@@ -11953,7 +12076,17 @@
                       } else {
                         systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName]);
                       }
-                    }, function (sqlErr) {
+                    },
+                    // Deeply-nested defensive path: only reached if
+                    //   the *revert* SQL (undoing the `dbVersions`
+                    //   INSERT/UPDATE after the original version-
+                    //   upgrade itself already failed) fails a
+                    //   *second* time. Not feasibly triggerable
+                    //   without fault-injecting the underlying SQL
+                    //   driver on this specific, already-failing
+                    //   revert statement.
+                    function (sqlErr) {
+                      /* c8 ignore next 2 -- see comment above */
                       isRevertingSysdb = false;
                       cb(sqlErr); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                     }, function () {
@@ -11969,8 +12102,20 @@
             });
             return undefined;
           }).catch(function (err) {
+            /* c8 ignore start -- Purely defensive: nothing in
+               `triggerAnyVersionChangeAndBlockedEvents`'s promise chain
+               (or this `.then()` continuation above) ever rejects/throws
+               under any reachable application-level condition -- all of
+               its continuations resolve cleanly, and its `dispatchEvent`
+               calls are deliberately fire-and-forget ("No need to catch
+               errors"), running inside a `setTimeout` where a listener
+               throwing becomes an uncaught exception in that macrotask
+               rather than a promise rejection here. This exists solely
+               to surface a truly-unexpected internal bug via the console
+               before rethrowing, not to handle a real, testable error path. */
             console.log('Error within `triggerAnyVersionChangeAndBlockedEvents`');
             throw err;
+            /* c8 ignore stop -- see comment above */
           });
         } else {
           finishRequest();
@@ -12000,9 +12145,17 @@
       } else {
         db = /** @type {DatabaseFull} */me.__openDatabase(useMemoryDatabase ? (/** @type {string} */CFG.memoryDatabase) : joinPath(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
         if (useDatabaseCache) {
+          /* c8 ignore start -- Defensive: by the time `openDB` runs,
+             `websqlDBCache[name]` has always already been created by
+             `addRequestToConnectionQueue`'s own callback above (guarded
+             by this same `useDatabaseCache` condition), which always
+             runs first and unconditionally ensures the entry exists
+             before ever calling `openDB`. Kept as a safety net in case
+             that invariant ever changes. */
           if (!Object.hasOwn(websqlDBCache, name)) {
             websqlDBCache[name] = {};
           }
+          /* c8 ignore stop -- see comment above */
           websqlDBCache[name][version] = db;
         }
       }
@@ -12086,7 +12239,6 @@
     // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
       escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name);
-      /* c8 ignore next 4 -- error case */
       // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
       throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
@@ -12197,9 +12349,23 @@
                   cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError);
                 }, dbError);
               }, dbError, undefined, function (currentTask, err, done, rollback, commit) {
+                /* c8 ignore start -- Defensive fallback, not reachable in
+                   practice: `currentTask.readOnly` is always `false` here
+                   (this callback is only ever attached to the writable
+                   `sysdb.transaction(...)` call above, never to a
+                   `sysdb.readTransaction(...)`), and `err` can only be
+                   truthy if the `DELETE FROM dbVersions` statement's own
+                   error callback (`dbError`) reports the failure back to
+                   `websql-configurable` as unhandled -- but `dbError`
+                   deliberately always `return`s `false`, which tells the
+                   library the error was already handled (and to keep
+                   `err` falsy here), precisely so this custom
+                   `sysdbFinishedCbDelete` rollback/commit path below is
+                   used instead of the library's own default rollback. */
                 if (currentTask.readOnly || err) {
                   return true;
                 }
+                /* c8 ignore stop -- see comment above */
                 sysdbFinishedCbDelete = function sysdbFinishedCbDelete(err, cb) {
                   if (err) {
                     rollback(err, cb);
@@ -12808,7 +12974,7 @@
         success(undefined, undefined, undefined);
       }
     }, function (tx, err) {
-      /* c8 ignore next -- debug */
+      /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
       if (CFG.DEBUG) {
         console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
       }
@@ -12965,7 +13131,6 @@
           }
         }
         if (rows.length === 0) {
-          /* c8 ignore next 5 -- debug */
           if (me.__multiEntryExhausted) {
             if (CFG.DEBUG) {
               console.log('[multiEntry] Reached end of multiEntry cursor (last batch had no matches)');
@@ -12973,7 +13138,6 @@
             success(undefined, undefined, undefined);
             return;
           }
-          /* c8 ignore next 2 -- debug */
           if (CFG.DEBUG) {
             console.log('[multiEntry] batch had no matches; fetching next batch');
           }
@@ -12994,8 +13158,16 @@
           if (a.key > b.key) {
             return me.direction === 'prev' ? -1 : 1;
           }
-          /* c8 ignore next -- unreachable (identical primary keys) */
+          /* c8 ignore start -- Defensive: only reachable if two matches
+             in the same batch shared both the same `matchingKey` and
+             the same primary `key`, which would require the same
+             record's multi-entry array to contain a duplicate value.
+             `Key.js`'s array-to-key conversion already drops duplicate
+             values when a multi-entry index entry is built, so this
+             can never happen in practice; kept only to satisfy the
+             `Array.prototype.sort` comparator contract. */
           return 0;
+          /* c8 ignore stop -- see comment above */
         });
         me.__prefetchedIndex = 0;
         me.__prefetchedData = {
@@ -13010,19 +13182,23 @@
             return this.data[index];
           }
         };
-        /* c8 ignore next 2 -- debug */
         if (CFG.DEBUG) {
           console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
         }
         me.__decode(rows[0], success);
-      }, function (tx, err) {
-        /* c8 ignore next 4 -- debug / sqlite error */
+      },
+      /* c8 ignore start -- Defensive: guards against an unexpected SQLite
+         execution error (e.g. I/O error, corruption) while querying for
+         multi-entry cursor matches; not reliably reproducible without
+         mocking the SQL layer. */
+      function (tx, err) {
         if (CFG.DEBUG) {
           console.log('[multiEntry] Could not execute Cursor.continue', sqlStr, sqlValues);
         }
         error(err);
         return false;
       });
+      /* c8 ignore stop -- see comment above */
     }
     runQuery();
   };
@@ -13463,16 +13639,33 @@
             // We don't invalidate the cache (as we don't access it anymore
             //    and it will set the index off)
             success(undefined);
-            /* c8 ignore next 4 -- edge case */
+            /* c8 ignore start -- Defensive: `__find` (invoked just above) has
+               already confirmed a row exists for this primary key within the
+               same transaction queue, so `rowsAffected` should always be 1 in
+               normal usage. This branch would only be reached if the underlying
+               row were removed by another request queued in the same
+               transaction between `__find`'s check and this DELETE actually
+               running (e.g. deleting the same record directly via the object
+               store while a cursor over it is mid-iteration); attempts to
+               construct such a scenario instead trigger a transaction abort
+               (`AbortError`) before this callback ever runs, since the default
+               action of an unhandled request error is to abort the
+               transaction. */
           } else {
             // @ts-expect-error Apparently ok
             error('No rows with key found' + key);
           }
-          /* c8 ignore next 4 -- sqlite error */
-        }, function (tx, data) {
+          /* c8 ignore stop -- see comment above */
+        },
+        /* c8 ignore start -- Defensive: guards against an unexpected SQLite
+           execution error (e.g. I/O error, corruption) while deleting the
+           current row; not reliably reproducible without mocking the SQL
+           layer. */
+        function (tx, data) {
           error(data);
           return false;
         });
+        /* c8 ignore stop -- see comment above */
       }, error);
     }, undefined, me);
   };
@@ -14040,11 +14233,17 @@
             setNonIDBGlobals();
           }
         }
-        /* c8 ignore start -- TS guard */
+        /* c8 ignore start -- Defensive: `IDB.shimIndexedDB` was already
+           confirmed truthy just before this function (`__useShim`) was
+           defined and immediately invoked (see the `if ('shimIndexedDB'
+           in IDB && IDB.shimIndexedDB)` guard above), and nothing in
+           this function's body reassigns or deletes it. Only reachable
+           if `IDB` is some unusual object (e.g. a Proxy) whose
+           `shimIndexedDB` property value changes between reads. */
         if (!IDB.shimIndexedDB) {
           return;
         }
-        /* c8 ignore stop -- TS guard */
+        /* c8 ignore stop -- see comment above */
         IDB.shimIndexedDB.__setConnectionQueueOrigin();
       };
       IDB.shimIndexedDB.__debug = /** @type {(val: boolean) => void} */function (val) {
@@ -14112,8 +14311,6 @@
       // React Native
       navigator.userAgent && navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 25 : 4) * 1024 * 1024;
     }
-
-    /* c8 ignore next 4 -- coverage bug with logical short-circuits */
     if (!CFG.avoidAutoShim && (!IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
       IDB.shimIndexedDB.__useShim();
     } else {

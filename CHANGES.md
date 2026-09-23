@@ -9,6 +9,7 @@
 - fix: allow resetting `memoryDatabase` and stop `sysdb` staying pinned to a stale setting
 - fix: issue with exported but not internally used `extractKeyFromValueUsingKeyPath`
 - test: `clean-mocha` now also clears `__sysdb__*` and `D_dbname*`, preventing stale `__sysdb__.sqlite` version-tracking entries and a stale leftover `D_dbname.sqlite` file from desyncing and causing intermittent hangs/`ConstraintError`s in isolated or repeated test runs (e.g. `IDBIndex` recreate, `DOMStringList` `forEach`/`map`).
+- test: 100% coverage
 - chore: update `@node-static/node-static`, typeson-registry, eventargeter, devDeps.; lint
 
 ## 19.0.5
