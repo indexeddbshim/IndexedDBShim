@@ -725,6 +725,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 // tx.executeSql(sql, [], function () {
                                 const sql = 'CREATE INDEX ' +
                                     escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')';
+                                /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
                                 if (CFG.DEBUG) { console.log(sql); }
                                 tx.executeSql(
                                     sql,
@@ -922,8 +923,16 @@ function executeFetchIndexData (
         if (isCount) {
             success(recordCount);
         } else if (recordCount === 0) {
+            // `unboundedDisallowed` is always `true` here: this function is only reached (for
+            //   non-`count` `opType`s) via `get`/`getKey`, which always pass `nullDisallowed: true`
+            //   through as `unboundedDisallowed`. `getAll`/`getAllKeys`/`getAllRecords` use a
+            //   different (cursor-based) code path, so the `unboundedDisallowed`-`false` case
+            //   (returning `[]` here) is unreachable given current callers.
+            /* c8 ignore next -- see comment above */
             success(unboundedDisallowed ? undefined : []);
         } else {
+            // `unboundedDisallowed` is always `true` here; see comment above.
+            /* c8 ignore next -- see comment above */
             success(unboundedDisallowed ? records[0] : records);
         }
     }, /** @type {SqlErrorCallback} */ (error));

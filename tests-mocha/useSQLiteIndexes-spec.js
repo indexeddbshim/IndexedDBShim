@@ -102,4 +102,36 @@ describe('useSQLiteIndexes enabled', function () {
             store.deleteIndex('idx2');
         });
     });
+
+    it('should preserve other existing SQLite indexes when renaming an index', function (done) {
+        // `useSQLiteIndexes` is `true` by default in the Node test environment (see `test-node.js`);
+        //   set explicitly here so this test documents and exercises that path regardless of test order.
+        const originalConfig = shimIndexedDB.__getConfig('useSQLiteIndexes');
+        shimIndexedDB.__setConfig('useSQLiteIndexes', true);
+
+        createDB('db-with-multiple-indexes', function (db) {
+            shimIndexedDB.__setConfig('useSQLiteIndexes', originalConfig);
+            db.close();
+            done();
+        }, function (db) {
+            const store = db.createObjectStore('store1', {keyPath: 'id'});
+
+            store.add({id: 1, prop1: 'a', prop2: 'x'});
+            store.add({id: 2, prop1: 'b', prop2: 'y'});
+
+            const idx1 = store.createIndex('idx1', 'prop1');
+            // Having a second index present when `idx1` is renamed below exercises
+            //   `IDBIndex.js`'s `__renameIndex` SQLite-index-recreation loop for
+            //   "other" indexes that need to be preserved across the table rebuild.
+            const idx2 = store.createIndex('idx2', 'prop2');
+
+            idx1.name = 'idx1-renamed';
+            expect(idx1.name).to.equal('idx1-renamed');
+
+            const countReq = idx2.count();
+            countReq.onsuccess = function (e) {
+                expect(e.target.result).to.equal(2);
+            };
+        });
+    });
 });

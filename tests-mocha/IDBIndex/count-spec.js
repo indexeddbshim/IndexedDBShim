@@ -617,4 +617,45 @@ describe('IDBIndex.count', function () {
             }, env.transactionDuration);
         });
     });
+
+    it('should count multiEntry index entries correctly when some records have a non-array value at the keyPath', function (done) {
+        util.generateDatabaseName(function (err, name) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
+            const open = indexedDB.open(name, 1);
+            open.onerror = open.onblocked = done;
+
+            open.onupgradeneeded = function () {
+                const db = open.result;
+                const store = db.createObjectStore('store', {autoIncrement: true});
+                store.createIndex('tags', 'tags', {multiEntry: true});
+            };
+
+            open.onsuccess = function () {
+                const db = open.result;
+                const tx = db.transaction('store', 'readwrite');
+                const store = tx.objectStore('store');
+                // Two array-valued tags (contributing 2 and 1 entries) plus one
+                //   record whose `tags` is a plain (non-array) value, which is
+                //   still valid for a `multiEntry` index and contributes 1 entry.
+                store.add({tags: ['a', 'b']});
+                store.add({tags: ['a']});
+                store.add({tags: 'c'});
+
+                tx.oncomplete = function () {
+                    const index = db.transaction('store', 'readonly').objectStore('store').index('tags');
+                    const countReq = index.count();
+                    countReq.onsuccess = function () {
+                        expect(countReq.result).to.equal(4);
+                        db.close();
+                        done();
+                    };
+                    countReq.onerror = done;
+                };
+            };
+        });
+    });
 });

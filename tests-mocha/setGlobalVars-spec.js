@@ -315,15 +315,18 @@ describe('setGlobalVars coverage', function () {
 
     it('should cover line 388 (!IDB.indexedDB || poorIndexedDbSupport) false branch', function () {
         // IDB.indexedDB is truthy, poorIndexedDbSupport is falsy
+        // (avoidAutoShim is explicitly reset to `false` here since it is a shared
+        //  `CFG` singleton that an earlier test in this file leaves set to `true`,
+        //  which would otherwise short-circuit the `&&` before this branch runs)
         const idb = {indexedDB: {}};
-        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        const cfg = {win: {openDatabase () { /* no-op */ }}, avoidAutoShim: false};
         setGlobalVars(idb, cfg);
     });
 
     it('should cover line 388 poorIndexedDbSupport true branch with truthy IDB.indexedDB', function () {
         // IDB.indexedDB is truthy, poorIndexedDbSupport is truthy
         const idb = {indexedDB: {}};
-        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        const cfg = {win: {openDatabase () { /* no-op */ }}, avoidAutoShim: false};
         const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
         Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: 'Android 4.1'}), configurable: true});
         try {
@@ -349,17 +352,21 @@ describe('setGlobalVars coverage', function () {
     });
 
     it('should cover line 388 (!IDB.indexedDB || poorIndexedDbSupport) true/false branches completely', function () {
+        // (avoidAutoShim is explicitly reset to `false` in each `cfg` below since it is
+        //  a shared `CFG` singleton that an earlier test in this file leaves set to
+        //  `true`, which would otherwise short-circuit the `&&` before this branch runs)
+
         // IDB.indexedDB truthy, poor falsy
-        setGlobalVars({indexedDB: {}}, {win: {openDatabase () { /* no-op */ }}});
+        setGlobalVars({indexedDB: {}}, {win: {openDatabase () { /* no-op */ }}, avoidAutoShim: false});
 
         // IDB.indexedDB falsy
-        setGlobalVars({}, {win: {openDatabase () { /* no-op */ }}});
+        setGlobalVars({}, {win: {openDatabase () { /* no-op */ }}, avoidAutoShim: false});
 
         // IDB.indexedDB truthy, poor truthy
         const originalNavigatorDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
         Object.defineProperty(globalThis, 'navigator', {get: () => ({userAgent: 'Android 4.1'}), configurable: true});
         try {
-            setGlobalVars({indexedDB: {}}, {win: {openDatabase () { /* no-op */ }}});
+            setGlobalVars({indexedDB: {}}, {win: {openDatabase () { /* no-op */ }}, avoidAutoShim: false});
         } finally {
             if (originalNavigatorDesc) {
                 Object.defineProperty(globalThis, 'navigator', originalNavigatorDesc);
@@ -371,8 +378,9 @@ describe('setGlobalVars coverage', function () {
     it('should cover line 388 false branch for openDatabase !== undefined', function () {
         // IDB.indexedDB is falsy, so (!IDB.indexedDB || poorIndexedDbSupport) is TRUE
         // But openDatabase is undefined!
+        // (avoidAutoShim explicitly reset to `false`; see comment above)
         const idb = {};
-        const cfg = {win: {}}; // no openDatabase!
+        const cfg = {win: {}, avoidAutoShim: false}; // no openDatabase!
         setGlobalVars(idb, cfg);
     });
 
