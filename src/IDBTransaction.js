@@ -273,8 +273,8 @@ IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
  */
 IDBTransaction.prototype.__executeRequests = function () {
     const me = this;
+    /* c8 ignore start -- Dead code: `__executeRequests` has exactly one caller (a single `setTimeout` scheduled once per transaction), so `me.__running` can never already be `true` when this function starts. */
     if (me.__running) {
-        /* c8 ignore start -- Dead code: `__executeRequests` has exactly one caller (a single `setTimeout` scheduled once per transaction), so `me.__running` can never already be `true` when this function starts. */
         if (CFG.DEBUG) { console.log('Looks like the request set is already running', me.mode); }
         return;
     }
@@ -670,11 +670,11 @@ IDBTransaction.prototype.__executeRequests = function () {
                 return;
             }
             /* c8 ignore stop -- see comment above */
+            /* c8 ignore start -- Dead code in practice: by the time this callback runs, `requestsFinished` has always already set `__transactionEndCallback` (per the guard above), and `__completed`/`__transFinishedCbFired` are always already set true by `requestsFinished`'s own `__callTransFinishedCb` call, so this guard always returns early and the fall-through body below is never reached; not reliably reproducible without a contrived timing race. */
             if (!me.__transactionEndCallback || me.__completed || me.__transFinishedCbFired) {
                 return;
             }
 
-            /* c8 ignore start -- Dead code in practice: reaching here (past both guards above) is only possible via the same untriggered race described above. */
             me.__transFinishedCbFired = true;
             me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
             /* c8 ignore stop -- see comment above */
@@ -1071,10 +1071,12 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             //   rollback automatically), but for Node.js, etc., we give chance for
             //   manual aborts which would otherwise not work.
             if (me.mode === 'readwrite') {
+                /* c8 ignore start -- Dead code in practice: `__transactionFinished` is only ever set by the driver-queue-idle-races-ahead scenario described earlier in this file (also `c8 ignore`d there), which is not observed in this test suite. */
                 if (me.__transactionFinished) {
                     abort();
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 me.__transactionEndCallback = abort;
                 return;
             }
@@ -1085,13 +1087,13 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                     abort,
                     /** @type {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} */ (abort)
                 ); // Not working in some circumstances, even in Node
+            /* c8 ignore start -- Defensive: the underlying WebSQL/SQLite driver throwing synchronously on `ROLLBACK` is not reliably reproducible without mocking the SQL layer. */
             } catch (err) {
-                /* c8 ignore start -- Defensive: the underlying WebSQL/SQLite driver throwing synchronously on `ROLLBACK` is not reliably reproducible without mocking the SQL layer. */
                 // Browser errs when transaction has ended and since it most likely already erred here,
                 //   we call to abort
                 abort();
-                /* c8 ignore stop -- see comment above */
             }
+            /* c8 ignore stop -- see comment above */
         } else {
             abort(null, {code: 0});
         }
