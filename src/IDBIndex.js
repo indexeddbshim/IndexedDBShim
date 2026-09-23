@@ -283,8 +283,8 @@ IDBIndex.__createIndex = function (store, index) {
         function error (tx, err) {
             /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             failure(createDOMException('UnknownError', 'Could not create index "' + indexName + '"' + err.code + '::' + err.message, err));
-            /* c8 ignore stop -- see comment above */
         }
+        /* c8 ignore stop -- see comment above */
 
         /**
          * @param {WebSQLTransaction} tx
@@ -423,8 +423,8 @@ IDBIndex.__deleteIndex = function (store, index) {
         function error (tx, err) {
             /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));
-            /* c8 ignore stop -- see comment above */
         }
+        /* c8 ignore stop -- see comment above */
 
         /**
          * @returns {void}
@@ -676,8 +676,8 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
         function sqlError (tx, err) {
             /* c8 ignore start -- Defensive: only reached if one of the chained `CREATE TABLE`/`INSERT`/`DROP TABLE`/`ALTER TABLE` statements below fails, which is not reliably reproducible without mocking the SQL layer. */
             error(err);
-            /* c8 ignore stop -- see comment above */
         }
+        /* c8 ignore stop -- see comment above */
         /**
          * @returns {void}
          */
@@ -688,8 +688,8 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
             }
             /* c8 ignore start -- Defensive: `__renameIndex`'s only caller (the `IDBIndex.prototype.name` setter) always supplies a `cb`, so this fallback is dead with the current call graph. */
             success();
-            /* c8 ignore stop -- see comment above */
         }
+        /* c8 ignore stop -- see comment above */
         if (!CFG.useSQLiteIndexes) {
             finish();
             return;

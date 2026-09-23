@@ -308,8 +308,8 @@ IDBObjectStore.__createObjectStore = function (db, store) {
             if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
             return false;
-            /* c8 ignore stop -- see comment above */
         }
+        /* c8 ignore stop -- see comment above */
 
         const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
@@ -383,8 +383,8 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
             return false;
-            /* c8 ignore stop -- see comment above */
         }
+        /* c8 ignore stop -- see comment above */
 
         tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
             if (data.rows.length > 0) {
@@ -968,8 +968,8 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
                 /* c8 ignore start -- Defensive: catches unexpected decode failures (e.g. corrupted stored data); not reliably reproducible via the public API since encode/decode are always paired and never write undecodable data. */
                 // If no result is returned, or error occurs when parsing JSON
                 if (CFG.DEBUG) { console.log(e); }
-                /* c8 ignore stop -- see comment above */
             }
+            /* c8 ignore stop -- see comment above */
             success(ret);
         }, function (tx, err) {
             /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */

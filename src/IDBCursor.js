@@ -351,6 +351,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
+        /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
         if (CFG.DEBUG) { console.log('Could not execute Cursor.continue', sqlStr, sqlValues); }
         error(err);
         return false;

@@ -357,8 +357,8 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
             console.warn('Could not find a memory database instance to delete.');
             databaseDeleted();
             return;
-            /* c8 ignore stop -- see comment above */
         }
+        /* c8 ignore stop -- see comment above */
         const sqliteDB = latestSQLiteDBCached._db;
         if (!sqliteDB || !sqliteDB.close) {
             console.error('The `openDatabase` implementation does not have the expected `._db.close` method for closing the database');
@@ -896,9 +896,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 //   that pushes onto `connection.__transactions`), so `pos` is
                                 //   always -1 here.
                                 if (pos !== -1) {
-                                    /* c8 ignore next -- see comment above */
+                                    /* c8 ignore start -- see comment above */
                                     connection.__transactions.splice(pos, 1);
                                 }
+                                /* c8 ignore stop -- see comment above */
 
                                 if (/** @type {import('./IDBDatabase.js').IDBDatabaseFull} */ (
                                     req.__result
@@ -1054,8 +1055,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                        before ever calling `openDB`. Kept as a safety net in case
                        that invariant ever changes. */
                     websqlDBCache[name] = {};
-                    /* c8 ignore stop -- see comment above */
                 }
+                /* c8 ignore stop -- see comment above */
                 websqlDBCache[name][version] = db;
             }
         }
