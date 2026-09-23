@@ -448,9 +448,11 @@ IDBTransaction.prototype.__executeRequests = function () {
                     }
                 );
                 q.req.addDefaultEventListener('error', function () {
+                    /* c8 ignore start -- Defensive: this default listener is skipped entirely by `eventtargeter` whenever the event was `preventDefault()`-ed (the only case in which the shared `q` variable above could have already advanced to a different, non-request queue entry by the time a default listener runs); not reachable via the public API under normal (synchronous) dispatch. */
                     if (!q.req) {
                         return;
                     }
+                    /* c8 ignore stop -- see comment above */
                     me.__abortTransaction(q.req.__error);
                 });
 
@@ -496,9 +498,11 @@ IDBTransaction.prototype.__executeRequests = function () {
                     //   (not reset here).
                     return true;
                 }
+                /* c8 ignore start -- Defensive: reaching this queue entry via the normal advancement path after it was independently marked `__done` (e.g. by `__abortTransaction`'s own separate, async per-request error dispatch) requires a narrow race between that async cleanup and this synchronous advancement; not reliably reproducible without directly manipulating that timing. */
                 if (q.req.__done) { // Avoid continuing with aborted requests
                     return false;
                 }
+                /* c8 ignore stop -- see comment above */
                 // We're now handing off to (possibly async) work for
                 //   this request, so the transaction is no longer active
                 //   until its own `success`/`error` dispatch (below)
@@ -521,18 +525,22 @@ IDBTransaction.prototype.__executeRequests = function () {
                         return;
                     }
                     q.op(tx, q.args, success, error, executeNextRequest);
+                /* c8 ignore start -- Defensive: `q.op` (the SQL driver callback) is expected to report failures via its own `error`/`failure` callback argument rather than throwing synchronously; not reliably reproducible without directly forcing the driver to throw. */
                 } catch (e) {
                     error(/** @type {Error} */ (e));
                 }
+                /* c8 ignore stop -- see comment above */
             }
 
             /**
              * @returns {void}
              */
             function runQueuedRequest () {
+                /* c8 ignore start -- Defensive: only reached if `prepareNextRequest` returns `false` (see its own ignore comment above for why that's not reliably reproducible). */
                 if (!prepareNextRequest()) {
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 launchQueuedOp();
             }
 

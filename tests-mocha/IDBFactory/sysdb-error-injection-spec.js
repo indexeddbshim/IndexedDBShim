@@ -302,4 +302,53 @@ describe('IDBFactory sysdb SQL error handling', function () {
             done();
         };
     });
+
+    it('should omit the `.sqlite` extension from the sysdb file name when `addSQLiteExtension` is `false`', function (done) {
+        const addSQLiteExtension = shimIndexedDB.__getConfig('addSQLiteExtension');
+        shimIndexedDB.__setConfig('memoryDatabase', null); // Forces the non-memory (joinPath) branch; differs from `beforeEach`'s `:memory:` so `sysdb` is recreated again
+        shimIndexedDB.__setConfig('addSQLiteExtension', false);
+        let capturedName;
+        shimIndexedDB.__openDatabase = function (name, ...rest) {
+            if (typeof name === 'string' && name.includes('__sysdb__')) {
+                capturedName = name;
+                return {
+                    version: '1',
+                    transaction (fn, errCb, okCb) {
+                        const tx = {
+                            executeSql (sql, params, success) {
+                                success && success(tx, {rows: {length: 0, item: () => undefined}});
+                            }
+                        };
+                        fn(tx);
+                        okCb && okCb();
+                    },
+                    readTransaction (fn) {
+                        fn({
+                            executeSql (sql, params, success) {
+                                success && success({}, {rows: {length: 0, item: () => undefined}});
+                            }
+                        });
+                    }
+                };
+            }
+            return prevOpenDatabase(name, ...rest);
+        };
+        /**
+         * @returns {void}
+         */
+        function restore () {
+            shimIndexedDB.__setConfig('addSQLiteExtension', addSQLiteExtension);
+        }
+        const open = shimIndexedDB.open('sysdb-no-extension-test', 1);
+        open.onerror = open.onblocked = function (e) {
+            restore();
+            done((e.target && e.target.error) || new Error('open() failed'));
+        };
+        open.onsuccess = function () {
+            open.result.close();
+            restore();
+            expect(capturedName).to.equal('__sysdb__');
+            done();
+        };
+    });
 });

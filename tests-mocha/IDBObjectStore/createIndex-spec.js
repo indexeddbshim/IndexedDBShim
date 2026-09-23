@@ -480,6 +480,68 @@ describe('IDBObjectStore.createIndex', function () {
                 }
             });
         });
+
+        it('should abort the upgrade transaction with a ConstraintError when reindexing finds existing duplicate values for a new unique index', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                createVersion1();
+
+                /**
+                 * @returns {void}
+                 */
+                function createVersion1 () {
+                    const open = indexedDB.open(name, 1);
+                    open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = function (event) {
+                        const db = event.target.result;
+                        const store = db.createObjectStore('store', {keyPath: 'id'});
+                        // Two existing records share the same `a` value, so
+                        //   the unique index added below (in version 2) must
+                        //   fail with a `ConstraintError` while replaying
+                        //   these existing records -- this goes through the
+                        //   non-request `createIndex` queue op's own
+                        //   `failure` callback (no `IDBRequest` involved),
+                        //   which aborts the transaction directly rather
+                        //   than dispatching a cancelable request error.
+                        store.put({id: 1, a: 'dup'});
+                        store.put({id: 2, a: 'dup'});
+                    };
+
+                    open.onsuccess = function () {
+                        open.result.close();
+                        setTimeout(createVersion2, 50);
+                    };
+                }
+
+                /**
+                 * @returns {void}
+                 */
+                function createVersion2 () {
+                    const open = indexedDB.open(name, 2);
+                    open.onupgradeneeded = function () {
+                        const store = open.transaction.objectStore('store');
+                        store.createIndex('idx', 'a', {unique: true});
+                        open.transaction.onabort = function (event) {
+                            expect(event.target.error.name).to.equal('ConstraintError');
+                        };
+                    };
+                    open.onerror = function (event) {
+                        event.preventDefault(); // Otherwise fails the test via the `window.onerror` shim
+                        expect(event.target.error.name).to.equal('AbortError');
+                        done();
+                    };
+                    open.onsuccess = function () {
+                        open.result.close();
+                        done(new Error('Expected the version-2 upgrade to abort due to the duplicate values'));
+                    };
+                }
+            });
+        });
     });
 
     describe('failure tests', function () {

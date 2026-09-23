@@ -7,6 +7,13 @@ describe('IDBTransaction.objectStore', function () {
                 IDBTransaction.prototype.objectStore.call({}, 'inline');
             }).to.throw(TypeError, 'Illegal invocation');
         });
+
+        it('should throw "Illegal constructor" when `IDBTransaction` is invoked directly', function () {
+            expect(() => {
+                // eslint-disable-next-line no-new -- Testing the throw
+                new IDBTransaction();
+            }).to.throw(TypeError, 'Illegal constructor');
+        });
     }
 
     it('should return an IDBObjectStore', function (done) {
