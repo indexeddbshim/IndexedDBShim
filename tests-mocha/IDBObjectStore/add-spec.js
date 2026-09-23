@@ -189,6 +189,56 @@ describe('IDBObjectStore.add (only)', function () {
         });
     });
 
+    it('should continue the transaction if the request\'s error event has `preventDefault()` called on it', function (done) {
+        this.timeout(5000);
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
+
+            const tx = db.transaction('out-of-line', 'readwrite');
+
+            const store = tx.objectStore('out-of-line');
+            const add1 = store.add({foo: 'bar'}, 12345);
+            add1.onsuccess = sinon.spy();
+            add1.onerror = sinon.spy();
+
+            const add2 = store.add({biz: 'baz'}, 12345);
+            add2.onsuccess = sinon.spy();
+            add2.onerror = sinon.spy(function (event) {
+                event.preventDefault();
+            });
+
+            const add3 = store.add({qux: 'quux'}, 67890);
+            add3.onsuccess = sinon.spy();
+            add3.onerror = sinon.spy();
+
+            tx.oncomplete = function () {
+                sinon.assert.calledOnce(add1.onsuccess);
+                sinon.assert.notCalled(add1.onerror);
+
+                sinon.assert.notCalled(add2.onsuccess);
+                sinon.assert.calledOnce(add2.onerror);
+                expect(add2.error.name).to.equal('ConstraintError');
+
+                // A subsequent request in the same transaction should still
+                //   run to completion since the error was prevented.
+                sinon.assert.calledOnce(add3.onsuccess);
+                sinon.assert.notCalled(add3.onerror);
+
+                db.close();
+                done();
+            };
+
+            tx.onabort = sinon.spy(function () {
+                db.close();
+                done(new Error('The transaction should not have aborted since `preventDefault()` was called on the failing request\'s error event'));
+            });
+        });
+    });
+
     it('should throw an error if an out-of-line key conflict occurs in simultaneous transactions', function (done) {
         this.timeout(8000);
         util.createDatabase('out-of-line', function (err, db) {

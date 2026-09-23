@@ -43,6 +43,46 @@ describe('IDBTransaction.abort', function () {
         });
     });
 
+    it('should error out later-queued requests when aborted synchronously from an earlier request\'s success handler', function (done) {
+        this.timeout(20000);
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+
+            tx.onabort = function () {
+                sinon.assert.calledOnce(add1.onsuccess);
+                sinon.assert.calledOnce(add2.onerror);
+                sinon.assert.notCalled(add2.onsuccess);
+                db.close();
+                done();
+            };
+            tx.oncomplete = function () {
+                db.close();
+                done(new Error('Transaction should have aborted, not completed'));
+            };
+
+            // Both requests are queued synchronously, before either has had a
+            //   chance to run, so aborting from `add1`'s success handler
+            //   later marks `add2` (still pending in the queue at that
+            //   point) as done via `__abortTransaction`'s own cleanup --
+            //   exercising `prepareNextRequest`'s "already aborted" check for
+            //   a request it hasn't reached yet.
+            const add1 = store.add({id: 4});
+            const add2 = store.add({id: 5});
+            add1.onsuccess = sinon.spy(function () {
+                tx.abort();
+            });
+            add1.onerror = sinon.spy();
+            add2.onsuccess = sinon.spy();
+            add2.onerror = sinon.spy();
+        });
+    });
+
     it('should throw InvalidStateError when called on an already-committed transaction', function (done) {
         this.timeout(20000);
         util.createDatabase('inline', function (err, db) {

@@ -392,6 +392,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 //   is what actually resets `__handlerActive`, once it's
                 //   confirmed (across its own bounded microtask wait) that no
                 //   such continuation queued anything.
+                /* c8 ignore start -- Deliberately not tested: throwing from a request's `onsuccess` handler to exercise this branch would surface as an uncaught error through this test suite's `window.onerror` shim, which (per `retention-spec.js`'s `assertLater` comment) can trigger unbounded recursion here; not safe to trigger directly. */
                 if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     if (!me.__committed) { // An explicit `commit()` locks in the commit, so errors thrown afterward must not abort it
@@ -400,6 +401,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                         return;
                     }
                 }
+                /* c8 ignore stop -- see comment above */
                 util.runContinuationSafely(advanceAfterDispatch);
             }
 
@@ -458,6 +460,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.dispatchEvent(e);
                 // Do not set __active or __handlerActive flags to false yet --
                 //   see the matching comment in `success`, above.
+                /* c8 ignore start -- Deliberately not tested: throwing from a request's `onerror` handler to exercise this branch would surface as an uncaught error through this test suite's `window.onerror` shim, which (per `retention-spec.js`'s `assertLater` comment) can trigger unbounded recursion here; not safe to trigger directly. */
                 if (!e.__legacyOutputDidListenersThrowError) {
                     return;
                 }
@@ -469,6 +472,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     return;
                 }
                 me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
+                /* c8 ignore stop -- see comment above */
             }
 
             /**
