@@ -324,6 +324,51 @@ describe('IDBDatabase.createObjectStore', function () {
                 };
             });
         });
+
+        // Regression test: recreating a store whose *previous* deletion has
+        // already fully resolved (as opposed to still being merely
+        // `__pendingDelete`) within the same version-change transaction --
+        // exercised by deferring the recreate until after a round-trip
+        // request on another store, so the delete's own (asynchronous)
+        // completion callback has already run by the time we recreate.
+        it('should handle recreating a store whose earlier deletion has already resolved', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                const open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+                open.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+                    db.createObjectStore('store', {keyPath: 'id'});
+                    db.deleteObjectStore('store');
+                    const aux = db.createObjectStore('aux', {autoIncrement: true});
+                    const putReq = aux.put({});
+                    putReq.onsuccess = function () {
+                        const store = db.createObjectStore('store', {autoIncrement: true});
+                        expect(store.keyPath).to.be.null;
+                        expect(store.autoIncrement).to.equal(true);
+                    };
+                    putReq.onerror = function (event) {
+                        done(event.target.error);
+                    };
+                };
+                open.onsuccess = function () {
+                    const db = open.result;
+                    const tx = db.transaction('store', 'readwrite');
+                    const addReq = tx.objectStore('store').add({});
+                    addReq.onsuccess = function () {
+                        db.close();
+                        done();
+                    };
+                    addReq.onerror = function (event) {
+                        done(event.target.error);
+                    };
+                };
+            });
+        });
     });
 
     describe('failure tests', function () {

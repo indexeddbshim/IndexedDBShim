@@ -2,12 +2,13 @@
 
 ## 19.0.6
 
-- test: `clean-mocha` now also clears `__sysdb__*` and `D_dbname*`, preventing stale `__sysdb__.sqlite` version-tracking entries and a stale leftover `D_dbname.sqlite` file from desyncing and causing intermittent hangs/`ConstraintError`s in isolated or repeated test runs (e.g. `IDBIndex` recreate, `DOMStringList` `forEach`/`map`).
+- fix: allow recreating an object store after its earlier deletion has resolved
 - fix: SQLite Fallback bug: `__renameIndex` now correctly short-circuits the SQLite table and column recreation logic if `useSQLiteIndexes` is false, preventing missing column crashes.
 - fix(index): correct async index name capture; async `indexName` evaluation: During `createIndex`, the SQL execution dynamically evaluated `index.name` which could be problematic if the index was renamed synchronously before the transaction fired. We now bind strictly to the statically scoped `indexName` parameter, preventing `SQLITE_ERROR: no such column` when indexes are renamed immediately after creation.
 - fix(`__forceClose`): close() was clearing __transactions before __forceClose's abort loop could read it, so it never aborted anything, and a second bug in the same function meant the close event's completion counter also referenced the now-emptied array
 - fix: allow resetting `memoryDatabase` and stop `sysdb` staying pinned to a stale setting
 - fix: issue with exported but not internally used `extractKeyFromValueUsingKeyPath`
+- test: `clean-mocha` now also clears `__sysdb__*` and `D_dbname*`, preventing stale `__sysdb__.sqlite` version-tracking entries and a stale leftover `D_dbname.sqlite` file from desyncing and causing intermittent hangs/`ConstraintError`s in isolated or repeated test runs (e.g. `IDBIndex` recreate, `DOMStringList` `forEach`/`map`).
 - chore: update `@node-static/node-static`, typeson-registry, eventargeter, devDeps.; lint
 
 ## 19.0.5
