@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.6 - 9/22/2026 */
+/*! indexeddbshim - v19.0.7 - 9/23/2026 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -4086,6 +4086,33 @@
   }
 
   /**
+   * @param {BufferSource|ArrayBufferLike} buffer
+   * @returns {boolean}
+   */
+  function isBufferDetached(buffer) {
+    // Use the standard property if available
+    // @ts-expect-error - More recent API
+    if (typeof buffer.detached === 'boolean') {
+      // @ts-expect-error - More recent API
+      return buffer.detached;
+    }
+    /* c8 ignore next 14 -- Older browsers */
+
+    // Fallback check via byteLength and constructor test
+    if (buffer.byteLength !== 0) {
+      return false;
+    }
+    try {
+      // @ts-expect-error Ok
+      // eslint-disable-next-line no-new -- Throwaway
+      new Uint8Array(buffer);
+      return false;
+    } catch (_unused) {
+      return true;
+    }
+  }
+
+  /**
    *
    * @param {BufferSource} O
    * @throws {TypeError}
@@ -4097,15 +4124,16 @@
     var length;
     if (ArrayBuffer.isView(O)) {
       // Has [[ViewedArrayBuffer]] internal slot
-      var arrayBuffer = O.buffer;
-      if (arrayBuffer === undefined) {
-        throw new TypeError('Could not copy the bytes held by a buffer source as the buffer was undefined.');
-      }
       offset = O.byteOffset; // [[ByteOffset]] (will also throw as desired if detached)
       length = O.byteLength; // [[ByteLength]] (will also throw as desired if detached)
     } else {
       length = O.byteLength; // [[ArrayBufferByteLength]] on ArrayBuffer (will also throw as desired if detached)
     }
+    var arrayBuffer = ArrayBuffer.isView(O) ? O.buffer : O;
+    if (isBufferDetached(arrayBuffer)) {
+      throw new TypeError('Could not copy the bytes held by a buffer source as the buffer was detached.');
+    }
+
     // const octets = new Uint8Array(input);
     // const octets = types.binary.decode(types.binary.encode(input));
     return new Uint8Array(
@@ -4177,7 +4205,7 @@
           var octets;
           try {
             octets = getCopyBytesHeldByBufferSource(/** @type {BufferSource} */input);
-          } catch (_unused) {
+          } catch (_unused2) {
             return {
               type: type,
               invalid: true,

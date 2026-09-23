@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 19.0.7
+
+- fix: proper throwing when arraybuffer view (or buffer) is detached
+
 ## 19.0.6
 
 - fix: allow recreating an object store after its earlier deletion has resolved
