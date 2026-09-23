@@ -92,8 +92,22 @@ import setGlobalVars from '../src/setGlobalVars.js';
 import CFG from '../src/CFG.js';
 
 describe('setGlobalVars coverage', function () {
+    let originalCFG, originalOpenDatabase;
     beforeEach(function () {
+        // `shimIndexedDB` and `CFG` are process-wide singletons, so the fake
+        //   `cfg.win.openDatabase` no-op stubs and other config overrides
+        //   used throughout this suite (passed to `setGlobalVars`/`__useShim`
+        //   via an isolated `idb`/`cfg` object) still end up mutating this
+        //   shared state -- e.g. `shimIndexedDB.__openDatabase` gets rebound
+        //   to the fake stub, permanently breaking real database opens in
+        //   later, unrelated tests/files if not restored here.
+        originalCFG = {...CFG};
+        originalOpenDatabase = window.shimIndexedDB.__openDatabase;
         CFG.DEFAULT_DB_SIZE = undefined;
+    });
+    afterEach(function () {
+        Object.assign(CFG, originalCFG);
+        window.shimIndexedDB.__openDatabase = originalOpenDatabase;
     });
 
     it('should cover undefined openDatabase in __useShim (lines 217-218)', function () {
