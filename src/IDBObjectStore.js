@@ -299,13 +299,13 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     }
 
     transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
+        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} [err]
          * @returns {boolean}
          */
         function error (tx, err) {
-            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
             return false;
@@ -374,13 +374,13 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     // Remove the object store from WebSQL
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
+        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} [err]
          * @returns {boolean}
          */
         function error (tx, err) {
-            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
             return false;
