@@ -58,7 +58,7 @@ describe('IDBFactory SecurityError', function () {
         try {
             expect(() => {
                 shimIndexedDB.open('some-db-name');
-            }).to.throw(Error, /opaque origin/);
+            }).to.throw(Error, /opaque origin/v);
         } finally {
             shimIndexedDB.__setConfig('checkOrigin', checkOrigin);
             global.location = oldLocation;
@@ -73,7 +73,7 @@ describe('IDBFactory SecurityError', function () {
         try {
             expect(() => {
                 shimIndexedDB.deleteDatabase('some-db-name');
-            }).to.throw(Error, /opaque origin/);
+            }).to.throw(Error, /opaque origin/v);
         } finally {
             shimIndexedDB.__setConfig('checkOrigin', checkOrigin);
             global.location = oldLocation;
@@ -88,7 +88,7 @@ describe('IDBFactory SecurityError', function () {
         try {
             expect(() => {
                 shimIndexedDB.open('some-db-name');
-            }).to.throw(Error, /opaque origin/);
+            }).to.throw(Error, /opaque origin/v);
         } finally {
             shimIndexedDB.__setConfig('checkOrigin', checkOrigin);
             global.location = oldLocation;

@@ -219,7 +219,7 @@ describe('IDBFactory.deleteDatabase shim-internal edge cases', function () {
     it('should throw for a database name exceeding the length limit', function () {
         expect(() => {
             shimIndexedDB.deleteDatabase(util.sampleData.veryLongString);
-        }).to.throw(Error, /length/);
+        }).to.throw(Error, /length/v);
     });
 
     it('should fall back to the WebSQL __sys__ table-drop path when CFG.deleteDatabaseFiles is false', function (done) {
@@ -296,7 +296,7 @@ describe('IDBFactory.deleteDatabase shim-internal edge cases', function () {
                         done(e.target.error || new Error('deleteDatabase() errored or blocked'));
                     };
                     del.onsuccess = function () {
-                        sinon.assert.calledWithMatch(warn, /Error closing database connection prior to file removal/);
+                        sinon.assert.calledWithMatch(warn, /Error closing database connection prior to file removal/v);
                         warn.restore();
                         done();
                     };
@@ -354,8 +354,10 @@ describe('IDBFactory.deleteDatabase shim-internal edge cases', function () {
             //   path, so the resulting one-off `.sqlite`-less file is swept
             //   up automatically by `package.json`'s `clean-mocha` script
             //   (globs for `file::memory:?*`).
+            // eslint-disable-next-line sonarjs/pseudo-random -- Testing
             const resetPath = 'file::memory:?D_delete-sysdb-reset-' + Date.now() + '-' + Math.random().toString(36).slice(2);
             shimIndexedDB.__setConfig('memoryDatabase', resetPath);
+            // eslint-disable-next-line sonarjs/pseudo-random -- Testing
             const resetReq = shimIndexedDB.open('sysdb-reset-' + Date.now() + '-' + Math.random().toString(36).slice(2), 1);
             resetReq.onsuccess = function () {
                 resetReq.result.close();
@@ -400,7 +402,7 @@ describe('IDBFactory.deleteDatabase shim-internal edge cases', function () {
                 open1.result.close();
                 shimIndexedDB.deleteDatabase(name); // Never completes; only the log is asserted.
                 setTimeout(function () {
-                    sinon.assert.calledWithMatch(errorStub, /does not have the expected/);
+                    sinon.assert.calledWithMatch(errorStub, /does not have the expected/v);
                     errorStub.restore();
                     done();
                 }, 50);
@@ -435,7 +437,7 @@ describe('IDBFactory.deleteDatabase shim-internal edge cases', function () {
                 open1.result.close();
                 shimIndexedDB.deleteDatabase(name); // Never completes; only the log is asserted.
                 setTimeout(function () {
-                    sinon.assert.calledWithMatch(warn, /Error closing \(destroying\) memory database/);
+                    sinon.assert.calledWithMatch(warn, /Error closing \(destroying\) memory database/v);
                     warn.restore();
                     done();
                 }, 50);

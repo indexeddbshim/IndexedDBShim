@@ -503,7 +503,7 @@ describe('IDBFactory.open shim-internal edge cases', function () {
     it('should throw for a database name exceeding the length limit', function () {
         expect(() => {
             shimIndexedDB.open(util.sampleData.veryLongString);
-        }).to.throw(Error, /length/);
+        }).to.throw(Error, /length/v);
     });
 
     it('should auto-name the database when CFG.autoName is true and the name is empty', function (done) {
@@ -516,7 +516,7 @@ describe('IDBFactory.open shim-internal edge cases', function () {
         };
         open.onsuccess = function () {
             shimIndexedDB.__setConfig('autoName', autoName);
-            expect(open.result.name).to.match(/^autoNamedDatabase_\d+$/u);
+            expect(open.result.name).to.match(/^autoNamedDatabase_\d+$/v);
             open.result.close();
             shimIndexedDB.deleteDatabase(open.result.name);
             done();
