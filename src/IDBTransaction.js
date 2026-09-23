@@ -274,9 +274,11 @@ IDBTransaction.prototype.__callTransFinishedCb = function (err, cb) {
 IDBTransaction.prototype.__executeRequests = function () {
     const me = this;
     if (me.__running) {
+        /* c8 ignore start -- Dead code: `__executeRequests` has exactly one caller (a single `setTimeout` scheduled once per transaction), so `me.__running` can never already be `true` when this function starts. */
         if (CFG.DEBUG) { console.log('Looks like the request set is already running', me.mode); }
         return;
     }
+    /* c8 ignore stop -- see comment above */
 
     // The synchronous script that created this transaction (and
     //   synchronously queued whatever requests it wanted to) has now
@@ -327,6 +329,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     queueMicrotask(cb);
                     return;
                 }
+                /* c8 ignore start -- Browser-only path: in every automated test environment (Node's websql-configurable/better-sqlite3 driver, and the fake/mock drivers modeled after it) `__usesStandardDriver()` is always `false` (they support the 4-arg `nonstandardTransCb` signature), so `isStandardDriver` is never `true` and this branch is never reached. Only a real standard (3-arg) WebSQL driver, as found in an actual browser, would exercise it. */
                 try {
                     tx.executeSql('SELECT 1', [], function () {
                         cb();
@@ -340,6 +343,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     //   abort the transaction here.
                     me.__abortTransaction(/** @type {Error|DOMException} */ (err));
                 }
+                /* c8 ignore stop -- see comment above */
             }
 
             /**
@@ -352,19 +356,25 @@ IDBTransaction.prototype.__executeRequests = function () {
              * @returns {void}
              */
             function success (result, req) {
+                /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished by a concurrent path (e.g. a driver-level failure or explicit `abort()`) racing with this request's own in-flight SQL success callback; not reliably reproducible without directly manipulating the SQL driver's callback timing. */
                 if (me.__errored || me.__requestsFinished) {
                     // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 if (req) {
                     q.req = req; // Need to do this in case of cursors
                 }
+                /* c8 ignore start -- Dead code: `launchQueuedOp` only ever passes `success` as a callback in the branch where `q.req` is already truthy, and a falsy `req` param here leaves `q.req` unchanged, so `q.req` can't be falsy at this point. */
                 if (!q.req) {
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
+                /* c8 ignore start -- Defensive: only reached if the SQL driver invoked this request's success callback more than once for the same queued op; not reliably reproducible without directly manipulating the SQL driver. */
                 if (q.req.__done) { // Avoid continuing with aborted requests
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 q.req.__done = true;
                 q.req.__result = result;
                 q.req.__error = null;
@@ -401,14 +411,18 @@ IDBTransaction.prototype.__executeRequests = function () {
              * @returns {void}
              */
             function error (...args /* tx, err */) {
+                /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished by a concurrent path racing with this request's own in-flight SQL error callback; not reliably reproducible without directly manipulating the SQL driver's callback timing. */
                 if (me.__errored || me.__requestsFinished) {
                     // We've already called "onerror", "onabort", or thrown within
                     //  the transaction, so don't do it again.
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
+                /* c8 ignore start -- Defensive: only reached if the SQL driver invoked this request's error callback more than once, or after its success callback already ran; not reliably reproducible without directly manipulating the SQL driver. */
                 if (q.req && q.req.__done) { // Avoid continuing with aborted requests
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 const err = /** @type {Error|DOMException} */ (findError(args));
                 if (!q.req) {
                     me.__abortTransaction(err);
@@ -545,9 +559,11 @@ IDBTransaction.prototype.__executeRequests = function () {
              * @returns {void}
              */
             function checkQueueEntry (attemptsLeft) {
+                /* c8 ignore start -- Defensive: only reached if the transaction is independently errored/finished (e.g. an explicit `abort()`) during this function's keep-alive polling wait; not reliably reproducible without a contrived timing race. */
                 if (me.__errored || me.__requestsFinished) {
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 if (i < me.__requests.length) {
                     runQueuedRequest();
                     return;
@@ -569,10 +585,12 @@ IDBTransaction.prototype.__executeRequests = function () {
              * @returns {void}
              */
             function executeNextRequest () {
+                /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished by a concurrent path racing with this continuation; not reliably reproducible without a contrived timing race. */
                 if (me.__errored || me.__requestsFinished) {
                     // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 i++;
                 if (i >= me.__requests.length) {
                     checkQueueEntry(keepAliveAttempts);
@@ -607,9 +625,11 @@ IDBTransaction.prototype.__executeRequests = function () {
              * @returns {void}
              */
             function advanceAfterDispatch () {
+                /* c8 ignore start -- Defensive: only reached if the transaction was independently errored/finished by a concurrent path racing with this continuation; not reliably reproducible without a contrived timing race. */
                 if (me.__errored || me.__requestsFinished) {
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 i++;
                 if (i >= me.__requests.length) {
                     checkQueueEntry(keepAliveAttempts);
@@ -626,10 +646,12 @@ IDBTransaction.prototype.__executeRequests = function () {
             executeNextRequest();
         },
         function webSQLError (webSQLErr) {
+            /* c8 ignore start -- Dead code: the underlying websql-configurable driver's `_onTransactionComplete` always passes either `null` or a genuine `Error`/`DOMException` as this callback's argument, never the literal value `true`, under any driver used by the test suite. */
             // @ts-expect-error It's ok
             if (webSQLErr === true) { // Not a genuine SQL error
                 return;
             }
+            /* c8 ignore stop -- see comment above */
             const err = webSQLErrback(/** @type {Error & {code?: number}} */ (webSQLErr));
             me.__abortTransaction(err);
         },
@@ -706,6 +728,7 @@ IDBTransaction.prototype.__executeRequests = function () {
          */
         function complete () {
             me.__completed = true;
+            /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
             if (CFG.DEBUG) { console.log('Transaction completed'); }
             const evt = createEvent('complete');
             try {
@@ -836,9 +859,11 @@ IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
  * @returns {void}
  */
 IDBTransaction.prototype.__assertActive = function () {
+    /* c8 ignore start -- Defensive: every call site (via `__addToTransactionQueue`/`__addNonRequestToTransactionQueue`) either already performed the static `IDBTransaction.__assertActive(tx)` check synchronously just beforehand, or queues against a transaction just created fresh (necessarily active), so this redundant instance-level check is not reachable via the public API. */
     if (!this.__active || !this.__handlerActive || this.__committed) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
+    /* c8 ignore stop -- see comment above */
 };
 
 /**
@@ -902,10 +927,12 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 IDBTransaction.prototype.__abortTransaction = function (err) {
     const me = this;
     logError('Error', 'An error occurred in a transaction', err);
+    /* c8 ignore start -- Defensive re-entrancy guard: only reached if `__abortTransaction` is invoked a second time on the same transaction after `__errored` is already `true` (e.g. two independent internal error paths racing); not reliably reproducible without a contrived timing race. */
     if (me.__errored) {
         // We've already called "onerror", "onabort", or thrown, so don't do it again.
         return;
     }
+    /* c8 ignore stop -- see comment above */
     me.__errored = true;
 
     if (me.mode === 'versionchange') { // Steps for aborting an upgrade transaction
@@ -944,17 +971,13 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     }
 
     if (me.__requestsFinished && err !== null) {
+        /* c8 ignore start -- Defense in depth: `err` is only ever `null` here via `IDBTransaction.prototype.abort`'s own `__abortTransaction(null)` call, which now checks `__requestsFinished` itself first and throws `InvalidStateError` synchronously before ever reaching this point -- so this guard should not see a non-null `err` in practice. */
         // The transaction has already completed, so we can't call "onerror" or "onabort".
-        // So throw the error instead. `err` is only ever `null` here via
-        //   `IDBTransaction.prototype.abort`'s own `__abortTransaction(null)`
-        //   call, which now checks `__requestsFinished` itself first and
-        //   throws `InvalidStateError` synchronously before ever reaching
-        //   this point -- so this guard is just defense in depth against
-        //   `err` somehow being `null` some other way, not something this
-        //   path should see in practice.
+        // So throw the error instead.
         setTimeout(() => {
             throw err;
         }, 0);
+        /* c8 ignore stop -- see comment above */
     }
 
     /**
@@ -964,9 +987,12 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
      */
     function abort (tx, errOrResult) {
         if (!tx) {
+            /* c8 ignore next -- Debug-only log; only reached via the no-op `abort()` calls below (rare paths), and requires `CFG.DEBUG` to have any effect anyway. */
             if (CFG.DEBUG) { console.log('Rollback not possible due to missing transaction', me); }
         } else if (errOrResult && 'code' in errOrResult && typeof errOrResult.code === 'number') {
+            /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
             if (CFG.DEBUG) { console.log('Rollback erred; feature is probably not supported as per WebSQL', me); }
+        /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
         } else if (CFG.DEBUG) { console.log('Rollback succeeded', me); }
 
         me.dispatchEvent(createEvent('__preabort'));
@@ -980,9 +1006,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             //  behaves first-in-first-out with the same timeout so we could
             //  just use a `forEach`.
             return promises.then(function () {
+                /* c8 ignore start -- Dead code: the preceding `.filter()` only keeps entries with a truthy `q.req`, and nothing ever resets `q.req` back to a falsy value afterward, so this invariant can't actually be violated. */
                 if (!q.req) {
                     throw new Error('Missing request');
                 }
+                /* c8 ignore stop -- see comment above */
                 q.req.__done = true;
                 q.req.__result = undefined;
                 q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
@@ -991,9 +1019,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                     /** @type {(resolve: (value?: unknown) => void) => void} */
                     (resolve) => {
                         setTimeout(() => {
+                            /* c8 ignore start -- Dead code: same invariant as above -- `q.req` was already confirmed truthy by the outer `.filter()` and is never reset. */
                             if (!q.req) {
                                 throw new Error('Missing request');
                             }
+                            /* c8 ignore stop -- see comment above */
                             q.req.dispatchEvent(reqEvt); // No need to catch errors
                             resolve();
                         }, 0);
@@ -1010,10 +1040,12 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                 releaseFinishedTransaction(me);
             }, 0);
             return undefined;
+        /* c8 ignore start -- Diagnostic safety net: nothing in the preceding promise chain normally rejects (the only throws it could catch are the dead invariant-violation checks above), so this handler is not reachable in practice. */
         }).catch((err) => {
             console.log('Abort error');
             throw err;
         });
+        /* c8 ignore stop -- see comment above */
     }
 
     me.__transFinishedCb(true, function (rollback) {
@@ -1036,9 +1068,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                     /** @type {import('websql-configurable/lib/websql/WebSQLTransaction.js').SqlErrorCallback} */ (abort)
                 ); // Not working in some circumstances, even in Node
             } catch (err) {
+                /* c8 ignore start -- Defensive: the underlying WebSQL/SQLite driver throwing synchronously on `ROLLBACK` is not reliably reproducible without mocking the SQL layer. */
                 // Browser errs when transaction has ended and since it most likely already erred here,
                 //   we call to abort
                 abort();
+                /* c8 ignore stop -- see comment above */
             }
         } else {
             abort(null, {code: 0});
@@ -1055,6 +1089,7 @@ IDBTransaction.prototype.abort = function () {
     if (!(me instanceof IDBTransaction)) {
         throw new TypeError('Illegal invocation');
     }
+    /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
     if (CFG.DEBUG) { console.log('The transaction was aborted', me); }
     IDBTransaction.__assertNotFinished(me);
     if (me.__committed) {
@@ -1084,6 +1119,7 @@ IDBTransaction.prototype.commit = function () {
     if (!me.__active || !me.__handlerActive || me.__committed) {
         throw createDOMException('InvalidStateError', 'Failed to execute \'commit\' on \'IDBTransaction\': The transaction is not active.');
     }
+    /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG`. */
     if (CFG.DEBUG) { console.log('The transaction was explicitly committed', me); }
     me.__committed = true;
 };
@@ -1131,6 +1167,7 @@ IDBTransaction.__assertNotFinished = function (tx) {
  * @returns {void}
  */
 IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
+    /* c8 ignore start -- Dead code: this function has no callers anywhere in src/ (confirmed via grep); object store methods use `IDBTransaction.__assertActive`/`__assertNotFinished` directly instead. */
     try {
         IDBTransaction.__assertNotFinished(tx);
     } catch (err) {
@@ -1139,6 +1176,7 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
         }
         throw err;
     }
+    /* c8 ignore stop -- see comment above */
 };
 
 /**
