@@ -292,6 +292,38 @@ describe('IDBDatabase.createObjectStore', function () {
                 });
             }
         });
+
+        it('should handle deleting and recreating a store under the same name in the same transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                const open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+                open.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+                    db.createObjectStore('store', {keyPath: 'id'});
+                    db.deleteObjectStore('store');
+                    const store = db.createObjectStore('store', {autoIncrement: true});
+                    expect(store.keyPath).to.be.null;
+                    expect(store.autoIncrement).to.equal(true);
+                };
+                open.onsuccess = function () {
+                    const db = open.result;
+                    const tx = db.transaction('store', 'readwrite');
+                    const addReq = tx.objectStore('store').add({});
+                    addReq.onsuccess = function () {
+                        db.close();
+                        done();
+                    };
+                    addReq.onerror = function (event) {
+                        done(event.target.error);
+                    };
+                };
+            });
+        });
     });
 
     describe('failure tests', function () {

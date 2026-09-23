@@ -205,6 +205,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
                         tx.executeSql(sql, sqlValues, function (tx) {
                             // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
                             const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
+                            /* c8 ignore next -- Debug-only log; no test sets `CFG.DEBUG` while renaming a store. */
                             if (CFG.DEBUG) { console.log(sql); }
                             tx.executeSql(sql, [], function () {
                                 delete me.__pendingName;
@@ -964,8 +965,8 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
                 ret = getKey
                     ? Key.decode(util.unescapeSQLiteResponse(/** @type {{key: string}} */ (data.rows.item(0)).key), false)
                     : Sca.decode(util.unescapeSQLiteResponse(/** @type {{value: string}} */ (data.rows.item(0)).value));
-            } catch (e) {
                 /* c8 ignore start -- Defensive: catches unexpected decode failures (e.g. corrupted stored data); not reliably reproducible via the public API since encode/decode are always paired and never write undecodable data. */
+            } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
                 if (CFG.DEBUG) { console.log(e); }
             }
