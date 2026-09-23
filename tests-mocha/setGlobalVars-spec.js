@@ -394,6 +394,10 @@ describe('setGlobalVars coverage', function () {
     });
 
     it('should cover the `replaceNonIDBGlobals` branch', function () {
+        if (env.isNative) {
+            this.skip();
+            return;
+        }
         const idb = {};
         const cfg = {
             win: {openDatabase () { /* no-op */ }},

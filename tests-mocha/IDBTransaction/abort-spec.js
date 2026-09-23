@@ -115,7 +115,13 @@ describe('IDBTransaction.abort', function () {
                 }
                 expect(caught).to.be.an.instanceOf(env.DOMException);
                 expect(caught.name).to.equal('InvalidStateError');
-                expect(caught.message).to.include('already been committed');
+                expect(caught.message).to.include(
+                    env.browser.isFirefox
+                        ? 'A mutation operation was attempted on a database that did not allow mutations'
+                        : env.isNative
+                            ? "Failed to execute 'abort'"
+                            : 'already been committed'
+                );
             };
             addReq.onerror = function () {
                 db.close();
@@ -165,7 +171,11 @@ describe('IDBTransaction.abort', function () {
                     }
                     expect(caught).to.be.an.instanceOf(env.DOMException);
                     expect(caught.name).to.equal('InvalidStateError');
-                    expect(caught.message).to.match(/already committing|finished by commit or abort/);
+                    expect(caught.message).to.match(
+                        env.browser.isFirefox
+                            ? /A mutation operation was attempted on a database that did not allow mutations/v
+                            : /The transaction has finished|already committing|finished by commit or abort/v
+                    );
                 }, 0);
             };
             addReq.onerror = function () {
