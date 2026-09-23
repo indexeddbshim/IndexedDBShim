@@ -294,8 +294,16 @@ function setGlobalVars (idb, initialConfig) {
                 }
             }
             if (!IDB.shimIndexedDB) {
+                /* c8 ignore start -- Defensive: `IDB.shimIndexedDB` was already
+                   confirmed truthy just before this function (`__useShim`) was
+                   defined and immediately invoked (see the `if ('shimIndexedDB'
+                   in IDB && IDB.shimIndexedDB)` guard above), and nothing in
+                   this function's body reassigns or deletes it. Only reachable
+                   if `IDB` is some unusual object (e.g. a Proxy) whose
+                   `shimIndexedDB` property value changes between reads. */
                 return;
             }
+            /* c8 ignore stop -- see comment above */
             IDB.shimIndexedDB.__setConnectionQueueOrigin();
         };
 

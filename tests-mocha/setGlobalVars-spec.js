@@ -361,4 +361,24 @@ describe('setGlobalVars coverage', function () {
         const cfg = {win: {}}; // no openDatabase!
         setGlobalVars(idb, cfg);
     });
+
+    it('should throw "Illegal invocation" when the shimmed `indexedDB` getter is called on a non-instance', function () {
+        const idb = {};
+        const cfg = {win: {openDatabase () { /* no-op */ }}};
+        setGlobalVars(idb, cfg);
+        idb.shimIndexedDB.__useShim();
+        const desc = Object.getOwnPropertyDescriptor(idb, 'indexedDB');
+        expect(() => desc.get.call({})).to.throw(TypeError, 'Illegal invocation');
+    });
+
+    it('should cover the `replaceNonIDBGlobals` branch', function () {
+        const idb = {};
+        const cfg = {
+            win: {openDatabase () { /* no-op */ }},
+            replaceNonIDBGlobals: true
+        };
+        setGlobalVars(idb, cfg);
+        idb.shimIndexedDB.__useShim();
+        expect(idb.DOMException).to.equal(window.ShimDOMException);
+    });
 });
