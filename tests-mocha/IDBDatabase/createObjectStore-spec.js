@@ -372,6 +372,33 @@ describe('IDBDatabase.createObjectStore', function () {
     });
 
     describe('failure tests', function () {
+        it('should throw InvalidStateError if called outside of a version change transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                const open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+
+                open.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+                    db.createObjectStore('My Store');
+                };
+
+                open.onsuccess = function () {
+                    const db = open.result;
+
+                    try {
+                        db.createObjectStore('Another Store');
+                    } catch (e) {
+                        err = e;
+                    }
+
+                    expect(err).to.be.an.instanceOf(env.DOMException);
+                    expect(err.name).to.equal('InvalidStateError');
+                    db.close();
+                    done();
+                };
+            });
+        });
+
         it('should throw an error if called without params', function (done) {
             util.generateDatabaseName(function (err, name) {
                 const open = indexedDB.open(name, 1);
