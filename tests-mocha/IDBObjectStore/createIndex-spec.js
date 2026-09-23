@@ -293,6 +293,51 @@ describe('IDBObjectStore.createIndex', function () {
             }
         });
 
+        it('should enforce uniqueness across overlapping array values on a unique multiEntry index', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                const open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+
+                open.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+                    const store = db.createObjectStore('store', {autoIncrement: true});
+                    store.createIndex('tags', 'tags', {unique: true, multiEntry: true});
+
+                    store.put({tags: ['a', 'b']});
+                    const putReq2 = store.put({tags: ['b', 'c']}); // 'b' overlaps -- should fail
+                    putReq2.onsuccess = function () {
+                        expect.fail('Expected a ConstraintError due to the overlapping "b" tag');
+                    };
+                    putReq2.onerror = function (event) {
+                        expect(event.target.error.name).to.equal('ConstraintError');
+                        event.preventDefault();
+                    };
+
+                    // A scalar (non-array) tag value takes a different SQL/JS
+                    //   match path than the array-vs-array overlap above, but
+                    //   should likewise conflict with the existing 'a' tag.
+                    const putReq3 = store.put({tags: 'a'});
+                    putReq3.onsuccess = function () {
+                        expect.fail('Expected a ConstraintError due to the existing "a" tag');
+                    };
+                    putReq3.onerror = function (event) {
+                        expect(event.target.error.name).to.equal('ConstraintError');
+                        event.preventDefault();
+                    };
+                };
+
+                open.onsuccess = function () {
+                    open.result.close();
+                    done();
+                };
+            });
+        });
+
         it('should not report a false ConstraintError for a unique index whose keyPath cannot be evaluated on the value', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
@@ -365,6 +410,58 @@ describe('IDBObjectStore.createIndex', function () {
                     open.onupgradeneeded = function () {
                         const store = open.transaction.objectStore('store');
                         store.createIndex('idx', 'a.b');
+                    };
+
+                    open.onsuccess = function () {
+                        open.result.close();
+                        done();
+                    };
+                }
+            });
+        });
+
+        it('should skip existing records whose keyPath resolves to an invalid key type when reindexing', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                createVersion1();
+
+                /**
+                 * @returns {void}
+                 */
+                function createVersion1 () {
+                    const open = indexedDB.open(name, 1);
+                    open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = function (event) {
+                        const db = event.target.result;
+                        const store = db.createObjectStore('store', {keyPath: 'id'});
+                        // A boolean is not a valid IndexedDB key, so the
+                        //   keyPath `a` added below (in version 2) will
+                        //   resolve to an invalid (not merely unevaluatable)
+                        //   key for this existing record.
+                        store.put({id: 1, a: true});
+                    };
+
+                    open.onsuccess = function () {
+                        open.result.close();
+                        setTimeout(createVersion2, 50);
+                    };
+                }
+
+                /**
+                 * @returns {void}
+                 */
+                function createVersion2 () {
+                    const open = indexedDB.open(name, 2);
+                    open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = function () {
+                        const store = open.transaction.objectStore('store');
+                        store.createIndex('idx', 'a');
                     };
 
                     open.onsuccess = function () {

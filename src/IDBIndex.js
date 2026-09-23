@@ -731,12 +731,12 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                     sql,
                                     [],
                                     resolve,
+                                    /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                     /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
-                                        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                         reject(err);
-                                        /* c8 ignore stop -- see comment above */
                                     })
+                                    /* c8 ignore stop -- see comment above */
                                 );
                                 // }, function (tx, err) {
                                 //    reject(err);
@@ -755,20 +755,20 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                         if (CFG.DEBUG) { console.log(sql); }
                                         tx.executeSql(
                                             sql, [], resolve,
+                                            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                             /** @type {SqlErrorCallback} */
                                             (function (tx, err) {
-                                                /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                                 reject(err);
-                                                /* c8 ignore stop -- see comment above */
                                             })
+                                            /* c8 ignore stop -- see comment above */
                                         );
                                     },
+                                    /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                     /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
-                                        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                         reject(err);
-                                        /* c8 ignore stop -- see comment above */
                                     })
+                                    /* c8 ignore stop -- see comment above */
                                 );
                             })
                         );

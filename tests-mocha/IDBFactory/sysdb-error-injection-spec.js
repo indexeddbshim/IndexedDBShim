@@ -54,6 +54,34 @@ describe('IDBFactory sysdb SQL error handling', function () {
         shimIndexedDB.__setConfig('memoryDatabase', memoryDatabase);
     });
 
+    it('errors an open() request when the sysdb transaction itself fails (no `err`, only `tx`)', function (done) {
+        shimIndexedDB.__openDatabase = function () {
+            return {
+                version: '1',
+                transaction (fn, errCb) {
+                    // Simulate the whole transaction failing outright (as
+                    //   opposed to an individual `executeSql` call within
+                    //   it) -- this invokes `sysDbCreateError` with only a
+                    //   single (`tx`) argument, no separate `err`.
+                    setTimeout(function () {
+                        errCb(new Error('Simulated sysdb transaction failure'));
+                    }, 0);
+                },
+                readTransaction (fn, errCb) {
+                    errCb && errCb(new Error('Should not be reached'));
+                }
+            };
+        };
+        const open = shimIndexedDB.open('sysdb-transaction-error-test', 1);
+        open.onsuccess = open.onblocked = function () {
+            done(new Error('open() should have failed'));
+        };
+        open.onerror = function (e) {
+            expect(e.target.error).to.exist;
+            done();
+        };
+    });
+
     it('errors an open() request when creating the sysdb dbVersions table fails', function (done) {
         shimIndexedDB.__openDatabase = function () {
             return {
@@ -138,5 +166,138 @@ describe('IDBFactory sysdb SQL error handling', function () {
             expect(err).to.exist;
         }
         expect(rejected, 'databases() should have rejected').to.be.true;
+    });
+
+    it('rejects databases() when the sysdb readTransaction itself fails (no `err`, only `tx`)', async function () {
+        shimIndexedDB.__openDatabase = function () {
+            return {
+                version: '1',
+                transaction (fn, errCb, okCb) {
+                    const tx = {
+                        executeSql (sql, params, success) {
+                            success && success(tx, {rows: {length: 0, item: () => undefined}});
+                        }
+                    };
+                    fn(tx);
+                    okCb && okCb();
+                },
+                readTransaction (fn, errCb) {
+                    // Simulate the whole `readTransaction` itself failing
+                    //   outright (as opposed to an individual `executeSql`
+                    //   call within it) -- this invokes
+                    //   `dbGetDatabaseNamesError` with only a single (`tx`)
+                    //   argument, no separate `err`.
+                    errCb(new Error('Simulated sysdb readTransaction failure'));
+                }
+            };
+        };
+        let rejected = false;
+        try {
+            await shimIndexedDB.databases();
+        } catch (err) {
+            rejected = true;
+            expect(err).to.exist;
+        }
+        expect(rejected, 'databases() should have rejected').to.be.true;
+    });
+
+    it('should use `sysDatabaseBasePath` to build the sysdb file path when not using a memory database', function (done) {
+        const sysDatabaseBasePath = shimIndexedDB.__getConfig('sysDatabaseBasePath');
+        shimIndexedDB.__setConfig('memoryDatabase', null); // Forces the non-memory (joinPath) branch
+        shimIndexedDB.__setConfig('sysDatabaseBasePath', 'my-sys-base-path');
+        let capturedName;
+        // Only intercept the `sysdb` file's own creation (identified by its
+        //   distinctive `__sysdb__` file name) with a fully fake, no-I/O
+        //   driver; delegate everything else (the actual user database
+        //   being opened) to the real driver so the rest of the `open()`
+        //   flow behaves normally.
+        shimIndexedDB.__openDatabase = function (name, ...rest) {
+            if (typeof name === 'string' && name.includes('__sysdb__')) {
+                capturedName = name;
+                return {
+                    version: '1',
+                    transaction (fn, errCb, okCb) {
+                        const tx = {
+                            executeSql (sql, params, success) {
+                                success && success(tx, {rows: {length: 0, item: () => undefined}});
+                            }
+                        };
+                        fn(tx);
+                        okCb && okCb();
+                    },
+                    readTransaction (fn) {
+                        fn({
+                            executeSql (sql, params, success) {
+                                success && success({}, {rows: {length: 0, item: () => undefined}});
+                            }
+                        });
+                    }
+                };
+            }
+            return prevOpenDatabase(name, ...rest);
+        };
+        const open = shimIndexedDB.open('sysdb-basepath-test', 1);
+        open.onerror = open.onblocked = function (e) {
+            shimIndexedDB.__setConfig('sysDatabaseBasePath', sysDatabaseBasePath);
+            done((e.target && e.target.error) || new Error('open() failed'));
+        };
+        open.onsuccess = function () {
+            open.result.close();
+            shimIndexedDB.__setConfig('sysDatabaseBasePath', sysDatabaseBasePath);
+            expect(capturedName).to.equal('my-sys-base-path/__sysdb__.sqlite');
+            done();
+        };
+    });
+
+    it('should fall back to an empty base path for the sysdb file when neither `sysDatabaseBasePath` nor `databaseBasePath` is set', function (done) {
+        const sysDatabaseBasePath = shimIndexedDB.__getConfig('sysDatabaseBasePath');
+        const databaseBasePath = shimIndexedDB.__getConfig('databaseBasePath');
+        shimIndexedDB.__setConfig('memoryDatabase', undefined); // Forces the non-memory (joinPath) branch; differs from the prior test's `null` so `sysdb` is recreated again
+        shimIndexedDB.__setConfig('sysDatabaseBasePath', null);
+        shimIndexedDB.__setConfig('databaseBasePath', null);
+        let capturedName;
+        shimIndexedDB.__openDatabase = function (name, ...rest) {
+            if (typeof name === 'string' && name.includes('__sysdb__')) {
+                capturedName = name;
+                return {
+                    version: '1',
+                    transaction (fn, errCb, okCb) {
+                        const tx = {
+                            executeSql (sql, params, success) {
+                                success && success(tx, {rows: {length: 0, item: () => undefined}});
+                            }
+                        };
+                        fn(tx);
+                        okCb && okCb();
+                    },
+                    readTransaction (fn) {
+                        fn({
+                            executeSql (sql, params, success) {
+                                success && success({}, {rows: {length: 0, item: () => undefined}});
+                            }
+                        });
+                    }
+                };
+            }
+            return prevOpenDatabase(name, ...rest);
+        };
+        /**
+         * @returns {void}
+         */
+        function restore () {
+            shimIndexedDB.__setConfig('sysDatabaseBasePath', sysDatabaseBasePath);
+            shimIndexedDB.__setConfig('databaseBasePath', databaseBasePath);
+        }
+        const open = shimIndexedDB.open('sysdb-basepath-fallback-test', 1);
+        open.onerror = open.onblocked = function (e) {
+            restore();
+            done((e.target && e.target.error) || new Error('open() failed'));
+        };
+        open.onsuccess = function () {
+            open.result.close();
+            restore();
+            expect(capturedName).to.equal('__sysdb__.sqlite');
+            done();
+        };
     });
 });

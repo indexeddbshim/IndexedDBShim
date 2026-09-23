@@ -346,14 +346,15 @@ function closeCachedWebSQLConnections (name, cb) {
 function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
     const useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
     if (useMemoryDatabase) {
+        /* c8 ignore start -- Defensive: only reachable if `websqlDBCache[name]`
+           was initialized as an empty placeholder by `open()`'s connection-queue
+           setup (`addRequestToConnectionQueue`, above `openDB`) but never
+           populated with an actual instance -- e.g. `__openDatabase` throwing
+           after a `dbVersions` row already existed for `name` from an earlier,
+           successful `open()` -- or if `name` was never added to the cache at
+           all. Not reachable via normal, non-tampered API usage. */
         const latestSQLiteDBCached = Object.hasOwn(websqlDBCache, name) ? getLatestCachedWebSQLDB(name) : null;
         if (!latestSQLiteDBCached) {
-            /* c8 ignore start -- Defensive: only reachable if `websqlDBCache[name]`
-               was initialized as an empty placeholder by `open()`'s connection-queue
-               setup (`addRequestToConnectionQueue`, above `openDB`) but never
-               populated with an actual instance -- e.g. `__openDatabase` throwing
-               after a `dbVersions` row already existed for `name` from an earlier,
-               successful `open()`. Not reachable via normal, non-tampered API usage. */
             console.warn('Could not find a memory database instance to delete.');
             databaseDeleted();
             return;
@@ -895,8 +896,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 //   via `IDBDatabase.prototype.transaction()` (the only place
                                 //   that pushes onto `connection.__transactions`), so `pos` is
                                 //   always -1 here.
+                                /* c8 ignore start -- see comment above */
                                 if (pos !== -1) {
-                                    /* c8 ignore start -- see comment above */
                                     connection.__transactions.splice(pos, 1);
                                 }
                                 /* c8 ignore stop -- see comment above */
@@ -942,10 +943,11 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         //   (`currentTask.readOnly` is always false here, and
                         //   `dbCreateError` always returns `false`, so `err` is never
                         //   truthy either).
+                        /* c8 ignore start -- see comment above */
                         if (currentTask.readOnly || err) {
-                            /* c8 ignore next 2 -- see comment above */
                             return true;
                         }
+                        /* c8 ignore stop -- see comment above */
                         sysdbFinishedCb = function (systx, err, cb) {
                             if (err) {
                                 rollback(err,
@@ -1046,14 +1048,14 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 CFG.DEFAULT_DB_SIZE
             ));
             if (useDatabaseCache) {
+                /* c8 ignore start -- Defensive: by the time `openDB` runs,
+                   `websqlDBCache[name]` has always already been created by
+                   `addRequestToConnectionQueue`'s own callback above (guarded
+                   by this same `useDatabaseCache` condition), which always
+                   runs first and unconditionally ensures the entry exists
+                   before ever calling `openDB`. Kept as a safety net in case
+                   that invariant ever changes. */
                 if (!(Object.hasOwn(websqlDBCache, name))) {
-                    /* c8 ignore start -- Defensive: by the time `openDB` runs,
-                       `websqlDBCache[name]` has always already been created by
-                       `addRequestToConnectionQueue`'s own callback above (guarded
-                       by this same `useDatabaseCache` condition), which always
-                       runs first and unconditionally ensures the entry exists
-                       before ever calling `openDB`. Kept as a safety net in case
-                       that invariant ever changes. */
                     websqlDBCache[name] = {};
                 }
                 /* c8 ignore stop -- see comment above */
@@ -1254,20 +1256,20 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                 cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError);
                             }, dbError);
                         }, dbError, undefined, function (currentTask, err, done, rollback, commit) {
+                            /* c8 ignore start -- Defensive fallback, not reachable in
+                               practice: `currentTask.readOnly` is always `false` here
+                               (this callback is only ever attached to the writable
+                               `sysdb.transaction(...)` call above, never to a
+                               `sysdb.readTransaction(...)`), and `err` can only be
+                               truthy if the `DELETE FROM dbVersions` statement's own
+                               error callback (`dbError`) reports the failure back to
+                               `websql-configurable` as unhandled -- but `dbError`
+                               deliberately always `return`s `false`, which tells the
+                               library the error was already handled (and to keep
+                               `err` falsy here), precisely so this custom
+                               `sysdbFinishedCbDelete` rollback/commit path below is
+                               used instead of the library's own default rollback. */
                             if (currentTask.readOnly || err) {
-                                /* c8 ignore start -- Defensive fallback, not reachable in
-                                   practice: `currentTask.readOnly` is always `false` here
-                                   (this callback is only ever attached to the writable
-                                   `sysdb.transaction(...)` call above, never to a
-                                   `sysdb.readTransaction(...)`), and `err` can only be
-                                   truthy if the `DELETE FROM dbVersions` statement's own
-                                   error callback (`dbError`) reports the failure back to
-                                   `websql-configurable` as unhandled -- but `dbError`
-                                   deliberately always `return`s `false`, which tells the
-                                   library the error was already handled (and to keep
-                                   `err` falsy here), precisely so this custom
-                                   `sysdbFinishedCbDelete` rollback/commit path below is
-                                   used instead of the library's own default rollback. */
                                 return true;
                             }
                             /* c8 ignore stop -- see comment above */

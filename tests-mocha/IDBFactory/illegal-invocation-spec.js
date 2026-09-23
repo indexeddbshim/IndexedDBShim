@@ -79,4 +79,19 @@ describe('IDBFactory SecurityError', function () {
             global.location = oldLocation;
         }
     });
+
+    it('should throw SecurityError when open() is called with no global `location` at all', function () {
+        const checkOrigin = shimIndexedDB.__getConfig('checkOrigin');
+        const oldLocation = global.location;
+        delete global.location;
+        shimIndexedDB.__setConfig('checkOrigin', true);
+        try {
+            expect(() => {
+                shimIndexedDB.open('some-db-name');
+            }).to.throw(Error, /opaque origin/);
+        } finally {
+            shimIndexedDB.__setConfig('checkOrigin', checkOrigin);
+            global.location = oldLocation;
+        }
+    });
 });
