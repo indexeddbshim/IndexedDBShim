@@ -211,8 +211,10 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
                                 success();
                             });
                         }, function (tx, err) {
+                            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                             error(err);
                             return false;
+                            /* c8 ignore stop -- see comment above */
                         });
                     });
                 }
@@ -302,9 +304,11 @@ IDBObjectStore.__createObjectStore = function (db, store) {
          * @returns {boolean}
          */
         function error (tx, err) {
+            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
             return false;
+            /* c8 ignore stop -- see comment above */
         }
 
         const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
@@ -375,9 +379,11 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
          * @returns {boolean}
          */
         function error (tx, err) {
+            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
             return false;
+            /* c8 ignore stop -- see comment above */
         }
 
         tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
@@ -572,10 +578,12 @@ IDBObjectStore.prototype.__checkIndexConstraints = function (tx, value, excludeK
                 return;
             }
             const indexKeyValue = indexKey.value;
+            /* c8 ignore start -- Defensive: unreachable given the current `Key.js` implementation, where a keyPath evaluation that would resolve to `undefined` always instead reports `invalid`/`failure` (caught above, causing an earlier `return`) rather than succeeding with an `undefined` value. */
             if (indexKeyValue === undefined) {
                 resolve(undefined);
                 return;
             }
+            /* c8 ignore stop -- see comment above */
             const multiCheck = index.multiEntry && Array.isArray(indexKeyValue);
             const fetchArgs = buildFetchIndexDataSQL(true, index, indexKeyValue, 'key', multiCheck);
             executeFetchIndexData(...fetchArgs, tx, null, function success (key) {
@@ -670,9 +678,11 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
              * @returns {void}
              */
             function setIndexInfo (index) {
+                /* c8 ignore start -- Defensive: unreachable given the current `Key.js` implementation, where a keyPath evaluation that would resolve to `undefined` always instead reports `invalid`/`failure` (caught above, causing an earlier `return`) rather than succeeding with an `undefined` value. */
                 if (indexKeyValue === undefined) {
                     return;
                 }
+                /* c8 ignore stop -- see comment above */
                 paramMap[index.__currentName] = /** @type {string} */ (
                     Key.encode(indexKeyValue, index.multiEntry)
                 );
@@ -838,8 +848,10 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
         if (CFG.DEBUG) { console.log('Did the row with the', key, 'exist?', data.rowsAffected); }
         cb(tx);
     }, function (tx, err) {
+        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
         error(err);
         return false;
+        /* c8 ignore stop -- see comment above */
     });
 };
 
@@ -953,13 +965,17 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
                     ? Key.decode(util.unescapeSQLiteResponse(/** @type {{key: string}} */ (data.rows.item(0)).key), false)
                     : Sca.decode(util.unescapeSQLiteResponse(/** @type {{value: string}} */ (data.rows.item(0)).value));
             } catch (e) {
+                /* c8 ignore start -- Defensive: catches unexpected decode failures (e.g. corrupted stored data); not reliably reproducible via the public API since encode/decode are always paired and never write undecodable data. */
                 // If no result is returned, or error occurs when parsing JSON
                 if (CFG.DEBUG) { console.log(e); }
+                /* c8 ignore stop -- see comment above */
             }
             success(ret);
         }, function (tx, err) {
+            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             error(err);
             return false;
+            /* c8 ignore stop -- see comment above */
         });
     }, undefined, me);
 };
@@ -1062,8 +1078,10 @@ IDBObjectStore.prototype.delete = function (query) {
             });
             success();
         }, function (tx, err) {
+            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             error(err);
             return false;
+            /* c8 ignore stop -- see comment above */
         });
     }, undefined, me);
 };
@@ -1093,8 +1111,10 @@ IDBObjectStore.prototype.clear = function () {
             });
             success();
         }, function (tx, err) {
+            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             error(err);
             return false;
+            /* c8 ignore stop -- see comment above */
         });
     }, undefined, me);
 };
