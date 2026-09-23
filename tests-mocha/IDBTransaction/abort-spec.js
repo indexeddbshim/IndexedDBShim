@@ -146,9 +146,16 @@ describe('IDBTransaction.abort', function () {
 
             const addReq = store.add({id: 2});
             addReq.onsuccess = function () {
-                // No further requests are queued, so the transaction is now
-                //   `__requestsFinished` and auto-committing, even though
-                //   `__committed` itself isn't set yet.
+                // No further requests are queued, so shortly the transaction
+                //   will become `__requestsFinished` and auto-committing,
+                //   even though `__committed` itself isn't set until the
+                //   async SQL commit round trip actually resolves. Exactly
+                //   how much of that round trip has elapsed by the time this
+                //   `setTimeout(fn, 0)` macrotask runs is not deterministic
+                //   (it races the driver's own macrotask-scheduled commit
+                //   completion), so `abort()` may throw either while still
+                //   "already committing" or after having fully finished --
+                //   both are valid confirmations that abort is too late.
                 setTimeout(function () {
                     let caught;
                     try {
@@ -158,7 +165,7 @@ describe('IDBTransaction.abort', function () {
                     }
                     expect(caught).to.be.an.instanceOf(env.DOMException);
                     expect(caught.name).to.equal('InvalidStateError');
-                    expect(caught.message).to.include('already committing');
+                    expect(caught.message).to.match(/already committing|finished by commit or abort/);
                 }, 0);
             };
             addReq.onerror = function () {
