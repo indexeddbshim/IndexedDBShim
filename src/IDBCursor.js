@@ -540,7 +540,16 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 if (a.key > b.key) {
                     return me.direction === 'prev' ? -1 : 1;
                 }
+                /* c8 ignore start -- Defensive: only reachable if two matches
+                   in the same batch shared both the same `matchingKey` and
+                   the same primary `key`, which would require the same
+                   record's multi-entry array to contain a duplicate value.
+                   `Key.js`'s array-to-key conversion already drops duplicate
+                   values when a multi-entry index entry is built, so this
+                   can never happen in practice; kept only to satisfy the
+                   `Array.prototype.sort` comparator contract. */
                 return 0;
+                /* c8 ignore stop -- see comment above */
             });
 
             me.__prefetchedIndex = 0;
@@ -558,11 +567,15 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
             };
             if (CFG.DEBUG) { console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor'); }
             me.__decode(rows[0], success);
-        }, function (tx, err) {
+        }, /* c8 ignore start -- Defensive: guards against an unexpected SQLite
+              execution error (e.g. I/O error, corruption) while querying for
+              multi-entry cursor matches; not reliably reproducible without
+              mocking the SQL layer. */ function (tx, err) {
             if (CFG.DEBUG) { console.log('[multiEntry] Could not execute Cursor.continue', sqlStr, sqlValues); }
             error(err);
             return false;
         });
+        /* c8 ignore stop -- see comment above */
     }
 
     runQuery();
@@ -1032,14 +1045,31 @@ IDBCursor.prototype.delete = function () {
                         // We don't invalidate the cache (as we don't access it anymore
                         //    and it will set the index off)
                         success(undefined);
+                    /* c8 ignore start -- Defensive: `__find` (invoked just above) has
+                       already confirmed a row exists for this primary key within the
+                       same transaction queue, so `rowsAffected` should always be 1 in
+                       normal usage. This branch would only be reached if the underlying
+                       row were removed by another request queued in the same
+                       transaction between `__find`'s check and this DELETE actually
+                       running (e.g. deleting the same record directly via the object
+                       store while a cursor over it is mid-iteration); attempts to
+                       construct such a scenario instead trigger a transaction abort
+                       (`AbortError`) before this callback ever runs, since the default
+                       action of an unhandled request error is to abort the
+                       transaction. */
                     } else {
                         // @ts-expect-error Apparently ok
                         error('No rows with key found' + key);
                     }
-                }, function (tx, data) {
+                    /* c8 ignore stop -- see comment above */
+                }, /* c8 ignore start -- Defensive: guards against an unexpected SQLite
+                      execution error (e.g. I/O error, corruption) while deleting the
+                      current row; not reliably reproducible without mocking the SQL
+                      layer. */ function (tx, data) {
                     error(data);
                     return false;
                 });
+                /* c8 ignore stop -- see comment above */
             }, error
         );
     }, undefined, me);
