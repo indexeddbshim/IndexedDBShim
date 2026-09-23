@@ -305,7 +305,12 @@ describe('IDBFactory sysdb SQL error handling', function () {
 
     it('should omit the `.sqlite` extension from the sysdb file name when `addSQLiteExtension` is `false`', function (done) {
         const addSQLiteExtension = shimIndexedDB.__getConfig('addSQLiteExtension');
-        shimIndexedDB.__setConfig('memoryDatabase', null); // Forces the non-memory (joinPath) branch; differs from `beforeEach`'s `:memory:` so `sysdb` is recreated again
+        // `undefined` (not `null`) forces the non-memory (joinPath) branch here: it differs
+        //   from `beforeEach`'s `:memory:` so `sysdb` is recreated now, AND from the file's
+        //   `null` baseline (restored by the outer `afterEach` below) so `sysdb` is recreated
+        //   again -- against the real driver -- once this test ends. Using `null` for both
+        //   leaves the fake driver installed above permanently active for every later test.
+        shimIndexedDB.__setConfig('memoryDatabase', undefined);
         shimIndexedDB.__setConfig('addSQLiteExtension', false);
         let capturedName;
         shimIndexedDB.__openDatabase = function (name, ...rest) {
