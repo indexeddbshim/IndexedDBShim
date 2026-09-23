@@ -6,6 +6,15 @@ describe('IDBObjectStore.createIndex', function () {
         ({indexedDB} = env);
     });
 
+    if (!env.isNative) {
+        it('should throw "Illegal constructor" when `IDBIndex` is invoked directly', function () {
+            expect(() => {
+                // eslint-disable-next-line no-new -- Testing the throw
+                new IDBIndex();
+            }).to.throw(TypeError, 'Illegal constructor');
+        });
+    }
+
     describe('success tests', function () {
         it('should create an index with default properties', function (done) {
             util.generateDatabaseName(function (err, name) {

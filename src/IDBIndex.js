@@ -275,13 +275,13 @@ IDBIndex.__createIndex = function (store, index) {
         /** @type {{[key: string]: boolean}} */
         let indexValues = {};
 
+        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
          * @returns {void}
          */
         function error (tx, err) {
-            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             failure(createDOMException('UnknownError', 'Could not create index "' + indexName + '"' + err.code + '::' + err.message, err));
         }
         /* c8 ignore stop -- see comment above */
@@ -415,13 +415,13 @@ IDBIndex.__deleteIndex = function (store, index) {
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         transaction
     ).__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
+        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
          * @returns {void}
          */
         function error (tx, err) {
-            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));
         }
         /* c8 ignore stop -- see comment above */
@@ -670,13 +670,13 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         store.transaction
     ).__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
+        /* c8 ignore start -- Defensive: only reached if one of the chained `CREATE TABLE`/`INSERT`/`DROP TABLE`/`ALTER TABLE` statements below fails, which is not reliably reproducible without mocking the SQL layer. */
         /**
          * @param {WebSQLTransaction} tx
          * @param {(Error & {code?: number})} err
          * @returns {void}
          */
         function sqlError (tx, err) {
-            /* c8 ignore start -- Defensive: only reached if one of the chained `CREATE TABLE`/`INSERT`/`DROP TABLE`/`ALTER TABLE` statements below fails, which is not reliably reproducible without mocking the SQL layer. */
             error(err);
         }
         /* c8 ignore stop -- see comment above */
