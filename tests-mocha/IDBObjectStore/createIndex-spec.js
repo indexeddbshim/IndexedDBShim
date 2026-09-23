@@ -292,6 +292,37 @@ describe('IDBObjectStore.createIndex', function () {
                 });
             }
         });
+
+        it('should not report a false ConstraintError for a unique index whose keyPath cannot be evaluated on the value', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                const open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+
+                open.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+                    const store = db.createObjectStore('store', {autoIncrement: true});
+                    store.createIndex('idx', 'a.b', {unique: true});
+
+                    // Neither value has an object at `a`, so the index's dotted
+                    //   keyPath fails to evaluate for both -- this must not be
+                    //   treated as two records sharing an (undefined) index key.
+                    // `put` (not `add`) is required here, since only `put`
+                    //   runs the unique-index constraint check being tested.
+                    store.put({a: 'x'});
+                    store.put({a: 'y'});
+                };
+
+                open.onsuccess = function () {
+                    open.result.close();
+                    done();
+                };
+            });
+        });
     });
 
     describe('failure tests', function () {
