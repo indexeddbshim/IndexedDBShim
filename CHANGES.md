@@ -3,6 +3,8 @@
 ## 19.0.7
 
 - fix: proper throwing when arraybuffer view (or buffer) is detached
+- docs: README on Node usage; advantage
+- test: restore mocha browser testing
 
 ## 19.0.6
 
