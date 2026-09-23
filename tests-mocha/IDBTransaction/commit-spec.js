@@ -48,4 +48,44 @@ describe('IDBTransaction.commit', function () {
             };
         });
     });
+
+    it('should throw InvalidStateError when called on an already-committed transaction', function (done) {
+        this.timeout(20000);
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+
+            tx.oncomplete = function () {
+                db.close();
+                done();
+            };
+            tx.onerror = function () {
+                db.close();
+                done(new Error('Transaction should have completed, not errored'));
+            };
+
+            const addReq = store.add({id: 2});
+            addReq.onsuccess = function () {
+                tx.commit();
+
+                let err2;
+                try {
+                    tx.commit();
+                } catch (e) {
+                    err2 = e;
+                }
+                expect(err2).to.be.an.instanceOf(env.DOMException);
+                expect(err2.name).to.equal('InvalidStateError');
+            };
+            addReq.onerror = function () {
+                db.close();
+                done(new Error('Could not add data'));
+            };
+        });
+    });
 });

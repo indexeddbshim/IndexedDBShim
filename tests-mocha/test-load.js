@@ -65,6 +65,7 @@ if (typeof process !== 'undefined' && process.env.npm_config_test) { // eslint-d
         'IDBRequest/getters-spec.js',
         'IDBTransaction/objectStore-spec.js',
         'IDBTransaction/commit-spec.js',
+        'IDBTransaction/abort-spec.js',
         'IDBTransaction/events-spec.js',
         'IDBTransaction/durability-spec.js',
         'IDBTransaction/issue391-standard-driver-spec.js',

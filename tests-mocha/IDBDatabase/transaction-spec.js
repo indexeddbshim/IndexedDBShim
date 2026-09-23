@@ -175,6 +175,32 @@ describe('IDBDatabase.transaction', function () {
     });
 
     describe('failure tests', function () {
+        it('should throw InvalidStateError if called during a version change transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                const open = env.indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+
+                open.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+                    db.createObjectStore('store');
+
+                    try {
+                        db.transaction('store', 'readonly');
+                    } catch (e) {
+                        err = e;
+                    }
+
+                    expect(err).to.be.an.instanceOf(env.DOMException);
+                    expect(err.name).to.equal('InvalidStateError');
+                };
+
+                open.onsuccess = function () {
+                    open.result.close();
+                    done();
+                };
+            });
+        });
+
         it('should throw an error if called without params', function (done) {
             util.createDatabase(function (err, db) {
                 try {

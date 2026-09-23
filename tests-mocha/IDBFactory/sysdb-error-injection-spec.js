@@ -36,8 +36,10 @@ describe('IDBFactory sysdb SQL error handling', function () {
         //   path, so the resulting one-off `.sqlite`-less file is swept up
         //   automatically by `package.json`'s `clean-mocha` script (globs
         //   for `file::memory:?*`).
+        // eslint-disable-next-line sonarjs/pseudo-random -- Testing
         const resetPath = 'file::memory:?D_delete-sysdb-reset-' + Date.now() + '-' + Math.random().toString(36).slice(2);
         shimIndexedDB.__setConfig('memoryDatabase', resetPath);
+        // eslint-disable-next-line sonarjs/pseudo-random -- Testing
         const resetReq = shimIndexedDB.open('sysdb-reset-' + Date.now() + '-' + Math.random().toString(36).slice(2), 1);
         resetReq.onsuccess = function () {
             resetReq.result.close();
@@ -86,7 +88,7 @@ describe('IDBFactory sysdb SQL error handling', function () {
         shimIndexedDB.__openDatabase = function () {
             return {
                 version: '1',
-                transaction (fn, errCb) {
+                transaction (fn /* , errCb */) {
                     fn({
                         executeSql (sql, params, success, error) {
                             // Deferred (not called synchronously): a fully
@@ -144,7 +146,7 @@ describe('IDBFactory sysdb SQL error handling', function () {
                     fn(tx);
                     okCb && okCb();
                 },
-                readTransaction (fn, errCb) {
+                readTransaction (fn /* , errCb */) {
                     fn({
                         executeSql (sql, params, success, error) {
                             // Call twice to also exercise `databases()`'s
