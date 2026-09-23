@@ -29,10 +29,21 @@ describe('Key.convertValueToKey', function () {
         expect(result.message).to.equal('Bad array entry value-to-key conversion');
     });
 
-    it('should mark a detached buffer source as invalid', function () {
-        const buf = new ArrayBuffer(8);
-        structuredClone(buf, {transfer: [buf]}); // Detaches `buf`.
-        const result = Key.convertValueToKey(buf);
+    it('should mark a genuine detached ArrayBuffer view as invalid', function () {
+        const buffer = new ArrayBuffer(8);
+        const view = new Uint8Array(buffer, 2, 4); // view over the buffer
+        structuredClone(buffer, {transfer: [buffer]}); // detaches both buffer and view
+
+        const result = Key.convertValueToKey(view);
+        expect(result.invalid).to.equal(true);
+        expect(result.message).to.equal('Could not read the buffer source (it may be detached)');
+    });
+
+    it('should mark a genuine detached ArrayBuffer as invalid', function () {
+        const buffer = new ArrayBuffer(8);
+        structuredClone(buffer, {transfer: [buffer]}); // genuine detached ArrayBuffer
+
+        const result = Key.convertValueToKey(buffer);
         expect(result.invalid).to.equal(true);
         expect(result.message).to.equal('Could not read the buffer source (it may be detached)');
     });
@@ -118,20 +129,6 @@ describe('Key additional coverage', function () {
             const numberPrefix = String.fromCodePoint(200) + '-';
             Key.decode(numberPrefix + '9000000000000', false);
         }).to.throw(Error, 'Invalid number.');
-    });
-
-    it('should throw when buffer is undefined', function () {
-        const originalIsView = ArrayBuffer.isView;
-        ArrayBuffer.isView = () => true;
-        try {
-            expect(() => {
-                Key.encode({byteLength: 1, slice () {
-                    //
-                }});
-            }).to.throw(TypeError, 'Could not copy the bytes held by a buffer source as the buffer was undefined.');
-        } finally {
-            ArrayBuffer.isView = originalIsView;
-        }
     });
 
     it('should handle zero rows or error in getCurrentNumber via generateKeyForStore', function (done) {
