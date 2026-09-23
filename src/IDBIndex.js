@@ -660,7 +660,9 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     const escapedTmpStoreNameSQL = util.sqlQuote('tmp_' + util.escapeStoreNameForSQL(storeName).slice(1, -1));
     const colNamesToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo[0]);
     const colInfoToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo.join(' '));
+    /* c8 ignore next -- Defensive: the sole caller always supplies a non-empty `colInfoToPreserveArr` (seeded with `key`/`value` column info), so the empty-array fallback is unreachable. */
     const listColInfoToPreserve = (colInfoToPreserve.length ? (colInfoToPreserve.join(', ') + ', ') : '');
+    /* c8 ignore next -- Defensive: see comment above. */
     const listColsToPreserve = (colNamesToPreserve.length ? (colNamesToPreserve.join(', ') + ', ') : '');
 
     // We could adapt the approach at https://stackoverflow.com/a/8430746/271577

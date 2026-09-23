@@ -323,6 +323,57 @@ describe('IDBObjectStore.createIndex', function () {
                 };
             });
         });
+
+        it('should skip existing records whose keyPath cannot be evaluated when reindexing', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                createVersion1();
+
+                /**
+                 * @returns {void}
+                 */
+                function createVersion1 () {
+                    const open = indexedDB.open(name, 1);
+                    open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = function (event) {
+                        const db = event.target.result;
+                        const store = db.createObjectStore('store', {keyPath: 'id'});
+                        // `a` is a primitive, so the dotted keyPath `a.b`
+                        //   added below (in version 2) will fail to evaluate
+                        //   against this existing record.
+                        store.put({id: 1, a: 'x'});
+                    };
+
+                    open.onsuccess = function () {
+                        open.result.close();
+                        setTimeout(createVersion2, 50);
+                    };
+                }
+
+                /**
+                 * @returns {void}
+                 */
+                function createVersion2 () {
+                    const open = indexedDB.open(name, 2);
+                    open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = function () {
+                        const store = open.transaction.objectStore('store');
+                        store.createIndex('idx', 'a.b');
+                    };
+
+                    open.onsuccess = function () {
+                        open.result.close();
+                        done();
+                    };
+                }
+            });
+        });
     });
 
     describe('failure tests', function () {
