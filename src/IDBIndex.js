@@ -281,7 +281,9 @@ IDBIndex.__createIndex = function (store, index) {
          * @returns {void}
          */
         function error (tx, err) {
+            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             failure(createDOMException('UnknownError', 'Could not create index "' + indexName + '"' + err.code + '::' + err.message, err));
+            /* c8 ignore stop -- see comment above */
         }
 
         /**
@@ -419,7 +421,9 @@ IDBIndex.__deleteIndex = function (store, index) {
          * @returns {void}
          */
         function error (tx, err) {
+            /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
             failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));
+            /* c8 ignore stop -- see comment above */
         }
 
         /**
@@ -506,9 +510,11 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed) {
 
     IDBIndex.__invalidStateIfDeleted(me);
     IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
+    /* c8 ignore start -- Defensive: `IDBObjectStore.__invalidStateIfDeleted` just above already throws when `me.objectStore.__deleted` is true, so this identical check can never be reached. */
     if (me.objectStore.__deleted) {
         throw createDOMException('InvalidStateError', "This index's object store has been deleted");
     }
+    /* c8 ignore stop -- see comment above */
     IDBTransaction.__assertActive(me.objectStore.transaction);
 
     if (nullDisallowed && util.isNullish(range)) {
@@ -668,7 +674,9 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
          * @returns {void}
          */
         function sqlError (tx, err) {
+            /* c8 ignore start -- Defensive: only reached if one of the chained `CREATE TABLE`/`INSERT`/`DROP TABLE`/`ALTER TABLE` statements below fails, which is not reliably reproducible without mocking the SQL layer. */
             error(err);
+            /* c8 ignore stop -- see comment above */
         }
         /**
          * @returns {void}
@@ -678,7 +686,9 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                 cb(tx, success);
                 return;
             }
+            /* c8 ignore start -- Defensive: `__renameIndex`'s only caller (the `IDBIndex.prototype.name` setter) always supplies a `cb`, so this fallback is dead with the current call graph. */
             success();
+            /* c8 ignore stop -- see comment above */
         }
         if (!CFG.useSQLiteIndexes) {
             finish();
@@ -720,7 +730,9 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                     resolve,
                                     /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
+                                        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                         reject(err);
+                                        /* c8 ignore stop -- see comment above */
                                     })
                                 );
                                 // }, function (tx, err) {
@@ -742,13 +754,17 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                             sql, [], resolve,
                                             /** @type {SqlErrorCallback} */
                                             (function (tx, err) {
+                                                /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                                 reject(err);
+                                                /* c8 ignore stop -- see comment above */
                                             })
                                         );
                                     },
                                     /** @type {SqlErrorCallback} */
                                     (function (tx, err) {
+                                        /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
                                         reject(err);
+                                        /* c8 ignore stop -- see comment above */
                                     })
                                 );
                             })
@@ -757,8 +773,10 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                             /** @type {(reason: unknown) => PromiseLike<never>} */
                             (error)
                         ).catch((err) => {
+                            /* c8 ignore start -- Defensive: only reached if `finish` or the outer `error` callback itself throws; not reliably reproducible. */
                             console.log('Index rename error');
                             throw err;
+                            /* c8 ignore stop -- see comment above */
                         });
                     }, /** @type {SqlErrorCallback} */ (sqlError));
                 }, /** @type {SqlErrorCallback} */ (sqlError));
@@ -879,9 +897,11 @@ function executeFetchIndexData (
                         record = row;
                     }
                 }
+                /* c8 ignore start -- Defensive: the SQL `LIKE` clause is a coarse pre-filter and this precise re-check in JS is meant to catch its false positives, but the encoding's per-character dash-prefix plus trailing-space delimiter (see `Key.js` string encoding) and fixed-length number encoding prevent one encoded value from ever being a spurious substring of another, so a `LIKE` hit always also passes this check in practice. */
                 if (!record) {
                     continue;
                 }
+                /* c8 ignore stop -- see comment above */
 
                 records.push(decode(record));
                 if (unboundedDisallowed) {

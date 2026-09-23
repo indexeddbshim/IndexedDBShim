@@ -76,4 +76,85 @@ describe('IDBIndex.openCursor multi-entry regression', function () {
             query(index, IDBKeyRange.lowerBound('b', true), recordCount);
         });
     });
+
+    // Regression test: a multi-entry array containing a duplicate value must
+    // not produce more than one index record for that record (per spec, the
+    // duplicate is dropped when the index entry is built), and querying for
+    // it must not error.
+    it('should not error when a record\'s multi-entry values contain a duplicate', function (done) {
+        util.createDatabase('inline', 'multi-entry-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('multi-entry-index');
+
+            tx.onerror = function (event) {
+                done(event.target.error.message);
+            };
+            tx.oncomplete = function () {
+                db.close();
+                done();
+            };
+
+            store.add({id: ['dup', 'dup']});
+
+            util.query(index, IDBKeyRange.only('dup'), 'next', function (queryErr, data) {
+                if (queryErr) {
+                    throw queryErr;
+                }
+                expect(data).to.have.lengthOf(1);
+            });
+        });
+    });
+
+    // Regression test: when the *last* (partial, exhausting) batch of
+    // underlying rows produces no multi-entry matches at all, the cursor
+    // must finish cleanly (rather than looping or erroring) instead of only
+    // being exercised by non-final batches with no matches.
+    it('should finish cleanly when the final batch of a multi-entry cursor has no matches', function (done) {
+        this.timeout(10000);
+
+        const originalPackSize = shimIndexedDB.__getConfig('cursorPreloadPackSize');
+        shimIndexedDB.__setConfig({cursorPreloadPackSize: 2});
+
+        util.createDatabase('inline', 'multi-entry-index', function (err, db) {
+            if (err) {
+                shimIndexedDB.__setConfig({cursorPreloadPackSize: originalPackSize});
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('multi-entry-index');
+
+            tx.onerror = function (event) {
+                shimIndexedDB.__setConfig({cursorPreloadPackSize: originalPackSize});
+                done(event.target.error.message);
+            };
+            tx.oncomplete = function () {
+                shimIndexedDB.__setConfig({cursorPreloadPackSize: originalPackSize});
+                db.close();
+                done();
+            };
+
+            // None of these records' multi-entry values match the range
+            // queried below, and there are more records than the pack size,
+            // so the last (partial, exhausting) batch also has no matches.
+            store.add({id: ['a', 'b', 0]});
+            store.add({id: ['a', 'b', 1]});
+            store.add({id: ['a', 'b', 2]});
+
+            util.query(index, IDBKeyRange.only('nonexistent'), 'next', function (queryErr, data) {
+                if (queryErr) {
+                    throw queryErr;
+                }
+                expect(data).to.have.lengthOf(0);
+            });
+        });
+    });
 });
