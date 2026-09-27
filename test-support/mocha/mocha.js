@@ -1,4 +1,4 @@
-// mocha@12.0.1 in javascript ES2018
+// mocha@12.0.2 in javascript ES2018
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -10584,22 +10584,12 @@
         !after &&
         self._failedBeforeEachHook
       ) {
-        // Fail all remaining tests in the suite
-        var remainingTests = tests.slice();
-        remainingTests.forEach(function (t) {
-          if (!t.state) {
-            var testError = createHookSkipError(
-              self._failedBeforeEachHook.title,
-              self._failedBeforeEachHook.error,
-            );
-
-            t.state = STATE_FAILED$2;
-            self.failures++;
-            self.emit(constants$g.EVENT_TEST_BEGIN, t);
-            self.emit(constants$g.EVENT_TEST_FAIL, t, testError);
-            self.emit(constants$g.EVENT_TEST_END, t);
-          }
-        });
+        // Fail all remaining tests in the suite and its nested suites
+        self.failAffectedTests(
+          suite,
+          self._failedBeforeEachHook.error,
+          self._failedBeforeEachHook.title,
+        );
         // Clear the stored hook info
         delete self._failedBeforeEachHook;
       }
@@ -10891,6 +10881,9 @@
       runnable = new Runnable("Uncaught error outside test suite");
       debug("uncaught(): no current Runnable; created a phony one");
       runnable.parent = this.suite;
+      if (err.file) {
+        runnable.file = err.file;
+      }
 
       if (this.state === constants$g.STATE_RUNNING) {
         debug("uncaught(): failing gracefully");
@@ -14983,7 +14976,7 @@
 
   		/*!
   		 * mocha
-  		 * Copyright(c) 2011 TJ Holowaychuk <tj@vision-media.ca>
+  		 * Copyright(c) 2011-2026 OpenJS Foundation and contributors, https://openjsf.org
   		 * MIT Licensed
   		 */
 
@@ -15448,7 +15441,8 @@
   		      "unloadFile() is only supported in a Node.js environment",
   		    );
   		  }
-  		  return require$$18.unloadFile(file);
+  		  const { unloadFile } = require$$18;
+  		  return unloadFile(file);
   		};
 
   		/**

@@ -52,12 +52,12 @@
     </script>
 
     <!-- Test Environment -->
-    <script src="../test-support/mocha/mocha.js"></script>
     <script src="../test-support/sinon/pkg/sinon-no-sourcemaps.js"></script>
 
     <!-- IndexedDBShim -->
     <script src="../dist/indexeddbshim-noninvasive.js"></script>
     <script type="module">
+    import {mocha} from '../test-support/mocha/mocha.mjs';
     import * as chai from '../test-support/chai/chai.js';
     /* globals setGlobalVars */
     setGlobalVars(null, {
