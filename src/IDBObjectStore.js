@@ -965,12 +965,11 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
                 ret = getKey
                     ? Key.decode(util.unescapeSQLiteResponse(/** @type {{key: string}} */ (data.rows.item(0)).key), false)
                     : Sca.decode(util.unescapeSQLiteResponse(/** @type {{value: string}} */ (data.rows.item(0)).value));
-                /* c8 ignore start -- Defensive: catches unexpected decode failures (e.g. corrupted stored data); not reliably reproducible via the public API since encode/decode are always paired and never write undecodable data. */
             } catch (e) {
-                // If no result is returned, or error occurs when parsing JSON
                 if (CFG.DEBUG) { console.log(e); }
+                error(createDOMException('UnknownError', 'Stored value could not be decoded.'));
+                return;
             }
-            /* c8 ignore stop -- see comment above */
             success(ret);
         }, function (tx, err) {
             /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
