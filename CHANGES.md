@@ -2,7 +2,7 @@
 
 ## 19.0.8
 
-- fix: reject stored value decoding errors in object store get (@zhangzhaohong-dev)
+- fix: reject stored value decoding errors in object store get(@zhangzhaohong-dev) and in index and cursor reads
 
 ## 19.0.7
 
