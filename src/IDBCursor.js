@@ -343,9 +343,9 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
             me.__prefetchedIndex = 0;
             me.__prefetchedData = data.rows;
             if (CFG.DEBUG) { console.log('Preloaded ' + data.rows.length + ' records for cursor'); }
-            me.__decode(/** @type {RowItemNonNull} */ (data.rows.item(0)), success);
+            me.__decode(/** @type {RowItemNonNull} */ (data.rows.item(0)), success, error);
         } else if (data.rows.length === 1) {
-            me.__decode(/** @type {RowItemNonNull} */ (data.rows.item(0)), success);
+            me.__decode(/** @type {RowItemNonNull} */ (data.rows.item(0)), success, error);
         } else {
             if (CFG.DEBUG) { console.log('Reached end of cursors'); }
             success(undefined, undefined, undefined);
@@ -567,7 +567,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 }
             };
             if (CFG.DEBUG) { console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor'); }
-            me.__decode(rows[0], success);
+            me.__decode(rows[0], success, error);
         }, /* c8 ignore start -- Defensive: guards against an unexpected SQLite
               execution error (e.g. I/O error, corruption) while querying for
               multi-entry cursor matches; not reliably reproducible without
@@ -646,10 +646,11 @@ IDBCursor.prototype.__onsuccess = function (success) {
  *   primaryKey: import('./Key.js').Key|undefined,
  *   encKey?: string
  * ) => void} callback
+ * @param {(err: Error|DOMException) => void} error Called if stored data cannot be decoded
  * @this {IDBCursorFull}
  * @returns {void}
  */
-IDBCursor.prototype.__decode = function (rowItem, callback) {
+IDBCursor.prototype.__decode = function (rowItem, callback, error) {
     const me = this;
     if (me.__multiEntryIndex && me.__unique) {
         if (!me.__matchedKeys) {
@@ -669,12 +670,19 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
     const encVal = util.unescapeSQLiteResponse(rowItem[me.__valueColumnName]);
     const encPrimaryKey = util.unescapeSQLiteResponse(rowItem.key);
 
-    const key = Key.decode(
-        encKey,
-        me.__multiEntryIndex
-    );
-    const val = me.__valueDecoder.decode(encVal);
-    const primaryKey = Key.decode(encPrimaryKey);
+    let key, val, primaryKey;
+    try {
+        key = Key.decode(
+            encKey,
+            me.__multiEntryIndex
+        );
+        val = me.__valueDecoder.decode(encVal);
+        primaryKey = Key.decode(encPrimaryKey);
+    } catch (e) {
+        if (CFG.DEBUG) { console.log(e); }
+        error(createDOMException('UnknownError', 'Stored value could not be decoded.'));
+        return;
+    }
     callback(key, val, primaryKey, encKey /* , encVal, encPrimaryKey */);
 };
 
@@ -843,7 +851,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
                         return;
                     }
                     checkKey();
-                });
+                }, error);
                 return;
             }
         }
@@ -1377,7 +1385,8 @@ function collectAll (source, query, count, direction, mode) {
                                 return;
                             }
                             acceptOrFinish(k, val, primKey);
-                        }
+                        },
+                        error
                     );
                     return;
                 }

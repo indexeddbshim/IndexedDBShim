@@ -867,58 +867,64 @@ function executeFetchIndexData (
                 (record) => { // when opType is value
                     return Sca.decode(util.unescapeSQLiteResponse(record.value));
                 });
-        if (index.multiEntry) {
-            const escapedIndexNameForKeyCol = util.escapeIndexNameForSQLKeyColumn(index.name);
-            const encodedKey = Key.encode(range, index.multiEntry);
-            for (let i = 0; i < data.rows.length; i++) {
-                const row = /** @type {{key: string, value: string, [k: string]: string}} */ (data.rows.item(i));
-                const rowKey = /** @type {import('./Key.js').ValueTypeArray} */ (
-                    Key.decode(row[escapedIndexNameForKeyCol])
-                );
-                let record;
-                if (hasKey && (
-                    (multiChecks && /** @type {import('./Key.js').ValueType[]} */ (range).some(
-                        /**
-                         * @param {import('./Key.js').ValueType} check
-                         * @returns {boolean}
-                         */
-                        (check) => rowKey.includes(check)
-                    )) || // More precise than our SQL
-                    Key.isMultiEntryMatch(
-                        // Added `JSON.stringify` as was having problems with
-                        //        `JSON.stringify` encoding added to nested
-                        //        array keys
-                        JSON.stringify(encodedKey).slice(1, -1),
-                        row[escapedIndexNameForKeyCol]
-                    )
-                )) {
-                    recordCount++;
-                    record = row;
-                } else if (!hasKey && !multiChecks) {
-                    if (rowKey !== undefined) {
-                        recordCount += (Array.isArray(rowKey) ? rowKey.length : 1);
+        try {
+            if (index.multiEntry) {
+                const escapedIndexNameForKeyCol = util.escapeIndexNameForSQLKeyColumn(index.name);
+                const encodedKey = Key.encode(range, index.multiEntry);
+                for (let i = 0; i < data.rows.length; i++) {
+                    const row = /** @type {{key: string, value: string, [k: string]: string}} */ (data.rows.item(i));
+                    const rowKey = /** @type {import('./Key.js').ValueTypeArray} */ (
+                        Key.decode(row[escapedIndexNameForKeyCol])
+                    );
+                    let record;
+                    if (hasKey && (
+                        (multiChecks && /** @type {import('./Key.js').ValueType[]} */ (range).some(
+                            /**
+                             * @param {import('./Key.js').ValueType} check
+                             * @returns {boolean}
+                             */
+                            (check) => rowKey.includes(check)
+                        )) || // More precise than our SQL
+                        Key.isMultiEntryMatch(
+                            // Added `JSON.stringify` as was having problems with
+                            //        `JSON.stringify` encoding added to nested
+                            //        array keys
+                            JSON.stringify(encodedKey).slice(1, -1),
+                            row[escapedIndexNameForKeyCol]
+                        )
+                    )) {
+                        recordCount++;
                         record = row;
+                    } else if (!hasKey && !multiChecks) {
+                        if (rowKey !== undefined) {
+                            recordCount += (Array.isArray(rowKey) ? rowKey.length : 1);
+                            record = row;
+                        }
+                    }
+                    /* c8 ignore start -- Defensive: the SQL `LIKE` clause is a coarse pre-filter and this precise re-check in JS is meant to catch its false positives, but the encoding's per-character dash-prefix plus trailing-space delimiter (see `Key.js` string encoding) and fixed-length number encoding prevent one encoded value from ever being a spurious substring of another, so a `LIKE` hit always also passes this check in practice. */
+                    if (!record) {
+                        continue;
+                    }
+                    /* c8 ignore stop -- see comment above */
+
+                    records.push(decode(record));
+                    if (unboundedDisallowed) {
+                        break;
                     }
                 }
-                /* c8 ignore start -- Defensive: the SQL `LIKE` clause is a coarse pre-filter and this precise re-check in JS is meant to catch its false positives, but the encoding's per-character dash-prefix plus trailing-space delimiter (see `Key.js` string encoding) and fixed-length number encoding prevent one encoded value from ever being a spurious substring of another, so a `LIKE` hit always also passes this check in practice. */
-                if (!record) {
-                    continue;
+            } else {
+                for (let i = 0; i < data.rows.length; i++) {
+                    const record = /** @type {{key: string, value: string}} */ (data.rows.item(i));
+                    if (record) {
+                        records.push(decode(record));
+                    }
                 }
-                /* c8 ignore stop -- see comment above */
-
-                records.push(decode(record));
-                if (unboundedDisallowed) {
-                    break;
-                }
+                recordCount = records.length;
             }
-        } else {
-            for (let i = 0; i < data.rows.length; i++) {
-                const record = /** @type {{key: string, value: string}} */ (data.rows.item(i));
-                if (record) {
-                    records.push(decode(record));
-                }
-            }
-            recordCount = records.length;
+        } catch (e) {
+            if (CFG.DEBUG) { console.log(e); }
+            error(createDOMException('UnknownError', 'Stored value could not be decoded.'));
+            return;
         }
         if (isCount) {
             success(recordCount);

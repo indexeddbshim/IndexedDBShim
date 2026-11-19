@@ -955,13 +955,13 @@ IDBObjectStore.prototype.__get = function (query, getKey) {
         if (CFG.DEBUG) { console.log('Fetching', me.__currentName, sqlValues); }
         tx.executeSql(sqlStr, sqlValues, function (tx, data) {
             if (CFG.DEBUG) { console.log('Fetched data', data); }
+            if (data.rows.length === 0) {
+                success();
+                return;
+            }
             let ret;
             try {
                 // Opera can't deal with the try-catch here.
-                if (data.rows.length === 0) {
-                    success();
-                    return;
-                }
                 ret = getKey
                     ? Key.decode(util.unescapeSQLiteResponse(/** @type {{key: string}} */ (data.rows.item(0)).key), false)
                     : Sca.decode(util.unescapeSQLiteResponse(/** @type {{value: string}} */ (data.rows.item(0)).value));
