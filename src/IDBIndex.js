@@ -923,7 +923,7 @@ function executeFetchIndexData (
             }
         } catch (e) {
             if (CFG.DEBUG) { console.log(e); }
-            error(createDOMException('UnknownError', 'Stored value could not be decoded.'));
+            error(tx, createDOMException('UnknownError', 'Stored value could not be decoded.'));
             return;
         }
         if (isCount) {

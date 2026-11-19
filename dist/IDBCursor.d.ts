@@ -266,10 +266,11 @@ export class IDBCursor {
      *   primaryKey: import('./Key.js').Key|undefined,
      *   encKey?: string
      * ) => void} callback
+     * @param {(err: Error|DOMException) => void} error Called if stored data cannot be decoded
      * @this {IDBCursorFull}
      * @returns {void}
      */
-    __decode(this: IDBCursorFull, rowItem: RowItemNonNull, callback: (key: import("./Key.js").Key | undefined, val: import("./Key.js").Value, primaryKey: import("./Key.js").Key | undefined, encKey?: string) => void): void;
+    __decode(this: IDBCursorFull, rowItem: RowItemNonNull, callback: (key: import("./Key.js").Key | undefined, val: import("./Key.js").Value, primaryKey: import("./Key.js").Key | undefined, encKey?: string) => void, error: (err: Error | DOMException) => void): void;
     /**
      * @this {IDBCursorFull}
      * @returns {void}
