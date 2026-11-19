@@ -15,7 +15,7 @@
       "json-summary",
       "lcov"
     ],
-    "check-coverage": true,
+    "check-coverage": false,
     "lines": 100,
     "statements": 100,
     "functions": 100,
@@ -78,7 +78,7 @@
     "coverage:mocha": "c8 --temp-directory coverage/mocha --reporter=none --no-clean mocha --reporter-options configFile=mocha-multi-reporters.json,cmrOutput=@es-joy/json-file-reporter+output+mocha --require source-map-support/register tests-mocha/test-node.js",
     "coverage-badge": "coveradge badges/coverage-badge",
     "coverage:copy": "cp -r coverage/fake/. coverage/combined/ && cp -r coverage/mock/. coverage/combined/ && cp -r coverage/mocha/. coverage/combined/ && cp -r coverage/w3c/. coverage/combined/",
-    "coverage:report-only": "c8 report --temp-directory coverage/combined",
+    "coverage:report-only": "c8 report --check-coverage --temp-directory coverage/combined",
     "coverage:report": "run-s coverage:copy coverage:report-only",
     "remove-cache": "rimraf node_modules/.cache",
     "remove-cov": "rimraf .nyc_output ",
