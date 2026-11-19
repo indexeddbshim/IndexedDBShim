@@ -1,4 +1,4 @@
-/*! indexeddbshim - v19.0.7 - 9/23/2026 */
+/*! indexeddbshim - v19.0.8 - 11/19/2026 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -9473,61 +9473,69 @@
         // when opType is value
         return decode(unescapeSQLiteResponse(record.value));
       };
-      if (index.multiEntry) {
-        var escapedIndexNameForKeyCol = escapeIndexNameForSQLKeyColumn(index.name);
-        var encodedKey = _encode(range, index.multiEntry);
-        var _loop = function _loop() {
-            var row = /** @type {{key: string, value: string, [k: string]: string}} */data.rows.item(i);
-            var rowKey = /** @type {import('./Key.js').ValueTypeArray} */
-            _decode(row[escapedIndexNameForKeyCol]);
-            var record;
-            if (hasKey && (multiChecks && /** @type {import('./Key.js').ValueType[]} */range.some(
-            /**
-             * @param {import('./Key.js').ValueType} check
-             * @returns {boolean}
-             */
-            function (check) {
-              return rowKey.includes(check);
-            }) ||
-            // More precise than our SQL
-            isMultiEntryMatch(
-            // Added `JSON.stringify` as was having problems with
-            //        `JSON.stringify` encoding added to nested
-            //        array keys
-            JSON.stringify(encodedKey).slice(1, -1), row[escapedIndexNameForKeyCol]))) {
-              recordCount++;
-              record = row;
-            } else if (!hasKey && !multiChecks) {
-              if (rowKey !== undefined) {
-                recordCount += Array.isArray(rowKey) ? rowKey.length : 1;
+      try {
+        if (index.multiEntry) {
+          var escapedIndexNameForKeyCol = escapeIndexNameForSQLKeyColumn(index.name);
+          var encodedKey = _encode(range, index.multiEntry);
+          var _loop = function _loop() {
+              var row = /** @type {{key: string, value: string, [k: string]: string}} */data.rows.item(i);
+              var rowKey = /** @type {import('./Key.js').ValueTypeArray} */
+              _decode(row[escapedIndexNameForKeyCol]);
+              var record;
+              if (hasKey && (multiChecks && /** @type {import('./Key.js').ValueType[]} */range.some(
+              /**
+               * @param {import('./Key.js').ValueType} check
+               * @returns {boolean}
+               */
+              function (check) {
+                return rowKey.includes(check);
+              }) ||
+              // More precise than our SQL
+              isMultiEntryMatch(
+              // Added `JSON.stringify` as was having problems with
+              //        `JSON.stringify` encoding added to nested
+              //        array keys
+              JSON.stringify(encodedKey).slice(1, -1), row[escapedIndexNameForKeyCol]))) {
+                recordCount++;
                 record = row;
+              } else if (!hasKey && !multiChecks) {
+                if (rowKey !== undefined) {
+                  recordCount += Array.isArray(rowKey) ? rowKey.length : 1;
+                  record = row;
+                }
               }
-            }
-            /* c8 ignore start -- Defensive: the SQL `LIKE` clause is a coarse pre-filter and this precise re-check in JS is meant to catch its false positives, but the encoding's per-character dash-prefix plus trailing-space delimiter (see `Key.js` string encoding) and fixed-length number encoding prevent one encoded value from ever being a spurious substring of another, so a `LIKE` hit always also passes this check in practice. */
-            if (!record) {
-              return 0; // continue
-            }
-            /* c8 ignore stop -- see comment above */
+              /* c8 ignore start -- Defensive: the SQL `LIKE` clause is a coarse pre-filter and this precise re-check in JS is meant to catch its false positives, but the encoding's per-character dash-prefix plus trailing-space delimiter (see `Key.js` string encoding) and fixed-length number encoding prevent one encoded value from ever being a spurious substring of another, so a `LIKE` hit always also passes this check in practice. */
+              if (!record) {
+                return 0; // continue
+              }
+              /* c8 ignore stop -- see comment above */
 
-            records.push(decode$1(record));
-            if (unboundedDisallowed) {
-              return 1; // break
-            }
-          },
-          _ret;
-        for (var i = 0; i < data.rows.length; i++) {
-          _ret = _loop();
-          if (_ret === 0) continue;
-          if (_ret === 1) break;
-        }
-      } else {
-        for (var _i = 0; _i < data.rows.length; _i++) {
-          var record = /** @type {{key: string, value: string}} */data.rows.item(_i);
-          if (record) {
-            records.push(decode$1(record));
+              records.push(decode$1(record));
+              if (unboundedDisallowed) {
+                return 1; // break
+              }
+            },
+            _ret;
+          for (var i = 0; i < data.rows.length; i++) {
+            _ret = _loop();
+            if (_ret === 0) continue;
+            if (_ret === 1) break;
           }
+        } else {
+          for (var _i = 0; _i < data.rows.length; _i++) {
+            var record = /** @type {{key: string, value: string}} */data.rows.item(_i);
+            if (record) {
+              records.push(decode$1(record));
+            }
+          }
+          recordCount = records.length;
         }
-        recordCount = records.length;
+      } catch (e) {
+        if (CFG.DEBUG) {
+          console.log(e);
+        }
+        error(createDOMException('UnknownError', 'Stored value could not be decoded.'));
+        return;
       }
       if (isCount) {
         success(recordCount);
@@ -10487,22 +10495,21 @@
         if (CFG.DEBUG) {
           console.log('Fetched data', data);
         }
+        if (data.rows.length === 0) {
+          success();
+          return;
+        }
         var ret;
         try {
           // Opera can't deal with the try-catch here.
-          if (data.rows.length === 0) {
-            success();
-            return;
-          }
           ret = getKey ? _decode(unescapeSQLiteResponse(/** @type {{key: string}} */data.rows.item(0).key), false) : decode(unescapeSQLiteResponse(/** @type {{value: string}} */data.rows.item(0).value));
-          /* c8 ignore start -- Defensive: catches unexpected decode failures (e.g. corrupted stored data); not reliably reproducible via the public API since encode/decode are always paired and never write undecodable data. */
         } catch (e) {
-          // If no result is returned, or error occurs when parsing JSON
           if (CFG.DEBUG) {
             console.log(e);
           }
+          error(createDOMException('UnknownError', 'Stored value could not be decoded.'));
+          return;
         }
-        /* c8 ignore stop -- see comment above */
         success(ret);
       }, function (tx, err) {
         /* c8 ignore start -- Defensive: SQL execution error, not reliably reproducible without mocking the SQL layer. */
@@ -12992,9 +12999,9 @@
         if (CFG.DEBUG) {
           console.log('Preloaded ' + data.rows.length + ' records for cursor');
         }
-        me.__decode(/** @type {RowItemNonNull} */data.rows.item(0), success);
+        me.__decode(/** @type {RowItemNonNull} */data.rows.item(0), success, error);
       } else if (data.rows.length === 1) {
-        me.__decode(/** @type {RowItemNonNull} */data.rows.item(0), success);
+        me.__decode(/** @type {RowItemNonNull} */data.rows.item(0), success, error);
       } else {
         if (CFG.DEBUG) {
           console.log('Reached end of cursors');
@@ -13213,7 +13220,7 @@
         if (CFG.DEBUG) {
           console.log('[multiEntry] Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
         }
-        me.__decode(rows[0], success);
+        me.__decode(rows[0], success, error);
       },
       /* c8 ignore start -- Defensive: guards against an unexpected SQLite
          execution error (e.g. I/O error, corruption) while querying for
@@ -13295,10 +13302,11 @@
    *   primaryKey: import('./Key.js').Key|undefined,
    *   encKey?: string
    * ) => void} callback
+   * @param {(err: Error|DOMException) => void} error Called if stored data cannot be decoded
    * @this {IDBCursorFull}
    * @returns {void}
    */
-  IDBCursor.prototype.__decode = function (rowItem, callback) {
+  IDBCursor.prototype.__decode = function (rowItem, callback, error) {
     var me = this;
     if (me.__multiEntryIndex && me.__unique) {
       if (!me.__matchedKeys) {
@@ -13313,9 +13321,18 @@
     var encKey = unescapeSQLiteResponse(me.__multiEntryIndex ? rowItem.matchingKey : rowItem[me.__keyColumnName]);
     var encVal = unescapeSQLiteResponse(rowItem[me.__valueColumnName]);
     var encPrimaryKey = unescapeSQLiteResponse(rowItem.key);
-    var key = _decode(encKey, me.__multiEntryIndex);
-    var val = me.__valueDecoder.decode(encVal);
-    var primaryKey = _decode(encPrimaryKey);
+    var key, val, primaryKey;
+    try {
+      key = _decode(encKey, me.__multiEntryIndex);
+      val = me.__valueDecoder.decode(encVal);
+      primaryKey = _decode(encPrimaryKey);
+    } catch (e) {
+      if (CFG.DEBUG) {
+        console.log(e);
+      }
+      error(createDOMException('UnknownError', 'Stored value could not be decoded.'));
+      return;
+    }
     callback(key, val, primaryKey, encKey /* , encVal, encPrimaryKey */);
   };
 
@@ -13476,7 +13493,7 @@
               return;
             }
             checkKey();
-          });
+          }, error);
           return;
         }
       }
@@ -14003,7 +14020,7 @@
                 return;
               }
               acceptOrFinish(k, val, primKey);
-            });
+            }, error);
             return;
           }
         }

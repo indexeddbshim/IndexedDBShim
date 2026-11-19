@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 19.0.8
+
+- fix: reject stored value decoding errors in object store get (@zhangzhaohong-dev)
+
 ## 19.0.7
 
 - fix: proper throwing when arraybuffer view (or buffer) is detached
